@@ -1,0 +1,538 @@
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import React from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  FlatList,
+  Linking,
+  Platform,
+  RefreshControl,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useWalletSavedCardsQuery } from '../../../../general/api/walletSavedCardsService';
+import { useAuthSessionQuery } from '../../../../general/hooks/useAuthQueries';
+import useAddress from '../../../../general/hooks/useAddress';
+import AppPopup from '../../../../general/components/AppPopup';
+import BottomSheetHandle from '../../../../general/components/BottomSheetHandle';
+import Button from '../../../../general/components/Button';
+import { showToast } from '../../../../general/components/AppToast';
+import Skeleton from '../../../../general/components/Skeleton';
+import SwipeableBottomSheet from '../../../../general/components/SwipeableBottomSheet';
+import Text from '../../../../general/components/Text';
+import { useTheme } from '../../../../general/theme/theme';
+import TrackWorkerBookingContent from '../components/TrackWorker/TrackWorkerBookingContent';
+import TrackWorkerFeedbackSection from '../components/TrackWorker/TrackWorkerFeedbackSection';
+import TrackWorkerHeader from '../components/TrackWorker/TrackWorkerHeader';
+import TrackWorkerMapPreview from '../components/TrackWorker/TrackWorkerMapPreview';
+import TrackWorkerStatusBlock from '../components/TrackWorker/TrackWorkerStatusBlock';
+import useHomeVisitRouteEstimate from '../hooks/useHomeVisitRouteEstimate';
+import { homeVisitsKeys } from '../../api/queryKeys';
+import type { HomeVisitsStackParamList } from '../../navigation/types';
+import { homeVisitsSingleVendorDiscoveryService } from '../api/discoveryService';
+import useTrackWorkerRealtime from '../hooks/useTrackWorkerRealtime';
+import useSingleVendorBookingDetails from '../hooks/useSingleVendorBookingDetails';
+import useRefetchOnAppActive from '../hooks/useRefetchOnAppActive';
+import type { HomeVisitsSingleVendorNavigationParamList } from '../navigation/types';
+import {
+  extractDestinationLocation,
+  extractWorkerLocation,
+} from '../utils/trackWorkerLocation';
+import {
+  getProgressStep,
+  normalizeJobStatus,
+  resolveTrackWorkerStage,
+  type TrackWorkerStage,
+} from '../utils/trackWorkerStatus';
+import { isMapStage } from '../utils/trackWorkerFormatters';
+
+type Props = NativeStackScreenProps<
+  HomeVisitsSingleVendorNavigationParamList,
+  'SingleVendorTrackWorker'
+>;
+
+type LocalFlowState = 'none' | 'payment_confirmed' | 'feedback';
+
+function isMissingSavedCardError(error: unknown) {
+  const message = error instanceof Error ? error.message.toLowerCase() : '';
+  return (
+    message.includes('saved card') ||
+    message.includes('no card') ||
+    message.includes('payment method') ||
+    message.includes('wallet')
+  );
+}
+
+export default function TrackWorkerScreen({ navigation, route }: Props) {
+  const { t } = useTranslation('homeVisits');
+  const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const { height: viewportHeight } = useWindowDimensions();
+  const { orderId } = route.params;
+  const queryClient = useQueryClient();
+  const { latitude: currentLatitude, longitude: currentLongitude } = useAddress();
+
+  const sessionQuery = useAuthSessionQuery();
+  const token = sessionQuery.data?.token ?? null;
+  const currentUserId = sessionQuery.data?.user?.id ?? null;
+
+  const bookingDetailsQuery = useSingleVendorBookingDetails({ orderId });
+  const {
+    data,
+    isLoading,
+    isRefetching,
+    refetch: refetchBookingDetails,
+  } = bookingDetailsQuery;
+  const savedCardsQuery = useWalletSavedCardsQuery('home-services');
+  const { refetch: refetchSavedCards } = savedCardsQuery;
+
+  const [isServiceDetailsExpanded, setIsServiceDetailsExpanded] = React.useState(true);
+  const [localFlow, setLocalFlow] = React.useState<LocalFlowState>('none');
+  const [rating, setRating] = React.useState(0);
+  const [feedback, setFeedback] = React.useState('');
+  const [isAroundCornerDismissed, setIsAroundCornerDismissed] = React.useState(false);
+  const resetLocalFlow = React.useCallback(() => {
+    setLocalFlow('none');
+  }, []);
+
+  const { liveBookingData, trackingSnapshot, workerLocation } = useTrackWorkerRealtime({
+    currentUserId,
+    initialBookingData: data,
+    orderId,
+    token,
+  });
+
+  React.useEffect(() => {
+    resetLocalFlow();
+  }, [data?.jobStatus, data?.status, resetLocalFlow]);
+
+  const bookingData = liveBookingData ?? data ?? null;
+  const stage = resolveTrackWorkerStage(bookingData);
+  const normalizedJobStatus = normalizeJobStatus(
+    bookingData?.jobStatus ?? bookingData?.status,
+  );
+  const stageToRender: TrackWorkerStage =
+    localFlow === 'payment_confirmed'
+      ? 'payment_confirmed'
+      : localFlow === 'feedback'
+        ? 'feedback'
+        : stage;
+
+  const isMapVisible = isMapStage(stageToRender);
+
+  const showAroundCornerPopupRaw =
+    stageToRender === 'on_way' &&
+    `${bookingData?.statusMessage ?? ''}`.toLowerCase().includes('around the corner');
+  const showAroundCornerPopup = showAroundCornerPopupRaw && !isAroundCornerDismissed;
+
+  const progressStep = getProgressStep(stageToRender);
+  const services = bookingData?.services ?? [];
+  const defaultSavedCard =
+    savedCardsQuery.data?.cards.find((card) => card.isDefault) ?? null;
+  const isWorkerPaymentRequested = normalizedJobStatus === 'payment_requested';
+  const rootNavigation =
+    navigation.getParent<NativeStackNavigationProp<HomeVisitsStackParamList>>();
+
+  const destinationLocation = React.useMemo(
+    () => extractDestinationLocation(bookingData),
+    [bookingData],
+  );
+  const seededWorkerLocation = React.useMemo(
+    () => extractWorkerLocation(bookingData),
+    [bookingData],
+  );
+  const customerLocation = React.useMemo(() => {
+    if (typeof currentLatitude === 'number' && typeof currentLongitude === 'number') {
+      return { latitude: currentLatitude, longitude: currentLongitude };
+    }
+
+    return destinationLocation;
+  }, [currentLatitude, currentLongitude, destinationLocation]);
+
+  const routeEstimate = useHomeVisitRouteEstimate({
+    destination: customerLocation,
+    origin: workerLocation ?? seededWorkerLocation,
+    preferredDistanceKm: trackingSnapshot?.distanceKm,
+    preferredEstimatedMinutes: trackingSnapshot?.estimatedMinutes,
+    preferredRoutePath: trackingSnapshot?.routePath,
+  });
+
+  const handleRefresh = React.useCallback(async () => {
+    await Promise.all([
+      refetchBookingDetails(),
+      refetchSavedCards(),
+    ]);
+  }, [refetchBookingDetails, refetchSavedCards]);
+
+  useRefetchOnAppActive({
+    enabled: Boolean(orderId),
+    onActive: handleRefresh,
+  });
+
+  const sheetExpandedHeight = React.useMemo(() => {
+    if (isMapVisible) {
+      return Math.min(Math.max(540, viewportHeight * 0.72), viewportHeight - 56);
+    }
+
+    return viewportHeight;
+  }, [isMapVisible, viewportHeight]);
+
+  const sheetDefaultHeight = React.useMemo(() => {
+    if (!isMapVisible) {
+      return undefined;
+    }
+
+    return Math.min(sheetExpandedHeight - 84, 470 + insets.bottom);
+  }, [insets.bottom, isMapVisible, sheetExpandedHeight]);
+
+  const sheetCollapsedHeight = React.useMemo(() => {
+    if (isMapVisible) {
+      return 220 + insets.bottom;
+    }
+
+    return sheetExpandedHeight;
+  }, [insets.bottom, isMapVisible, sheetExpandedHeight]);
+
+  const contactWorkerPhone = React.useMemo(() => {
+    const assignedWorkers = bookingData?.assignedWorkers ?? [];
+    const supervisorId = bookingData?.supervisorWorkerId ?? bookingData?.assignedWorker?.id;
+    const supervisor = assignedWorkers.find(
+      (worker) => worker.id === supervisorId || worker.role === 'supervisor',
+    );
+
+    return supervisor?.phone ?? bookingData?.assignedWorker?.phone ?? null;
+  }, [
+    bookingData?.assignedWorker?.id,
+    bookingData?.assignedWorker?.phone,
+    bookingData?.assignedWorkers,
+    bookingData?.supervisorWorkerId,
+  ]);
+
+  const onPressContactWorker = React.useCallback(async () => {
+    const phone = contactWorkerPhone;
+
+    if (!phone) {
+      showToast.error(t('single_vendor_track_worker_contact_unavailable'));
+      return;
+    }
+
+    const url = Platform.select({
+      ios: `telprompt:${phone}`,
+      default: `tel:${phone}`,
+    });
+
+    try {
+      await Linking.openURL(url ?? `tel:${phone}`);
+    } catch {
+      showToast.error(t('single_vendor_track_worker_contact_unavailable'));
+    }
+  }, [contactWorkerPhone, t]);
+
+  const payWithSavedCardMutation = useMutation({
+    mutationFn: (targetOrderId: string) =>
+      homeVisitsSingleVendorDiscoveryService.payPaymentRequestedJobWithSavedCard(
+        targetOrderId,
+        defaultSavedCard?.id ? { paymentMethodId: defaultSavedCard.id } : {},
+      ),
+    onSuccess: async (response) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: homeVisitsKeys.singleVendorBookingDetail(orderId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: homeVisitsKeys.singleVendorBookings(),
+        }),
+      ]);
+
+      const status = `${response.stripeStatus ?? ''}`.toLowerCase();
+      const paymentStatus = `${response.paymentStatus ?? ''}`.toLowerCase();
+      const jobStatus = `${response.jobStatus ?? ''}`.toLowerCase();
+
+      if (
+        status === 'succeeded' ||
+        paymentStatus === 'paid' ||
+        jobStatus === 'completed'
+      ) {
+        setLocalFlow('payment_confirmed');
+        setTimeout(() => {
+          setLocalFlow('feedback');
+        }, 1000);
+        return;
+      }
+
+      showToast.success(t('single_vendor_track_worker_payment_processing'));
+    },
+    onError: (error) => {
+      if (isMissingSavedCardError(error)) {
+        showToast.error(
+          t('single_vendor_track_worker_default_card_required_title'),
+          t('single_vendor_track_worker_default_card_required_message'),
+        );
+        rootNavigation?.navigate('Wallet');
+        return;
+      }
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : t('single_vendor_track_worker_payment_failed');
+      showToast.error(t('single_vendor_track_worker_payment_failed'), message);
+    },
+  });
+
+  const onPayNow = React.useCallback(() => {
+    const handleNoDefaultCard = () => {
+      showToast.error(
+        t('single_vendor_track_worker_default_card_required_title'),
+        t('single_vendor_track_worker_default_card_required_message'),
+      );
+      rootNavigation?.navigate('Wallet');
+    };
+
+    if (!bookingData?.orderId) {
+      showToast.error(t('single_vendor_track_worker_payment_failed'));
+      return;
+    }
+
+    if (!isWorkerPaymentRequested) {
+      return;
+    }
+
+    if (savedCardsQuery.isPending) {
+      return;
+    }
+
+    if (!defaultSavedCard?.id) {
+      handleNoDefaultCard();
+      return;
+    }
+
+    payWithSavedCardMutation.mutate(bookingData.orderId);
+  }, [
+    bookingData?.orderId,
+    defaultSavedCard?.id,
+    payWithSavedCardMutation,
+    rootNavigation,
+    savedCardsQuery.isPending,
+    isWorkerPaymentRequested,
+    t,
+  ]);
+
+  const onSubmitFeedback = React.useCallback(() => {
+    showToast.success(t('single_vendor_track_worker_feedback_success'));
+    navigation.goBack();
+  }, [navigation, t]);
+
+  React.useEffect(() => {
+    if (!showAroundCornerPopupRaw) {
+      setIsAroundCornerDismissed(false);
+    }
+  }, [showAroundCornerPopupRaw]);
+
+  return (
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      {isMapVisible ? (
+        <View style={styles.mapLayer}>
+          <TrackWorkerMapPreview
+            customerLocation={customerLocation}
+            routePath={routeEstimate.routePath}
+            variant="full"
+            workerLocation={workerLocation ?? seededWorkerLocation}
+          />
+        </View>
+      ) : null}
+
+      <View style={styles.headerOverlay}>
+        <TrackWorkerHeader
+          onClose={() => navigation.goBack()}
+          title={isMapVisible ? '' : t('single_vendor_track_worker_title')}
+          topInset={insets.top}
+        />
+      </View>
+
+      <SwipeableBottomSheet
+        collapsedHeight={sheetCollapsedHeight}
+        defaultHeight={sheetDefaultHeight}
+        expandedHeight={sheetExpandedHeight}
+        handle={isMapVisible ? <BottomSheetHandle color={colors.border} /> : null}
+        handleGestureInset={0}
+        initialState={isMapVisible ? 'default' : 'expanded'}
+        style={[
+          styles.sheet,
+          {
+            backgroundColor: colors.background,
+            borderTopLeftRadius: isMapVisible ? 24 : 0,
+            borderTopRightRadius: isMapVisible ? 24 : 0,
+            paddingBottom: insets.bottom + 6,
+            shadowColor: colors.shadowColor,
+          },
+        ]}
+      >
+        <FlatList
+          data={SHEET_LIST_DATA}
+          keyExtractor={keyExtractor}
+          renderItem={() => (
+            <>
+              {isLoading ? (
+                <View style={styles.loadingWrap}>
+                  <Skeleton height={220} width="100%" />
+                </View>
+              ) : (
+                <>
+                  <View style={styles.content}>
+                    <TrackWorkerStatusBlock
+                      distanceKm={routeEstimate.distanceKm}
+                      estimatedMinutes={routeEstimate.estimatedMinutes}
+                      progressStep={progressStep}
+                      stage={stageToRender}
+                      statusMessage={bookingData?.statusMessage}
+                    />
+                  </View>
+
+                  {stageToRender === 'payment_confirmed' ? null : stageToRender === 'feedback' ? (
+                    <View style={styles.content}>
+                      <TrackWorkerFeedbackSection
+                        feedback={feedback}
+                        onChangeFeedback={setFeedback}
+                        onChangeRating={setRating}
+                        onSubmit={onSubmitFeedback}
+                        rating={rating}
+                      />
+                    </View>
+                  ) : (
+                    <View style={styles.content}>
+                      <TrackWorkerBookingContent
+                        data={bookingData}
+                        isServiceDetailsExpanded={isServiceDetailsExpanded}
+                        onPressContactWorker={() => {
+                          void onPressContactWorker();
+                        }}
+                        onToggleServiceDetails={() => setIsServiceDetailsExpanded((prev) => !prev)}
+                        services={services}
+                        stage={stageToRender}
+                      />
+                    </View>
+                  )}
+
+                  {stageToRender === 'payment' ? (
+                    <View style={styles.payActionWrap}>
+                      <Button
+                        label={t('single_vendor_track_worker_pay_now')}
+                        onPress={onPayNow}
+                        isLoading={payWithSavedCardMutation.isPending || savedCardsQuery.isPending}
+                        disabled={
+                          payWithSavedCardMutation.isPending ||
+                          savedCardsQuery.isPending ||
+                          !isWorkerPaymentRequested
+                        }
+                        style={styles.payNowButton}
+                        labelStyle={{ color: '#030712' }}
+                      />
+                      {!isWorkerPaymentRequested ? (
+                        <View style={styles.payHintWrap}>
+                          <Text style={[styles.payHintText, { color: colors.mutedText }]}>
+                            {t('single_vendor_track_worker_waiting_payment_request')}
+                          </Text>
+                        </View>
+                      ) : null}
+                    </View>
+                  ) : null}
+                </>
+              )}
+            </>
+          )}
+          style={styles.sheetList}
+          contentContainerStyle={[
+            styles.sheetContent,
+            {
+              paddingTop: isMapVisible ? 0 : Math.max(insets.top + 76, 88),
+              paddingBottom: insets.bottom + 28,
+            },
+          ]}
+          keyboardShouldPersistTaps="handled"
+          nestedScrollEnabled
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefetching && !isLoading}
+              onRefresh={() => {
+                void handleRefresh();
+              }}
+              tintColor={colors.primary}
+            />
+          }
+          showsVerticalScrollIndicator={false}
+        />
+      </SwipeableBottomSheet>
+
+      <AppPopup
+        description={t('single_vendor_track_worker_around_corner_subtitle')}
+        onRequestClose={() => undefined}
+        primaryAction={{
+          label: t('single_vendor_track_worker_view'),
+          onPress: () => setIsAroundCornerDismissed(true),
+        }}
+        title={t('single_vendor_track_worker_around_corner_title')}
+        visible={showAroundCornerPopup}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  content: {
+    paddingHorizontal: 16,
+  },
+  headerOverlay: {
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    zIndex: 20,
+  },
+  loadingWrap: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  mapLayer: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  payActionWrap: {
+    marginHorizontal: 16,
+    marginTop: 14,
+  },
+  payNowButton: {
+    backgroundColor: '#FC9401',
+    borderColor: '#FC9401',
+    borderRadius: 6,
+    minHeight: 48,
+  },
+  payHintText: {
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: 'center',
+  },
+  payHintWrap: {
+    marginTop: 8,
+  },
+  screen: {
+    flex: 1,
+  },
+  sheetList: {
+    flex: 1,
+  },
+  sheet: {
+    elevation: 10,
+    shadowOffset: { height: -3, width: 0 },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+  },
+  sheetContent: {
+    paddingBottom: 18,
+  },
+});
+
+const SHEET_LIST_DATA = ['track-worker-content'];
+const keyExtractor = (item: string) => item;

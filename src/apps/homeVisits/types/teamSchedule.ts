@@ -1,0 +1,67 @@
+import type { HomeVisitsServiceDetailsSelectionState } from './serviceDetails';
+
+export type HomeVisitsBookingSummary = {
+  totalPrice: number;
+  serviceCount: number;
+  durationMinutes: number;
+  durationLabel: string | null;
+};
+
+export type HomeVisitsTeamScheduleMode = 'one-time' | 'contract';
+export type HomeVisitsWorkerType = 'individual' | 'team';
+export type HomeVisitsContractType = 'weekly' | 'monthly' | 'yearly';
+export type HomeVisitsBookingFlow = 'singleVendor' | 'multiVendor';
+
+export type HomeVisitsSelectedServiceSnapshot = {
+  id: string;
+  name: string;
+  price: number;
+  durationLabel?: string | null;
+  isLocked?: boolean;
+};
+
+export type HomeVisitsScheduledSlot = {
+  startTime: string;
+  endTime: string;
+};
+
+export type HomeVisitsTeamAndScheduleRouteParams = {
+  serviceId: string;
+  serviceCenterId: string;
+  bookingFlow?: HomeVisitsBookingFlow;
+  initialSelection: HomeVisitsServiceDetailsSelectionState;
+  selectedServiceIds: string[];
+  selectedServices: HomeVisitsSelectedServiceSnapshot[];
+  summary: HomeVisitsBookingSummary;
+};
+
+export type HomeVisitsReviewAndConfirmRouteParams =
+  HomeVisitsTeamAndScheduleRouteParams & {
+    teamSize: number;
+    workingHours: number;
+    workerType: HomeVisitsWorkerType;
+    jobDescription?: string;
+    contractDays?: number;
+    contractType?: HomeVisitsContractType;
+    selectedWeekdays?: number[];
+    repeatEnabled?: boolean;
+    contractEndDateUnix?: number;
+    repeatEndDateUnix?: number;
+    selectedDateUnix?: number;
+    selectedDateUnixList?: number[];
+    startTimeUnix?: number;
+    endTimeUnix?: number;
+    serviceMode: HomeVisitsTeamScheduleMode;
+    scheduledAtIso: string;
+    scheduledSlot: HomeVisitsScheduledSlot;
+  };
+
+export type HomeVisitsChooseDateAndTimeRouteParams =
+  HomeVisitsTeamAndScheduleRouteParams & {
+    teamSize: number;
+    workingHours: number;
+    workerType: HomeVisitsWorkerType;
+    jobDescription?: string;
+    serviceMode: HomeVisitsTeamScheduleMode;
+    contractType?: HomeVisitsContractType;
+  };

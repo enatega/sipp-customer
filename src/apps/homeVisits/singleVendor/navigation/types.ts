@@ -1,0 +1,73 @@
+import type { NavigatorScreenParams } from '@react-navigation/native';
+import type { AddressFlowParamList } from "../../../../general/navigation/addressFlowTypes";
+import type { HomeVisitsMultiVendorProvider } from '../../multiVendor/api/types';
+import type { HomeVisitsServiceDetailsSelectionState } from '../../types/serviceDetails';
+import type {
+  HomeVisitsChooseDateAndTimeRouteParams,
+  HomeVisitsReviewAndConfirmRouteParams,
+  HomeVisitsTeamAndScheduleRouteParams,
+} from '../../types/teamSchedule';
+
+export type SingleVendorBottomTabParamList = {
+  SingleVendorTabHome: undefined;
+  SingleVendorTabSearch: undefined;
+  SingleVendorTabOrders: undefined;
+  SingleVendorTabProfile: undefined;
+};
+
+export type SingleVendorStackParamList = {
+  SingleVendorTabs: NavigatorScreenParams<SingleVendorBottomTabParamList> | undefined;
+  SingleVendorDetails: undefined;
+  SingleVendorCategoriesSeeAll: undefined;
+  SingleVendorFavorites: undefined;
+  SingleVendorNotifications: undefined;
+  MultiVendorCenterDetails: {
+    provider: HomeVisitsMultiVendorProvider;
+  };
+  SeeAllScreen: {
+    scope?: 'single-vendor' | 'multi-vendor' | 'chain';
+    queryType:
+      | 'nearby-services'
+      | 'most-popular-services'
+      | 'deals-services'
+      | 'category-services';
+    title: string;
+    cardType?: 'service';
+    cardVariant?: 'default';
+    categoryId?: string;
+    latitude?: number;
+    longitude?: number;
+  };
+  SingleVendorBookingDetails: {
+    orderId: string;
+  };
+  SingleVendorContractDetails: {
+    contractId: string;
+  };
+  SingleVendorTrackWorker: {
+    orderId: string;
+    source?: 'booking_details' | 'home_active_service';
+  };
+  SingleVendorManageAppointment: {
+    orderId: string;
+  };
+  SingleVendorCancelAppointment: {
+    orderId: string;
+  };
+  ServiceDetails: {
+    serviceId: string;
+    bookingFlow?: 'singleVendor' | 'multiVendor';
+  };
+  ServiceDetailsBooking: {
+    serviceId: string;
+    serviceCenterId: string;
+    bookingFlow?: 'singleVendor' | 'multiVendor';
+    initialSelection: HomeVisitsServiceDetailsSelectionState;
+  };
+  TeamAndSchedule: HomeVisitsTeamAndScheduleRouteParams;
+  ChooseDateAndTime: HomeVisitsChooseDateAndTimeRouteParams;
+  ReviewAndConfirm: HomeVisitsReviewAndConfirmRouteParams;
+};
+
+export type HomeVisitsSingleVendorNavigationParamList =
+  SingleVendorStackParamList & AddressFlowParamList;
