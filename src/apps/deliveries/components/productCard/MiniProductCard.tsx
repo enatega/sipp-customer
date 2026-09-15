@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Image from '../../../../general/components/Image';
 import Text from '../../../../general/components/Text';
 import { useTheme } from '../../../../general/theme/theme';
@@ -7,6 +7,7 @@ import CartCountBadge from '../cart/CartCountBadge';
 import type { SearchProductItem } from '../../api/searchServiceTypes';
 import type { DeliveryShopTypeProduct } from '../../api/types';
 import type { ProductCardControlState } from './types';
+import PressableScale from '../../../../general/components/PressableScale';
 
 type Props = {
   onPress: () => void;
@@ -15,7 +16,7 @@ type Props = {
 };
 
 export default function MiniProductCard({ onPress, product, state }: Props) {
-  const { colors, typography } = useTheme();
+  const { colors, elevation, shape, spacing } = useTheme();
   const imageUri =
     product.productImage ??
     ('storeImage' in product ? product.storeImage ?? null : null) ??
@@ -23,18 +24,22 @@ export default function MiniProductCard({ onPress, product, state }: Props) {
     undefined;
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.8}
+    <PressableScale
+      accessibilityLabel={product.productName}
+      accessibilityRole="button"
       onPress={onPress}
       style={[
         styles.container,
         {
           backgroundColor: colors.surface,
-          shadowColor: colors.shadowColor,
+          borderRadius: shape.radius.surface,
+          gap: spacing.sm,
+          padding: spacing.sm,
+          ...elevation.raised,
         },
       ]}
     >
-      <View style={styles.imageContainer}>
+      <View style={[styles.imageContainer, { borderRadius: shape.radius.control }]}>
         <Image
           source={imageUri ? { uri: imageUri } : undefined}
           style={styles.image}
@@ -46,29 +51,20 @@ export default function MiniProductCard({ onPress, product, state }: Props) {
       </View>
 
       <Text
+        variant="caption"
         weight="semiBold"
-        style={{
-          color: colors.text,
-          fontSize: typography.size.xxs,
-          lineHeight: 12,
-        }}
+        color={colors.text}
         numberOfLines={2}
       >
         {product.productName}
       </Text>
-    </TouchableOpacity>
+    </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    width: 100,
-    borderRadius: 8,
-    padding: 8,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    width: 116,
     marginVertical: 6,
   },
   countBadge: {
@@ -81,10 +77,8 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   imageContainer: {
-    width: 84,
-    height: 84,
-    borderRadius: 6,
+    width: 100,
+    height: 100,
     overflow: 'hidden',
-    marginBottom: 6,
   },
 });

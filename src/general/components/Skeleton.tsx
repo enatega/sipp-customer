@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { ViewStyle, StyleSheet, Animated } from 'react-native';
 import { useTheme } from '../theme/theme';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 
 type Props = {
   width?: ViewStyle['width'];
@@ -10,26 +11,35 @@ type Props = {
   children?: React.ReactNode;
 };
 
-export default function Skeleton({ width, height, borderRadius = 8, style, children }: Props) {
-  const { colors } = useTheme();
+export default function Skeleton({ width, height, borderRadius, style, children }: Props) {
+  const { colors, motion, shape } = useTheme();
+  const isReducedMotionEnabled = useReducedMotion();
   const opacity = useRef(new Animated.Value(0.5)).current;
 
   useEffect(() => {
-    Animated.loop(
+    if (isReducedMotionEnabled) {
+      opacity.setValue(motion.opacity.subtle);
+      return;
+    }
+
+    const pulse = Animated.loop(
       Animated.sequence([
         Animated.timing(opacity, {
-          toValue: 1,
-          duration: 800,
+          toValue: 0.86,
+          duration: motion.duration.deliberate * 2,
           useNativeDriver: true,
         }),
         Animated.timing(opacity, {
           toValue: 0.5,
-          duration: 800,
+          duration: motion.duration.deliberate * 2,
           useNativeDriver: true,
         }),
       ])
-    ).start();
-  }, [opacity]);
+    );
+
+    pulse.start();
+    return () => pulse.stop();
+  }, [isReducedMotionEnabled, motion.duration.deliberate, motion.opacity.subtle, opacity]);
 
   return (
     <Animated.View
@@ -38,8 +48,8 @@ export default function Skeleton({ width, height, borderRadius = 8, style, child
         {
           width,
           height,
-          borderRadius,
-          backgroundColor: colors.border,
+          borderRadius: borderRadius ?? shape.radius.sm,
+          backgroundColor: colors.surfaceSunken,
           opacity,
         },
         style,

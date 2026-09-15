@@ -22,28 +22,38 @@ export default function ListStateView({
   containerStyle,
   variant,
 }: Props) {
-  const { colors } = useTheme();
+  const { colors, shape, spacing } = useTheme();
 
   return (
-    <View style={[styles.container, containerStyle]}>
+    <View style={[styles.container, { gap: spacing.md }, containerStyle]}>
       {variant === 'loading' ? (
         <ActivityIndicator size="large" color={colors.primary} />
       ) : (
-        <Ionicons
-          name={variant === 'error' ? 'alert-circle-outline' : 'search-outline'}
-          size={44}
-          color={variant === 'error' ? colors.danger : colors.primary}
-        />
+        <View
+          style={[
+            styles.iconWell,
+            {
+              backgroundColor: variant === 'error' ? colors.dangerSoft : colors.primarySoft,
+              borderRadius: shape.radius.surface,
+            },
+          ]}
+        >
+          <Ionicons
+            name={variant === 'error' ? 'alert-circle-outline' : 'search-outline'}
+            size={34}
+            color={variant === 'error' ? colors.danger : colors.primary}
+          />
+        </View>
       )}
 
       {title ? (
-        <Text variant="subtitle" weight="bold" style={styles.title}>
+        <Text variant="cardTitle" weight="bold" style={styles.title}>
           {title}
         </Text>
       ) : null}
 
       {description ? (
-        <Text color={colors.mutedText} style={styles.description}>
+        <Text color={colors.textSubtle} variant="supporting" style={styles.description}>
           {description}
         </Text>
       ) : null}
@@ -67,14 +77,19 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     flex: 1,
-    gap: 10,
     justifyContent: 'center',
     paddingHorizontal: 24,
     paddingVertical: 48,
   },
   description: {
-    maxWidth: 280,
+    maxWidth: 320,
     textAlign: 'center',
+  },
+  iconWell: {
+    alignItems: 'center',
+    height: 72,
+    justifyContent: 'center',
+    width: 72,
   },
   title: {
     textAlign: 'center',

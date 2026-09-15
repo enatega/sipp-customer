@@ -11,25 +11,10 @@ export type AppCurrency = {
   updatedAt: string;
 };
 
-export type GlobalEmergencyContact = {
-  id: string;
-  title: string;
-  contact_number: string;
-  is_active: boolean;
-  description: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
 type AppConfigStatus = {
   isLoading: boolean;
   isLoaded: boolean;
   error: string | null;
-};
-
-type RideSharingAppConfigState = AppConfigStatus & {
-  currency: AppCurrency | null;
-  emergencyContact: GlobalEmergencyContact | null;
 };
 
 export type DeliveryPlatformType =
@@ -64,16 +49,7 @@ type DeliveriesAppConfigState = AppConfigStatus & {
 };
 
 type AppConfigState = {
-  rideSharing: RideSharingAppConfigState;
   deliveries: DeliveriesAppConfigState;
-  setRideSharingCurrency: (currency: AppCurrency | null) => void;
-  setRideSharingEmergencyContact: (
-    emergencyContact: GlobalEmergencyContact | null,
-  ) => void;
-  setRideSharingConfigLoading: (isLoading: boolean) => void;
-  setRideSharingConfigError: (error: string | null) => void;
-  markRideSharingConfigLoaded: () => void;
-  resetRideSharingConfig: () => void;
   setDeliveriesPlatformConfiguration: (
     platformConfiguration: DeliveriesPlatformConfiguration | null,
   ) => void;
@@ -91,14 +67,6 @@ type AppConfigState = {
   resetDeliveriesConfig: () => void;
 };
 
-const initialRideSharingConfigState: RideSharingAppConfigState = {
-  currency: null,
-  emergencyContact: null,
-  isLoading: false,
-  isLoaded: false,
-  error: null,
-};
-
 const initialDeliveriesConfigState: DeliveriesAppConfigState = {
   platformConfiguration: null,
   appSettings: null,
@@ -111,55 +79,7 @@ const initialDeliveriesConfigState: DeliveriesAppConfigState = {
 };
 
 export const useAppConfigStore = create<AppConfigState>((set) => ({
-  rideSharing: initialRideSharingConfigState,
   deliveries: initialDeliveriesConfigState,
-
-  setRideSharingCurrency: (currency) =>
-    set((state) => ({
-      rideSharing: {
-        ...state.rideSharing,
-        currency,
-        error: null,
-      },
-    })),
-
-  setRideSharingEmergencyContact: (emergencyContact) =>
-    set((state) => ({
-      rideSharing: {
-        ...state.rideSharing,
-        emergencyContact,
-        error: null,
-      },
-    })),
-
-  setRideSharingConfigLoading: (isLoading) =>
-    set((state) => ({
-      rideSharing: {
-        ...state.rideSharing,
-        isLoading,
-      },
-    })),
-
-  setRideSharingConfigError: (error) =>
-    set((state) => ({
-      rideSharing: {
-        ...state.rideSharing,
-        error,
-      },
-    })),
-
-  markRideSharingConfigLoaded: () =>
-    set((state) => ({
-      rideSharing: {
-        ...state.rideSharing,
-        isLoaded: true,
-      },
-    })),
-
-  resetRideSharingConfig: () =>
-    set({
-      rideSharing: initialRideSharingConfigState,
-    }),
 
   setDeliveriesPlatformConfiguration: (platformConfiguration) =>
     set((state) => ({
@@ -242,24 +162,6 @@ function resolveCurrencyCodeValue(currency: AppCurrency | null) {
   return currency?.code || 'QAR';
 }
 
-export function useRideSharingCurrency() {
-  return useAppConfigStore((state) => state.rideSharing.currency);
-}
-
-export function useRideSharingEmergencyContact() {
-  return useAppConfigStore((state) => state.rideSharing.emergencyContact);
-}
-
-export function useRideSharingCurrencyLabel() {
-  const currency = useRideSharingCurrency();
-  return resolveCurrencyDisplayValue(currency);
-}
-
-export function useRideSharingCurrencyCode() {
-  const currency = useRideSharingCurrency();
-  return resolveCurrencyCodeValue(currency);
-}
-
 export function useDeliveriesOrderTrackingVariant() {
   return useAppConfigStore((state) => state.deliveries.orderTrackingVariant);
 }
@@ -267,14 +169,6 @@ export function useDeliveriesOrderTrackingVariant() {
 export function getDeliveriesOrderTrackingVariant(): OrderTrackingVariant {
   const variant = useAppConfigStore.getState().deliveries.orderTrackingVariant;
   return variant === 'legacy' || variant === 'modern' ? variant : 'legacy';
-}
-
-export function getRideSharingCurrencyLabel() {
-  return resolveCurrencyDisplayValue(useAppConfigStore.getState().rideSharing.currency);
-}
-
-export function getRideSharingCurrencyCode() {
-  return resolveCurrencyCodeValue(useAppConfigStore.getState().rideSharing.currency);
 }
 
 export function mapPlatformTypeToDeliveryMode(

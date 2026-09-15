@@ -11,6 +11,7 @@ import DeliveriesSectionEmptyState from '../../../components/home/DeliveriesSect
 import type { DeliveryShopTypeCategory } from '../../../api/categoriesServicesTypes';
 import { useTheme } from '../../../../../general/theme/theme';
 import { useTranslation } from 'react-i18next';
+import { useWindowClass } from '../../../../../general/hooks/useWindowClass';
 
 type Props = {
   categories: DeliveryShopTypeCategory[];
@@ -33,13 +34,14 @@ export default function MainSeeAllCategoriesSection({
   sectionTitle,
   actionLabel,
 }: Props) {
-  const { colors } = useTheme();
+  const { colors, shape, spacing } = useTheme();
+  const { gutter } = useWindowClass();
   const { t } = useTranslation('deliveries');
   const isEmpty = !isPending && !isError && categories.length === 0;
   const shouldShowSeeAll = !isPending && !isError && categories.length > 0;
 
   return (
-    <View style={styles.section}>
+    <View style={[styles.section, { gap: spacing.md, paddingHorizontal: gutter }]}> 
       <SectionActionHeader
         title={sectionTitle}
         actionLabel={shouldShowSeeAll ? actionLabel : undefined}
@@ -63,8 +65,8 @@ export default function MainSeeAllCategoriesSection({
         <HorizontalList
           data={categories}
           keyExtractor={(item) => item.id}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
-          contentContainerStyle={styles.listContent}
+          ItemSeparatorComponent={() => <View style={{ width: spacing.md }} />}
+          contentContainerStyle={{ paddingRight: gutter }}
           renderItem={({ item }) => {
             const isSelected = selectedCategoryId === item.id;
             return (
@@ -72,21 +74,20 @@ export default function MainSeeAllCategoriesSection({
                   imageUrl={item.imageUrl}
                   title={item.name}
                   onPress={() => onSelectCategory(item.id)}
-                  containerStyle={styles.categoryCardContainer}
                   imageWrapStyle={
                     isSelected
                       ? [
                           styles.imageWrapBase,
                           styles.selectedImageWrap,
-                          { backgroundColor: colors.primary },
+                          {
+                            backgroundColor: colors.primarySoft,
+                            borderColor: colors.primary,
+                            borderRadius: shape.radius.surface,
+                          },
                         ]
-                      : styles.imageWrapBase
+                      : [styles.imageWrapBase, { borderRadius: shape.radius.surface }]
                   }
-                  imageStyle={
-                    isSelected
-                      ? [styles.categoryImage, styles.selectedCategoryImage]
-                      : styles.categoryImage
-                  }
+                  imageStyle={[styles.categoryImage, { borderRadius: shape.radius.control }]}
                   titleStyle={isSelected ? { ...styles.selectedTitle, color: colors.primary } : undefined}
                 />
               );
@@ -98,41 +99,19 @@ export default function MainSeeAllCategoriesSection({
 }
 
 const styles = StyleSheet.create({
-  listContent: {
-    paddingLeft: 2,
-    paddingRight: 16,
-  },
-  categoryCardContainer: {
-    width: 64,
-  },
   categoryImage: {
-    borderRadius: 28,
-    height: 56,
-    width: 56,
+    height: 60,
+    width: 60,
   },
   imageWrapBase: {
-    borderRadius: 8,
-    height: 56,
-    padding: 0,
-    shadowOpacity: 0,
-    shadowRadius: 0,
-    width: 56,
+    height: 80,
+    width: 80,
   },
-  section: {
-    gap: 12,
-    paddingHorizontal: 16,
-  },
+  section: {},
   selectedImageWrap: {
     alignItems: 'center',
+    borderWidth: 2,
     justifyContent: 'center',
   },
-  selectedCategoryImage: {
-    borderRadius: 20,
-    height: 40,
-    width: 40,
-  },
   selectedTitle: {},
-  separator: {
-    width: 12,
-  },
 });

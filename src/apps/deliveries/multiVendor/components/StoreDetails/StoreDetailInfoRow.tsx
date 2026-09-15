@@ -1,149 +1,153 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useTranslation } from 'react-i18next';
-import { useTheme } from '../../../../../general/theme/theme';
-import Text from '../../../../../general/components/Text';
 import Icon from '../../../../../general/components/Icon';
+import Text from '../../../../../general/components/Text';
+import { useTheme } from '../../../../../general/theme/theme';
 
 type Props = {
-  rating?: number | null;
-  reviewCount?: number | null;
-  hours?: string | null;
   deliveryFee?: string | null;
+  deliveryTime?: string | null;
   distance?: string | null;
-  phone?: string | null;
-  email?: string | null;
+  minimumOrder?: string | null;
+};
+
+type Metric = {
+  icon: string;
+  key: string;
+  label: string;
+  supportingLabel?: string;
 };
 
 export default function StoreDetailInfoRow({
-  rating,
-  reviewCount,
-  hours,
   deliveryFee,
+  deliveryTime,
   distance,
-  phone,
-  email,
+  minimumOrder,
 }: Props) {
-  const { colors, typography } = useTheme();
-  const { t } = useTranslation('deliveries');
-  const hasRating = typeof rating === 'number' && Number.isFinite(rating) && rating > 0;
-  const hasReviewCount =
-    typeof reviewCount === 'number' && Number.isFinite(reviewCount) && reviewCount > 0;
-  const hasHours = Boolean(hours?.trim());
-  const hasDeliveryFee = Boolean(deliveryFee?.trim());
-  const hasDistance = Boolean(distance?.trim());
-  const hasContact = Boolean(phone || email);
+  const { colors, shape, spacing } = useTheme();
+  const resolvedDeliveryFee = deliveryFee?.trim();
+  const resolvedDeliveryTime = deliveryTime?.trim();
+  const metrics: Metric[] = [
+    resolvedDeliveryFee || resolvedDeliveryTime
+      ? {
+          icon: 'bicycle-outline',
+          key: 'delivery',
+          label: resolvedDeliveryFee || resolvedDeliveryTime || '',
+          supportingLabel:
+            resolvedDeliveryFee && resolvedDeliveryTime
+              ? resolvedDeliveryTime
+              : undefined,
+        }
+      : null,
+    distance?.trim()
+      ? {
+          icon: 'location-outline',
+          key: 'distance',
+          label: distance.trim(),
+        }
+      : null,
+    minimumOrder?.trim()
+      ? {
+          icon: 'bag-handle-outline',
+          key: 'minimum-order',
+          label: minimumOrder.trim(),
+        }
+      : null,
+  ].filter((item): item is Metric => item != null);
+
+  if (metrics.length === 0) {
+    return null;
+  }
 
   return (
-    <View style={styles.wrapper}>
-      <View style={styles.metaRow}>
-        {hasRating ? (
-          <View style={styles.metaItem}>
-            <Icon color={colors.yellow500} name="star" size={14} type="Ionicons" />
-            <Text style={[styles.metaValue, { color: colors.text }]} weight="semiBold">
-              {rating.toFixed(1)}
-            </Text>
-            {hasReviewCount ? (
-              <Text style={[styles.metaText, { color: colors.mutedText }]}>({reviewCount})</Text>
+    <View
+      style={[
+        styles.band,
+        {
+          backgroundColor: colors.surfaceElevated,
+          borderColor: colors.border,
+          borderRadius: shape.radius.control,
+          borderWidth: shape.borderWidth.hairline,
+        },
+      ]}
+    >
+      <View style={styles.metrics}>
+        {metrics.map((metric, index) => (
+          <React.Fragment key={metric.key}>
+            {index > 0 ? (
+              <View style={[styles.separator, { backgroundColor: colors.border }]} />
             ) : null}
-          </View>
-        ) : null}
-
-        {hasRating && hasHours ? <View style={[styles.dot, { backgroundColor: colors.border }]} /> : null}
-
-        {hasHours ? <Text style={[styles.metaText, { color: colors.mutedText }]}>{hours}</Text> : null}
-
-        {hasHours && hasDeliveryFee ? (
-          <View style={[styles.dot, { backgroundColor: colors.border }]} />
-        ) : null}
-
-        {hasDeliveryFee ? (
-          <View style={styles.metaItem}>
-            <Icon color={colors.mutedText} name="bicycle-outline" size={14} type="Ionicons" />
-            <Text style={[styles.metaText, { color: colors.mutedText }]}>{deliveryFee}</Text>
-          </View>
-        ) : null}
-
-        {hasDeliveryFee && hasDistance ? (
-          <View style={[styles.dot, { backgroundColor: colors.border }]} />
-        ) : null}
-
-        {hasDistance ? (
-          <View style={styles.metaItem}>
-            <Icon color={colors.mutedText} name="location-outline" size={14} type="Ionicons" />
-            <Text style={[styles.metaText, { color: colors.mutedText }]}>{distance}</Text>
-          </View>
-        ) : null}
-      </View>
-
-      {hasContact ? (
-        <Text
-          style={[
-            styles.contactLine,
-            { color: colors.mutedText, fontSize: typography.size.xs2, lineHeight: 18 },
-          ]}
-        >
-          {phone ? (
-            <>
-              {t('store_details_call_label')}{' '}
-              <Text style={[styles.contactHighlight, { color: colors.text }]} weight="medium">
-                {phone}
-              </Text>
-            </>
-          ) : null}
-          {phone && email ? ` ${t('store_details_email_label')} ` : null}
-          {email ? (
-            <Text
-              style={[styles.contactHighlight, styles.contactLink, { color: colors.text }]}
-              weight="medium"
+            <View
+              style={[
+                styles.metric,
+                {
+                  gap: spacing.xs,
+                  paddingHorizontal: spacing.sm,
+                  paddingVertical: spacing.md,
+                },
+              ]}
             >
-              {email}
-            </Text>
-          ) : null}
-        </Text>
-      ) : null}
+              <Icon
+                color={colors.textSubtle}
+                name={metric.icon}
+                size={18}
+                type="Ionicons"
+              />
+              <View style={styles.metricCopy}>
+                <Text
+                  color={colors.textSubtle}
+                  ellipsizeMode="tail"
+                  numberOfLines={1}
+                  variant="caption"
+                  weight="semiBold"
+                >
+                  {metric.label}
+                </Text>
+                {metric.supportingLabel ? (
+                  <Text
+                    color={colors.textSubtle}
+                    ellipsizeMode="tail"
+                    numberOfLines={1}
+                    variant="caption"
+                  >
+                    {metric.supportingLabel}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+          </React.Fragment>
+        ))}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    gap: 8,
+  band: {
+    overflow: 'hidden',
   },
-  metaRow: {
+  metric: {
     alignItems: 'center',
+    flexBasis: 0,
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    justifyContent: 'center',
-    paddingHorizontal: 8,
+    flexGrow: 1,
+    minWidth: 0,
   },
-  metaItem: {
-    alignItems: 'center',
+  metricCopy: {
+    flex: 1,
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  metrics: {
+    alignItems: 'stretch',
     flexDirection: 'row',
-    gap: 4,
+    flexGrow: 1,
+    width: '100%',
   },
-  metaValue: {
-    fontSize: 12,
-    lineHeight: 18,
-  },
-  metaText: {
-    fontSize: 12,
-    lineHeight: 18,
-  },
-  dot: {
-    borderRadius: 2,
-    height: 4,
-    width: 4,
-  },
-  contactLine: {
-    textAlign: 'center',
-  },
-  contactHighlight: {
-    fontSize: 12,
-    lineHeight: 18,
-  },
-  contactLink: {
-    textDecorationLine: 'underline',
+  separator: {
+    alignSelf: 'stretch',
+    marginVertical: 12,
+    opacity: 0.72,
+    width: StyleSheet.hairlineWidth,
   },
 });

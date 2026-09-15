@@ -1,7 +1,8 @@
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet } from 'react-native';
-import { useTheme } from '../../../../../general/theme/theme';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import PressableScale from '../../../../../general/components/PressableScale';
 import Text from '../../../../../general/components/Text';
+import { useTheme } from '../../../../../general/theme/theme';
 import type { DeliveryStoreDetailsFilterItem } from '../../../api/types';
 
 type Props = {
@@ -15,11 +16,11 @@ export default function StoreDetailSubcategory({
   onSelect,
   subcategories,
 }: Props) {
-  const { colors } = useTheme();
+  const { colors, layout, shape, spacing } = useTheme();
 
   return (
     <ScrollView
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[styles.content, { gap: spacing.sm }]}
       horizontal
       showsHorizontalScrollIndicator={false}
     >
@@ -27,26 +28,38 @@ export default function StoreDetailSubcategory({
         const isActive = subcategory.id === activeSubcategoryId;
 
         return (
-          <Pressable
+          <PressableScale
+            accessibilityRole="tab"
+            accessibilityState={{ selected: isActive }}
             key={subcategory.id}
             onPress={() => onSelect(subcategory.id)}
             style={[
               styles.chip,
               {
-                backgroundColor: isActive ? colors.blue100 : colors.surface,
+                borderRadius: shape.radius.pill,
+                minHeight: layout.touchTarget.minimum,
               },
             ]}
           >
-            <Text
+            <View
               style={[
-                styles.label,
-                { color: isActive ? colors.text : colors.mutedText },
+                styles.chipSurface,
+                {
+                  backgroundColor: isActive ? colors.primarySoft : 'transparent',
+                  borderRadius: shape.radius.pill,
+                  paddingHorizontal: spacing.md,
+                },
               ]}
-              weight="medium"
             >
-              {subcategory.name}
-            </Text>
-          </Pressable>
+              <Text
+                color={isActive ? colors.primary : colors.textSubtle}
+                variant="label"
+                weight={isActive ? 'bold' : 'medium'}
+              >
+                {subcategory.name}
+              </Text>
+            </View>
+          </PressableScale>
         );
       })}
     </ScrollView>
@@ -54,17 +67,16 @@ export default function StoreDetailSubcategory({
 }
 
 const styles = StyleSheet.create({
-  content: {
-    gap: 8,
-    paddingVertical: 8,
-  },
   chip: {
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  label: {
-    fontSize: 14,
-    lineHeight: 22,
+  chipSurface: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 34,
+  },
+  content: {
+    alignItems: 'center',
   },
 });

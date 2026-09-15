@@ -15,7 +15,7 @@ import {
 // import HomeTravelBannerSection from './home/HomeTravelBannerSection';
 import OurServicesSection from './home/OurServicesSection';
 import type { SelectMiniAppFn } from '../apps/registry/homeSections/types';
-import { HOME_WIDGETS, type RideIntent } from '../apps/registry/generated/appRegistry';
+import { HOME_WIDGETS } from '../apps/registry/generated/appRegistry';
 
 type Props = {
   onSelectMiniApp?: SelectMiniAppFn;
@@ -105,38 +105,6 @@ export default function HomeScreen({ onSelectMiniApp }: Props) {
     }
   }
 
-  function handleSelectRideOption(rideIntent: RideIntent) {
-    onSelectMiniApp?.('rideSharing', {
-      screen: 'RideSharingHome',
-      params: {
-        rideType: rideIntent,
-      },
-    });
-  }
-
-  function handleSelectDeliveryService(shopTypeId: string) {
-    if (shopTypeId === 'food-delivery') {
-      onSelectMiniApp?.('deliveries');
-      return;
-    }
-
-    onSelectMiniApp?.('deliveries', {
-      screen: 'MultiVendor',
-      params: {
-        screen: 'MainSeeAllScreen',
-        params: {
-          initialShopTypeId: shopTypeId,
-        },
-      },
-    });
-  }
-
-  function handleSelectTravelBanner() {
-    handleSelectRideOption('now');
-  }
-
-  const RideOptionsSection = HOME_WIDGETS.rideOptions;
-  const DeliveryServicesSection = HOME_WIDGETS.deliveryServices;
   const RecommendedStoresSection = HOME_WIDGETS.recommendedStores;
 
   return (
@@ -144,18 +112,9 @@ export default function HomeScreen({ onSelectMiniApp }: Props) {
       <HomeHeader backgroundVariant="solid" />
       <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          {/* Hidden for deliveries-only customer UI.
-          {RideOptionsSection ? (
-            <RideOptionsSection onSelectRideOption={handleSelectRideOption} />
-          ) : null}
-          {DeliveryServicesSection ? (
-            <DeliveryServicesSection onSelectService={handleSelectDeliveryService} />
-          ) : null}
-          */}
           {RecommendedStoresSection ? (
             <RecommendedStoresSection onSelectMiniApp={onSelectMiniApp} />
           ) : null}
-          {/* <HomeTravelBannerSection onPress={handleSelectTravelBanner} /> */}
           <OurServicesSection onSelectMiniApp={onSelectMiniApp} />
         </ScrollView>
       </SafeAreaView>

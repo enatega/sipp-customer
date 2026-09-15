@@ -1,5 +1,5 @@
 import type { RefObject, ReactNode } from "react";
-import type { TextInput, TextInputProps } from "react-native";
+import type { StyleProp, TextInput, TextInputProps, ViewStyle } from "react-native";
 import type { ProfileAddress } from "../../api/profileService";
 
 // Generic types for search recommendations and recent searches
@@ -20,6 +20,7 @@ export type GenericRecentSearchItem = {
 // Generic address sheet configuration - flexible to work with different apps
 export type GenericSearchAddressSheetConfig = {
   addresses: ProfileAddress[];
+  bottomOffset?: number;
   isLoading?: boolean;
   isVisible: boolean;
   onAddAddress: () => void;
@@ -86,8 +87,10 @@ export type SearchInputProps = {
   onBlur?: TextInputProps["onBlur"];
   onSubmitEditing?: TextInputProps["onSubmitEditing"];
   autoFocus?: boolean;
+  density?: 'compact' | 'regular';
   editable?: boolean;
-  style?: TextInputProps['style'];
+  surfaceElevation?: 'flat' | 'subtle' | 'raised';
+  style?: StyleProp<ViewStyle>;
 };
 
 export type SearchFilters = {
@@ -104,4 +107,22 @@ export type RecentSearchesProps = {
   deletingRecentSearchId: string | null;
   isDeletingRecentSearch: boolean;
   isClearingRecentSearches: boolean;
+};
+
+export type RecentSearchProps = {
+  search: string;
+  onDeletePress: () => void;
+  onItemPress: () => void;
+  isDeleting?: boolean;
+  isDeleteDisabled?: boolean;
+};
+
+export type SearchChipProps = {
+  label: string;
+  onPress: (label: string) => void;
+};
+
+export type SearchSuggestionsProps = {
+  recommendations: GenericSearchRecommendation[];
+  onSuggestionPress: (term: string) => void;
 };

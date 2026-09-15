@@ -10,6 +10,7 @@ import {
 import { useTheme } from '../theme/theme';
 import Text from './Text';
 import Button from './Button';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 
 type PopupAction = {
   label: string;
@@ -45,7 +46,8 @@ export default function AppPopup({
   dismissOnOverlayPress = false,
   containerStyle,
 }: Props) {
-  const { colors } = useTheme();
+  const { colors, elevation, shape, spacing } = useTheme();
+  const isReducedMotionEnabled = useReducedMotion();
   const showsPrimaryAction = showPrimaryAction;
   const showsActions = showsPrimaryAction || Boolean(secondaryAction);
 
@@ -59,36 +61,55 @@ export default function AppPopup({
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
+      animationType={isReducedMotionEnabled ? 'none' : 'fade'}
       statusBarTranslucent
       onRequestClose={onRequestClose}
     >
-      <Pressable style={styles.overlay} onPress={handleOverlayPress}>
-        <Pressable style={styles.cardContainer}>
+      <Pressable
+        accessibilityViewIsModal
+        style={[
+          styles.overlay,
+          {
+            backgroundColor: colors.scrim,
+            paddingHorizontal: spacing.lg,
+            paddingVertical: spacing.xxl,
+          },
+        ]}
+        onPress={handleOverlayPress}
+      >
+        <Pressable onPress={() => undefined} style={styles.cardContainer}>
           <View
             style={[
               styles.card,
+              elevation.overlay,
               {
-                backgroundColor: colors.surface,
-                shadowColor: '#101828',
+                backgroundColor: colors.surfaceElevated,
+                borderRadius: shape.radius.sheet,
+                paddingBottom: spacing.lg,
+                paddingHorizontal: spacing.lg,
+                paddingTop: spacing.xxl,
               },
               containerStyle,
             ]}
           >
-            {illustration ? <View style={styles.illustration}>{illustration}</View> : null}
+            {illustration ? (
+              <View style={[styles.illustration, { marginBottom: spacing.xl }]}>
+                {illustration}
+              </View>
+            ) : null}
 
-            <View style={styles.content}>
-              <View style={styles.copy}>
-                <Text variant="subtitle" weight="bold" style={styles.title}>
+            <View style={[styles.content, { gap: spacing.lg }]}>
+              <View style={[styles.copy, { gap: spacing.sm }]}>
+                <Text variant="sectionTitle" weight="semiBold" accessibilityRole="header" style={styles.title}>
                   {title}
                 </Text>
-                <Text style={[styles.description, { color: colors.text }]}>
+                <Text variant="supporting" style={[styles.description, { color: colors.textSubtle }]}>
                   {description}
                 </Text>
               </View>
 
               {showsActions ? (
-                <View style={styles.actions}>
+                <View style={[styles.actions, { gap: spacing.sm }]}>
                   {showsPrimaryAction ? (
                     <Button
                       label={primaryAction.label}
@@ -96,6 +117,7 @@ export default function AppPopup({
                       variant={primaryAction.variant}
                       isLoading={primaryAction.isLoading}
                       disabled={primaryAction.disabled}
+                      fullWidth
                       style={[styles.button, primaryAction.style]}
                     />
                   ) : null}
@@ -107,6 +129,7 @@ export default function AppPopup({
                       variant={secondaryAction.variant}
                       isLoading={secondaryAction.isLoading}
                       disabled={secondaryAction.disabled}
+                      fullWidth
                       style={[styles.button, secondaryAction.style]}
                     />
                   ) : null}
@@ -123,11 +146,8 @@ export default function AppPopup({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(17, 24, 39, 0.34)',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 24,
   },
   cardContainer: {
     width: '100%',
@@ -135,28 +155,13 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '94%',
-    maxWidth: 360,
-    borderRadius: 24,
-    paddingHorizontal: 16,
-    paddingTop: 24,
-    paddingBottom: 16,
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 3,
+    maxWidth: 400,
   },
   illustration: {
     alignItems: 'center',
-    marginBottom: 24,
   },
-  content: {
-    gap: 12,
-  },
+  content: {},
   copy: {
-    gap: 12,
     alignItems: 'center',
   },
   title: {
@@ -165,13 +170,8 @@ const styles = StyleSheet.create({
   description: {
     textAlign: 'center',
   },
-  actions: {
-    gap: 16,
-  },
+  actions: {},
   button: {
     width: '100%',
-    borderRadius: 6,
-    paddingVertical: 10,
-    minHeight: 44,
   },
 });

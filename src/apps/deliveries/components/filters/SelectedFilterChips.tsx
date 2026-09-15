@@ -4,6 +4,7 @@ import Icon from "../../../../general/components/Icon";
 import Text from "../../../../general/components/Text";
 import { useTheme } from "../../../../general/theme/theme";
 import type { GenericFilterChip } from "./types";
+import PressableScale from "../../../../general/components/PressableScale";
 
 type Props = {
   chips: GenericFilterChip[];
@@ -18,51 +19,55 @@ export default function SelectedFilterChips({
   clearAllLabel,
   onClearAll,
 }: Props) {
-  const { colors, typography } = useTheme();
+  const { colors, shape, spacing } = useTheme();
 
   if (chips.length === 0) {
     return null;
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: spacing.sm }]}>
       <FlatList
         data={chips}
         horizontal
         keyExtractor={(chip) => chip.id}
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.chipsContent}
+        contentContainerStyle={[styles.chipsContent, { gap: spacing.sm, paddingRight: spacing.md }]}
         renderItem={({ item: chip }) => (
-          <Pressable
+          <PressableScale
+            accessibilityLabel={chip.label}
             accessibilityRole="button"
             onPress={() => onRemoveChip(chip)}
-            style={({ pressed }) => [
+            pressedScale={0.97}
+            style={[
               styles.chip,
               {
-                backgroundColor: colors.blue50,
-                opacity: pressed ? 0.85 : 1,
+                backgroundColor: colors.primarySoft,
+                borderRadius: shape.radius.pill,
+                gap: spacing.xs,
+                paddingHorizontal: spacing.md,
               },
             ]}
           >
             <Text
-              weight="medium"
-              style={{
-                fontSize: typography.size.sm,
-                lineHeight: typography.lineHeight.sm,
-              }}
+              color={colors.primary}
+              variant="caption"
+              weight="semiBold"
             >
               {chip.label}
             </Text>
             <View
-              style={{
-                backgroundColor: colors.background,
-                borderRadius: 200,
-                padding: 2,
-              }}
+              style={[
+                styles.removeIcon,
+                {
+                  backgroundColor: colors.surface,
+                  borderRadius: shape.radius.pill,
+                },
+              ]}
             >
-              <Icon type="Entypo" name="cross" size={16} color={colors.text} />
+              <Icon type="Entypo" name="cross" size={14} color={colors.primary} />
             </View>
-          </Pressable>
+          </PressableScale>
         )}
       />
 
@@ -77,12 +82,9 @@ export default function SelectedFilterChips({
         ]}
       >
         <Text
-          weight="medium"
           color={colors.primary}
-          style={{
-            fontSize: typography.size.sm2,
-            lineHeight: typography.lineHeight.sm2,
-          }}
+          variant="label"
+          weight="semiBold"
         >
           {clearAllLabel}
         </Text>
@@ -94,16 +96,10 @@ export default function SelectedFilterChips({
 const styles = StyleSheet.create({
   chip: {
     alignItems: "center",
-    borderRadius: 999,
     flexDirection: "row",
-    gap: 6,
-    minHeight: 32,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
+    minHeight: 40,
   },
   chipsContent: {
-    gap: 8,
-    paddingRight: 12,
   },
   clearButton: {
     justifyContent: "center",
@@ -112,5 +108,11 @@ const styles = StyleSheet.create({
   container: {
     alignItems: "center",
     flexDirection: "row",
+  },
+  removeIcon: {
+    alignItems: "center",
+    height: 22,
+    justifyContent: "center",
+    width: 22,
   },
 });

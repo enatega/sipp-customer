@@ -18,7 +18,7 @@ export default function CategoriesSeeAll() {
   const { shopTypeId, title } = route.params;
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.background }]}> 
+    <View style={[styles.screen, { backgroundColor: colors.canvas }]}> 
       <ScreenHeader showBack={navigation.canGoBack()} />
       <CategoriesSeeAllContainer shopTypeId={shopTypeId} title={title} />
     </View>

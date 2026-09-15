@@ -9,8 +9,9 @@ export default function DeliveriesSeeAllHeader(props: Props) {
   return (
     <SeeAllHeader
       {...props}
-      renderSearchInput={({ value, onChangeText, placeholder }) => (
+      renderSearchInput={({ value, onChangeText, placeholder, editable }) => (
         <SearchInput
+          editable={editable}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}

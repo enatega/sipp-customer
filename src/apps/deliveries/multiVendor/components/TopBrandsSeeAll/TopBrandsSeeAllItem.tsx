@@ -1,8 +1,9 @@
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useTheme } from '../../../../../general/theme/theme';
 import type { DeliveryTopBrand } from '../../../api/types';
 import TopBrandCard from '../../../components/storeCard/TopBrandCard';
+import PressableScale from '../../../../../general/components/PressableScale';
 
 type Props = {
   brand: DeliveryTopBrand;
@@ -15,15 +16,16 @@ export default function TopBrandsSeeAllItem({
   onPress,
   isDisabled = false,
 }: Props) {
-  const { typography } = useTheme();
+  const { shape, typography } = useTheme();
 
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole="button"
       accessibilityLabel={brand.name}
       disabled={isDisabled}
       onPress={() => onPress(brand)}
-      style={styles.item}
+      pressedScale={0.98}
+      style={[styles.item, { borderRadius: shape.radius.surface }]}
     >
       <TopBrandCard
         brand={brand}
@@ -40,7 +42,7 @@ export default function TopBrandsSeeAllItem({
           lineHeight: typography.lineHeight.sm2,
         }}
       />
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -65,6 +67,6 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   item: {
-    width: '48%',
+    flex: 1,
   },
 });

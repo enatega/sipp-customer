@@ -9,15 +9,25 @@ type Props = {
 };
 
 export default function CartCountBadge({ count, style }: Props) {
-  const { colors } = useTheme();
+  const { colors, shape, spacing } = useTheme();
 
   if (count <= 0) {
     return null;
   }
 
   return (
-    <View style={[styles.badge, { backgroundColor: colors.primary }, style]}>
-      <Text color={colors.onPrimary} style={styles.label} weight="semiBold">
+    <View
+      style={[
+        styles.badge,
+        {
+          backgroundColor: colors.primary,
+          borderRadius: shape.radius.pill,
+          paddingHorizontal: spacing.sm,
+        },
+        style,
+      ]}
+    >
+      <Text color={colors.onPrimary} variant="badge" style={styles.label} weight="bold">
         {count}
       </Text>
     </View>
@@ -27,15 +37,11 @@ export default function CartCountBadge({ count, style }: Props) {
 const styles = StyleSheet.create({
   badge: {
     alignItems: 'center',
-    borderRadius: 999,
     justifyContent: 'center',
     minWidth: 22,
-    paddingHorizontal: 6,
     paddingVertical: 2,
   },
   label: {
-    fontSize: 11,
     fontVariant: ['tabular-nums'],
-    lineHeight: 14,
   },
 });

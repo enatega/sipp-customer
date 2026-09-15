@@ -2,13 +2,10 @@ import React from 'react';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../../../general/theme/theme';
 import DeliveriesTabBar, {
   DELIVERIES_TAB_BAR_HEIGHT,
-  DELIVERIES_TAB_BAR_SAFE_PADDING,
 } from '../../components/navigation/DeliveriesTabBar';
-import SingleVendorTabButton from '../components/navigation/SingleVendorTabButton';
 import HomeScreen from '../screens/HomeScreen/HomeScreen';
 import SearchScreen from '../screens/SearchScreen/SearchScreen';
 import SingleVendorProfileTabScreen from '../../screens/ProfileTab/SingleVendorProfileTabScreen';
@@ -23,39 +20,23 @@ type TabIconProps = {
 };
 
 export default function SinglevendorBottomTabNavigator() {
-  const { colors, typography } = useTheme();
+  const { colors } = useTheme();
   const { t } = useTranslation('deliveries');
-  const insets = useSafeAreaInsets();
-  const safeBottom = Math.max(insets.bottom, DELIVERIES_TAB_BAR_SAFE_PADDING);
 
   return (
     <Tab.Navigator
       sceneContainerStyle={{
-        backgroundColor: colors.background,
+        backgroundColor: colors.canvas,
       }}
       tabBar={(props) => <DeliveriesTabBar {...props} />}
       screenOptions={{
         freezeOnBlur: true,
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
-        tabBarButton: (props) => <SingleVendorTabButton {...props} />,
         tabBarHideOnKeyboard: true,
-        tabBarIconStyle: {
-          marginTop: 2,
-        },
         tabBarInactiveTintColor: colors.iconMuted,
-        tabBarLabelStyle: {
-          fontFamily: typography.fontFamily.semiBold,
-          fontSize: typography.size.xs2,
-          fontWeight: '600',
-          lineHeight: typography.lineHeight.sm,
-          marginBottom: 8,
-        },
         tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.border,
-          height: DELIVERIES_TAB_BAR_HEIGHT + safeBottom,
-          paddingBottom: safeBottom,
+          height: DELIVERIES_TAB_BAR_HEIGHT,
         },
       }}
     >

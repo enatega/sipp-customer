@@ -2,24 +2,32 @@ import type { DeliveriesAppSettings } from '../stores/useAppConfigStore';
 
 export type ThemedMiniAppId =
   | "general"
-  | "deliveries"
-  | "rideSharing"
-  | "homeVisits"
-  | "appointments"
-  | "developerMode";
+  | "deliveries";
 
 const baseLightColors = {
+  canvas: "#F7F8FA",
   background: "#FFFFFF",
   backgroundTertiary: "#F4F4F5",
   surface: "#FFFFFF",
+  surfaceElevated: "#FFFFFF",
+  surfaceSunken: "#F2F4F7",
+  glassSurface: "rgba(255, 255, 255, 0.34)",
+  glassBorder: "rgba(255, 255, 255, 0.82)",
+  glassHighlight: "rgba(255, 255, 255, 0.56)",
   primary: "#2346E8",
   primaryDark: "#1C2FA6",
+  primarySoft: "#E9EDFF",
+  primaryPressed: "#1837C8",
   onPrimary: "#FFFFFF",
+  onSurface: "#111827",
   onLight: "#111827",
   secondary: "#6B5BFF",
   text: "#111827",
+  textStrong: "#0B1220",
+  textSubtle: "#667085",
   mutedText: "#6B7280",
   border: "#E4E4E7",
+  divider: "#ECEEF2",
   success: "#10B981",
   successSoft: "#F0FDF4",
   successText: "#047857",
@@ -50,6 +58,10 @@ const baseLightColors = {
   iconMuted: "#71717A",
   iconDisabled: "#A1A1AA",
   overlayDark20: "rgba(0, 0, 0, 0.2)",
+  scrim: "rgba(11, 18, 32, 0.44)",
+  mediaScrimStart: "rgba(11, 18, 32, 0.04)",
+  mediaScrimEnd: "rgba(11, 18, 32, 0.82)",
+  statePressed: "rgba(35, 70, 232, 0.10)",
   shadowColor: "#000000",
   white: "#FFFFFF",
   iconColor: "#27272A",
@@ -173,6 +185,8 @@ function buildDeliveriesDynamicOverrides(
     return {
       primary: lightPrimary,
       primaryDark: resolvedSecondary,
+      primarySoft: darkWarmAccent,
+      primaryPressed: lighten(lightPrimary, 0.12),
       onPrimary: isLightHex(lightPrimary) ? baseLightColors.onLight : baseLightColors.white,
       secondary: resolvedSecondary,
       blue50: darkSurfaceSoft,
@@ -196,12 +210,16 @@ function buildDeliveriesDynamicOverrides(
       findingRidePulseB: mixColors(resolvedSecondary, darkSurface, 0.3),
       findingRidePulseC: resolvedSecondary,
       findingRideCenterHalo: withAlpha(resolvedSecondary, 0.22),
+      statePressed: withAlpha(lightPrimary, 0.18),
     };
   }
 
   return {
     primary: darkAccent,
     primaryDark: darken(resolvedPrimary, 0.08),
+    primarySoft: lighten(resolvedPrimary, 0.88),
+    primaryPressed: darken(resolvedPrimary, 0.14),
+    onPrimary: isLightHex(darkAccent) ? baseLightColors.onLight : baseLightColors.white,
     secondary: resolvedSecondary,
     blue50: warmSurfaceSoft,
     blue100: warmSurfaceStrong,
@@ -224,21 +242,34 @@ function buildDeliveriesDynamicOverrides(
     findingRidePulseB: lighten(resolvedSecondary, 0.34),
     findingRidePulseC: resolvedSecondary,
     findingRideCenterHalo: withAlpha(resolvedSecondary, 0.34),
+    statePressed: withAlpha(resolvedPrimary, 0.12),
   };
 }
 
 const baseDarkColors: ThemeColors = {
+  canvas: "#0B0E14",
   background: "#0F1117",
   backgroundTertiary: "#161A23",
   surface: "#161A23",
+  surfaceElevated: "#1D222D",
+  surfaceSunken: "#10141C",
+  glassSurface: "rgba(29, 34, 45, 0.46)",
+  glassBorder: "rgba(255, 255, 255, 0.12)",
+  glassHighlight: "rgba(255, 255, 255, 0.08)",
   primary: "#4C7DFF",
   primaryDark: "#2E4BC8",
+  primarySoft: "#1C2B52",
+  primaryPressed: "#7A9CFF",
   onPrimary: "#FFFFFF",
+  onSurface: "#F9FAFB",
   onLight: "#111827",
   secondary: "#8B7BFF",
   text: "#F9FAFB",
+  textStrong: "#FFFFFF",
+  textSubtle: "#A8B0BF",
   mutedText: "#9CA3AF",
   border: "#424244",
+  divider: "#292E39",
   success: "#34D399",
   successSoft: "#163326",
   successText: "#6EE7B7",
@@ -269,6 +300,10 @@ const baseDarkColors: ThemeColors = {
   iconMuted: "#9CA3AF",
   iconDisabled: "#6B7280",
   overlayDark20: "rgba(0, 0, 0, 0.2)",
+  scrim: "rgba(0, 0, 0, 0.62)",
+  mediaScrimStart: "rgba(0, 0, 0, 0.08)",
+  mediaScrimEnd: "rgba(0, 0, 0, 0.84)",
+  statePressed: "rgba(76, 125, 255, 0.16)",
   shadowColor: "#000000",
   white: "#FFFFFF",
   iconColor: "#F9FAFB",
@@ -318,78 +353,6 @@ const appColorOverrides: Record<ThemedMiniAppId, ThemeColorOverrideSet> = {
     },
   },
   deliveries: {
-    light: {
-      background: "#FFFFFF",
-      backgroundTertiary: "#F4F4F5",
-      surface: "#FFFFFF",
-      primary: "#2346E8",
-      primaryDark: "#1C2FA6",
-      secondary: "#6B5BFF",
-    },
-    dark: {
-      background: "#0F1117",
-      backgroundTertiary: "#161A23",
-      surface: "#161A23",
-      primary: "#4C7DFF",
-      primaryDark: "#2E4BC8",
-      secondary: "#8B7BFF",
-    },
-  },
-  rideSharing: {
-    light: {
-      background: "#FFFFFF",
-      backgroundTertiary: "#F4F4F5",
-      surface: "#FFFFFF",
-      primary: "#1691BF",
-      primaryDark: "#1C2FA6",
-      secondary: "#6B5BFF",
-    },
-    dark: {
-      background: "#0F1117",
-      backgroundTertiary: "#161A23",
-      surface: "#161A23",
-      primary: "#4FC3E8",
-      primaryDark: "#2E4BC8",
-      secondary: "#8B7BFF",
-    },
-  },
-  homeVisits: {
-    light: {
-      background: "#FFFFFF",
-      backgroundTertiary: "#F4F4F5",
-      surface: "#FFFFFF",
-      primary: "#2346E8",
-      primaryDark: "#1C2FA6",
-      secondary: "#6B5BFF",
-    },
-    dark: {
-      background: "#0F1117",
-      backgroundTertiary: "#161A23",
-      surface: "#161A23",
-      primary: "#4C7DFF",
-      primaryDark: "#2E4BC8",
-      secondary: "#8B7BFF",
-    },
-  },
-  appointments: {
-    light: {
-      background: "#FFFFFF",
-      backgroundTertiary: "#F4F4F5",
-      surface: "#FFFFFF",
-      primary: "#2346E8",
-      primaryDark: "#1C2FA6",
-      secondary: "#6B5BFF",
-    },
-    dark: {
-      background: "#0F1117",
-      backgroundTertiary: "#161A23",
-      surface: "#161A23",
-      primary: "#4C7DFF",
-      primaryDark: "#2E4BC8",
-      secondary: "#8B7BFF",
-    },
-  },
-  developerMode: {
     light: {
       background: "#FFFFFF",
       backgroundTertiary: "#F4F4F5",

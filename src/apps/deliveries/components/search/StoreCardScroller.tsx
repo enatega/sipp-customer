@@ -1,80 +1,54 @@
 import React from 'react';
-import { FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import Text from '../../../../general/components/Text';
-import { typography } from '../../../../general/theme/typography';
 import { useTheme } from '../../../../general/theme/theme';
 import StoreCard from '../storeCard/StoreCard';
 import type { StoreCardScrollerProps } from './types';
+import SectionActionHeader from '../../../../general/components/SectionActionHeader';
 
 export default function StoreCardScroller({
   stores,
   onSeeAllPress,
   onLoadMore,
+  isLoadingMore,
 }: StoreCardScrollerProps) {
-  const { colors } = useTheme();
+  const { colors, spacing } = useTheme();
   const { t } = useTranslation('deliveries');
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text
-          weight="extraBold"
-          style={{
-            color: colors.text,
-            fontSize: typography.size.h5,
-            lineHeight: typography.lineHeight.h5,
-          }}
-        >
-          {t('stores')}
-        </Text>
-        {onSeeAllPress ? (
-          <TouchableOpacity
-            style={[styles.seeAllButton, { backgroundColor: colors.blue100 }]}
-            onPress={onSeeAllPress}
-            activeOpacity={0.7}
-          >
-            <Text
-              variant="body"
-              weight="medium"
-              style={{ color: colors.text, fontSize: typography.size.sm2 }}
-            >
-              {t('see_all')}
-            </Text>
-          </TouchableOpacity>
-        ) : null}
-      </View>
+      <SectionActionHeader
+        actionLabel={onSeeAllPress ? t('see_all') : undefined}
+        onActionPress={onSeeAllPress}
+        title={t('stores')}
+      />
       <FlatList
         data={stores}
-        renderItem={({ item }) => <StoreCard layout="fullWidth" store={item} />}
+        renderItem={({ item }) => <StoreCard layout="resultRow" store={item} />}
         keyExtractor={(item) => item.storeId}
         showsVerticalScrollIndicator={false}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        contentContainerStyle={{
+          paddingBottom: spacing.lg,
+          paddingHorizontal: spacing.xs,
+          paddingTop: spacing.md,
+        }}
+        ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
         scrollEnabled={false}
         onEndReached={onLoadMore}
         onEndReachedThreshold={0.5}
+        ListFooterComponent={isLoadingMore ? (
+          <View style={[styles.loader, { paddingVertical: spacing.lg }]}>
+            <ActivityIndicator color={colors.primary} size="small" />
+          </View>
+        ) : null}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    marginTop: 4,
-    marginBottom: 8,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  container: {},
+  loader: {
     alignItems: 'center',
-    marginBottom: 12,
-  },
-  separator: {
-    width: 16,
-  },
-  seeAllButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 6,
   },
 });

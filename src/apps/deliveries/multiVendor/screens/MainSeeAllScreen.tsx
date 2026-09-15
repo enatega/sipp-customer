@@ -24,6 +24,7 @@ import {
 import type { MultiVendorStackParamList } from "../navigation/types";
 import NearbyStoreList from "../components/HomeTab/NearbyStoreList";
 import { deliveryKeys } from "../../api/queryKeys";
+import { useWindowClass } from "../../../../general/hooks/useWindowClass";
 
 type NavigationProp = NativeStackNavigationProp<
   MultiVendorStackParamList,
@@ -36,7 +37,8 @@ type MainSeeAllRouteProp = RouteProp<
 >;
 
 export default function MainSeeAllScreen() {
-  const { colors } = useTheme();
+  const { colors, layout, spacing } = useTheme();
+  const { gutter } = useWindowClass();
   const { t } = useTranslation("deliveries");
   const { t: tGeneral } = useTranslation("general");
   const navigation = useNavigation<NavigationProp>();
@@ -118,7 +120,7 @@ export default function MainSeeAllScreen() {
   }, [queryClient]);
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+    <View style={[styles.screen, { backgroundColor: colors.canvas }]}> 
       <DeliveriesSeeAllHeader
         searchPlaceholder={t("generic_list_search_placeholder")}
         searchValue={searchValue}
@@ -130,7 +132,15 @@ export default function MainSeeAllScreen() {
         isFilterVisible={true}
         isMapVisible={false}
       />
-      <View style={{ paddingHorizontal: 16 }}>
+      <View
+        style={[
+          styles.filters,
+          {
+            maxWidth: layout.contentMaxWidth.commerce,
+            paddingHorizontal: gutter,
+          },
+        ]}
+      >
         <SelectedFilterChips
           chips={filterState.chips}
           clearAllLabel={tGeneral("clear_all")}
@@ -146,7 +156,14 @@ export default function MainSeeAllScreen() {
       />
 
       <ScrollView
-        contentContainerStyle={styles.contentContainer}
+        contentContainerStyle={[
+          styles.contentContainer,
+          {
+            gap: spacing.section.default,
+            paddingBottom: spacing.xxxl,
+            paddingVertical: spacing.lg,
+          },
+        ]}
         refreshControl={(
           <RefreshControl
             refreshing={isRefreshing}
@@ -222,9 +239,10 @@ export default function MainSeeAllScreen() {
 
 const styles = StyleSheet.create({
   contentContainer: {
-    gap: 12,
-    paddingBottom: 28,
-    paddingVertical: 16,
+  },
+  filters: {
+    alignSelf: 'center',
+    width: '100%',
   },
   screen: {
     flex: 1,

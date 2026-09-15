@@ -7,6 +7,9 @@ import Icon from '../../../components/Icon';
 import { useTheme } from '../../../theme/theme';
 import type { GenericListHeaderRenderProps } from '../../../components/filterablePaginatedList';
 import { resetToSharedRoute } from '../../../navigation/rootNavigation';
+import IconButton from '../../../components/IconButton';
+import { useWindowClass } from '../../../hooks/useWindowClass';
+import PlatformGlassSurface from '../../../components/PlatformGlassSurface';
 
 export default function SeeAllHeader({
   searchPlaceholder,
@@ -24,7 +27,8 @@ export default function SeeAllHeader({
   const { t } = useTranslation('general');
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, elevation, layout, spacing } = useTheme();
+  const { gutter } = useWindowClass();
 
   const searchInput = renderSearchInput({
     value: searchValue,
@@ -50,30 +54,27 @@ export default function SeeAllHeader({
     });
   };
 
-  return (
+  const content = (
     <View
       style={[
         styles.container,
+        elevation.raised,
         {
-          backgroundColor: colors.background,
-          paddingTop: insets.top + 8,
+          borderBottomColor: colors.divider,
+          gap: spacing.sm,
+          maxWidth: layout.contentMaxWidth.expanded,
+          paddingBottom: spacing.md,
+          paddingHorizontal: gutter,
+          paddingTop: insets.top + spacing.sm,
         },
       ]}
     >
-      <Pressable
+      <IconButton
         accessibilityLabel={t('see_all_back_label')}
-        accessibilityRole="button"
+        icon={<Icon type="Ionicons" name="arrow-back" size={22} color={colors.text} />}
         onPress={handleBackPress}
-        style={({ pressed }) => [
-          styles.iconButton,
-          {
-            backgroundColor: colors.backgroundTertiary,
-            opacity: pressed ? 0.85 : 1,
-          },
-        ]}
-      >
-        <Icon type="Ionicons" name="arrow-back" size={22} color={colors.text} />
-      </Pressable>
+        variant="soft"
+      />
 
       {isSearchVisible ? (
         isSearchEditable ? (
@@ -93,56 +94,35 @@ export default function SeeAllHeader({
       )}
 
       {isFilterVisible ? (
-        <Pressable
-          accessibilityRole="button"
+        <IconButton
           accessibilityLabel={t('see_all_open_filters_label')}
+          icon={<Icon type="Feather" name="sliders" size={20} color={colors.text} />}
           onPress={onOpenFilters}
-          style={({ pressed }) => [
-            styles.iconButton,
-            {
-              backgroundColor: colors.backgroundTertiary,
-              opacity: pressed ? 0.85 : 1,
-            },
-          ]}
-        >
-          <Icon type="Feather" name="sliders" size={20} color={colors.text} />
-        </Pressable>
+          variant="soft"
+        />
       ) : null}
 
       {isMapVisible ? (
-        <Pressable
-          accessibilityRole="button"
+        <IconButton
           accessibilityLabel={t('see_all_map_view_label')}
+          icon={<Icon type="Feather" name="map" size={20} color={colors.text} />}
           onPress={onMapPress}
-          style={({ pressed }) => [
-            styles.iconButton,
-            {
-              backgroundColor: colors.backgroundTertiary,
-              opacity: pressed ? 0.85 : 1,
-            },
-          ]}
-        >
-          <Icon type="Feather" name="map" size={20} color={colors.text} />
-        </Pressable>
+          variant="soft"
+        />
       ) : null}
     </View>
   );
+
+  return <PlatformGlassSurface>{content}</PlatformGlassSurface>;
 }
 
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
+    alignSelf: 'center',
+    borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
-    gap: 12,
-    paddingBottom: 12,
-    paddingHorizontal: 16,
-  },
-  iconButton: {
-    alignItems: 'center',
-    borderRadius: 20,
-    height: 40,
-    justifyContent: 'center',
-    width: 40,
+    width: '100%',
   },
   searchContainer: {
     flex: 1,

@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Dimensions,
   FlatList,
   Modal,
   Pressable,
@@ -18,6 +17,9 @@ import { useTheme } from '../../theme/theme';
 import type { MainFilterSectionTitles, MainListFilterData, MainListFilters } from './types';
 import MainFilterAddressOptionRow from './MainFilterAddressOptionRow';
 import MainFilterOptionChip from './MainFilterOptionChip';
+import IconButton from '../IconButton';
+import { useWindowClass } from '../../hooks/useWindowClass';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
   visible: boolean;
@@ -39,8 +41,6 @@ type Props = {
   onSelectStock: (stockId: string) => void;
   onSelectSort: (sortId: string) => void;
 };
-
-const SHEET_HEIGHT = Math.min(Dimensions.get('window').height * 0.78, 760);
 
 function decodeFilterLabel(label: string) {
   return label?.replaceAll('&amp;', '&');
@@ -67,8 +67,10 @@ export default function MainFilterSheet({
   onSelectSort,
 }: Props) {
   const insets = useSafeAreaInsets();
-  const { colors, typography } = useTheme();
-  void onClear;
+  const { colors, elevation, layout, shape, spacing } = useTheme();
+  const { t } = useTranslation('general');
+  const { gutter, height } = useWindowClass();
+  const sheetHeight = Math.min(height * 0.78, 760);
 
   if (!visible) {
     return null;
@@ -83,67 +85,77 @@ export default function MainFilterSheet({
     >
       <View style={styles.modalRoot}>
         <Pressable
-          style={[styles.backdrop, { backgroundColor: colors.overlayDark20 }]}
+          style={[styles.backdrop, { backgroundColor: colors.scrim }]}
           onPress={onClose}
         />
 
         <SwipeableBottomSheet
-          expandedHeight={SHEET_HEIGHT + insets.bottom}
+          expandedHeight={sheetHeight + insets.bottom}
           collapsedHeight={0}
           initialState="expanded"
           modal
           onCollapsed={onClose}
           style={[
             styles.sheet,
+            elevation.overlay,
             {
-              backgroundColor: colors.background,
-              shadowColor: colors.shadowColor,
+              backgroundColor: colors.surfaceElevated,
+              borderTopLeftRadius: shape.radius.sheet,
+              borderTopRightRadius: shape.radius.sheet,
+              maxWidth: layout.contentMaxWidth.readable,
             },
           ]}
-          handle={<BottomSheetHandle color={colors.border} />}
+          handle={<BottomSheetHandle color={colors.iconDisabled} />}
         >
-          <View style={styles.header}>
-            <View style={styles.headerSpacer} />
+          <View style={[styles.header, { paddingHorizontal: gutter }]}>
+            <Pressable
+              accessibilityLabel={t('clear_all')}
+              accessibilityRole="button"
+              hitSlop={8}
+              onPress={onClear}
+              style={({ pressed }) => [
+                styles.clearButton,
+                { opacity: pressed ? 0.68 : 1 },
+              ]}
+            >
+              <Text color={colors.primary} variant="label" weight="semiBold">
+                {t('clear_all')}
+              </Text>
+            </Pressable>
             <Text
               weight="bold"
-              style={{
-                fontSize: typography.size.xl2,
-                lineHeight: typography.lineHeight.xl2,
-              }}
+              variant="cardTitle"
+              style={styles.headerTitle}
             >
               {title}
             </Text>
-            <Pressable
-              accessibilityLabel={closeLabel}
-              accessibilityRole="button"
-              hitSlop={12}
-              onPress={onClose}
-              style={({ pressed }) => [
-                styles.closeButton,
-                {
-                  backgroundColor: colors.backgroundTertiary,
-                  opacity: pressed ? 0.85 : 1,
-                  zIndex: 999
-                },
-              ]}
-            >
-              <Icon type="Entypo" name="cross" size={20} color={colors.text} />
-            </Pressable>
+            <View style={styles.closeSlot}>
+              <IconButton
+                accessibilityLabel={closeLabel}
+                icon={<Icon type="Entypo" name="cross" size={20} color={colors.text} />}
+                onPress={onClose}
+                variant="soft"
+              />
+            </View>
           </View>
 
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={[
               styles.scrollContent,
-              { paddingBottom: insets.bottom + 16 },
+              {
+                gap: spacing.section.default,
+                paddingBottom: insets.bottom + spacing.lg,
+                paddingHorizontal: gutter,
+              },
             ]}
           >
             {isCategoryVisible && filters?.categories?.length ? (
-              <View style={styles.section}>
-                <Text variant="subtitle" weight="bold">
+              <View style={[styles.section, { gap: spacing.md }]}>
+                <Text variant="cardTitle" weight="bold">
                   {sectionTitles?.category}
                 </Text>
-                <View style={styles.chipWrap}>
+                <View style={[styles.chipWrap, { gap: spacing.sm }]}>
                   {filters.categories.map((category) => {
                     const categoryId = category.ids[0];
 
@@ -165,8 +177,8 @@ export default function MainFilterSheet({
             ) : null}
 
             {filters?.priceTiers?.length ? (
-              <View style={styles.section}>
-                <Text variant="subtitle" weight="bold">
+              <View style={[styles.section, { gap: spacing.md }]}>
+                <Text variant="cardTitle" weight="bold">
                   {sectionTitles?.price}
                 </Text>
                 <FlatList
@@ -174,7 +186,7 @@ export default function MainFilterSheet({
                   horizontal
                   keyExtractor={(item) => item.value}
                   showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.flatListContent}
+                  contentContainerStyle={[styles.flatListContent, { gap: spacing.sm }]}
                   renderItem={({ item: option }) => (
                     <MainFilterOptionChip
                       label={decodeFilterLabel(option.label)}
@@ -187,11 +199,11 @@ export default function MainFilterSheet({
             ) : null}
 
             {filters?.addresses?.length ? (
-              <View style={styles.section}>
-                <Text variant="subtitle" weight="bold">
+              <View style={[styles.section, { gap: spacing.md }]}>
+                <Text variant="cardTitle" weight="bold">
                   {sectionTitles?.address}
                 </Text>
-                <View style={styles.addressList}>
+                <View style={[styles.addressList, { gap: spacing.sm }]}>
                   {filters.addresses.map((option) => (
                     <MainFilterAddressOptionRow
                       key={option.id}
@@ -207,8 +219,8 @@ export default function MainFilterSheet({
 
             {/* Todo: can add stock based filter after backend handling */}
             {/* {isStockVisible && filters?.stock?.length ? (
-              <View style={styles.section}>
-                <Text variant="subtitle" weight="bold">
+              <View style={[styles.section, { gap: spacing.md }]}>
+                <Text variant="cardTitle" weight="bold">
                   {sectionTitles?.stock}
                 </Text>
                 <FlatList
@@ -216,7 +228,7 @@ export default function MainFilterSheet({
                   horizontal
                   keyExtractor={(item) => item.value}
                   showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.flatListContent}
+                  contentContainerStyle={[styles.flatListContent, { gap: spacing.sm }]}
                   renderItem={({ item: option }) => (
                     <MainFilterOptionChip
                       label={decodeFilterLabel(option.label)}
@@ -229,8 +241,8 @@ export default function MainFilterSheet({
             ) : null} */}
 
             {filters?.sortBy?.length ? (
-              <View style={styles.section}>
-                <Text variant="subtitle" weight="bold">
+              <View style={[styles.section, { gap: spacing.md }]}>
+                <Text variant="cardTitle" weight="bold">
                   {sectionTitles?.sort}
                 </Text>
                 <FlatList
@@ -238,7 +250,7 @@ export default function MainFilterSheet({
                   horizontal
                   keyExtractor={(item) => item.value}
                   showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={styles.flatListContent}
+                  contentContainerStyle={[styles.flatListContent, { gap: spacing.sm }]}
                   renderItem={({ item: option }) => (
                     <MainFilterOptionChip
                       label={decodeFilterLabel(option.label)}
@@ -250,7 +262,7 @@ export default function MainFilterSheet({
               </View>
             ) : null}
 
-            <View style={styles.actions}>
+            <View style={[styles.actions, { marginTop: spacing.sm }]}>
               <Button
                 label={applyLabel}
                 onPress={onApply}
@@ -266,12 +278,8 @@ export default function MainFilterSheet({
 }
 
 const styles = StyleSheet.create({
-  actions: {
-    marginTop: 20,
-  },
-  addressList: {
-    gap: 18,
-  },
+  actions: {},
+  addressList: {},
   applyButton: {
     width: '100%',
   },
@@ -281,46 +289,39 @@ const styles = StyleSheet.create({
   chipWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
   },
-  closeButton: {
-    alignItems: 'center',
-    borderRadius: 999,
-    height: 32,
+  clearButton: {
     justifyContent: 'center',
-    width: 32,
+    minHeight: 44,
+    minWidth: 72,
+  },
+  closeSlot: {
+    alignItems: 'flex-end',
+    width: 72,
   },
   flatListContent: {
-    gap: 8,
     paddingRight: 4,
   },
   header: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 20,
-    paddingHorizontal: 10
+    paddingTop: 4,
   },
-  headerSpacer: {
-    width: 32,
+  headerTitle: {
+    flex: 1,
+    textAlign: 'center',
   },
   modalRoot: {
     flex: 1,
     justifyContent: 'flex-end',
   },
   scrollContent: {
-    paddingHorizontal: 16,
     paddingTop: 8,
   },
-  section: {
-    gap: 12,
-    marginBottom: 20,
-  },
+  section: {},
   sheet: {
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    shadowOffset: { width: 0, height: -6 },
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
+    alignSelf: 'center',
+    width: '100%',
   },
 });

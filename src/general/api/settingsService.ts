@@ -1,6 +1,6 @@
 import apiClient from './apiClient';
 
-export type SettingsAppPrefix = 'deliveries' | 'home-services';
+export type SettingsAppPrefix = 'deliveries';
 
 function getSettingsBase(appPrefix: SettingsAppPrefix) {
   return `/api/v1/apps/${appPrefix}/settings`;

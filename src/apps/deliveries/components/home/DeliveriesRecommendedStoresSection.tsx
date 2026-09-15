@@ -23,7 +23,7 @@ type Props = {
 export default function DeliveriesRecommendedStoresSection({
   onSelectMiniApp,
 }: Props) {
-  const { typography, colors } = useTheme();
+  const { typography, colors, spacing } = useTheme();
   const { t } = useTranslation('deliveries');
   const { latitude: selectedLatitude, longitude: selectedLongitude } = useAddress();
   const { currentCoordinates } = useCurrentLocation();
@@ -108,7 +108,10 @@ export default function DeliveriesRecommendedStoresSection({
           keyExtractor={(item, index) => `${item.storeId}-${index}`}
           renderItem={renderItem}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[
+            styles.content,
+            { paddingBottom: spacing.lg, paddingTop: spacing.xs },
+          ]}
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.4}
           ListFooterComponent={

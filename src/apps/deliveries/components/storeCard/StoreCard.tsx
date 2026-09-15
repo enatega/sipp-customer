@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { View, TouchableOpacity } from "react-native";
+import { View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTheme } from "../../../../general/theme/theme";
@@ -16,6 +16,8 @@ import StoreInfo from "./subComponents/StoreInfo";
 import StoreRating from "./subComponents/StoreRating";
 import StoreDeliveryInfo from "./subComponents/StoreDeliveryInfo";
 import { useTranslations } from "../../../../general/localization/LocalizationProvider";
+import PressableScale from "../../../../general/components/PressableScale";
+import { pushStoreDetails } from "../../navigation/storeDetailsNavigation";
 
 type StoreCardData =
   | DeliveryNearbyStore
@@ -25,7 +27,7 @@ type StoreCardData =
 export interface StoreCardProps {
   store: StoreCardData;
   actionSlot?: React.ReactNode;
-  layout?: "compact" | "fullWidth";
+  layout?: "compact" | "fullWidth" | "resultRow";
   onPress?: () => void;
   showClosedOverlay?: boolean;
   onClosedPress?: () => void;
@@ -42,7 +44,7 @@ function isProductStoreCardData(
 function isStoreClosed(
   store: Exclude<StoreCardData, DeliveryShopTypeProduct>,
 ) {
-  return store.isAvailable === false || store.isClosed === true;
+  return store.isAvailable === false || ("isClosed" in store && store.isClosed === true);
 }
 
 function resolveOfferLabel(
@@ -76,11 +78,13 @@ export default function StoreCard({
   showClosedOverlay = false,
   onClosedPress,
 }: StoreCardProps) {
-  const { colors } = useTheme();
+  const { colors, elevation, shape, spacing } = useTheme();
   const { t } = useTranslations("deliveries")
   const currencyLabel = useDeliveriesCurrencyLabel();
   const navigation = useNavigation<NavigationProp>();
   const isProductItem = isProductStoreCardData(store);
+  const isResultRow = layout === "resultRow";
+  const isCompact = layout === "compact";
   const isPressable = Boolean(onPress) || !isProductItem;
   const resolvedImageUrl = isProductItem
     ? store.productImage ||
@@ -96,22 +100,11 @@ export default function StoreCard({
     t("off"),
   );
   const resolvedName = isProductItem ? store.productName : store.name;
-  const resolvedLocation = !isProductItem ? store.address ?? undefined : undefined;
   const resolvedRating = store.averageRating ?? undefined;
   const resolvedReviewCount = store.reviewCount ?? undefined;
   const resolvedCuisine = isProductItem
     ? store.storeName ?? undefined
-    : store.shopTypeName ?? undefined;
-  const hasVisibleRating =
-    typeof resolvedRating === "number" &&
-    Number.isFinite(resolvedRating) &&
-    resolvedRating > 0;
-  const hasVisibleReviewCount =
-    typeof resolvedReviewCount === "number" &&
-    Number.isFinite(resolvedReviewCount) &&
-    resolvedReviewCount > 0;
-  const shouldInlineCuisineWithName =
-    Boolean(resolvedCuisine?.trim()) && !hasVisibleRating && !hasVisibleReviewCount;
+    : store.shopTypeName ?? store.address ?? undefined;
   const resolvedPrice = isProductItem ? store.price ?? 0 : store.baseFee ?? 0;
   const resolvedDeliveryTime = isProductItem
     ? store.deliveryTime ?? ""
@@ -135,22 +128,27 @@ export default function StoreCard({
       return;
     }
 
-    navigation.navigate("StoreDetails", { store });
+    pushStoreDetails(navigation, store);
   }, [isClosedStore, navigation, onClosedPress, onPress, store]);
 
   return (
-    <TouchableOpacity
+    <PressableScale
+      accessibilityLabel={resolvedName}
+      accessibilityRole={isPressable ? "button" : undefined}
       disabled={!isPressable}
       style={[
         styles.container,
-        layout === "fullWidth" ? styles.fullWidthContainer : styles.compactContainer,
+        layout === "fullWidth"
+          ? styles.fullWidthContainer
+          : isResultRow
+            ? styles.resultRowContainer
+            : styles.compactContainer,
         {
           backgroundColor: colors.surface,
-          borderColor: colors.border,
-          shadowColor: colors.shadowColor,
+          borderRadius: shape.radius.surface,
+          ...elevation.raised,
         },
       ]}
-      activeOpacity={isPressable ? 0.7 : 1}
       onPress={handlePress}
     >
       <StoreImage
@@ -158,30 +156,44 @@ export default function StoreCard({
         closedLabel={t("store_status_closed")}
         imageUrl={resolvedImageUrl}
         isClosed={isClosedStore}
+        layout={layout}
         offer={resolvedOffer}
       />
 
-      <View style={styles.content}>
-        <StoreInfo
-          name={resolvedName}
-          trailingLabel={shouldInlineCuisineWithName ? resolvedCuisine : undefined}
-        />
+      <View
+        style={[
+          styles.content,
+          {
+            flex: isResultRow ? 1 : undefined,
+            gap: isCompact ? spacing.xs : spacing.sm,
+            justifyContent: isResultRow ? 'center' : undefined,
+            paddingBottom: spacing.md,
+            paddingHorizontal: spacing.md,
+            paddingTop: isCompact ? spacing.sm + 2 : spacing.md,
+          },
+        ]}
+      >
+        <StoreInfo name={resolvedName} />
         <StoreRating
           rating={resolvedRating}
           reviewCount={resolvedReviewCount}
-          cuisine={
-            shouldInlineCuisineWithName
-              ? undefined
-              : (resolvedCuisine ?? resolvedLocation)
-          }
+          cuisine={resolvedCuisine}
         />
-        <View style={[styles.line, { backgroundColor: colors.border }]} />
+        <View
+          style={[
+            styles.line,
+            {
+              backgroundColor: colors.divider,
+              marginVertical: isCompact ? spacing.xxs : spacing.xs,
+            },
+          ]}
+        />
         <StoreDeliveryInfo
           price={resolvedPrice}
           deliveryTime={resolvedDeliveryTime}
           distance={resolvedDistance}
         />
       </View>
-    </TouchableOpacity>
+    </PressableScale>
   );
 }

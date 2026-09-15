@@ -1,10 +1,11 @@
-import { ActivityIndicator, StyleSheet, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import React from "react";
 import Icon from "../Icon";
 import { useTheme } from "../../theme/theme";
 import Text from "../Text";
-import { typography } from "../../theme/typography";
 import { RecentSearchProps } from "./types";
+import PressableScale from "../PressableScale";
+import { useTranslation } from "react-i18next";
 
 const RecentSearch = ({
   search,
@@ -13,35 +14,46 @@ const RecentSearch = ({
   isDeleting = false,
   isDeleteDisabled = false,
 }: RecentSearchProps) => {
-  const { colors } = useTheme();
+  const { colors, shape, spacing } = useTheme();
+  const { t } = useTranslation("general");
   return (
-    <View style={styles.container}>
-      <TouchableOpacity
-        onPressIn={onItemPress}
-        style={styles.item}
-        activeOpacity={0.7}
+    <View style={[styles.container, { borderBottomColor: colors.divider }]}>
+      <PressableScale
+        accessibilityLabel={search}
+        accessibilityRole="button"
+        onPress={onItemPress}
+        pressedScale={0.99}
+        style={[styles.item, { gap: spacing.md }]}
       >
-        <Icon
-          type="Ionicons"
-          name="time-outline"
-          size={20}
-          color={colors.text}
-        />
+        <View
+          style={[
+            styles.iconWell,
+            {
+              backgroundColor: colors.surfaceSunken,
+              borderRadius: shape.radius.control,
+            },
+          ]}
+        >
+          <Icon type="Ionicons" name="time-outline" size={19} color={colors.textSubtle} />
+        </View>
         <Text
-          weight="medium"
           numberOfLines={1}
-          style={{ fontSize: typography.size.sm2 }}
+          variant="body"
+          weight="medium"
+          style={styles.label}
         >
           {search}
         </Text>
-      </TouchableOpacity>
+      </PressableScale>
 
-      <TouchableOpacity
+      <Pressable
+        accessibilityLabel={t("search_delete_recent_label", { term: search })}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: isDeleting || isDeleteDisabled }}
         hitSlop={12}
         onPress={onDeletePress}
         disabled={isDeleting || isDeleteDisabled}
-        activeOpacity={0.7}
-        style={styles.deleteButton}
+        style={({ pressed }) => [styles.deleteButton, { opacity: pressed ? 0.6 : 1 }]}
       >
         {isDeleting ? (
           <ActivityIndicator size="small" color={colors.mutedText} />
@@ -53,7 +65,7 @@ const RecentSearch = ({
             color={colors.mutedText}
           />
         )}
-      </TouchableOpacity>
+      </Pressable>
     </View>
   );
 };
@@ -62,23 +74,33 @@ export default RecentSearch;
 
 const styles = StyleSheet.create({
   container: {
+    alignItems: "center",
+    borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    minHeight: 64,
     width: "100%",
-    paddingVertical: 10,
   },
   item: {
-    flexDirection: "row",
-    justifyContent: "flex-start",
     alignItems: "center",
     flex: 1,
-    gap: 12,
+    flexDirection: "row",
+    justifyContent: "flex-start",
     paddingRight: 8,
   },
   deleteButton: {
-    width: 40,
     alignItems: "flex-end",
     justifyContent: "center",
+    minHeight: 44,
+    width: 44,
+  },
+  iconWell: {
+    alignItems: "center",
+    height: 40,
+    justifyContent: "center",
+    width: 40,
+  },
+  label: {
+    flex: 1,
   },
 });

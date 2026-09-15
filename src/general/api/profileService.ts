@@ -1,6 +1,6 @@
 import apiClient from "./apiClient";
 
-export type ProfileAppPrefix = "appointments" | "deliveries" | "home-services";
+export type ProfileAppPrefix = "deliveries";
 
 function getProfileBase(appPrefix: ProfileAppPrefix) {
   return `/api/v1/apps/${appPrefix}/profile`;

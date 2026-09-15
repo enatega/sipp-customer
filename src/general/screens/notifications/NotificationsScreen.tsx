@@ -14,7 +14,7 @@ import { useTheme } from '../../theme/theme';
 
 const NOTIFICATIONS_LIMIT = 10;
 
-type AppPrefix = 'deliveries' | 'home-services';
+type AppPrefix = 'deliveries';
 
 type NotificationsApiItem = {
   id: string;
@@ -38,7 +38,7 @@ type Props = {
 };
 
 export default function NotificationsScreen({
-  appPrefix = 'home-services',
+  appPrefix = 'deliveries',
   userId: userIdProp,
 }: Props) {
   const { colors, typography } = useTheme();

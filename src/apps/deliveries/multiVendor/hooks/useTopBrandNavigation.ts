@@ -7,6 +7,7 @@ import type {
 } from '../../api/types';
 import { useNearbyStores } from '../../hooks';
 import type { MultiVendorStackParamList } from '../navigation/types';
+import { pushStoreDetails } from '../../navigation/storeDetailsNavigation';
 
 type NavigationProp = NativeStackNavigationProp<MultiVendorStackParamList>;
 
@@ -22,6 +23,13 @@ function isBrandStoreNameMatch(
     storeName === brandName ||
     storeName.includes(brandName) ||
     brandName.includes(storeName)
+  );
+}
+
+function isStoreClosed(store: DeliveryNearbyStore) {
+  return (
+    store.isAvailable === false
+    || ('isClosed' in store && store.isClosed === true)
   );
 }
 
@@ -84,11 +92,19 @@ export default function useTopBrandNavigation() {
   );
 
   const openTopBrand = useCallback(
-    (brand: DeliveryTopBrand) => {
+    (
+      brand: DeliveryTopBrand,
+      onClosedStorePress?: (store: DeliveryNearbyStore) => void,
+    ) => {
       const matchedStore = resolveStoreFromBrand(brand);
 
       if (matchedStore) {
-        navigation.navigate('StoreDetails', { store: matchedStore });
+        if (isStoreClosed(matchedStore) && onClosedStorePress) {
+          onClosedStorePress(matchedStore);
+          return;
+        }
+
+        pushStoreDetails(navigation, matchedStore);
         return;
       }
 

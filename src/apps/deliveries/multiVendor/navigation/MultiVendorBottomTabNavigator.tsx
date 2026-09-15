@@ -2,15 +2,12 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import HomeTab from '../screens/HomeTab/HomeTab';
 import SearchTab from '../screens/SearchTab/SearchTab';
 import { useTheme } from '../../../../general/theme/theme';
 import DeliveriesTabBar, {
   DELIVERIES_TAB_BAR_HEIGHT,
-  DELIVERIES_TAB_BAR_SAFE_PADDING,
 } from '../../components/navigation/DeliveriesTabBar';
-import MultiVendorTabButton from '../components/TabButton';
 import MultiVendorProfileTabScreen from '../../screens/ProfileTab/MultiVendorProfileTabScreen';
 import OrdersScreen from '../../screens/OrdersScreen/OrdersScreen';
 
@@ -22,10 +19,8 @@ type TabIconProps = {
 };
 
 function MultiVendorBottomTabNavigator() {
-  const { colors, typography } = useTheme();
+  const { colors } = useTheme();
   const { t } = useTranslation('deliveries');
-  const insets = useSafeAreaInsets();
-  const safeBottom = Math.max(insets.bottom, DELIVERIES_TAB_BAR_SAFE_PADDING);
 
   const renderIcon =
     (name: keyof typeof MaterialCommunityIcons.glyphMap) =>
@@ -43,22 +38,8 @@ function MultiVendorBottomTabNavigator() {
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.iconMuted,
-        tabBarButton: (props) => <MultiVendorTabButton {...props} />,
-        tabBarIconStyle: {
-          marginTop: 2,
-        },
-        tabBarLabelStyle: {
-          fontFamily: typography.fontFamily.semiBold,
-          fontSize: typography.size.xxs,
-          fontWeight: '600',
-          lineHeight: typography.lineHeight.sm,
-          marginBottom: 8,
-        },
         tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.border,
-          height: DELIVERIES_TAB_BAR_HEIGHT + safeBottom,
-          paddingBottom: safeBottom,
+          height: DELIVERIES_TAB_BAR_HEIGHT,
         },
       }}
       tabBar={(props) => <DeliveriesTabBar {...props} />}

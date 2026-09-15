@@ -15,15 +15,22 @@ export default function BottomSheetHandle({
   containerStyle,
   variant = 'visible',
 }: Props) {
-  const { colors } = useTheme();
+  const { colors, shape, spacing } = useTheme();
 
   return (
-    <View style={[styles.container, containerStyle]}>
+    <View
+      style={[
+        styles.container,
+        { paddingBottom: spacing.md, paddingTop: spacing.xs },
+        containerStyle,
+      ]}
+    >
       <View
         style={[
           styles.handle,
           {
-            backgroundColor: color ?? colors.border,
+            backgroundColor: color ?? colors.iconDisabled,
+            borderRadius: shape.radius.pill,
             opacity: variant === 'hidden' ? 0 : 1,
           },
         ]}
@@ -35,12 +42,9 @@ export default function BottomSheetHandle({
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    paddingBottom: 12,
-    paddingTop: 4,
   },
   handle: {
-    borderRadius: 999,
     height: 4,
-    width: 40,
+    width: 36,
   },
 });

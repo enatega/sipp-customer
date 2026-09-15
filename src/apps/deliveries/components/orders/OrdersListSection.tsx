@@ -13,6 +13,7 @@ import OrderListFooter from "./OrderListFooter";
 import OrderListSkeleton from "./OrderListSkeleton";
 import Text from "../../../../general/components/Text";
 import { useTheme } from "../../../../general/theme/theme";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 
 const DELIVERY_ROOT_ROUTES = ["SingleVendor", "MultiVendor", "Chain"] as const;
 
@@ -68,7 +69,8 @@ const OrdersListSection = ({
   const { t } = useTranslation("deliveries");
   const navigation =
     useNavigation<NativeStackNavigationProp<DeliveriesStackParamList>>();
-  const { colors, typography } = useTheme();
+  const { colors, spacing, typography } = useTheme();
+  const tabBarHeight = useBottomTabBarHeight();
 
   if (isLoading) {
     return <OrderListSkeleton />;
@@ -114,7 +116,10 @@ const OrdersListSection = ({
           onPress={(order) => handleOrderPress(order)}
         />
       )}
-      contentContainerStyle={styles.listContent}
+      contentContainerStyle={[
+        styles.listContent,
+        { paddingBottom: tabBarHeight + spacing.lg },
+      ]}
       ItemSeparatorComponent={() => <View style={styles.separator} />}
       showsVerticalScrollIndicator={false}
       ListHeaderComponent={
@@ -243,7 +248,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     // paddingHorizontal: 16,
     paddingTop: 12,
-    paddingBottom: 24,
   },
   separator: {
     height: 12,

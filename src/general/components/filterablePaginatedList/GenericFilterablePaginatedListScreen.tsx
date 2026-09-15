@@ -6,6 +6,7 @@ import Text from '../Text';
 import { useTheme } from '../../theme/theme';
 import type { FilterChip, GenericFilterablePaginatedListScreenProps } from './types';
 import ListStateView from './ListStateView';
+import { useWindowClass } from '../../hooks/useWindowClass';
 
 export default function GenericFilterablePaginatedListScreen<
   TItem,
@@ -37,10 +38,10 @@ export default function GenericFilterablePaginatedListScreen<
   listContentContainerStyle,
   renderItemCard,
 }: GenericFilterablePaginatedListScreenProps<TItem, TChip>) {
-  const { colors, typography } = useTheme();
+  const { colors, layout, spacing } = useTheme();
+  const { gutter } = useWindowClass();
   const { t } = useTranslation('general');
 
-  void totalCount;
   void error;
 
   const handleEndReached = useCallback(() => {
@@ -71,9 +72,17 @@ export default function GenericFilterablePaginatedListScreen<
   const canRenderChips = chips.length > 0 && onRemoveChip && onClearAll;
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.background }]}> 
+    <View style={[styles.screen, { backgroundColor: colors.canvas }]}>
       {header}
-      <View style={styles.content}>
+      <View
+        style={[
+          styles.content,
+          {
+            maxWidth: layout.contentMaxWidth.commerce,
+            paddingHorizontal: gutter,
+          },
+        ]}
+      >
         {canRenderChips && renderSelectedFilters ? (
           renderSelectedFilters({
             chips,
@@ -83,17 +92,25 @@ export default function GenericFilterablePaginatedListScreen<
           })
         ) : null}
 
-        <Text
-          weight="extraBold"
-          style={{
-            fontSize: typography.size.h5,
-            lineHeight: typography.lineHeight.h5,
-            marginBottom: 12,
-            marginTop: canRenderChips ? 16 : 4,
-          }}
+        <View
+          style={[
+            styles.titleRow,
+            {
+              gap: spacing.md,
+              marginBottom: spacing.md,
+              marginTop: canRenderChips ? spacing.lg : spacing.sm,
+            },
+          ]}
         >
-          {title}
-        </Text>
+          <Text accessibilityRole="header" variant="sectionTitle" weight="extraBold" style={styles.title}>
+            {title}
+          </Text>
+          {typeof totalCount === 'number' ? (
+            <Text color={colors.textSubtle} variant="caption" weight="medium">
+              {t('generic_list_results_count', { count: totalCount })}
+            </Text>
+          ) : null}
+        </View>
 
         {isInitialLoading ? (
           loadingComponent ?? <ListStateView variant="loading" />
@@ -118,8 +135,12 @@ export default function GenericFilterablePaginatedListScreen<
             data={items}
             renderItem={renderItem}
             keyExtractor={keyExtractor}
-            contentContainerStyle={[styles.listContent, listContentContainerStyle]}
-            ItemSeparatorComponent={() => <View style={styles.separator} />}
+            contentContainerStyle={[
+              styles.listContent,
+              { paddingBottom: spacing.section.default },
+              listContentContainerStyle,
+            ]}
+            ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
             onEndReached={handleEndReached}
             onEndReachedThreshold={0.35}
             refreshing={isRefetching && !isPending}
@@ -128,9 +149,11 @@ export default function GenericFilterablePaginatedListScreen<
             ListFooterComponent={
               isFetchingNextPage ? (
                 paginationLoadingComponent ? (
-                  <View style={styles.footerContent}>{paginationLoadingComponent}</View>
+                  <View style={[styles.footerContent, { paddingVertical: spacing.lg }]}>
+                    {paginationLoadingComponent}
+                  </View>
                 ) : (
-                  <View style={styles.footerLoader}>
+                  <View style={[styles.footerLoader, { paddingVertical: spacing.lg }]}>
                     <ActivityIndicator size="small" color={colors.primary} />
                   </View>
                 )
@@ -147,25 +170,24 @@ export default function GenericFilterablePaginatedListScreen<
 
 const styles = StyleSheet.create({
   content: {
+    alignSelf: 'center',
     flex: 1,
-    paddingHorizontal: 16,
+    width: '100%',
   },
   footerLoader: {
     alignItems: 'center',
-    paddingBottom: 24,
-    paddingTop: 8,
   },
-  footerContent: {
-    paddingBottom: 24,
-    paddingTop: 8,
-  },
-  listContent: {
-    paddingBottom: 24,
-  },
+  footerContent: {},
+  listContent: {},
   screen: {
     flex: 1,
   },
-  separator: {
-    height: 10,
+  title: {
+    flex: 1,
+  },
+  titleRow: {
+    alignItems: 'baseline',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
 });

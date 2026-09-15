@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -7,7 +7,6 @@ import { useTheme } from '../../../../general/theme/theme';
 import HorizontalList from '../../../../general/components/HorizontalList';
 import SectionActionHeader from '../../../../general/components/SectionActionHeader';
 import Text from '../../../../general/components/Text';
-import AppPopup from '../../../../general/components/AppPopup';
 import type { SearchStoreItem } from '../../api/searchServiceTypes';
 import type {
   DeliveryNearbyStore,
@@ -20,6 +19,9 @@ import {
   DiscoverySectionState,
 } from '../discovery';
 import StoreCard from '../storeCard/StoreCard';
+import { useWindowClass } from '../../../../general/hooks/useWindowClass';
+import { pushStoreDetails } from '../../navigation/storeDetailsNavigation';
+import ClosedStoreMenuPopup from '../storeCard/ClosedStoreMenuPopup';
 
 type DealsItem = DeliveryNearbyStore | SearchStoreItem | DeliveryShopTypeProduct;
 type NavigationProp = NativeStackNavigationProp<DeliveriesStoreDetailsParamList>;
@@ -31,6 +33,7 @@ type Props = {
   isError: boolean;
   actionLabel?: string;
   onActionPress?: () => void;
+  onClosedStorePress?: (store: DeliveryNearbyStore) => void;
   onItemPress?: (item: DealsItem) => void;
 };
 
@@ -53,18 +56,24 @@ export default function Deals({
   isError,
   actionLabel,
   onActionPress,
+  onClosedStorePress,
   onItemPress,
 }: Props) {
-  const { typography } = useTheme();
+  const { spacing, typography } = useTheme();
+  const { gutter } = useWindowClass();
   const { t } = useTranslation('deliveries');
   const navigation = useNavigation<NavigationProp>();
   const [selectedClosedStore, setSelectedClosedStore] = useState<DeliveryNearbyStore | null>(null);
   const isEmpty = !isPending && !isError && items.length === 0;
   const shouldShowAction = Boolean(actionLabel) && !isPending && !isError && items.length > 0;
-  const closedStoreName = useMemo(
-    () => selectedClosedStore?.name?.trim() || t('store_details_closed_store_fallback_name'),
-    [selectedClosedStore?.name, t],
-  );
+  const handleClosedStorePress = useCallback((store: DeliveryNearbyStore) => {
+    if (onClosedStorePress) {
+      onClosedStorePress(store);
+      return;
+    }
+
+    setSelectedClosedStore(store);
+  }, [onClosedStorePress]);
 
   const handleCloseClosedStorePopup = useCallback(() => {
     setSelectedClosedStore(null);
@@ -75,29 +84,32 @@ export default function Deals({
       return;
     }
 
-    navigation.navigate('StoreDetails', { store: selectedClosedStore });
+    pushStoreDetails(navigation, selectedClosedStore);
     setSelectedClosedStore(null);
   }, [navigation, selectedClosedStore]);
   const renderItem = useCallback(
     ({ item }: { item: DealsItem }) => {
       const isClosedStore =
         !isProductItem(item)
-        && (item.isAvailable === false || item.isClosed === true);
+        && (
+          item.isAvailable === false
+          || ('isClosed' in item && item.isClosed === true)
+        );
 
       return (
         <StoreCard
           store={item}
           showClosedOverlay={isClosedStore}
-          onClosedPress={isClosedStore ? () => setSelectedClosedStore(item) : undefined}
+          onClosedPress={isClosedStore ? () => handleClosedStorePress(item) : undefined}
           onPress={onItemPress ? () => onItemPress(item) : undefined}
         />
       );
     },
-    [onItemPress],
+    [handleClosedStorePress, onItemPress],
   );
 
   return (
-    <View style={styles.section}>
+    <View style={[styles.section, { gap: spacing.md, paddingHorizontal: gutter }]}>
       {shouldShowAction ? (
         <SectionActionHeader
           actionLabel={actionLabel!}
@@ -107,11 +119,8 @@ export default function Deals({
       ) : (
         <Text
           weight="extraBold"
-          style={{
-            fontSize: typography.size.h5,
-            letterSpacing: -0.36,
-            lineHeight: typography.lineHeight.h5,
-          }}
+          accessibilityRole="header"
+          style={typography.role.sectionTitle}
         >
           {title}
         </Text>
@@ -129,46 +138,33 @@ export default function Deals({
         <DeliveriesSectionEmptyState
           title={t('multi_vendor_home_section_empty_title')}
           message={t('multi_vendor_home_section_empty_message')}
+          variant="offers"
         />
       ) : (
         <HorizontalList
           data={items}
           keyExtractor={getItemKey}
-          contentContainerStyle={styles.listContent}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          contentContainerStyle={{
+            paddingBottom: spacing.lg,
+            paddingRight: gutter,
+            paddingTop: spacing.xs,
+          }}
+          ItemSeparatorComponent={() => <View style={{ width: spacing.md }} />}
           renderItem={renderItem}
         />
       )}
 
-      <AppPopup
-        description={t('store_details_closed_store_description', { storeName: closedStoreName })}
-        dismissOnOverlayPress
-        onRequestClose={handleCloseClosedStorePopup}
-        primaryAction={{
-          label: t('store_details_close'),
-          onPress: handleCloseClosedStorePopup,
-        }}
-        secondaryAction={{
-          label: t('store_closed_see_menu'),
-          onPress: handleSeeMenu,
-          variant: 'secondary',
-        }}
-        title={t('store_closed_modal_title', { storeName: closedStoreName })}
-        visible={Boolean(selectedClosedStore)}
-      />
+      {onClosedStorePress ? null : (
+        <ClosedStoreMenuPopup
+          onClose={handleCloseClosedStorePopup}
+          onSeeMenu={handleSeeMenu}
+          store={selectedClosedStore}
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  section: {
-    gap: 12,
-    paddingHorizontal: 16,
-  },
-  listContent: {
-    paddingRight: 16,
-  },
-  separator: {
-    width: 12,
-  },
+  section: {},
 });

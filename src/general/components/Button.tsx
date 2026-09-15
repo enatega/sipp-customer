@@ -1,7 +1,8 @@
-import React, { ReactNode } from 'react';
-import { ActivityIndicator, ColorValue, Pressable, StyleProp, StyleSheet, TextStyle, View, ViewStyle } from 'react-native';
+import React, { ReactNode, useRef } from 'react';
+import { ActivityIndicator, Animated, ColorValue, Platform, Pressable, StyleProp, StyleSheet, TextStyle, View, ViewStyle } from 'react-native';
 import Text from './Text';
 import { useTheme } from '../theme/theme';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 
 type Props = {
   label: string;
@@ -12,6 +13,9 @@ type Props = {
   disabled?: boolean
   isLoading?: boolean;
   labelStyle?: StyleProp<TextStyle>;
+  size?: 'compact' | 'default' | 'large';
+  fullWidth?: boolean;
+  accessibilityLabel?: string;
 };
 
 function parseColorToRgb(color?: ColorValue | null) {
@@ -86,8 +90,13 @@ export default function Button({
   isLoading = false,
   disabled = false,
   labelStyle,
+  size = 'default',
+  fullWidth = false,
+  accessibilityLabel,
 }: Props) {
-  const { colors } = useTheme();
+  const { colors, layout, motion, shape, spacing, typography } = useTheme();
+  const isReducedMotionEnabled = useReducedMotion();
+  const pressScale = useRef(new Animated.Value(1)).current;
   const isGhost = variant === 'ghost';
   const isSecondary = variant === 'secondary';
   const isDanger = variant === 'danger';
@@ -111,48 +120,78 @@ export default function Button({
           ? colors.onLight
         : colors.white;
 
+  const animatePress = (toValue: number) => {
+    if (isReducedMotionEnabled) {
+      pressScale.setValue(1);
+      return;
+    }
+
+    Animated.timing(pressScale, {
+      toValue,
+      duration: motion.duration.quick,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const minHeight = size === 'compact'
+    ? layout.touchTarget.minimum
+    : size === 'large'
+      ? 56
+      : layout.touchTarget.comfortable;
+
   return (
     <Pressable
       onPress={onPress}
+      onPressIn={() => animatePress(motion.scale.pressed)}
+      onPressOut={() => animatePress(1)}
       disabled={isDisabled}
       accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ disabled: isDisabled, busy: isLoading }}
-      style={({ pressed }) => [
-        styles.base,
-        {
-          backgroundColor: baseBackgroundColor,
-          borderColor: isGhost ? 'transparent' : colors.border,
-          opacity: isDisabled ? 0.6 : pressed ? 0.85 : 1,
-        },
-        style,
+      android_ripple={Platform.OS === 'android'
+        ? { borderless: false, color: colors.statePressed, foreground: true }
+        : undefined}
+      style={[
+        { borderRadius: shape.radius.control },
+        styles.pressable,
+        fullWidth ? styles.fullWidth : null,
       ]}
     >
-      <View style={styles.content}>
-        {isLoading ? (
-          <ActivityIndicator
-            size="small"
+      <Animated.View
+        style={[
+          styles.base,
+          {
+            backgroundColor: baseBackgroundColor,
+            borderColor: isGhost ? 'transparent' : colors.border,
+            borderRadius: shape.radius.control,
+            minHeight,
+            opacity: isDisabled ? motion.opacity.disabled : 1,
+            paddingHorizontal: size === 'compact' ? spacing.md : spacing.xl,
+            transform: [{ scale: pressScale }],
+          },
+          fullWidth ? styles.fullWidth : null,
+          style,
+        ]}
+      >
+        <View style={[styles.content, { gap: spacing.sm }]}>
+          {isLoading ? <ActivityIndicator size="small" color={contentColor} /> : null}
+          {icon && icon}
+          <Text
+            variant="button"
+            weight="semiBold"
             color={contentColor}
-          />
-        ) : null}
-        {icon && icon}
-        <Text
-          variant="body"
-          weight="semiBold"
-          color={contentColor}
-          style={labelStyle}
-        >
-          {label}
-        </Text>
-      </View>
+            style={[{ fontFamily: typography.fontFamily.semiBold }, labelStyle]}
+          >
+            {label}
+          </Text>
+        </View>
+      </Animated.View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   base: {
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-    borderRadius: 10,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -160,6 +199,12 @@ const styles = StyleSheet.create({
   content: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+  },
+  pressable: {
+    overflow: 'hidden',
+  },
+  fullWidth: {
+    alignSelf: 'stretch',
+    width: '100%',
   },
 });

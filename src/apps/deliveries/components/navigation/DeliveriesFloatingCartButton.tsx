@@ -1,12 +1,14 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useNavigation, type NavigationProp } from '@react-navigation/native';
-import React, { memo, useMemo } from 'react';
-import { Pressable, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import React, { memo, useEffect, useMemo, useRef } from 'react';
+import { Animated, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useCartCount } from '../../hooks/useCart';
 import type { DeliveriesStackParamList } from '../../navigation/types';
 import Text from '../../../../general/components/Text';
 import { useTheme } from '../../../../general/theme/theme';
+import { useReducedMotion } from '../../../../general/hooks/useReducedMotion';
+import PressableScale from '../../../../general/components/PressableScale';
 
 type Props = {
   style?: StyleProp<ViewStyle>;
@@ -14,7 +16,8 @@ type Props = {
 
 function DeliveriesFloatingCartButton({ style }: Props) {
   const navigation = useNavigation<NavigationProp<DeliveriesStackParamList>>();
-  const { colors, typography } = useTheme();
+  const { colors, elevation, motion, shape, spacing, typography } = useTheme();
+  const isReducedMotionEnabled = useReducedMotion();
   const { t } = useTranslation('deliveries');
   const { data } = useCartCount();
 
@@ -23,92 +26,116 @@ function DeliveriesFloatingCartButton({ style }: Props) {
     () => (totalItems > 99 ? '99+' : String(totalItems)),
     [totalItems],
   );
+  const appearance = useRef(new Animated.Value(0)).current;
 
-  if (totalItems <= 0) {
-    return null;
-  }
+  useEffect(() => {
+    if (isReducedMotionEnabled) {
+      appearance.setValue(1);
+      return;
+    }
+
+    appearance.setValue(0.92);
+    Animated.spring(appearance, {
+      toValue: 1,
+      damping: motion.spring.responsive.damping,
+      stiffness: motion.spring.responsive.stiffness,
+      mass: motion.spring.responsive.mass,
+      useNativeDriver: true,
+    }).start();
+  }, [appearance, isReducedMotionEnabled, motion.spring.responsive, totalItems]);
 
   return (
-    <Pressable
+    <PressableScale
       accessibilityLabel={t('cart_title')}
       accessibilityRole="button"
       onPress={() => navigation.navigate('Cart')}
-      style={({ pressed }) => [
-        styles.button,
+      pressedScale={motion.scale.pressed}
+      style={[
         style,
+        styles.target,
+        elevation.overlay,
         {
-          backgroundColor: colors.primary,
-          borderColor: colors.onPrimary,
-          opacity: pressed ? 0.94 : 1,
-          shadowColor: colors.shadowColor,
+          backgroundColor: colors.surfaceElevated,
+          borderRadius: shape.radius.pill,
         },
       ]}
     >
-      <View
-        pointerEvents="none"
-        style={[styles.iconHalo, { backgroundColor: 'rgba(255, 255, 255, 0.14)' }]}
-      />
-      <MaterialCommunityIcons
-        color={colors.onPrimary}
-        name="cart-outline"
-        size={24}
-      />
-      <View
+      <Animated.View
         style={[
-          styles.badge,
+          styles.button,
           {
-            backgroundColor: colors.surface,
-            borderColor: colors.primary,
+            backgroundColor: colors.primary,
+            borderColor: colors.onPrimary,
+            borderRadius: shape.radius.pill,
+            opacity: appearance,
+            transform: [{ scale: appearance }],
           },
         ]}
       >
-        <Text
-          color={colors.primary}
-          style={{
-            fontFamily: typography.fontFamily.semiBold,
-            fontSize: typography.size.xs2,
-            fontVariant: ['tabular-nums'],
-            lineHeight: typography.lineHeight.xxs,
-          }}
-          weight="semiBold"
-        >
-          {countLabel}
-        </Text>
-      </View>
-    </Pressable>
+        <View
+          pointerEvents="none"
+          style={[styles.iconHalo, { backgroundColor: colors.statePressed, borderRadius: shape.radius.pill }]}
+        />
+        <MaterialCommunityIcons color={colors.onPrimary} name="cart-outline" size={28} />
+        {totalItems > 0 ? (
+          <View
+            pointerEvents="none"
+            style={[
+              styles.badge,
+              {
+                backgroundColor: colors.surfaceElevated,
+                borderColor: colors.primary,
+                borderRadius: shape.radius.pill,
+                paddingHorizontal: spacing.xs + 2,
+              },
+            ]}
+          >
+            <Text
+              color={colors.primary}
+              variant="caption"
+              style={{
+                fontFamily: typography.fontFamily.semiBold,
+                fontVariant: ['tabular-nums'],
+              }}
+              weight="semiBold"
+            >
+              {countLabel}
+            </Text>
+          </View>
+        ) : null}
+      </Animated.View>
+    </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
   badge: {
     alignItems: 'center',
-    borderRadius: 999,
     borderWidth: 2,
     justifyContent: 'center',
-    minWidth: 26,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
+    minHeight: 20,
+    minWidth: 20,
+    paddingVertical: 1,
     position: 'absolute',
-    right: -3,
-    top: -5,
+    right: -4,
+    top: -4,
   },
   button: {
     alignItems: 'center',
-    borderRadius: 999,
-    borderWidth: 2,
-    elevation: 8,
-    height: 58,
+    height: 62,
     justifyContent: 'center',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.2,
-    shadowRadius: 18,
-    width: 58,
+    width: 62,
   },
   iconHalo: {
-    borderRadius: 999,
-    height: 34,
+    height: 28,
     position: 'absolute',
-    width: 34,
+    width: 28,
+  },
+  target: {
+    alignItems: 'center',
+    height: 76,
+    justifyContent: 'center',
+    width: 76,
   },
 });
 

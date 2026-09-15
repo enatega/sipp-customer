@@ -4,25 +4,29 @@ import Skeleton from '../../../../../general/components/Skeleton';
 import { useTheme } from '../../../../../general/theme/theme';
 
 export default function StoreDetailMenuCardSkeleton() {
-  const { colors } = useTheme();
+  const { colors, elevation, shape, spacing } = useTheme();
 
   return (
-    <View style={styles.wrapper}>
-      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <View style={[styles.imageArea, { backgroundColor: colors.surfaceSoft }]}>
-          <View style={styles.imageHeader}>
-            <Skeleton height={20} width="34%" borderRadius={6} />
-            <Skeleton height={32} width={32} borderRadius={16} />
-          </View>
-
-          <View style={styles.imageWrapper}>
-            <Skeleton height="62%" width="70%" borderRadius={12} />
-          </View>
-        </View>
-
-        <View style={styles.content}>
-          <Skeleton height={16} width="36%" borderRadius={6} />
-          <Skeleton height={20} width="78%" borderRadius={6} />
+    <View
+      style={[
+        styles.card,
+        elevation.raised,
+        {
+          backgroundColor: colors.surfaceElevated,
+          borderRadius: shape.radius.surface,
+          gap: spacing.md,
+          padding: spacing.md,
+        },
+      ]}
+    >
+      <Skeleton height={112} width={112} borderRadius={shape.radius.control} />
+      <View style={[styles.content, { gap: spacing.sm }]}>
+        <Skeleton height={20} width="78%" borderRadius={shape.radius.xs} />
+        <Skeleton height={15} width="94%" borderRadius={shape.radius.xs} />
+        <Skeleton height={15} width="64%" borderRadius={shape.radius.xs} />
+        <View style={styles.footer}>
+          <Skeleton height={22} width="38%" borderRadius={shape.radius.xs} />
+          <Skeleton height={44} width={44} borderRadius={shape.radius.pill} />
         </View>
       </View>
     </View>
@@ -30,35 +34,18 @@ export default function StoreDetailMenuCardSkeleton() {
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    flexShrink: 0,
-    marginVertical: 6,
-    width: '48%',
-  },
   card: {
-    borderRadius: 12,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  imageArea: {
-    aspectRatio: 1.15,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-  imageHeader: {
-    alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  imageWrapper: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-    paddingBottom: 8,
+    width: '100%',
   },
   content: {
-    gap: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 12,
+    flex: 1,
+    minWidth: 0,
+  },
+  footer: {
+    alignItems: 'flex-end',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 'auto',
   },
 });

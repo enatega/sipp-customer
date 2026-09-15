@@ -40,11 +40,11 @@ export default function DiscoveryCategoryResultsSection<T>({
   emptyState,
   errorState,
 }: Props<T>) {
-  const { typography } = useTheme();
+  const { spacing, typography } = useTheme();
   const isEmpty = !isLoading && !hasError && items.length === 0;
 
   return (
-    <View style={styles.section}>
+    <View style={[styles.section, { gap: spacing.md }]}>
       {actionLabel ? (
         <SectionActionHeader
           actionLabel={actionLabel}
@@ -54,11 +54,8 @@ export default function DiscoveryCategoryResultsSection<T>({
       ) : (
         <Text
           weight="extraBold"
-          style={{
-            fontSize: typography.size.h5,
-            letterSpacing: -0.36,
-            lineHeight: typography.lineHeight.h5,
-          }}
+          accessibilityRole="header"
+          style={typography.role.sectionTitle}
         >
           {title}
         </Text>
@@ -81,8 +78,12 @@ export default function DiscoveryCategoryResultsSection<T>({
         <HorizontalList
           data={items}
           keyExtractor={keyExtractor}
-          contentContainerStyle={styles.listContent}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          contentContainerStyle={{
+            paddingBottom: spacing.lg,
+            paddingRight: spacing.lg,
+            paddingTop: spacing.xs,
+          }}
+          ItemSeparatorComponent={() => <View style={{ width: spacing.md }} />}
           renderItem={({ item }) => renderItem(item)}
         />
       )}
@@ -91,13 +92,5 @@ export default function DiscoveryCategoryResultsSection<T>({
 }
 
 const styles = StyleSheet.create({
-  listContent: {
-    paddingRight: 16,
-  },
-  section: {
-    gap: 12,
-  },
-  separator: {
-    width: 12,
-  },
+  section: {},
 });

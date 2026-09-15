@@ -1,16 +1,18 @@
-import React from "react";
-import { Pressable, StyleSheet, View } from "react-native";
-import { useTranslation } from "react-i18next";
-import Image from "../../../../general/components/Image";
-import Icon from "../../../../general/components/Icon";
-import Text from "../../../../general/components/Text";
-import { useDeliveriesCurrencyLabel } from "../../../../general/stores/useAppConfigStore";
-import { useTheme } from "../../../../general/theme/theme";
-import type { DeliveryDealItem } from "../../api/dealsServiceTypes";
-import type { DeliveryStoreDetailsProduct } from "../../api/types";
-import CartActionControl from "../cart/CartActionControl";
-import CartCountBadge from "../cart/CartCountBadge";
-import type { ProductCardControlState } from "./types";
+import React from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
+import Icon from '../../../../general/components/Icon';
+import Image from '../../../../general/components/Image';
+import PressableScale from '../../../../general/components/PressableScale';
+import Text from '../../../../general/components/Text';
+import { useWindowClass } from '../../../../general/hooks/useWindowClass';
+import { useDeliveriesCurrencyLabel } from '../../../../general/stores/useAppConfigStore';
+import { useTheme } from '../../../../general/theme/theme';
+import type { DeliveryDealItem } from '../../api/dealsServiceTypes';
+import type { DeliveryStoreDetailsProduct } from '../../api/types';
+import CartActionControl from '../cart/CartActionControl';
+import type { ProductCardControlState } from './types';
 
 type Props = {
   onPress: () => void;
@@ -19,9 +21,7 @@ type Props = {
 };
 
 function formatPrice(price: number | null | undefined, currencyLabel: string) {
-  return typeof price === "number"
-    ? `${currencyLabel} ${price.toFixed(2)}`
-    : null;
+  return typeof price === 'number' ? `${currencyLabel} ${price.toFixed(2)}` : null;
 }
 
 type RawDealObject = {
@@ -42,242 +42,221 @@ function getProductDealMeta(product: DeliveryStoreDetailsProduct | DeliveryDealI
   let dealLabel: string | null = null;
   let discountedPrice: number | null = null;
 
-  if (rawDeal && typeof rawDeal === "object" && !Array.isArray(rawDeal)) {
+  if (rawDeal && typeof rawDeal === 'object' && !Array.isArray(rawDeal)) {
     const dealObject = rawDeal as RawDealObject;
-    dealLabel = typeof dealObject.deal_name === "string" ? dealObject.deal_name : null;
+    dealLabel = typeof dealObject.deal_name === 'string' ? dealObject.deal_name : null;
     dealType = dealType ?? dealObject.discount_type ?? null;
-    discountValue =
-      typeof discountValue === "number"
-        ? discountValue
-        : typeof dealObject.discount_value === "number"
-          ? dealObject.discount_value
-          : null;
-    discountedPrice =
-      typeof dealObject.discounted_price === "number" && Number.isFinite(dealObject.discounted_price)
-        ? dealObject.discounted_price
+    discountValue = typeof discountValue === 'number'
+      ? discountValue
+      : typeof dealObject.discount_value === 'number'
+        ? dealObject.discount_value
         : null;
-  } else if (typeof rawDeal === "string") {
+    discountedPrice = typeof dealObject.discounted_price === 'number' &&
+      Number.isFinite(dealObject.discounted_price)
+      ? dealObject.discounted_price
+      : null;
+  } else if (typeof rawDeal === 'string') {
     const trimmedDeal = rawDeal.trim();
-    if (trimmedDeal.length > 0 && trimmedDeal.toLowerCase() !== "no deal.") {
+    if (trimmedDeal.length > 0 && trimmedDeal.toLowerCase() !== 'no deal.') {
       dealLabel = trimmedDeal;
     }
   }
 
-  const normalizedDealType = typeof dealType === "string" ? dealType.toLowerCase() : null;
-  const hasNumericDiscount = typeof discountValue === "number" && Number.isFinite(discountValue) && discountValue > 0;
-
-  const hasDeal = Boolean(dealLabel) || hasNumericDiscount;
+  const normalizedDealType = typeof dealType === 'string' ? dealType.toLowerCase() : null;
+  const hasNumericDiscount = typeof discountValue === 'number' &&
+    Number.isFinite(discountValue) &&
+    discountValue > 0;
   const resolvedOffer = hasNumericDiscount
-    ? normalizedDealType === "percentage"
-      ? `${discountValue} % OFF`
+    ? normalizedDealType === 'percentage'
+      ? `${discountValue}% OFF`
       : `${discountValue} OFF`
     : dealLabel;
-  const originalPrice =
-    typeof rawOriginalPrice === "number" && Number.isFinite(rawOriginalPrice)
-      ? rawOriginalPrice
-      : null;
 
   return {
     discountedPrice,
-    hasDeal,
-    originalPrice,
+    hasDeal: Boolean(dealLabel) || hasNumericDiscount,
+    originalPrice: typeof rawOriginalPrice === 'number' && Number.isFinite(rawOriginalPrice)
+      ? rawOriginalPrice
+      : null,
     resolvedOffer: resolvedOffer ?? null,
   };
 }
 
-export default function StoreMenuProductCard({
-  onPress,
-  product,
-  state,
-}: Props) {
-  const { t } = useTranslation("deliveries");
-  const { colors } = useTheme();
+export default function StoreMenuProductCard({ onPress, product, state }: Props) {
+  const { t } = useTranslation('deliveries');
+  const { colors, elevation, shape, spacing } = useTheme();
+  const { isCompact } = useWindowClass();
   const currencyLabel = useDeliveriesCurrencyLabel();
   const { discountedPrice, hasDeal, originalPrice, resolvedOffer } = getProductDealMeta(product);
-  const basePrice = typeof product.price === "number" ? product.price : null;
-  const effectivePrice =
-    typeof discountedPrice === "number" && Number.isFinite(discountedPrice)
-      ? discountedPrice
-      : basePrice;
-  const priceLabel = formatPrice(effectivePrice, currencyLabel);
-  const strikePrice =
-    typeof discountedPrice === "number"
-      ? basePrice
-      : originalPrice;
-  const productImageUri =
-    product.imageUrl || "https://placehold.co/400x400.png";
-  const imageBackgroundColor = hasDeal
-    ? colors.storeMenuAccentOrange
-    : colors.storeMenuAccentLime;
+  const basePrice = typeof product.price === 'number' ? product.price : null;
+  const effectivePrice = typeof discountedPrice === 'number' && Number.isFinite(discountedPrice)
+    ? discountedPrice
+    : basePrice;
+  const strikePrice = typeof discountedPrice === 'number' ? basePrice : originalPrice;
+  const description = 'shortDescription' in product
+    ? product.shortDescription ?? product.description
+    : null;
+  const storeProduct = product as DeliveryStoreDetailsProduct;
+  const productImageUrl = [
+    product.imageUrl,
+    storeProduct.category?.imageUrl,
+    storeProduct.subcategory?.imageUrl,
+  ].find((value): value is string => typeof value === 'string' && value.trim().length > 0) ?? null;
+  const [hasImageError, setHasImageError] = React.useState(false);
+  const imageSize = isCompact ? 112 : 128;
+
+  React.useEffect(() => {
+    setHasImageError(false);
+  }, [productImageUrl]);
 
   return (
-    <Pressable onPress={onPress} style={styles.container}>
+    <PressableScale
+      accessibilityLabel={product.name}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={[
+        styles.card,
+        elevation.subtle,
+        {
+          backgroundColor: colors.surfaceElevated,
+          borderRadius: shape.radius.surface,
+          gap: spacing.md,
+          padding: spacing.md,
+        },
+      ]}
+    >
       <View
         style={[
-          styles.card,
+          styles.imageFrame,
           {
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-            shadowColor: colors.shadowColor,
+            backgroundColor: hasDeal ? colors.cardPeach : colors.surfaceSunken,
+            borderRadius: shape.radius.control,
+            height: imageSize,
+            width: imageSize,
           },
         ]}
       >
-        <View
-          style={[styles.imageArea, { backgroundColor: imageBackgroundColor }]}
-        >
+        {!productImageUrl || hasImageError ? (
+          <LinearGradient
+            colors={[colors.primarySoft, colors.surfaceSunken]}
+            end={{ x: 0.9, y: 1 }}
+            start={{ x: 0.1, y: 0 }}
+            style={[StyleSheet.absoluteFill, styles.fallback]}
+          >
+            <Icon color={colors.primary} name="restaurant-outline" size={30} type="Ionicons" />
+          </LinearGradient>
+        ) : null}
+        {productImageUrl && !hasImageError ? (
           <Image
+            accessibilityIgnoresInvertColors
+            accessible={false}
+            fadeDuration={Platform.OS === 'android' ? 0 : 140}
+            onError={() => setHasImageError(true)}
             resizeMode="cover"
-            source={{ uri: productImageUri }}
-            style={styles.backgroundImage}
+            source={{ uri: productImageUrl }}
+            style={StyleSheet.absoluteFill}
           />
+        ) : null}
+      </View>
 
-          <View style={styles.header}>
-            <View style={styles.badgeSlot}>
-              {hasDeal && resolvedOffer ? (
-                <View
-                  style={[styles.badge, { backgroundColor: colors.secondary }]}
-                >
-                  <Icon
-                    color={colors.blue800}
-                    name="pricetag-outline"
-                    size={11}
-                    type="Ionicons"
-                  />
-                  <Text
-                    style={[styles.badgeText, { color: colors.blue800 }]}
-                    weight="medium"
-                  >
-                    {resolvedOffer}
-                  </Text>
-                </View>
-              ) : null}
-            </View>
-
-            <CartActionControl
-              accessibilityLabel={t("store_details_add_product", {
-                item: product.name,
-              })}
-              count={state.controlCount}
-              disabled={state.isDisabled}
-              mode={state.controlMode}
-              onAdd={state.handleAdd}
-              onDecrement={state.handleDecrement}
-              onIncrement={state.handleIncrement}
-              size="medium"
-              style={styles.action}
-            />
+      <View style={[styles.content, { gap: spacing.xs }]}>
+        <Text numberOfLines={2} variant="cardTitle" weight="bold">
+          {product.name}
+        </Text>
+        {description?.trim() ? (
+          <Text color={colors.textSubtle} numberOfLines={2} variant="caption">
+            {description.trim()}
+          </Text>
+        ) : null}
+        {hasDeal && resolvedOffer ? (
+          <View
+            style={[
+              styles.offerChip,
+              {
+                backgroundColor: colors.primarySoft,
+                borderRadius: shape.radius.pill,
+                gap: spacing.xs,
+              },
+            ]}
+          >
+            <Icon color={colors.primary} name="pricetag-outline" size={12} type="Ionicons" />
+            <Text color={colors.primary} numberOfLines={1} variant="badge" weight="bold">
+              {resolvedOffer}
+            </Text>
           </View>
+        ) : null}
 
-          {state.shouldShowCountBadge ? (
-            <CartCountBadge
-              count={state.totalQuantity}
-              style={styles.countBadge}
-            />
-          ) : null}
-        </View>
-
-        <View style={styles.content}>
-          {priceLabel ? (
-            <View style={{ flexDirection: "row", gap: 6 }}>
-              {typeof strikePrice === "number" ? (
-                <Text
-                  style={[
-                    styles.price,
-                    {
-                      color: colors.mutedText,
-                      textDecorationLine: "line-through",
-                    },
-                  ]}
-                  weight="medium"
-                >
-                  {formatPrice(strikePrice, currencyLabel)}
-                </Text>
-              ) : null}
+        <View style={styles.footer}>
+          <View style={[styles.priceGroup, { gap: spacing.xs }]}>
+            {typeof strikePrice === 'number' ? (
               <Text
-                style={[styles.price, { color: colors.primary }]}
+                color={colors.textSubtle}
+                style={styles.strikePrice}
+                variant="caption"
                 weight="medium"
               >
-                {priceLabel}
+                {formatPrice(strikePrice, currencyLabel)}
               </Text>
-            </View>
-          ) : null}
-          <Text
-            style={[styles.title, { color: colors.text }]}
-            numberOfLines={1}
-            weight="semiBold"
-          >
-            {product.name}
-          </Text>
+            ) : null}
+            {effectivePrice !== null ? (
+              <Text color={colors.textStrong} variant="numeric" weight="extraBold">
+                {formatPrice(effectivePrice, currencyLabel)}
+              </Text>
+            ) : null}
+          </View>
+
+          <CartActionControl
+            accessibilityLabel={t('store_details_add_product', { item: product.name })}
+            count={state.controlCount}
+            disabled={state.isDisabled}
+            mode={state.controlMode}
+            onAdd={state.handleAdd}
+            onDecrement={state.handleDecrement}
+            onIncrement={state.handleIncrement}
+            size="medium"
+          />
         </View>
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
-  action: {
-    flexShrink: 0,
-  },
-  backgroundImage: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  badge: {
-    alignItems: "center",
-    borderRadius: 6,
-    flexDirection: "row",
-    gap: 4,
+  offerChip: {
+    alignSelf: 'flex-start',
+    alignItems: 'center',
+    flexDirection: 'row',
+    maxWidth: '100%',
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    alignSelf: "flex-start",
-  },
-  badgeSlot: {
-    flex: 1,
-    paddingRight: 8,
-  },
-  badgeText: {
-    fontSize: 12,
-    lineHeight: 18,
+    paddingVertical: 5,
   },
   card: {
-    borderRadius: 12,
-    borderWidth: 1,
-    overflow: "hidden",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-  },
-  container: {
-    flexShrink: 0,
-    marginVertical: 6,
-    width: "48%",
+    flexDirection: 'row',
+    width: '100%',
   },
   content: {
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 12,
+    flex: 1,
+    justifyContent: 'space-between',
+    minWidth: 0,
   },
-  countBadge: {
-    bottom: 8,
-    left: 10,
-    position: "absolute",
+  footer: {
+    alignItems: 'flex-end',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 'auto',
   },
-  header: {
-    alignItems: "flex-start",
-    flexDirection: "row",
-    justifyContent: "space-between",
+  fallback: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  imageArea: {
-    aspectRatio: 1.15,
-    overflow: "hidden",
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+  imageFrame: {
+    overflow: 'hidden',
   },
-  price: {
-    fontSize: 12,
-    lineHeight: 18,
+  priceGroup: {
+    flex: 1,
+    minWidth: 0,
   },
-  title: {
-    fontSize: 14,
-    lineHeight: 22,
+  strikePrice: {
+    textDecorationLine: 'line-through',
   },
 });

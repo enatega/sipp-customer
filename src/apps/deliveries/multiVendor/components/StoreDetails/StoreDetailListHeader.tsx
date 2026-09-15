@@ -1,309 +1,384 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
-import { ImageBackground, StyleSheet, View } from 'react-native';
+import {
+  Image as RNImage,
+  Platform,
+  StyleSheet,
+  View,
+  type LayoutChangeEvent,
+} from 'react-native';
+import Animated, {
+  Extrapolation,
+  interpolate,
+  type SharedValue,
+  useAnimatedStyle,
+} from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import SearchInput from '../../../../../general/components/search/SearchInput';
+import Icon from '../../../../../general/components/Icon';
+import IconButton from '../../../../../general/components/IconButton';
 import Image from '../../../../../general/components/Image';
+import Surface from '../../../../../general/components/Surface';
 import Text from '../../../../../general/components/Text';
+import { useReducedMotion } from '../../../../../general/hooks/useReducedMotion';
+import { useWindowClass } from '../../../../../general/hooks/useWindowClass';
 import { useTheme } from '../../../../../general/theme/theme';
-import StoreDetailActionButton from './StoreDetailActionButton';
-import FavouriteHeartButton from '../favourites/FavouriteHeartButton';
+import StoreDetailHeroCurve from './StoreDetailHeroCurve';
 import StoreDetailInfoRow from './StoreDetailInfoRow';
-import StoreDetailSubcategory from './StoreDetailSubcategory';
-import StoreDetailTabs from './StoreDetailTabs';
-import type {
-  DeliveryStoreDetailsFilterItem,
-} from '../../../api/types';
-import { typography } from '../../../../../general/theme/typography';
+import { STORE_DETAIL_HERO_HEIGHT } from './StoreDetailNavigationHeader';
 
 type Props = {
-  activeCategoryId: string | null;
-  activeSubcategoryId: string | null;
-  categories: DeliveryStoreDetailsFilterItem[];
   coverImageUrl: string;
   deliveryFee?: string | null;
+  deliveryTime?: string | null;
   distance?: string | null;
-  email?: string | null;
-  heroTitle: string;
   hours?: string | null;
+  isStoreAvailable?: boolean;
   logoImageUrl: string;
-  onBackPress: () => void;
-  onCategorySelect: (categoryId: string | null) => void;
-  onFavouritePress: () => void;
+  minimumOrder?: string | null;
   onInfoPress: () => void;
-  onSharePress: () => void;
-  onSubcategorySelect: (subcategoryId: string) => void;
-  phone?: string | null;
+  onLayout?: (event: LayoutChangeEvent) => void;
   rating?: number | null;
   reviewCount?: number | null;
-  isFavourite?: boolean;
-  isFavouriteLoading?: boolean;
-  searchValue: string;
-  sectionTitle: string;
+  scrollY: SharedValue<number>;
   storeName: string;
-  subcategories: DeliveryStoreDetailsFilterItem[];
-  onSearchChange: (value: string) => void;
+  tagLine?: string | null;
+  storeType?: string | null;
 };
 
+const AnimatedImage = Animated.createAnimatedComponent(RNImage);
+
 export default function StoreDetailListHeader({
-  activeCategoryId,
-  activeSubcategoryId,
-  categories,
   coverImageUrl,
   deliveryFee,
+  deliveryTime,
   distance,
-  email,
-  heroTitle,
   hours,
+  isStoreAvailable = true,
   logoImageUrl,
-  onBackPress,
-  onCategorySelect,
-  onFavouritePress,
+  minimumOrder,
   onInfoPress,
-  onSharePress,
-  onSearchChange,
-  onSubcategorySelect,
-  phone,
+  onLayout,
   rating,
   reviewCount,
-  isFavourite = false,
-  isFavouriteLoading = false,
-  searchValue,
-  sectionTitle,
+  scrollY,
   storeName,
-  subcategories,
+  tagLine,
+  storeType,
 }: Props) {
-  const { colors, typography } = useTheme();
+  const { colors, shape, spacing } = useTheme();
   const { t } = useTranslation('deliveries');
-  const insets = useSafeAreaInsets();
-  const showsCategories = categories.length > 0;
-  const showsSubcategories = subcategories.length > 0;
+  const { gutter } = useWindowClass();
+  const isReducedMotionEnabled = useReducedMotion();
+  const hasRating = typeof rating === 'number' && Number.isFinite(rating) && rating > 0;
+  const hasInfoMetrics = Boolean(
+    deliveryFee?.trim()
+    || deliveryTime?.trim()
+    || distance?.trim()
+    || minimumOrder?.trim(),
+  );
+
+  const heroImageStyle = useAnimatedStyle(() => {
+    if (isReducedMotionEnabled) {
+      return { transform: [{ translateY: 0 }, { scale: 1 }] };
+    }
+
+    return {
+      transform: [
+        {
+          translateY: interpolate(
+            scrollY.value,
+            [-120, 0, STORE_DETAIL_HERO_HEIGHT],
+            [-24, 0, 38],
+            Extrapolation.CLAMP,
+          ),
+        },
+        {
+          scale: interpolate(
+            scrollY.value,
+            [-120, 0, STORE_DETAIL_HERO_HEIGHT],
+            [1.18, 1.04, 1],
+            Extrapolation.CLAMP,
+          ),
+        },
+      ],
+    };
+  }, [isReducedMotionEnabled]);
+
+  const heroCopyStyle = useAnimatedStyle(() => {
+    if (isReducedMotionEnabled) {
+      return { opacity: 1, transform: [{ translateY: 0 }] };
+    }
+
+    const progress = interpolate(
+      scrollY.value,
+      [0, STORE_DETAIL_HERO_HEIGHT * 0.58],
+      [0, 1],
+      Extrapolation.CLAMP,
+    );
+
+    return {
+      opacity: 1 - progress,
+      transform: [{ translateY: -10 * progress }],
+    };
+  }, [isReducedMotionEnabled]);
+
+  const identityCardStyle = useAnimatedStyle(() => {
+    if (isReducedMotionEnabled) {
+      return { transform: [{ translateY: 0 }] };
+    }
+
+    const progress = interpolate(
+      scrollY.value,
+      [STORE_DETAIL_HERO_HEIGHT * 0.34, STORE_DETAIL_HERO_HEIGHT * 0.78],
+      [0, 1],
+      Extrapolation.CLAMP,
+    );
+
+    return {
+      transform: [{ translateY: -6 * progress }],
+    };
+  }, [isReducedMotionEnabled]);
 
   return (
-    <View style={styles.wrapper}>
-      <View style={styles.heroContainer}>
-        <ImageBackground
+    <View onLayout={onLayout} style={[styles.wrapper, { paddingBottom: spacing.sm }]}>
+      <View
+        style={[
+          styles.heroContainer,
+          { backgroundColor: colors.surfaceSunken, height: STORE_DETAIL_HERO_HEIGHT },
+        ]}
+      >
+        <AnimatedImage
+          accessibilityIgnoresInvertColors
+          accessible={false}
+          renderToHardwareTextureAndroid={Platform.OS === 'android'}
+          resizeMode="cover"
           source={{ uri: coverImageUrl }}
-          style={[styles.heroImage, { backgroundColor: colors.storeHeroPrimary }]}
-        >
-          <View
+          style={[styles.heroImage, heroImageStyle]}
+        />
+        <LinearGradient
+          colors={[colors.mediaScrimStart, 'transparent', colors.mediaScrimEnd]}
+          end={{ x: 0.5, y: 1 }}
+          locations={[0, 0.46, 1]}
+          pointerEvents="none"
+          start={{ x: 0.5, y: 0 }}
+          style={StyleSheet.absoluteFill}
+        />
+        {tagLine?.trim() ? (
+          <Animated.View
+            pointerEvents="none"
             style={[
-              styles.heroContent,
+              styles.heroCopy,
+              heroCopyStyle,
               {
-
-                paddingTop: insets.top + 12,
+                bottom: 58,
+                right: gutter + spacing.xs,
               },
             ]}
           >
-            <View style={styles.headerRow}>
-              <StoreDetailActionButton
-                accessibilityLabel={t('store_details_action_back')}
-                iconName="arrow-back"
-                onPress={onBackPress}
-              />
+            <Text
+              color={colors.white}
+              numberOfLines={3}
+              style={styles.heroTagLine}
+              variant="sectionTitle"
+              weight="medium"
+            >
+              {tagLine.trim()}
+            </Text>
+          </Animated.View>
+        ) : null}
+        <StoreDetailHeroCurve fillColor={colors.canvas} scrollY={scrollY} />
+      </View>
 
-              <View style={styles.actionGroup}>
-                <StoreDetailActionButton
-                  accessibilityLabel={t('store_details_action_info')}
-                  iconName="info"
-                  iconType="Feather"
-                  onPress={onInfoPress}
-                />
-                <FavouriteHeartButton
-                  accessibilityLabel={t('store_details_action_favorite')}
-                  isFavourite={isFavourite}
-                  isLoading={isFavouriteLoading}
-                  outlined
-                  onPress={onFavouritePress}
-                  tone="neutral"
-                  style={styles.favButton}
-                />
-                <StoreDetailActionButton
-                  accessibilityLabel={t('store_details_action_share')}
-                  iconName="share-2"
-                  iconType="Feather"
-                  onPress={onSharePress}
-                />
-              </View>
-            </View>
-
-            {heroTitle.trim() ? (
-              <Text
-                style={[
-                  styles.heroTitle,
-                  {
-                    color: colors.white,
-                    fontSize: typography.size.xxl + 8,
-                    lineHeight: 40,
-                  },
-                ]}
-                weight="extraBold"
-              >
-                {heroTitle}
-              </Text>
-            ) : null}
-          </View>
-        </ImageBackground>
-
-        <View
+      <Animated.View
+        style={[
+          identityCardStyle,
+          {
+            marginHorizontal: gutter,
+            marginTop: -spacing.hero,
+          },
+        ]}
+      >
+        <Surface
+          elevation="raised"
+          tone="elevated"
           style={[
-            styles.logoCard,
             {
-              backgroundColor: colors.surface,
-              borderColor: colors.surfaceSoft,
-              shadowColor: colors.shadowColor,
+              borderRadius: shape.radius.sheet,
+              gap: spacing.md,
+              padding: spacing.xl,
             },
           ]}
         >
-          <Image resizeMode="cover" source={{ uri: logoImageUrl }} style={styles.logoImage} />
-        </View>
-      </View>
-
-      <View style={styles.content}>
-        <Text
-          style={[styles.storeName, { color: colors.text, fontSize: typography.size.h5 }]}
-          weight="extraBold"
-        >
-          {storeName}
-        </Text>
-
-        <StoreDetailInfoRow
-          deliveryFee={deliveryFee}
-          distance={distance}
-          email={email}
-          hours={hours}
-          phone={phone}
-          rating={rating}
-          reviewCount={reviewCount}
-        />
-
-        <SearchInput
-          onChangeText={onSearchChange}
-          placeholder={t('store_details_search_placeholder')}
-          value={searchValue}
-        />
-      </View>
-
-      <View style={styles.filters}>
-        {showsCategories ? (
-          <StoreDetailTabs
-            activeCategoryId={activeCategoryId}
-            categories={categories}
-            onSelect={onCategorySelect}
-          />
-        ) : null}
-
-        {showsSubcategories ? (
-          <View style={styles.subcategoryContainer}>
-            <StoreDetailSubcategory
-              activeSubcategoryId={activeSubcategoryId}
-              onSelect={onSubcategorySelect}
-              subcategories={subcategories}
+          <View style={[styles.identityRow, { gap: spacing.md }]}>
+            <Image
+              resizeMode="cover"
+              source={{ uri: logoImageUrl }}
+              style={[
+                styles.logoImage,
+                {
+                  backgroundColor: colors.surfaceSunken,
+                  borderColor: colors.divider,
+                  borderRadius: shape.radius.control,
+                },
+              ]}
+            />
+            <View style={styles.identityCopy}>
+              <Text
+                numberOfLines={2}
+                maxFontSizeMultiplier={1.35}
+                style={styles.storeName}
+                variant="title"
+                weight="bold"
+              >
+                {storeName}
+              </Text>
+              {storeType?.trim() ? (
+                <Text color={colors.textSubtle} numberOfLines={1} variant="supporting">
+                  {storeType}
+                </Text>
+              ) : null}
+            </View>
+            <IconButton
+              accessibilityLabel={t('store_details_action_info')}
+              icon={(
+                <Icon color={colors.textSubtle} name="info" size={19} type="Feather" />
+              )}
+              onPress={onInfoPress}
+              variant="plain"
             />
           </View>
-        ) : null}
 
-        {!showsSubcategories ? (
-          <View style={styles.sectionHeader}>
-            <Text
-              style={[
-                styles.sectionTitle,
-                { color: colors.text, fontSize: typography.size.h5 },
-              ]}
-              weight="extraBold"
-            >
-              {sectionTitle}
-            </Text>
+          <View style={styles.storeMetaRow}>
+            <View style={[styles.availabilityRow, { gap: spacing.xs }]}>
+              <View
+                style={[
+                  styles.statusDot,
+                  {
+                    backgroundColor: isStoreAvailable ? colors.success : colors.danger,
+                    borderRadius: shape.radius.pill,
+                  },
+                ]}
+              />
+              <Text
+                color={isStoreAvailable ? colors.successText : colors.dangerText}
+                numberOfLines={1}
+                variant="caption"
+                weight="bold"
+              >
+                {t(isStoreAvailable ? 'store_status_open' : 'store_status_closed')}
+              </Text>
+              {hours?.trim() ? (
+                <Text
+                  color={colors.textSubtle}
+                  ellipsizeMode="tail"
+                  numberOfLines={1}
+                  style={styles.hoursLabel}
+                  variant="caption"
+                >
+                  · {hours.trim()}
+                </Text>
+              ) : null}
+            </View>
+
+            {hasRating ? (
+              <View style={[styles.ratingRow, { gap: spacing.xs }]}>
+                <Icon color={colors.warning} name="star" size={15} type="Ionicons" />
+                <Text color={colors.textSubtle} numberOfLines={1} variant="caption" weight="semiBold">
+                  {rating.toFixed(1)}{reviewCount ? ` (${reviewCount})` : ''}
+                </Text>
+              </View>
+            ) : null}
           </View>
-        ) : null}
-      </View>
+
+          {hasInfoMetrics ? (
+            <>
+              <View style={[styles.divider, { backgroundColor: colors.divider }]} />
+              <StoreDetailInfoRow
+                deliveryFee={deliveryFee}
+                deliveryTime={deliveryTime}
+                distance={distance}
+                minimumOrder={minimumOrder}
+              />
+            </>
+          ) : null}
+        </Surface>
+      </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    backgroundColor: 'transparent',
-  },
-  heroContainer: {
-    marginBottom: 12,
-  },
-  heroImage: {
-    height: 270,
-    overflow: 'hidden',
-  },
-  heroContent: {
+  availabilityRow: {
+    alignItems: 'center',
     flex: 1,
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 30,
-  },
-  headerRow: {
-    alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    minWidth: 0,
   },
-  actionGroup: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  favButton: {
-    position: 'relative',
-    top: undefined,
-    right: undefined,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  heroTitle: {
-    letterSpacing: -0.8,
-    maxWidth: 232,
-    paddingBottom: 18,
-  },
-  logoCard: {
-    alignItems: 'center',
-    alignSelf: 'center',
-    borderRadius: 14,
-    borderWidth: 1,
-    height: 96,
-    justifyContent: 'center',
-    marginTop: -48,
-    overflow: 'hidden',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    width: 96,
-  },
-  logoImage: {
-    height: '100%',
+  divider: {
+    height: StyleSheet.hairlineWidth,
     width: '100%',
   },
-  content: {
-    gap: 14,
-    paddingHorizontal: 16,
-    paddingTop: 0,
+  heroContainer: {
+    overflow: 'hidden',
+  },
+  heroImage: {
+    height: STORE_DETAIL_HERO_HEIGHT + 64,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: -32,
+  },
+  heroCopy: {
+    alignItems: 'flex-end',
+    maxWidth: '48%',
+    position: 'absolute',
+  },
+  heroTagLine: {
+    fontStyle: 'italic',
+    lineHeight: 27,
+    textAlign: 'right',
+    textShadowColor: 'rgba(0, 0, 0, 0.42)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 7,
+  },
+  hoursLabel: {
+    flex: 1,
+    minWidth: 0,
+  },
+  identityCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  identityRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  logoImage: {
+    borderWidth: StyleSheet.hairlineWidth,
+    height: 68,
+    width: 68,
+  },
+  ratingRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexShrink: 0,
+  },
+  statusDot: {
+    flexShrink: 0,
+    height: 9,
+    width: 9,
+  },
+  storeMetaRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   storeName: {
-    letterSpacing: -0.4,
-    lineHeight: typography.lineHeight.h5 + 2,
-    paddingBottom: 2,
-    textAlign: 'center',
+    flexShrink: 1,
+    paddingVertical: 2,
   },
-  filters: {
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-  },
-  subcategoryContainer: {
-    paddingTop: 6,
-  },
-  sectionHeader: {
-    // paddingVertical: 6,
-  },
-  sectionTitle: {
-    letterSpacing: -0.36,
-    paddingTop: 18,
-    paddingBottom: 12,
+  wrapper: {
+    backgroundColor: 'transparent',
+    overflow: 'visible',
   },
 });

@@ -25,31 +25,18 @@ type Props = {
 };
 
 export default function OurServicesSection({ onSelectMiniApp }: Props) {
-  const { colors, typography } = useTheme();
+  const { colors, shape, spacing, typography } = useTheme();
   const { t } = useTranslation('general');
 
   const allItems: ServiceItem[] = [
     { id: 'deliveries', title: t('service_deliveries'), icon: serviceIcons.deliveries, background: colors.cardSoft },
-    // Hidden for deliveries-only customer UI.
-    // {
-    //   id: 'appointments',
-    //   title: t('service_general_appointment'),
-    //   icon: serviceIcons.appointments,
-    //   background: colors.cardLavender,
-    //   params: {
-    //     screen: 'MultiVendor',
-    //   },
-    // },
-    // { id: 'homeVisits', title: t('service_home_visit'), icon: serviceIcons.homeVisits, background: colors.cardMint },
-    // { id: 'rideSharing', title: t('service_ride_sharing'), icon: serviceIcons.rideSharing, background: colors.cardPeach },
-    // { id: 'developerMode', title: t('developer_mode'), icon: serviceIcons.homeVisits, background: colors.cardPeach },
   ];
 
   const items = allItems.filter((service) => APP_ROUTE_BY_ID[service.id] != null);
 
   return (
-    <View style={styles.section}>
-      <Text variant="subtitle" weight="bold" style={styles.sectionTitle}>
+    <View style={[styles.section, { gap: spacing.md }]}> 
+      <Text variant="subtitle" weight="semiBold" accessibilityRole="header" style={styles.sectionTitle}>
         {t('services_title')}
       </Text>
       <View style={styles.grid}>
@@ -58,8 +45,21 @@ export default function OurServicesSection({ onSelectMiniApp }: Props) {
             key={service.id}
             onPress={() => onSelectMiniApp?.(service.id, service.params)}
             style={styles.cell}
+            accessibilityRole="button"
+            accessibilityLabel={service.title}
           >
-            <Card style={[styles.card, { backgroundColor: service.background }]}>
+            <Card
+              elevation="raised"
+              style={[
+                styles.card,
+                {
+                  backgroundColor: service.background,
+                  borderRadius: shape.radius.surface,
+                  paddingHorizontal: spacing.lg,
+                  paddingVertical: spacing.md,
+                },
+              ]}
+            >
               <Text
                 weight="semiBold"
                 numberOfLines={2}
@@ -67,7 +67,7 @@ export default function OurServicesSection({ onSelectMiniApp }: Props) {
               >
                 {service.title}
               </Text>
-              <View style={[styles.iconWrap, { backgroundColor: colors.surface }]}>
+              <View style={[styles.iconWrap, { backgroundColor: colors.surface, borderRadius: shape.radius.control }]}> 
                 <Image source={service.icon} style={styles.icon} />
               </View>
             </Card>
@@ -79,9 +79,7 @@ export default function OurServicesSection({ onSelectMiniApp }: Props) {
 }
 
 const styles = StyleSheet.create({
-  section: {
-    gap: 12,
-  },
+  section: {},
   sectionTitle: {
     marginTop: 8,
   },
@@ -95,13 +93,9 @@ const styles = StyleSheet.create({
   },
   card: {
     minHeight: 80,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
     justifyContent: 'space-between',
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
-    overflow: 'hidden',
   },
   title: {
     maxWidth: 90,
@@ -109,7 +103,6 @@ const styles = StyleSheet.create({
   iconWrap: {
     width: 46,
     height: 46,
-    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },

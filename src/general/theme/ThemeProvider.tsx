@@ -23,12 +23,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const THEME_STORAGE_KEY = 'super_app_theme_mode';
   const systemScheme = useColorScheme();
   const deliveriesAppSettings = useAppConfigStore((state) => state.deliveries.appSettings);
-  const [themeMode, setThemeModeState] = useState<ThemeMode>('light');
+  const [themeMode, setThemeModeState] = useState<ThemeMode>('system');
   const [activeMiniApp, setActiveMiniAppState] = useState<ThemedMiniAppId>('general');
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-       console.log('Loaded theme mode from storage:');
     SecureStore.getItemAsync(THEME_STORAGE_KEY)
       .then((savedMode: string | null) => {
      
@@ -44,7 +43,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setThemeMode = async (mode: ThemeMode) => {
-    console.log('Setting theme mode to:', mode);
     setThemeModeState(mode);
     await SecureStore.setItemAsync(THEME_STORAGE_KEY, mode);
   };

@@ -1,4 +1,4 @@
-import { FlatList, StyleSheet, TouchableOpacity, View } from "react-native";
+import { FlatList, Pressable, StyleSheet, View } from "react-native";
 import React from "react";
 import { ActivityIndicator } from "react-native";
 import RecentSearch from "./RecentSearch";
@@ -17,38 +17,45 @@ const RecentSearches = ({
   isClearingRecentSearches,
 }: RecentSearchesProps) => {
   const { t } = useTranslation("general");
-  const { colors, typography } = useTheme();
+  const { colors, spacing } = useTheme();
 
   return (
     <>
-      <View style={styles.headerContainer}>
+      <View
+        style={[
+          styles.headerContainer,
+          { paddingBottom: spacing.sm, paddingTop: spacing.sm },
+        ]}
+      >
         <Text
+          accessibilityRole="header"
+          variant="sectionTitle"
           weight="extraBold"
-          style={{
-            fontSize: typography.size.h5,
-            lineHeight: typography.lineHeight.h5,
-          }}
         >
           {t("recent_searches")}
         </Text>
-        <TouchableOpacity
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{
+            disabled: Boolean(isClearingRecentSearches || isDeletingRecentSearch),
+          }}
           hitSlop={12}
           onPress={onDeleteAllPress}
           disabled={Boolean(isClearingRecentSearches || isDeletingRecentSearch)}
-          activeOpacity={0.7}
+          style={({ pressed }) => ({ opacity: pressed ? 0.72 : 1 })}
         >
           {isClearingRecentSearches ? (
             <ActivityIndicator size="small" color={colors.primary} />
           ) : (
             <Text
               color={colors.primary}
-              weight="medium"
-              style={{ fontSize: typography.size.sm2, lineHeight: 22 }}
+              variant="label"
+              weight="semiBold"
             >
               {t("clear_all")}
             </Text>
           )}
-        </TouchableOpacity>
+        </Pressable>
       </View>
       <FlatList
         data={items}
@@ -77,7 +84,5 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingTop: 8,
-    paddingBottom: 12,
   },
 });

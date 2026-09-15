@@ -2,7 +2,19 @@ import React from "react";
 import { StyleProp, Text as RNText, TextStyle } from "react-native";
 import { useTheme } from "../theme/theme";
 
-export type TextVariant = "title" | "subtitle" | "body" | "caption";
+export type TextVariant =
+  | "display"
+  | "title"
+  | "subtitle"
+  | "sectionTitle"
+  | "cardTitle"
+  | "body"
+  | "supporting"
+  | "label"
+  | "caption"
+  | "badge"
+  | "numeric"
+  | "button";
 
 type Props = {
   children: React.ReactNode;
@@ -11,6 +23,10 @@ type Props = {
   weight?: "regular" | "medium" | "semiBold" | "bold" | "extraBold";
   color?: string;
   numberOfLines?: number;
+  allowFontScaling?: boolean;
+  maxFontSizeMultiplier?: number;
+  accessibilityRole?: "header" | "text";
+  ellipsizeMode?: "head" | "middle" | "tail" | "clip";
 };
 
 export default function Text({
@@ -20,31 +36,38 @@ export default function Text({
   weight = "regular",
   color,
   numberOfLines,
+  allowFontScaling = true,
+  maxFontSizeMultiplier = 1.8,
+  accessibilityRole,
+  ellipsizeMode,
 }: Props) {
   const { colors, typography } = useTheme();
 
   const variantStyle: TextStyle = (() => {
     switch (variant) {
+      case "display":
+        return typography.role.display;
       case "title":
-        return {
-          fontSize: typography.size.xxl,
-          lineHeight: typography.lineHeight.xl,
-        };
+        return typography.role.screenTitle;
       case "subtitle":
-        return {
-          fontSize: typography.size.lg,
-          lineHeight: typography.lineHeight.lg,
-        };
+      case "sectionTitle":
+        return typography.role.sectionTitle;
+      case "cardTitle":
+        return typography.role.cardTitle;
+      case "supporting":
+        return typography.role.supporting;
+      case "label":
+        return typography.role.label;
       case "caption":
-        return {
-          fontSize: typography.size.sm,
-          lineHeight: typography.lineHeight.sm,
-        };
+        return typography.role.caption;
+      case "badge":
+        return typography.role.badge;
+      case "numeric":
+        return typography.role.numeric;
+      case "button":
+        return typography.role.button;
       default:
-        return {
-          fontSize: typography.size.md,
-          lineHeight: typography.lineHeight.md,
-        };
+        return typography.role.body;
     }
   })();
 
@@ -56,11 +79,15 @@ export default function Text({
           fontFamily: typography.fontFamily.regular,
           fontWeight: typography.fontWeight[weight] as any,
         },
-        
+
         variantStyle,
         style,
       ]}
       numberOfLines={numberOfLines}
+      allowFontScaling={allowFontScaling}
+      maxFontSizeMultiplier={maxFontSizeMultiplier}
+      accessibilityRole={accessibilityRole}
+      ellipsizeMode={ellipsizeMode}
     >
       {children}
     </RNText>

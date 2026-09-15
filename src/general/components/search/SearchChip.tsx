@@ -1,43 +1,45 @@
 import React from "react";
-import { TouchableOpacity, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 import Text from "../Text";
 import { useTheme } from "../../theme/theme";
 import { SearchChipProps } from "./types";
+import PressableScale from "../PressableScale";
 
 
 export default function SearchChip({ label, onPress }: SearchChipProps) {
-  const { colors, typography } = useTheme();
+  const { colors, shape, spacing } = useTheme();
 
   return (
-    <TouchableOpacity
+    <PressableScale
+      accessibilityLabel={label}
+      accessibilityRole="button"
       style={[
         styles.chip,
         {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
+          backgroundColor: colors.primarySoft,
+          borderRadius: shape.radius.pill,
+          paddingHorizontal: spacing.lg,
         },
       ]}
       onPress={() => onPress(label)}
-      activeOpacity={0.7}
+      pressedScale={0.97}
     >
       <Text
-        variant="caption"
+        color={colors.primary}
+        variant="label"
         numberOfLines={1}
-        weight="medium"
-        style={{ fontSize: typography.size.sm2, lineHeight: 22 }}
+        weight="semiBold"
       >
         {label}
       </Text>
-    </TouchableOpacity>
+    </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
   chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 999,
-    borderWidth: 1,
     alignSelf: "flex-start",
+    justifyContent: "center",
+    minHeight: 40,
   },
 });

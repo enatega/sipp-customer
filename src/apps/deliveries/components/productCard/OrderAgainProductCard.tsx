@@ -1,8 +1,7 @@
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Image from '../../../../general/components/Image';
-import Icon from '../../../../general/components/Icon';
 import Text from '../../../../general/components/Text';
 import { useDeliveriesCurrencyLabel } from '../../../../general/stores/useAppConfigStore';
 import { useTheme } from '../../../../general/theme/theme';
@@ -10,14 +9,14 @@ import type { DeliveryOrderAgainItem } from '../../api/types';
 import CartActionControl from '../cart/CartActionControl';
 import CartCountBadge from '../cart/CartCountBadge';
 import type { ProductCardControlState } from './types';
+import PressableScale from '../../../../general/components/PressableScale';
+import DeliveryOfferBadge from '../DeliveryOfferBadge';
 
 type Props = {
   onPress: () => void;
   product: DeliveryOrderAgainItem;
   state: ProductCardControlState;
 };
-
-const ENABLE_ORDER_AGAIN_DEAL_DEBUG = true;
 
 type RawDealObject = {
   deal_name?: string;
@@ -67,18 +66,19 @@ function getOrderAgainDealMeta(product: DeliveryOrderAgainItem, offLabel: string
   const normalizedDealType = typeof dealType === 'string' ? dealType.toLowerCase() : null;
   const hasNumericDiscount =
     typeof discountValue === 'number' && Number.isFinite(discountValue) && discountValue > 0;
+  const numericDiscountValue = hasNumericDiscount ? discountValue : null;
   const basePrice = typeof product.price === 'number' ? product.price : null;
 
   if (
     discountedPrice === null &&
-    hasNumericDiscount &&
+    numericDiscountValue !== null &&
     typeof basePrice === 'number' &&
     Number.isFinite(basePrice)
   ) {
     discountedPrice =
       normalizedDealType === 'percentage'
-        ? Number((basePrice - (basePrice * discountValue) / 100).toFixed(2))
-        : Number((basePrice - discountValue).toFixed(2));
+        ? Number((basePrice - (basePrice * numericDiscountValue) / 100).toFixed(2))
+        : Number((basePrice - numericDiscountValue).toFixed(2));
   }
 
   const safeDiscountedPrice =
@@ -90,10 +90,10 @@ function getOrderAgainDealMeta(product: DeliveryOrderAgainItem, offLabel: string
       ? discountedPrice
       : null;
 
-  const offerText = hasNumericDiscount
+  const offerText = numericDiscountValue !== null
     ? normalizedDealType === 'percentage'
-      ? `${discountValue} % ${offLabel}`
-      : `${discountValue} ${offLabel}`
+      ? `${numericDiscountValue} % ${offLabel}`
+      : `${numericDiscountValue} ${offLabel}`
     : dealLabel;
 
   return {
@@ -106,7 +106,7 @@ function getOrderAgainDealMeta(product: DeliveryOrderAgainItem, offLabel: string
 
 export default function OrderAgainProductCard({ onPress, product, state }: Props) {
   const { t } = useTranslation('deliveries');
-  const { colors, typography } = useTheme();
+  const { colors, elevation, shape, spacing } = useTheme();
   const currencyLabel = useDeliveriesCurrencyLabel();
   const { basePrice, discountedPrice, hasDeal, offerText } = getOrderAgainDealMeta(
     product,
@@ -126,42 +126,17 @@ export default function OrderAgainProductCard({ onPress, product, state }: Props
       ? `${currencyLabel} ${basePrice.toFixed(2)}`
       : null;
 
-  React.useEffect(() => {
-    if (!ENABLE_ORDER_AGAIN_DEAL_DEBUG) {
-      return;
-    }
-
-    console.log('[Deliveries][OrderAgain][DealDebug]', {
-      productId: product.productId,
-      productName: product.productName,
-      rawDeal: product.deal,
-      dealType: product.dealType,
-      dealAmount: product.dealAmount,
-      price: product.price,
-      resolvedOffer: offerText,
-      resolvedDiscountedPrice: discountedPrice,
-    });
-  }, [
-    discountedPrice,
-    offerText,
-    product.deal,
-    product.dealAmount,
-    product.dealType,
-    product.price,
-    product.productId,
-    product.productName,
-  ]);
-
   return (
-    <Pressable
+    <PressableScale
+      accessibilityLabel={product.productName}
       accessibilityRole="button"
       onPress={onPress}
       style={[
         styles.card,
         {
           backgroundColor: colors.surface,
-          borderColor: colors.border,
-          shadowColor: colors.shadowColor,
+          borderRadius: shape.radius.surface,
+          ...elevation.raised,
         },
       ]}
     >
@@ -169,19 +144,11 @@ export default function OrderAgainProductCard({ onPress, product, state }: Props
         <Image source={{ uri: imageUri }} style={styles.image} resizeMode="cover" />
 
         {hasDeal && offerText ? (
-          <View style={[styles.badge, { backgroundColor: colors.blue800 }]}>
-            <Icon type="Feather" name="tag" size={12} color={colors.white} />
-            <Text
-              color={colors.white}
-              weight="medium"
-              style={{
-                fontSize: typography.size.xs2,
-                lineHeight: typography.lineHeight.sm,
-              }}
-            >
-              {offerText}
-            </Text>
-          </View>
+          <DeliveryOfferBadge
+            label={offerText}
+            size="compact"
+            style={styles.badge}
+          />
         ) : null}
 
         <View style={styles.action}>
@@ -202,30 +169,22 @@ export default function OrderAgainProductCard({ onPress, product, state }: Props
         ) : null}
       </View>
 
-      <View style={styles.content}>
+      <View style={[styles.content, { gap: spacing.xs, padding: spacing.sm }]}>
         <View style={styles.priceRow}>
           {strikePrice ? (
             <Text
               weight="medium"
-              color={colors.mutedText}
-              style={[
-                styles.strikePrice,
-                {
-                  fontSize: typography.size.xxs,
-                  lineHeight: typography.lineHeight.xxs,
-                },
-              ]}
+              color={colors.textSubtle}
+              variant="badge"
+              style={styles.strikePrice}
             >
               {strikePrice}
             </Text>
           ) : null}
           <Text
-            weight="medium"
+            weight="semiBold"
             color={colors.primary}
-            style={{
-              fontSize: typography.size.xxs,
-              lineHeight: typography.lineHeight.xxs,
-            }}
+            variant="caption"
           >
             {formattedPrice}
           </Text>
@@ -234,28 +193,22 @@ export default function OrderAgainProductCard({ onPress, product, state }: Props
         <Text
           weight="semiBold"
           numberOfLines={1}
-          style={{
-            fontSize: typography.size.xs2,
-            lineHeight: typography.lineHeight.sm,
-          }}
+          variant="label"
         >
           {product.productName}
         </Text>
 
         {product.storeName ? (
           <Text
-            color={colors.mutedText}
+            color={colors.textSubtle}
             numberOfLines={1}
-            style={{
-              fontSize: typography.size.xxs,
-              lineHeight: typography.lineHeight.xxs,
-            }}
+            variant="caption"
           >
             {product.storeName}
           </Text>
         ) : null}
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -266,29 +219,14 @@ const styles = StyleSheet.create({
     top: 6,
   },
   badge: {
-    alignItems: 'center',
-    borderRadius: 4,
-    flexDirection: 'row',
-    gap: 4,
     left: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
     position: 'absolute',
     top: 6,
   },
   card: {
-    borderRadius: 8,
-    borderWidth: 1,
-    overflow: 'hidden',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    width: 120,
+    width: 140,
   },
   content: {
-    gap: 2,
-    paddingHorizontal: 6,
-    paddingVertical: 6,
   },
   priceRow: {
     alignItems: 'center',
@@ -308,7 +246,9 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   imageWrapper: {
-    height: 76,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    height: 92,
     overflow: 'hidden',
     position: 'relative',
   },

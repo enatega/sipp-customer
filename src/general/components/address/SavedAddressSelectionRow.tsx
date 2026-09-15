@@ -23,7 +23,7 @@ export default function SavedAddressSelectionRow({
   onPress,
   typeLabel,
 }: Props) {
-  const { colors, typography } = useTheme();
+  const { colors, motion, shape, spacing } = useTheme();
   const resolvedAddress = address?.trim() || '-';
   const accentColor = isSelected ? colors.primary : colors.text;
 
@@ -41,38 +41,50 @@ export default function SavedAddressSelectionRow({
       style={({ pressed }) => [
         styles.row,
         {
-          backgroundColor: pressed ? colors.gray100 : 'transparent',
-          opacity: isDisabled ? 0.6 : 1,
+          backgroundColor: isSelected
+            ? colors.primarySoft
+            : pressed
+              ? colors.statePressed
+              : 'transparent',
+          borderRadius: shape.radius.control,
+          gap: spacing.md,
+          opacity: isDisabled ? motion.opacity.disabled : 1,
         },
       ]}
     >
-      <View style={styles.iconWrapper}>
-        <Ionicons name={iconName} size={22} color={accentColor} />
+      <View
+        style={[
+          styles.iconWrapper,
+          {
+            backgroundColor: isSelected ? colors.surfaceElevated : colors.surfaceSunken,
+            borderRadius: shape.radius.pill,
+          },
+        ]}
+      >
+        <Ionicons name={iconName} size={19} color={accentColor} />
       </View>
 
       <View style={styles.textBlock}>
         <Text
-          weight="medium"
+          variant="label"
+          weight="semiBold"
           style={[
             styles.title,
             {
               color: accentColor,
-              fontSize: typography.size.sm2,
-              lineHeight: typography.lineHeight.md,
             },
           ]}
         >
           {typeLabel}
         </Text>
         <Text
-          weight="medium"
+          variant="caption"
+          weight="regular"
           numberOfLines={2}
           style={[
             styles.subtitle,
             {
               color: isSelected ? colors.primary : colors.mutedText,
-              fontSize: typography.size.xs2,
-              lineHeight: typography.lineHeight.sm,
             },
           ]}
         >
@@ -83,7 +95,7 @@ export default function SavedAddressSelectionRow({
       {isSelecting ? (
         <ActivityIndicator color={colors.primary} size="small" />
       ) : isSelected ? (
-        <Ionicons name="checkmark" size={24} color={colors.primary} />
+        <Ionicons name="checkmark-circle" size={22} color={colors.primary} />
       ) : null}
     </Pressable>
   );
@@ -92,15 +104,14 @@ export default function SavedAddressSelectionRow({
 const styles = StyleSheet.create({
   iconWrapper: {
     alignItems: 'center',
+    height: 36,
     justifyContent: 'center',
-    width: 24,
+    width: 36,
   },
   row: {
     alignItems: 'center',
-    borderRadius: 10,
     flexDirection: 'row',
-    gap: 12,
-    minHeight: 56,
+    minHeight: 60,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },

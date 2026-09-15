@@ -1,11 +1,11 @@
 import React from 'react';
 import type { ImageStyle, StyleProp, TextStyle, ViewStyle } from 'react-native';
-import { Platform, StyleSheet, View } from 'react-native';
-import Icon from '../../../../general/components/Icon';
+import { StyleSheet, View } from 'react-native';
 import Image from '../../../../general/components/Image';
 import Text from '../../../../general/components/Text';
 import { useTheme } from '../../../../general/theme/theme';
 import type { DeliveryTopBrand } from '../../api/types';
+import DeliveryOfferBadge from '../DeliveryOfferBadge';
 
 type Props = {
   brand: DeliveryTopBrand;
@@ -28,7 +28,7 @@ export default function TopBrandCard({
   titleStyle,
   subtitleStyle,
 }: Props) {
-  const { colors, typography } = useTheme();
+  const { colors, elevation, shape, spacing, typography } = useTheme();
   const badgeLabel =
     brand.dealAmount && brand.dealType === 'percentage'
       ? `${brand.dealAmount}%`
@@ -43,16 +43,20 @@ export default function TopBrandCard({
         styles.card,
         {
           backgroundColor: colors.surface,
-          borderColor: 'rgba(16, 24, 40, 0.08)',
-          shadowColor: '#101828',
+          borderRadius: shape.radius.surface,
         },
+        elevation.raised,
         cardStyle,
       ]}
     >
       <View
         style={[
           styles.imageContainer,
-          { backgroundColor: colors.surfaceSoft },
+          {
+            backgroundColor: colors.surfaceSoft,
+            borderTopLeftRadius: shape.radius.surface,
+            borderTopRightRadius: shape.radius.surface,
+          },
           imageContainerStyle,
         ]}
       >
@@ -63,32 +67,18 @@ export default function TopBrandCard({
         />
 
         {badgeLabel ? (
-          <View
-            style={[
-              styles.badge,
-              { backgroundColor: colors.blue800, shadowColor: colors.shadowColor },
-              badgeStyle,
-            ]}
-          >
-            <Icon type="Feather" name="tag" size={12} color={colors.white} />
-            <Text
-              color={colors.white}
-              weight="medium"
-              style={{
-                fontSize: typography.size.xs2,
-                lineHeight: typography.lineHeight.sm,
-              }}
-            >
-              {badgeLabel}
-            </Text>
-          </View>
+          <DeliveryOfferBadge
+            label={badgeLabel}
+            size="compact"
+            style={[styles.badge, badgeStyle]}
+          />
         ) : null}
       </View>
 
       <View
         style={[
           styles.content,
-          { borderTopColor: 'rgba(0, 0, 0, 0.04)', shadowColor: '#000000' },
+          { gap: spacing.xxs, padding: spacing.sm },
           contentStyle,
         ]}
       >
@@ -96,10 +86,7 @@ export default function TopBrandCard({
           weight="semiBold"
           numberOfLines={1}
           style={[
-            {
-              fontSize: typography.size.xxs,
-              lineHeight: typography.lineHeight.xxs,
-            },
+            typography.role.caption,
             titleStyle,
           ]}
         >
@@ -108,15 +95,9 @@ export default function TopBrandCard({
 
         {subtitle ? (
           <Text
-            color={colors.mutedText}
+            color={colors.textSubtle}
             numberOfLines={1}
-            style={[
-              {
-                fontSize: typography.size.xxs,
-                lineHeight: typography.lineHeight.xxs,
-              },
-              subtitleStyle,
-            ]}
+            style={[typography.role.caption, subtitleStyle]}
           >
             {subtitle}
           </Text>
@@ -128,49 +109,25 @@ export default function TopBrandCard({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 6,
-    borderWidth: StyleSheet.hairlineWidth,
-    elevation: 3,
-    overflow: 'hidden',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: Platform.select({ ios: 0.12, android: 0.18 }),
-    shadowRadius: 3,
-    width: 100,
-    marginBottom: 5,
+    width: 112,
   },
   imageContainer: {
     alignItems: 'center',
-    height: 100,
+    height: 112,
     justifyContent: 'center',
     overflow: 'hidden',
-    width: 100,
+    width: 112,
   },
   image: {
     height: '100%',
     width: '100%',
   },
   badge: {
-    alignItems: 'center',
-    borderRadius: 6,
-    flexDirection: 'row',
-    gap: 4,
     left: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
     position: 'absolute',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
     top: 8,
   },
   content: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    gap: 0,
-    minHeight: 40,
-    paddingHorizontal: 6,
-    paddingVertical: 4,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+    minHeight: 48,
   },
 });

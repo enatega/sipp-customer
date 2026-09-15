@@ -2,30 +2,36 @@ import { StyleSheet } from 'react-native'
 
 export const styles = StyleSheet.create({
   container: {
-    borderRadius: 8,
-    borderWidth: 1,
-    overflow: 'hidden',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
+    flexShrink: 0,
   },
   compactContainer: {
-    width: 280,
+    width: 260,
   },
   fullWidthContainer: {
+    width: '100%',
+  },
+  resultRowContainer: {
+    alignItems: 'stretch',
+    flexDirection: 'row',
+    minHeight: 132,
     width: '100%',
   },
   imageContainer: {
     position: 'relative',
     width: '100%',
-    height: 140,
+    height: 156,
+    overflow: 'hidden',
+  },
+  compactImageContainer: {
+    height: 150,
   },
   image: {
     width: '100%',
     height: '100%',
+  },
+  resultRowImageContainer: {
+    height: 132,
+    width: 116,
   },
   closedOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -45,33 +51,21 @@ export const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     left: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
   },
-  offerIcon: {
-    marginRight: 4,
-  },
-  offerText: {
-    fontSize: 12,
-  },
-  content: {
-    paddingHorizontal: 8,
-    paddingTop: 6,
-    paddingBottom: 8,
-  },
+  content: {},
   nameContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
-    flex: 1,
+    flexDirection: 'row',
+    minWidth: 0,
+    width: '100%',
   },
   name: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 16,
     lineHeight: 22,
+  },
+  cuisine: {
+    flex: 1,
   },
   location: {
     flexShrink: 1,
@@ -79,6 +73,11 @@ export const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  deliveryInfoRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
   },
   ratingContainer: {
     flexDirection: 'row',
@@ -97,7 +96,6 @@ export const styles = StyleSheet.create({
   },
   line: {
     height: 1,
-    marginVertical: 4,
   },
   heartButton: {
     alignItems: 'center',
@@ -115,13 +113,8 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
-  dollarSign: {
-    fontSize: 16,
-    marginLeft: 2,
-    marginRight: 2,
-  },
   infoText: {
     fontSize: 12,
-    lineHeight: 18,
+    lineHeight: 16,
   },
 })

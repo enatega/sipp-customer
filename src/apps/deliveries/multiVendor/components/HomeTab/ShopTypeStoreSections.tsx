@@ -19,6 +19,8 @@ import {
   DiscoveryResultsSkeleton,
   DiscoverySectionState,
 } from '../../../components/discovery';
+import { useWindowClass } from '../../../../../general/hooks/useWindowClass';
+import type { DeliveryNearbyStore } from '../../../api/types';
 
 type NavProp = CompositeNavigationProp<
   NativeStackNavigationProp<MultiVendorStackParamList>,
@@ -39,9 +41,14 @@ function decodeDisplayText(value: string) {
   return decodedValue.replace(/%amp;|&amp;|&#38;/gi, '&');
 }
 
-export default function ShopTypeStoreSections() {
+type Props = {
+  onClosedStorePress?: (store: DeliveryNearbyStore) => void;
+};
+
+export default function ShopTypeStoreSections({ onClosedStorePress }: Props) {
   const { t } = useTranslation('deliveries');
-  const { typography } = useTheme();
+  const { spacing, typography } = useTheme();
+  const { gutter } = useWindowClass();
   const navigation = useNavigation<NavProp>();
   const { data: shopTypes = [] } = useShopTypes();
   const shopTypeStoreSections = useShopTypeStoresSections(shopTypes);
@@ -58,10 +65,12 @@ export default function ShopTypeStoreSections() {
     [navigation],
   );
 
-
+  const handleExploreAllStores = useCallback(() => {
+    navigation.navigate('MainSeeAllScreen');
+  }, [navigation]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { gap: spacing.section.default }]}>
       {shopTypeStoreSections.map(
         ({ shopType, data = [], error, isPending: isStoresPending }) => {
           const resolvedShopTypeName = decodeDisplayText(shopType.name);
@@ -69,15 +78,18 @@ export default function ShopTypeStoreSections() {
           const shouldShowSeeAll = !isStoresPending && !error && data.length > 0;
 
           return (
-            <View key={shopType.id} style={styles.storeSection}>
+            <View
+              key={shopType.id}
+              style={[
+                styles.storeSection,
+                { gap: spacing.md, paddingHorizontal: gutter },
+              ]}
+            >
               {!shouldShowSeeAll ? (
                 <Text
                   weight="extraBold"
-                  style={{
-                    fontSize: typography.size.h5,
-                    letterSpacing: -0.36,
-                    lineHeight: typography.lineHeight.h5,
-                  }}
+                  accessibilityRole="header"
+                  style={typography.role.sectionTitle}
                 >
                   {resolvedShopTypeName}
                 </Text>
@@ -99,20 +111,34 @@ export default function ShopTypeStoreSections() {
                 />
               ) : isEmpty ? (
                 <DeliveriesSectionEmptyState
-                  title={t('multi_vendor_home_section_empty_title')}
+                  actionLabel={t('multi_vendor_home_empty_explore_action')}
                   message={t('multi_vendor_shop_type_stores_empty')}
+                  onActionPress={handleExploreAllStores}
+                  title={t('multi_vendor_home_section_empty_title')}
+                  variant="discovery"
                 />
               ) : (
                 <HorizontalList
                   data={data}
                   keyExtractor={(item) => item.storeId}
-                  contentContainerStyle={styles.listContent}
-                  ItemSeparatorComponent={() => <View style={styles.separator} />}
+                  contentContainerStyle={{
+                    paddingBottom: spacing.lg,
+                    paddingRight: gutter,
+                    paddingTop: spacing.xs,
+                  }}
+                  ItemSeparatorComponent={() => <View style={{ width: spacing.md }} />}
                   renderItem={({ item }) => (
                     <StoreCard
                       store={item}
                       showClosedOverlay={
-                        item.isAvailable === false || item.isClosed === true
+                        item.isAvailable === false
+                        || ('isClosed' in item && item.isClosed === true)
+                      }
+                      onClosedPress={
+                        item.isAvailable === false
+                        || ('isClosed' in item && item.isClosed === true)
+                          ? () => onClosedStorePress?.(item)
+                          : undefined
                       }
                     />
                   )}
@@ -127,17 +153,6 @@ export default function ShopTypeStoreSections() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    gap: 12,
-  },
-  storeSection: {
-    gap: 12,
-    paddingHorizontal: 16,
-  },
-  listContent: {
-    paddingRight: 16,
-  },
-  separator: {
-    width: 12,
-  },
+  container: {},
+  storeSection: {},
 });

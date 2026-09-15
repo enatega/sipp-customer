@@ -1,4 +1,4 @@
-import React, { ReactNode, useMemo, useRef, useEffect } from 'react';
+import React, { ReactNode, useCallback, useMemo, useRef, useEffect } from 'react';
 import {
   Animated,
   Easing,
@@ -9,6 +9,8 @@ import {
   ViewStyle,
   View,
 } from 'react-native';
+import { useTheme } from '../theme/theme';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 
 type BottomSheetState = 'expanded' | 'default' | 'collapsed';
 
@@ -29,6 +31,7 @@ type Props = {
   modal?: boolean;
   enablePanGesture?: boolean;
   onHeightChange?: (height: number) => void;
+  horizontalInset?: number;
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -63,7 +66,10 @@ export default function SwipeableBottomSheet({
   modal = false,
   enablePanGesture = true,
   onHeightChange,
+  horizontalInset = 0,
 }: Props) {
+  const { motion } = useTheme();
+  const isReducedMotionEnabled = useReducedMotion();
   const normalizedCollapsedHeight = useMemo(
     () => clamp(collapsedHeight, 0, expandedHeight),
     [collapsedHeight, expandedHeight],
@@ -136,9 +142,18 @@ export default function SwipeableBottomSheet({
 
     if (!hasPresented.current) {
       animatedHeight.setValue(normalizedCollapsedHeight);
+
+      if (isReducedMotionEnabled) {
+        animatedHeight.setValue(target);
+        startHeight.current = target;
+        hasPresented.current = true;
+        onStateChange?.(currentState.current);
+        return;
+      }
+
       Animated.timing(animatedHeight, {
         toValue: target,
-        duration: 260,
+        duration: motion.duration.standard,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: false,
       }).start(() => {
@@ -154,6 +169,8 @@ export default function SwipeableBottomSheet({
   }, [
     animatedHeight,
     getHeightForState,
+    isReducedMotionEnabled,
+    motion.duration.standard,
     normalizedCollapsedHeight,
     onStateChange,
   ]);
@@ -173,24 +190,42 @@ export default function SwipeableBottomSheet({
     };
   }, [animatedHeight, onHeightChange]);
 
-  const animateTo = (state: BottomSheetState) => {
+  const animateTo = useCallback((state: BottomSheetState) => {
     const targetHeight = getHeightForState(state);
     currentState.current = state;
     onStateChange?.(state);
+
+    if (isReducedMotionEnabled) {
+      animatedHeight.setValue(targetHeight);
+      startHeight.current = targetHeight;
+      if (state === 'collapsed') {
+        onCollapsed?.();
+      }
+      return;
+    }
+
     Animated.spring(animatedHeight, {
       toValue: targetHeight,
       useNativeDriver: false,
-      tension: 180,
-      friction: 24,
+      tension: motion.spring.responsive.stiffness,
+      friction: motion.spring.responsive.damping,
     }).start(() => {
       startHeight.current = targetHeight;
       if (state === 'collapsed') {
         onCollapsed?.();
       }
     });
-  };
+  }, [
+    animatedHeight,
+    getHeightForState,
+    isReducedMotionEnabled,
+    motion.spring.responsive.damping,
+    motion.spring.responsive.stiffness,
+    onCollapsed,
+    onStateChange,
+  ]);
 
-  const handleRelease = (_: unknown, gesture: PanResponderGestureState) => {
+  const handleRelease = useCallback((_: unknown, gesture: PanResponderGestureState) => {
     const currentHeight = clamp(
       startHeight.current - gesture.dy,
       normalizedCollapsedHeight,
@@ -213,7 +248,7 @@ export default function SwipeableBottomSheet({
     }
 
     animateTo(getNearestSnapPoint(currentHeight, snapPoints).state);
-  };
+  }, [animateTo, expandedHeight, normalizedCollapsedHeight, snapPoints]);
 
   const panResponder = useMemo(
     () =>
@@ -244,7 +279,7 @@ export default function SwipeableBottomSheet({
           handleRelease(evt, gesture);
         },
       }),
-    [animatedHeight, expandedHeight, normalizedCollapsedHeight, snapPoints],
+    [animatedHeight, expandedHeight, handleRelease, normalizedCollapsedHeight],
   );
 
   return (
@@ -253,6 +288,8 @@ export default function SwipeableBottomSheet({
         styles.container,
         {
           height: animatedHeight,
+          left: horizontalInset,
+          right: horizontalInset,
         },
         style,
       ]}
@@ -288,8 +325,6 @@ export default function SwipeableBottomSheet({
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    left: 0,
-    right: 0,
     bottom: 0,
   },
   floatingAccessory: {

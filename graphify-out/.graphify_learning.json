@@ -1,0 +1,134 @@
+{
+  "generated_at": "2026-09-14T13:06:47.369851+00:00",
+  "nodes": {
+    "src_apps_deliveries_components_cart_cartscreencontent": {
+      "code_fingerprint": "4a2759f859b213e6d9a909cb565b6d08f56966e2677b34bae1045d3a7a31f12e",
+      "label": "CartScreenContent.tsx",
+      "last": "2026-09-14T07:46:31.583212+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-14T07:46:31.583212+00:00",
+          "outcome": "useful",
+          "q": "yes do that, and start with the implementation plan"
+        }
+      ],
+      "score": 0.994874535,
+      "source_file": "src/apps/deliveries/components/cart/CartScreenContent.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_components_ordertracking_useordertrackingviewmodel_trackingcoordinates": {
+      "code_fingerprint": "ff955aead0df66c27a0df2bc45566ee190cc54c500bf31f08675791c4f35fe0c",
+      "label": "TrackingCoordinates",
+      "last": "2026-09-14T07:46:31.583212+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-14T07:46:31.583212+00:00",
+          "outcome": "useful",
+          "q": "yes do that, and start with the implementation plan"
+        }
+      ],
+      "score": 0.994874535,
+      "source_file": "src/apps/deliveries/components/orderTracking/useOrderTrackingViewModel.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_multivendor_screens_hometab_hometab": {
+      "code_fingerprint": "efc1bcdcae9bf561c1e3a5da668c6af21eee6ec9d1208ff511fd92401fcdaf95",
+      "label": "HomeTab.tsx",
+      "last": "2026-09-14T07:46:31.583212+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-14T07:46:31.583212+00:00",
+          "outcome": "useful",
+          "q": "yes do that, and start with the implementation plan"
+        }
+      ],
+      "score": 0.994874535,
+      "source_file": "src/apps/deliveries/multiVendor/screens/HomeTab/HomeTab.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_multivendor_screens_storedetailsscreen_storedetailsscreen": {
+      "code_fingerprint": "fe8f1ab4e03437f8b85c1ff2ce7ef693ce47467487978567e99995dd30977117",
+      "label": "StoreDetailsScreen.tsx",
+      "last": "2026-09-14T07:46:31.583212+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-14T07:46:31.583212+00:00",
+          "outcome": "useful",
+          "q": "yes do that, and start with the implementation plan"
+        }
+      ],
+      "score": 0.994874535,
+      "source_file": "src/apps/deliveries/multiVendor/screens/StoreDetailsScreen/StoreDetailsScreen.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_navigation_deliveriesnavigator": {
+      "code_fingerprint": "c2d3bb87d793ce6f59bcbe0d99a4f64af53c77ba313390560be203f7f10007cd",
+      "label": "DeliveriesNavigator.tsx",
+      "last": "2026-09-14T07:46:31.583212+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-14T07:46:31.583212+00:00",
+          "outcome": "useful",
+          "q": "yes do that, and start with the implementation plan"
+        }
+      ],
+      "score": 0.994874535,
+      "source_file": "src/apps/deliveries/navigation/DeliveriesNavigator.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_screens_checkoutscreen_checkoutscreen": {
+      "code_fingerprint": "8ba2946d5a189b6d0d54e84784a5267a7d4b1d8e82597856aaffe64d17fd61c8",
+      "label": "CheckoutScreen.tsx",
+      "last": "2026-09-14T07:46:31.583212+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-14T07:46:31.583212+00:00",
+          "outcome": "useful",
+          "q": "yes do that, and start with the implementation plan"
+        }
+      ],
+      "score": 0.994874535,
+      "source_file": "src/apps/deliveries/screens/CheckoutScreen/CheckoutScreen.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_screens_supportchatscreen_supportchatscreen": {
+      "code_fingerprint": "284a358331e5a5d74d9c42066752c08f0bba04616a62e3f79aab0889f8979f52",
+      "label": "SupportChatScreen.tsx",
+      "last": "2026-09-14T07:46:31.583212+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-14T07:46:31.583212+00:00",
+          "outcome": "useful",
+          "q": "yes do that, and start with the implementation plan"
+        }
+      ],
+      "score": 0.994874535,
+      "source_file": "src/apps/deliveries/screens/SupportChatScreen/SupportChatScreen.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_general_theme_theme_theme": {
+      "code_fingerprint": "b1de343820c023eb053357b5d08599ed5759ad58c7ae10f24901661239feecc1",
+      "label": "Theme",
+      "last": "2026-09-14T07:46:31.583212+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-14T07:46:31.583212+00:00",
+          "outcome": "useful",
+          "q": "yes do that, and start with the implementation plan"
+        }
+      ],
+      "score": 0.994874535,
+      "source_file": "src/general/theme/theme.ts",
+      "status": "tentative",
+      "uses": 1
+    }
+  },
+  "version": 1
+}

@@ -1,14 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { RefreshControl, ScrollView, View } from 'react-native';
+import { RefreshControl } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import * as Location from 'expo-location';
-import { useNavigation } from '@react-navigation/native';
+import { CompositeNavigationProp, useNavigation } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../../../general/theme/theme';
 import { showToast } from '../../../../../general/components/AppToast';
 import AddressSelectionBottomSheet from '../../../../../general/components/address/AddressSelectionBottomSheet';
-import MultiVendorAddressHeader from '../../../components/MultiVendorAddressHeader';
 import type { DeliveriesStackParamList } from '../../../navigation/types';
 import ShopTypeList from '../../components/HomeTab/ShopTypeList';
 import ShopTypeStoreSections from '../../components/HomeTab/ShopTypeStoreSections';
@@ -17,7 +17,9 @@ import TopBrandsList from '../../components/HomeTab/TopBrandsList';
 import NearbyStoreList from '../../components/HomeTab/NearbyStoreList';
 import MultiVendorDealsSection from '../../components/HomeTab/MultiVendorDealsSection';
 import OrderAgain from '../../components/HomeTab/OrderAgain';
-import { useCartCount } from '../../../hooks/useCart';
+import AllInOneQuickActions, {
+  type HomeQuickActionId,
+} from '../../components/HomeTab/AllInOneQuickActions';
 import useAddressSelectionSheet from '../../../../../general/hooks/useAddressSelectionSheet';
 import type { ProfileAddress } from '../../../../../general/api/profileService';
 import useSavedAddresses from '../../../../../general/hooks/useSavedAddresses';
@@ -25,18 +27,37 @@ import { styles } from './HomeTabStyle';
 import useAddress from '../../../../../general/hooks/useAddress';
 import useCurrentLocation from '../../../../../general/hooks/useCurrentLocation';
 import useSelectSavedAddress from '../../../../../general/hooks/useSelectSavedAddress';
-// import AppSwitcherTopBar from '../../../../../general/components/appSwitch/AppSwitcherTopBar';
 import { deliveryKeys } from '../../../api/queryKeys';
+import HomeEntrance from '../../../components/home/HomeEntrance';
+import DeliveryHomeScaffold from '../../../components/home/DeliveryHomeScaffold';
+import type { DeliveryNearbyStore } from '../../../api/types';
+import ClosedStoreMenuPopup from '../../../components/storeCard/ClosedStoreMenuPopup';
+import { pushStoreDetails } from '../../../navigation/storeDetailsNavigation';
+import IconButton from '../../../../../general/components/IconButton';
+import Icon from '../../../../../general/components/Icon';
+import type {
+  MultiVendorBottomTabParamList,
+  MultiVendorStackParamList,
+} from '../../navigation/types';
+import useDeliveriesTabSheetOffset from '../../../hooks/useDeliveriesTabSheetOffset';
 
-type NavProp = NativeStackNavigationProp<DeliveriesStackParamList>;
+type NavProp = CompositeNavigationProp<
+  BottomTabNavigationProp<MultiVendorBottomTabParamList, 'MultiVendorTabHome'>,
+  CompositeNavigationProp<
+    NativeStackNavigationProp<MultiVendorStackParamList>,
+    NativeStackNavigationProp<DeliveriesStackParamList>
+  >
+>;
 
 export default function HomeTab() {
-  const { colors } = useTheme();
+  const { colors, spacing } = useTheme();
   const { t } = useTranslation('deliveries');
   const navigation = useNavigation<NavProp>();
+  const addressSheetBottomOffset = useDeliveriesTabSheetOffset();
   const queryClient = useQueryClient();
-  const { data: cartCount } = useCartCount();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedClosedStore, setSelectedClosedStore] =
+    useState<DeliveryNearbyStore | null>(null);
   const {
     addresses,
     isLoading: isAddressesLoading,
@@ -91,8 +112,42 @@ export default function HomeTab() {
     });
   }, [handleCloseAddressSheet, navigation, refreshCurrentLocation]);
 
-  const handleCartPress = useCallback(() => {
-    navigation.navigate('Cart');
+  const handleSearchPress = useCallback(() => {
+    navigation.navigate('MultiVendorTabSearch');
+  }, [navigation]);
+
+  const handleQuickActionPress = useCallback((actionId: HomeQuickActionId) => {
+    switch (actionId) {
+      case 'browse':
+        navigation.navigate('MainSeeAllScreen');
+        break;
+      case 'deals':
+        navigation.navigate('DealsSeeAll');
+        break;
+      case 'orders':
+        navigation.navigate('MultiVendorTabOrders');
+        break;
+      case 'favourites':
+        navigation.navigate('Favourites');
+        break;
+    }
+  }, [navigation]);
+
+  const handleNotificationsPress = useCallback(() => {
+    navigation.navigate('Notifications');
+  }, [navigation]);
+
+  const handleClosedStorePress = useCallback((store: DeliveryNearbyStore) => {
+    setSelectedClosedStore(store);
+  }, []);
+
+  const handleCloseClosedStorePopup = useCallback(() => {
+    setSelectedClosedStore(null);
+  }, []);
+
+  const handleSeeClosedStoreMenu = useCallback((store: DeliveryNearbyStore) => {
+    setSelectedClosedStore(null);
+    pushStoreDetails(navigation, store);
   }, [navigation]);
 
   const handleRefresh = useCallback(async () => {
@@ -201,41 +256,59 @@ export default function HomeTab() {
   ]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* <AppSwitcherTopBar activeKey="deliveries" /> */}
-      <MultiVendorAddressHeader
-        addresses={addresses}
-        onAddAddressPress={handleOpenAddressSheet}
-        onAddressPress={handleOpenAddressSheet}
-        cartCount={cartCount?.totalItems}
-        onCartPress={handleCartPress}
-      />
-      <ScrollView
-        contentContainerStyle={[
-          styles.contentContainer,
-        ]}
+    <>
+      <DeliveryHomeScaffold
+        contentContainerStyle={styles.contentContainer}
+        headerProps={{
+          addresses,
+          onAddAddressPress: handleOpenAddressSheet,
+          onAddressPress: handleOpenAddressSheet,
+          rightAccessory: (
+            <IconButton
+              accessibilityLabel={t('profile_menu_notifications')}
+              icon={(
+                <Icon
+                  color={colors.text}
+                  name="notifications-outline"
+                  size={20}
+                  type="Ionicons"
+                />
+              )}
+              onPress={handleNotificationsPress}
+              style={{ backgroundColor: colors.surfaceElevated }}
+              variant="outlined"
+            />
+          ),
+          showCartButton: false,
+        }}
+        onSearchPress={handleSearchPress}
         refreshControl={(
           <RefreshControl
-            refreshing={isRefreshing}
             onRefresh={() => {
               void handleRefresh();
             }}
+            refreshing={isRefreshing}
             tintColor={colors.primary}
           />
         )}
-        showsVerticalScrollIndicator={false}
       >
-        <ShopTypeList />
-        <MultiVendorSpecialOffers />
-        <TopBrandsList />
-        <NearbyStoreList />
-        <MultiVendorDealsSection />
-        <ShopTypeStoreSections />
-        <OrderAgain />
-      </ScrollView>
+        <HomeEntrance index={1} style={[styles.sectionGroup, { gap: spacing.section.compact }]}>
+          <ShopTypeList />
+          <MultiVendorSpecialOffers />
+          <AllInOneQuickActions onActionPress={handleQuickActionPress} />
+          <NearbyStoreList onClosedStorePress={handleClosedStorePress} />
+        </HomeEntrance>
+        <HomeEntrance index={2} style={[styles.sectionGroup, { gap: spacing.section.default }]}>
+          <TopBrandsList onClosedStorePress={handleClosedStorePress} />
+          <MultiVendorDealsSection onClosedStorePress={handleClosedStorePress} />
+          <ShopTypeStoreSections onClosedStorePress={handleClosedStorePress} />
+          <OrderAgain />
+        </HomeEntrance>
+      </DeliveryHomeScaffold>
 
       <AddressSelectionBottomSheet
         addresses={addresses}
+        bottomOffset={addressSheetBottomOffset}
         isLoading={isAddressesLoading}
         isVisible={isAddressSheetVisible}
         onAddAddress={handleAddAddressPress}
@@ -245,6 +318,11 @@ export default function HomeTab() {
         selectingAddressId={selectingAddressId}
         selectedAddressId={selectedAddress?.id}
       />
-    </View>
+      <ClosedStoreMenuPopup
+        onClose={handleCloseClosedStorePopup}
+        onSeeMenu={handleSeeClosedStoreMenu}
+        store={selectedClosedStore}
+      />
+    </>
   );
 }

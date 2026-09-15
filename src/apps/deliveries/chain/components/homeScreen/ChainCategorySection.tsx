@@ -12,6 +12,8 @@ import type { DeliveriesStackParamList } from '../../../navigation/types';
 import useChainCategoryProductSections from '../../hooks/useChainCategoryProductSections';
 import useChainMenuCategories from '../../hooks/useChainMenuCategories';
 import { useChainMenuStore } from '../../stores/useChainMenuStore';
+import { useTheme } from '../../../../../general/theme/theme';
+import { useWindowClass } from '../../../../../general/hooks/useWindowClass';
 
 type Props = {
   isTemplatePending?: boolean;
@@ -23,6 +25,8 @@ export default function ChainCategorySection({
   isTemplatePending = false,
 }: Props) {
   const { t } = useTranslation('deliveries');
+  const { spacing } = useTheme();
+  const { gutter } = useWindowClass();
   const navigation = useNavigation<NavigationProp>();
   const selectedMenuTemplateId = useChainMenuStore(
     (state) => state.selectedMenuTemplateId,
@@ -50,7 +54,7 @@ export default function ChainCategorySection({
   };
 
   return (
-    <View style={styles.content}>
+    <View style={[styles.content, { gap: spacing.section.default }]}>
       <DiscoveryCategorySection
         actionLabel={t('multi_vendor_see_all')}
         items={data}
@@ -61,7 +65,10 @@ export default function ChainCategorySection({
 
       {productSections.map(
         ({ category, data: products = [], error, isPending: isProductsPending }) => (
-          <View key={category.id} style={styles.resultSection}>
+          <View
+            key={category.id}
+            style={[styles.resultSection, { paddingHorizontal: gutter }]}
+          >
             <DiscoveryCategoryResultsSection
               title={category.name}
               actionLabel={t('multi_vendor_see_all')}
@@ -90,10 +97,6 @@ export default function ChainCategorySection({
 }
 
 const styles = StyleSheet.create({
-  content: {
-    gap: 12,
-  },
-  resultSection: {
-    paddingHorizontal: 16,
-  },
+  content: {},
+  resultSection: {},
 });

@@ -7,6 +7,7 @@ import { useTheme } from '../../theme/theme';
 import DiscoveryCategoryCard from './DiscoveryCategoryCard';
 import DiscoveryCategorySkeleton from './DiscoveryCategorySkeleton';
 import type { DiscoveryCategoryItem } from './types';
+import { useWindowClass } from '../../hooks/useWindowClass';
 
 type Props = {
   items: DiscoveryCategoryItem[];
@@ -15,6 +16,7 @@ type Props = {
   actionLabel?: string;
   onActionPress?: () => void;
   onItemPress?: (item: DiscoveryCategoryItem) => void;
+  variant?: 'default' | 'home';
 };
 
 export default function DiscoveryCategorySection({
@@ -24,12 +26,23 @@ export default function DiscoveryCategorySection({
   actionLabel,
   onActionPress,
   onItemPress,
+  variant = 'default',
 }: Props) {
-  const { typography } = useTheme();
+  const { spacing } = useTheme();
+  const { gutter } = useWindowClass();
+  const isHomeVariant = variant === 'home';
 
   return (
-    <View style={styles.section}>
-      {actionLabel ? (
+    <View
+      style={[
+        styles.section,
+        {
+          gap: isHomeVariant ? spacing.sm : spacing.md,
+          paddingHorizontal: gutter,
+        },
+      ]}
+    >
+      {isHomeVariant ? null : actionLabel ? (
         <SectionActionHeader
           actionLabel={actionLabel}
           title={title}
@@ -37,30 +50,34 @@ export default function DiscoveryCategorySection({
         />
       ) : (
         <Text
-          weight="extraBold"
-          style={{
-            fontSize: typography.size.h5,
-            letterSpacing: -0.36,
-            lineHeight: typography.lineHeight.h5,
-          }}
+          accessibilityRole="header"
+          variant="cardTitle"
+          weight="semiBold"
         >
           {title}
         </Text>
       )}
 
       {isPending ? (
-        <DiscoveryCategorySkeleton />
+        <DiscoveryCategorySkeleton variant={variant} />
       ) : (
         <HorizontalList
           data={items}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContent}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          contentContainerStyle={{
+            paddingBottom: isHomeVariant ? spacing.xs : spacing.lg,
+            paddingRight: gutter,
+            paddingTop: isHomeVariant ? 0 : spacing.xs,
+          }}
+          ItemSeparatorComponent={() => (
+            <View style={{ width: isHomeVariant ? spacing.xs : spacing.md }} />
+          )}
           renderItem={({ item }) => (
             <DiscoveryCategoryCard
               imageUrl={item.imageUrl}
               title={item.name}
               onPress={onItemPress ? () => onItemPress(item) : undefined}
+              variant={variant}
             />
           )}
         />
@@ -70,14 +87,6 @@ export default function DiscoveryCategorySection({
 }
 
 const styles = StyleSheet.create({
-  listContent: {
-    paddingRight: 16,
-  },
   section: {
-    gap: 12,
-    paddingHorizontal: 16,
-  },
-  separator: {
-    width: 12,
   },
 });

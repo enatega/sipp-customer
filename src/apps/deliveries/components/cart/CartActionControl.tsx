@@ -50,11 +50,11 @@ const SIZE_CONFIG: Record<
     quantityLineHeight: 16,
   },
   medium: {
-    actionIcon: 18,
-    addWidth: 32,
-    controlWidth: 96,
-    height: 32,
-    horizontalPadding: 10,
+    actionIcon: 20,
+    addWidth: 44,
+    controlWidth: 112,
+    height: 44,
+    horizontalPadding: 12,
     quantityFontSize: 14,
     quantityLineHeight: 20,
   },
@@ -112,8 +112,8 @@ export default function CartActionControl({
       style={[
         styles.container,
         {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
+          backgroundColor: isQuantityMode ? colors.surface : colors.primary,
+          borderColor: isQuantityMode ? colors.border : colors.primary,
           borderRadius: config.height / 2,
           height: config.height,
           shadowColor: colors.shadowColor,
@@ -144,7 +144,7 @@ export default function CartActionControl({
             },
           ]}
         >
-          <Icon color={colors.text} name="plus" size={config.actionIcon} type="Feather" />
+          <Icon color={colors.onPrimary} name="plus" size={config.actionIcon} type="Feather" />
         </Pressable>
       </Animated.View>
 

@@ -5,7 +5,6 @@ import {
   ScrollView,
   StyleSheet,
   View,
-  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -32,9 +31,12 @@ import SavedAddressSelectionRow from './SavedAddressSelectionRow';
 import HomeLocationPermissionPopup, {
   LocationPopupMode,
 } from '../../../screens/home/HomeLocationPermissionPopup';
+import IconButton from '../IconButton';
+import { useWindowClass } from '../../hooks/useWindowClass';
 
 type Props = {
   addresses: ProfileAddress[];
+  bottomOffset?: number;
   isLoading?: boolean;
   isVisible: boolean;
   onAddAddress: () => void;
@@ -51,6 +53,7 @@ const MAX_VISIBLE_ADDRESS_ROWS = 4;
 
 export default function AddressSelectionBottomSheet({
   addresses,
+  bottomOffset = 0,
   isLoading = false,
   isVisible,
   onAddAddress,
@@ -60,9 +63,9 @@ export default function AddressSelectionBottomSheet({
   selectingAddressId,
   selectedAddressId,
 }: Props) {
-  const { colors, typography } = useTheme();
+  const { colors, elevation, layout, motion, shape, spacing } = useTheme();
   const { t } = useTranslation('general');
-  const { height } = useWindowDimensions();
+  const { height, isCompact, width } = useWindowClass();
   const insets = useSafeAreaInsets();
   const isSelectionPending = Boolean(selectingAddressId);
   const [isRequestingLocation, setIsRequestingLocation] = useState(false);
@@ -71,6 +74,12 @@ export default function AddressSelectionBottomSheet({
     useState<LocationPopupMode>('request');
   const resolvedSelectedAddressId =
     selectedAddressId ?? getSelectedSavedAddressId(addresses);
+  const sheetWidth = isCompact
+    ? width
+    : Math.min(width - layout.gutter.medium * 2, layout.contentMaxWidth.readable);
+  const sheetHorizontalInset = isCompact
+    ? bottomOffset > 0 ? spacing.sm : 0
+    : Math.max(0, (width - sheetWidth) / 2);
 
   const expandedHeight = useMemo(() => {
     const estimatedContentHeight =
@@ -79,8 +88,10 @@ export default function AddressSelectionBottomSheet({
         ADDRESS_ROW_ESTIMATE +
       Math.max(insets.bottom, 16);
 
-    return Math.min(height * 0.75, Math.max(280, estimatedContentHeight));
-  }, [addresses.length, height, insets.bottom]);
+    const availableHeight = Math.max(320, height - bottomOffset);
+
+    return Math.min(availableHeight * 0.75, Math.max(280, estimatedContentHeight));
+  }, [addresses.length, bottomOffset, height, insets.bottom]);
 
   const handleUseCurrentLocationPress = useCallback(async () => {
     if (isSelectionPending || isRequestingLocation) {
@@ -163,100 +174,111 @@ export default function AddressSelectionBottomSheet({
   }
 
   return (
-    <View style={styles.overlay}>
+    <View accessibilityViewIsModal style={styles.overlay}>
       <Pressable
+        accessibilityLabel={t('address_selector_close')}
+        accessibilityRole="button"
         onPress={onClose}
-        style={[styles.backdrop, { backgroundColor: colors.overlayDark20 }]}
+        style={[styles.backdrop, { backgroundColor: colors.scrim }]}
       />
 
       <SwipeableBottomSheet
         collapsedHeight={0}
         expandedHeight={expandedHeight}
-        handle={<BottomSheetHandle color={colors.border} variant="hidden" />}
+        handle={<BottomSheetHandle variant={isCompact ? 'visible' : 'hidden'} />}
+        horizontalInset={sheetHorizontalInset}
         initialState="expanded"
         modal
         onCollapsed={onClose}
         style={[
           styles.sheet,
+          elevation.overlay,
           {
-            backgroundColor: colors.background,
-            shadowColor: colors.shadowColor,
+            backgroundColor: colors.surfaceElevated,
+            borderRadius: isCompact && bottomOffset === 0 ? 0 : shape.radius.sheet,
+            borderTopLeftRadius: shape.radius.sheet,
+            borderTopRightRadius: shape.radius.sheet,
+            bottom: isCompact
+              ? bottomOffset
+              : bottomOffset + Math.max(insets.bottom, spacing.xxl),
+            paddingTop: spacing.xs,
           },
         ]}
       >
-        <View style={styles.header}>
-          <View style={styles.headerSpacer} />
+        <View style={[styles.header, { paddingBottom: spacing.md, paddingHorizontal: spacing.lg }]}>
+          <View
+            style={[
+              styles.headerSpacer,
+              {
+                height: layout.touchTarget.minimum,
+                width: layout.touchTarget.minimum,
+              },
+            ]}
+          />
 
           <Text
-            weight="extraBold"
-            style={{
-              fontSize: typography.size.h5,
-              lineHeight: typography.lineHeight.h5,
-            }}
+            accessibilityRole="header"
+            variant="sectionTitle"
+            weight="semiBold"
           >
             {t('address_selector_title')}
           </Text>
 
-          <Pressable
+          <IconButton
             accessibilityLabel={t('address_selector_close')}
-            accessibilityRole="button"
-            hitSlop={12}
             onPress={onClose}
-            style={({ pressed }) => [
-              styles.closeButton,
-              {
-                backgroundColor: colors.backgroundTertiary,
-                opacity: pressed ? 0.85 : 1,
-              },
-            ]}
-          >
-            <Icon
+            variant="soft"
+            icon={<Icon
               color={colors.text}
               name="close"
               size={18}
               type="Ionicons"
-            />
-          </Pressable>
+            />}
+          />
         </View>
 
         <ScrollView
           contentContainerStyle={[
             styles.content,
-            { paddingBottom: Math.max(insets.bottom, 16) + 12 },
+            {
+              gap: spacing.sm,
+              paddingBottom: Math.max(insets.bottom, spacing.lg) + spacing.md,
+              paddingHorizontal: spacing.lg,
+            },
           ]}
           showsVerticalScrollIndicator={false}
         >
           <Pressable
             accessibilityLabel={t('address_selector_use_current_location')}
             accessibilityRole="button"
+            accessibilityState={{
+              busy: isRequestingLocation,
+              disabled: isSelectionPending || isRequestingLocation,
+            }}
             disabled={isSelectionPending || isRequestingLocation}
             onPress={() => {
               void handleUseCurrentLocationPress();
             }}
             style={({ pressed }) => [
-              styles.currentLocationRow,
-              {
-                backgroundColor: pressed ? colors.gray100 : 'transparent',
-                opacity: isSelectionPending || isRequestingLocation ? 0.55 : 1,
+                styles.currentLocationRow,
+                {
+                backgroundColor: pressed ? colors.statePressed : 'transparent',
+                borderRadius: shape.radius.control,
+                gap: spacing.md,
+                opacity: isSelectionPending || isRequestingLocation ? motion.opacity.disabled : 1,
               },
             ]}
           >
-            {isRequestingLocation ? (
-              <ActivityIndicator color={colors.primary} size="small" />
-            ) : (
-              <Icon
-                color={colors.text}
-                name="map-outline"
-                size={20}
-                type="Ionicons"
-              />
-            )}
+            <View style={[styles.actionIcon, { backgroundColor: colors.primarySoft, borderRadius: shape.radius.pill }]}>
+              {isRequestingLocation ? (
+                <ActivityIndicator color={colors.primary} size="small" />
+              ) : (
+                <Icon color={colors.primary} name="navigate-outline" size={19} type="Ionicons" />
+              )}
+            </View>
             <Text
-              weight="medium"
-              style={{
-                fontSize: typography.size.md,
-                lineHeight: typography.lineHeight.md,
-              }}
+              variant="body"
+              weight="semiBold"
             >
               {t('address_selector_use_current_location')}
             </Text>
@@ -268,7 +290,7 @@ export default function AddressSelectionBottomSheet({
             </View>
           ) : null}
 
-          <View style={styles.addressList}>
+          <View style={[styles.addressList, { gap: spacing.xs }]}>
             {addresses.map((address) => {
               return (
                 <SavedAddressSelectionRow
@@ -290,29 +312,26 @@ export default function AddressSelectionBottomSheet({
             <Pressable
               accessibilityLabel={t('address_selector_add_new')}
               accessibilityRole="button"
+              accessibilityState={{ disabled: isSelectionPending }}
               disabled={isSelectionPending}
               onPress={onAddAddress}
               style={({ pressed }) => [
                 styles.addAddressButton,
                 {
-                  opacity: isSelectionPending ? 0.55 : pressed ? 0.85 : 1,
+                  backgroundColor: pressed ? colors.statePressed : 'transparent',
+                  borderRadius: shape.radius.control,
+                  gap: spacing.md,
+                  opacity: isSelectionPending ? motion.opacity.disabled : 1,
                 },
               ]}
             >
-              <Icon
-                color={colors.mutedText}
-                name="add"
-                size={20}
-                type="Ionicons"
-              />
+              <View style={[styles.actionIcon, { backgroundColor: colors.surfaceSunken, borderRadius: shape.radius.pill }]}>
+                <Icon color={colors.primary} name="add" size={20} type="Ionicons" />
+              </View>
               <Text
-                weight="medium"
-                style={{
-                  color: colors.text,
-                  fontSize: typography.size.sm2,
-                  letterSpacing: 0,
-                  lineHeight: typography.lineHeight.md,
-                }}
+                color={colors.text}
+                variant="body"
+                weight="semiBold"
               >
                 {t('address_selector_add_new')}
               </Text>
@@ -342,38 +361,25 @@ export default function AddressSelectionBottomSheet({
 const styles = StyleSheet.create({
   addAddressButton: {
     alignItems: 'center',
-    borderRadius: 10,
     flexDirection: 'row',
-    gap: 12,
     minHeight: 48,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
-  addressList: {
-    gap: 4,
+  actionIcon: {
+    alignItems: 'center',
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
   },
+  addressList: {},
   backdrop: {
     ...StyleSheet.absoluteFillObject,
   },
-  closeButton: {
-    alignItems: 'center',
-    borderRadius: 16,
-    height: 32,
-    justifyContent: 'center',
-    position: 'relative',
-    width: 32,
-    zIndex: 8,
-    elevation: 8,
-  },
-  content: {
-    gap: 8,
-    paddingHorizontal: 16,
-  },
+  content: {},
   currentLocationRow: {
     alignItems: 'center',
-    borderRadius: 10,
     flexDirection: 'row',
-    gap: 12,
     minHeight: 48,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -382,16 +388,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingBottom: 12,
-    paddingHorizontal: 16,
     position: 'relative',
-    zIndex: 8,
-    elevation: 8,
+    zIndex: 3,
   },
-  headerSpacer: {
-    height: 32,
-    width: 32,
-  },
+  headerSpacer: {},
   loadingState: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -402,12 +402,5 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   sheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    elevation: 8,
-    paddingTop: 4,
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.16,
-    shadowRadius: 10,
   },
 });

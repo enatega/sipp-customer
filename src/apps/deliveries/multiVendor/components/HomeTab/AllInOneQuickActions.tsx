@@ -1,129 +1,140 @@
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import Text from '../../../../../general/components/Text';
-import { useTheme } from '../../../../../general/theme/theme';
 import { useTranslation } from 'react-i18next';
+import PressableScale from '../../../../../general/components/PressableScale';
+import Text from '../../../../../general/components/Text';
+import { useWindowClass } from '../../../../../general/hooks/useWindowClass';
+import { useTheme } from '../../../../../general/theme/theme';
+
+export type HomeQuickActionId = 'browse' | 'deals' | 'orders' | 'favourites';
 
 type QuickAction = {
-  id: string;
+  id: HomeQuickActionId;
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
   labelKey: string;
+  tone: 'primarySoft' | 'cardPeach' | 'cardMint' | 'cardLavender';
 };
 
-const GO_ANYWHERE_ACTIONS: QuickAction[] = [
-  { id: 'ride', icon: 'car-outline', labelKey: 'multi_vendor_home_quick_ride' },
-  { id: 'scheduled', icon: 'calendar-month-outline', labelKey: 'multi_vendor_home_quick_scheduled' },
-  { id: 'hourly', icon: 'clock-outline', labelKey: 'multi_vendor_home_quick_hourly' },
-  { id: 'courier', icon: 'truck-fast-outline', labelKey: 'multi_vendor_home_quick_courier' },
+const ACTIONS: QuickAction[] = [
+  {
+    id: 'browse',
+    icon: 'storefront-outline',
+    labelKey: 'multi_vendor_home_quick_browse',
+    tone: 'primarySoft',
+  },
+  {
+    id: 'deals',
+    icon: 'tag-outline',
+    labelKey: 'multi_vendor_home_quick_deals',
+    tone: 'cardPeach',
+  },
+  {
+    id: 'orders',
+    icon: 'history',
+    labelKey: 'multi_vendor_home_quick_orders',
+    tone: 'cardMint',
+  },
+  {
+    id: 'favourites',
+    icon: 'heart-outline',
+    labelKey: 'multi_vendor_home_quick_favourites',
+    tone: 'cardLavender',
+  },
 ];
 
-const DELIVERY_ACTIONS: QuickAction[] = [
-  { id: 'food', icon: 'food-outline', labelKey: 'multi_vendor_home_delivery_food' },
-  { id: 'groceries', icon: 'cart-outline', labelKey: 'multi_vendor_home_delivery_groceries' },
-];
+type Props = {
+  onActionPress: (actionId: HomeQuickActionId) => void;
+};
 
-export default function AllInOneQuickActions() {
+export default function AllInOneQuickActions({ onActionPress }: Props) {
   const { t } = useTranslation('deliveries');
-  const { colors } = useTheme();
+  const { colors, layout, shape, spacing } = useTheme();
+  const { gutter } = useWindowClass();
 
   return (
-    <View style={styles.container}>
-      <Text style={[styles.sectionTitle, { color: colors.text }]} weight="bold">
-        {t('multi_vendor_home_go_anywhere')}
-      </Text>
-
-      <View style={styles.quickRow}>
-        {GO_ANYWHERE_ACTIONS.map((action) => (
-          <View key={action.id} style={styles.quickItem}>
-            <View style={[styles.quickIconBox, { backgroundColor: colors.surfaceSoft }]}>
-              <MaterialCommunityIcons name={action.icon} size={24} color={colors.primary} />
-            </View>
-            <Text style={[styles.quickLabel, { color: colors.text }]} weight="semiBold">
-              {t(action.labelKey)}
-            </Text>
+    <View
+      accessibilityRole="toolbar"
+      style={[
+        styles.row,
+        {
+          gap: spacing.sm,
+          maxWidth: layout.contentMaxWidth.commerce,
+          paddingHorizontal: gutter,
+        },
+      ]}
+    >
+      {ACTIONS.map((action) => (
+        <PressableScale
+          accessibilityLabel={t(action.labelKey)}
+          accessibilityRole="button"
+          key={action.id}
+          onPress={() => onActionPress(action.id)}
+          pressedScale={0.96}
+          style={[
+            styles.action,
+            {
+              backgroundColor: colors[action.tone],
+              borderColor: colors.border,
+              borderRadius: shape.radius.surface,
+              gap: spacing.sm,
+              paddingHorizontal: spacing.xs,
+              paddingVertical: spacing.md,
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.iconSurface,
+              {
+                backgroundColor: colors.surfaceElevated,
+                borderRadius: shape.radius.control,
+              },
+            ]}
+          >
+            <MaterialCommunityIcons
+              color={colors.primary}
+              name={action.icon}
+              size={24}
+            />
           </View>
-        ))}
-      </View>
-
-      <Text style={[styles.sectionTitle, { color: colors.text }]} weight="bold">
-        {t('multi_vendor_home_get_anything')}
-      </Text>
-
-      <View style={styles.deliveryRow}>
-        {DELIVERY_ACTIONS.map((action) => (
-          <View key={action.id} style={[styles.deliveryCard, { backgroundColor: colors.blue50 }]}>
-            <View style={styles.deliveryTextWrap}>
-              <Text style={[styles.deliveryTitle, { color: colors.text }]} weight="semiBold">
-                {t(action.labelKey)}
-              </Text>
-              <Text style={[styles.deliverySubtitle, { color: colors.mutedText }]}>
-                {t('multi_vendor_home_delivery_subtitle')}
-              </Text>
-            </View>
-            <MaterialCommunityIcons name={action.icon} size={30} color={colors.primary} />
-          </View>
-        ))}
-      </View>
+          <Text
+            color={colors.textStrong}
+            numberOfLines={2}
+            style={styles.label}
+            variant="caption"
+            weight="bold"
+          >
+            {t(action.labelKey)}
+          </Text>
+        </PressableScale>
+      ))}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    gap: 16,
-    paddingHorizontal: 16,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    lineHeight: 28,
-  },
-  quickRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  quickItem: {
+  action: {
     alignItems: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
     flex: 1,
-    gap: 8,
-  },
-  quickIconBox: {
-    alignItems: 'center',
-    borderRadius: 16,
-    height: 72,
     justifyContent: 'center',
-    width: '100%',
+    minHeight: 104,
+    minWidth: 0,
   },
-  quickLabel: {
-    fontSize: 12,
-    lineHeight: 15,
+  iconSurface: {
+    alignItems: 'center',
+    height: 48,
+    justifyContent: 'center',
+    width: 48,
+  },
+  label: {
+    minHeight: 32,
     textAlign: 'center',
   },
-  deliveryRow: {
+  row: {
+    alignSelf: 'center',
     flexDirection: 'row',
-    gap: 12,
-  },
-  deliveryCard: {
-    alignItems: 'center',
-    borderRadius: 16,
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    minHeight: 78,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  deliveryTextWrap: {
-    flex: 1,
-    gap: 2,
-    paddingRight: 8,
-  },
-  deliveryTitle: {
-    fontSize: 24,
-    lineHeight: 26,
-  },
-  deliverySubtitle: {
-    fontSize: 12,
-    lineHeight: 16,
+    width: '100%',
   },
 });

@@ -1,9 +1,9 @@
 import React from "react";
 import { View } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import Image from "../../../../../general/components/Image";
 import Text from "../../../../../general/components/Text";
 import { useTheme } from "../../../../../general/theme/theme";
+import DeliveryOfferBadge from "../../DeliveryOfferBadge";
 import { styles } from "../styles";
 
 interface StoreImageProps {
@@ -12,6 +12,7 @@ interface StoreImageProps {
   actionSlot?: React.ReactNode;
   isClosed?: boolean;
   closedLabel?: string;
+  layout?: "compact" | "fullWidth" | "resultRow";
 }
 
 export default function StoreImage({
@@ -20,15 +21,29 @@ export default function StoreImage({
   actionSlot,
   isClosed = false,
   closedLabel,
+  layout = "compact",
 }: StoreImageProps) {
-  const { colors } = useTheme();
+  const { colors, shape } = useTheme();
+  const isResultRow = layout === "resultRow";
+  const isCompact = layout === "compact";
 
   return (
-    <View style={styles.imageContainer}>
+    <View
+      style={[
+        styles.imageContainer,
+        isCompact ? styles.compactImageContainer : null,
+        isResultRow ? styles.resultRowImageContainer : null,
+        {
+          borderTopLeftRadius: shape.radius.surface,
+          borderBottomLeftRadius: isResultRow ? shape.radius.surface : undefined,
+          borderTopRightRadius: isResultRow ? undefined : shape.radius.surface,
+        },
+      ]}
+    >
       <Image source={{ uri: imageUrl }} style={styles.image} />
 
       {isClosed ? (
-        <View style={styles.closedOverlay}>
+        <View style={[styles.closedOverlay, { backgroundColor: colors.scrim }]}>
           <Text
             variant="caption"
             weight="bold"
@@ -39,25 +54,13 @@ export default function StoreImage({
         </View>
       ) : null}
 
-      {offer && (
-        <View style={[styles.offerBadge, { backgroundColor: colors.secondary }]}>
-          <Ionicons
-            name="pricetag"
-            size={12}
-            color={colors.blue800}
-            style={styles.offerIcon}
-          />
-          <Text
-            variant="caption"
-            weight="semiBold"
-            style={[styles.offerText, { color: colors.blue800 }]}
-            numberOfLines={1}
-            ellipsizeMode="tail"
-          >
-            {offer}
-          </Text>
-        </View>
-      )}
+      {offer ? (
+        <DeliveryOfferBadge
+          label={String(offer)}
+          size={isResultRow ? "compact" : "regular"}
+          style={styles.offerBadge}
+        />
+      ) : null}
 
       {actionSlot ?? null}
     </View>

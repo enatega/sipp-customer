@@ -52,7 +52,7 @@ export function renderSeeAllItemCard(
       && (storeItem.isAvailable === false || storeItem.isClosed === true);
     return (
       <StoreCard
-        layout="fullWidth"
+        layout="resultRow"
         store={storeItem}
         showClosedOverlay={isClosedStore}
         onClosedPress={isClosedStore

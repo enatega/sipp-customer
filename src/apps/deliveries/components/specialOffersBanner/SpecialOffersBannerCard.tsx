@@ -1,37 +1,48 @@
 import React from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Text from '../../../../general/components/Text';
 import { useTheme } from '../../../../general/theme/theme';
 import type { DeliveryBanner } from '../../api/types';
 import SpecialOffersBannerMedia from './SpecialOffersBannerMedia';
 import SpecialOffersBannerVideo from './SpecialOffersBannerVideo';
+import PressableScale from '../../../../general/components/PressableScale';
 
 type Props = {
   banner: DeliveryBanner;
   width: number;
+  height: number;
   sidePadding: number;
   onPress?: () => void;
 };
 
 export default function SpecialOffersBannerCard({
   banner,
+  height,
   width,
   sidePadding,
   onPress,
 }: Props) {
-  const { colors, typography } = useTheme();
+  const { colors, shape, spacing } = useTheme();
   const videoUri = banner.bannerVideoLink?.trim() ?? '';
   const storeAddress = banner.store?.address?.trim() ?? '';
   const description = banner.description?.trim() ?? '';
   const isPressable = typeof onPress === 'function';
 
   return (
-    <Pressable
+    <PressableScale
+      accessibilityLabel={banner.title}
       accessibilityRole={isPressable ? 'button' : undefined}
       disabled={!isPressable}
       onPress={onPress}
-      style={[styles.container, { marginHorizontal: sidePadding, width }]}
+      style={[
+        styles.container,
+        {
+          borderRadius: shape.radius.hero,
+          marginHorizontal: sidePadding,
+          width,
+        },
+      ]}
     >
       {videoUri ? (
         <SpecialOffersBannerVideo videoUri={videoUri} />
@@ -39,23 +50,30 @@ export default function SpecialOffersBannerCard({
         <SpecialOffersBannerMedia banner={banner} />
       )}
 
-      <View style={styles.bannerCard}>
+      <View
+        style={[
+          styles.bannerCard,
+          {
+            borderRadius: shape.radius.hero,
+            height,
+            paddingHorizontal: spacing.xl,
+            paddingVertical: spacing.xl,
+          },
+        ]}
+      >
         <LinearGradient
-          colors={['rgba(0, 0, 0, 0.08)', 'rgba(0, 0, 0, 0.72)']}
+          colors={[colors.mediaScrimStart, colors.mediaScrimEnd]}
           end={{ x: 0.9, y: 1 }}
           start={{ x: 0.2, y: 0 }}
           style={styles.overlay}
         />
 
-        <View style={styles.content}>
+        <View style={[styles.content, { gap: spacing.sm }]}>
           {storeAddress ? (
             <Text
               color={colors.white}
+              variant="caption"
               weight="semiBold"
-              style={{
-                fontSize: typography.size.xs2,
-                lineHeight: typography.lineHeight.sm,
-              }}
             >
               {storeAddress}
             </Text>
@@ -64,11 +82,8 @@ export default function SpecialOffersBannerCard({
           <Text
             color={colors.white}
             numberOfLines={2}
-            weight="extraBold"
-            style={{
-              fontSize: typography.size.xl,
-              lineHeight: typography.lineHeight.xl,
-            }}
+            variant="sectionTitle"
+            weight="bold"
           >
             {banner.title}
           </Text>
@@ -78,39 +93,30 @@ export default function SpecialOffersBannerCard({
               color={colors.white}
               numberOfLines={3}
               weight="medium"
-              style={{
-                fontSize: typography.size.sm2,
-                lineHeight: typography.lineHeight.md,
-              }}
+              variant="supporting"
             >
               {description}
             </Text>
           ) : null}
         </View>
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     alignSelf: 'stretch',
-    borderRadius: 18,
     overflow: 'hidden',
   },
   bannerCard: {
-    borderRadius: 18,
-    height: 160,
     justifyContent: 'flex-end',
     overflow: 'hidden',
-    paddingHorizontal: 18,
-    paddingVertical: 20,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
   },
   content: {
-    gap: 8,
     zIndex: 1,
   },
 });

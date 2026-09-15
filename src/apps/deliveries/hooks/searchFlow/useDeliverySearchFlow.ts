@@ -26,6 +26,7 @@ import useSavedAddresses from "../../../../general/hooks/useSavedAddresses";
 import useSearchKeyboardState from "../../../../general/hooks/searchFlow/useSearchKeyboardState";
 import useSelectSavedAddress from "../../../../general/hooks/useSelectSavedAddress";
 import { type DeliverySearchFlowOptions } from "./types";
+import useDeliveriesTabSheetOffset from "../useDeliveriesTabSheetOffset";
 
 type DeliveriesNavigationProp =
   NativeStackNavigationProp<DeliveriesStackParamList>;
@@ -51,6 +52,7 @@ export default function useDeliverySearchFlow(
   options?: DeliverySearchFlowOptions,
 ) {
   const navigation = useNavigation<DeliveriesNavigationProp>();
+  const addressSheetBottomOffset = useDeliveriesTabSheetOffset();
   const route =
     useRoute<
       RouteProp<Record<SearchRouteName, object | undefined>, SearchRouteName>
@@ -280,6 +282,7 @@ export default function useDeliverySearchFlow(
     onClearRecentSearches: handleClearRecentSearches,
     addressSheet: {
       addresses,
+      bottomOffset: addressSheetBottomOffset,
       isLoading: isAddressesLoading,
       isVisible: isAddressSheetVisible,
       onAddAddress: handleAddAddressPress,

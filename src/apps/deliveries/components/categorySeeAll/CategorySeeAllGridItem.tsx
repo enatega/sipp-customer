@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useTheme } from '../../../../general/theme/theme';
 import { DiscoveryCategoryCard } from '../discovery';
 import type { DeliveryDiscoveryCategoryItem } from '../discovery';
@@ -7,30 +7,28 @@ import type { DeliveryDiscoveryCategoryItem } from '../discovery';
 type Props = {
   item: DeliveryDiscoveryCategoryItem;
   onPress: (item: DeliveryDiscoveryCategoryItem) => void;
+  size: number;
 };
 
-export default function CategorySeeAllGridItem({ item, onPress }: Props) {
-  const { typography } = useTheme();
+export default function CategorySeeAllGridItem({ item, onPress, size }: Props) {
+  const { shape, typography } = useTheme();
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={item.name}
+    <DiscoveryCategoryCard
+      imageUrl={item.imageUrl}
+      title={item.name}
       onPress={() => onPress(item)}
-      style={styles.item}
-    >
-      <DiscoveryCategoryCard
-        imageUrl={item.imageUrl}
-        title={item.name}
-        containerStyle={styles.cardContainer}
-        imageWrapStyle={styles.imageWrap}
-        imageStyle={styles.image}
-        titleStyle={{
-          fontSize: typography.size.sm2,
-          lineHeight: typography.lineHeight.md,
-        }}
-      />
-    </Pressable>
+      containerStyle={[styles.cardContainer, { width: size }]}
+      imageWrapStyle={[
+        styles.imageWrap,
+        { borderRadius: shape.radius.surface, height: size, width: size },
+      ]}
+      imageStyle={[styles.image, { borderRadius: shape.radius.control }]}
+      titleStyle={{
+        fontSize: typography.size.sm2,
+        lineHeight: typography.lineHeight.md,
+      }}
+    />
   );
 }
 
@@ -40,18 +38,10 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   image: {
-    borderRadius: 8,
     height: '100%',
     width: '100%',
   },
   imageWrap: {
-    borderRadius: 14,
-    height: 112,
     padding: 12,
-    width: 112,
-  },
-  item: {
-    paddingHorizontal: 6,
-    width: '33.3333%',
   },
 });

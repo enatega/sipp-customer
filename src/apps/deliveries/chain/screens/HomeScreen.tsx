@@ -1,11 +1,9 @@
 import React, { useCallback, useEffect } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AddressSelectionBottomSheet from '../../../../general/components/address/AddressSelectionBottomSheet';
-import MultiVendorAddressHeader from '../../components/MultiVendorAddressHeader';
 import type { ProfileAddress } from '../../../../general/api/profileService';
 import { useAddress } from '../../hooks';
 import useAddressSelectionSheet from '../../../../general/hooks/useAddressSelectionSheet';
@@ -22,16 +20,18 @@ import ChainSpecialOffersBanner from '../components/homeScreen/ChainSpecialOffer
 import type { ChainMenuTemplate } from '../api/types';
 import useChainMenuTemplates from '../hooks/useChainMenuTemplates';
 import { useChainMenuStore } from '../stores/useChainMenuStore';
-// import AppSwitcherTopBar from '../../../../general/components/appSwitch/AppSwitcherTopBar';
+import HomeEntrance from '../../components/home/HomeEntrance';
+import DeliveryHomeScaffold from '../../components/home/DeliveryHomeScaffold';
+import useDeliveriesTabSheetOffset from '../../hooks/useDeliveriesTabSheetOffset';
 
 type Props = Record<string, never>;
 
 export default function HomeScreen({}: Props) {
-  const { colors } = useTheme();
+  const { spacing } = useTheme();
   const { t } = useTranslation('deliveries');
-  const insets = useSafeAreaInsets();
   const navigation =
     useNavigation<NativeStackNavigationProp<DeliveriesStackParamList>>();
+  const addressSheetBottomOffset = useDeliveriesTabSheetOffset();
   const {
     addresses,
     isLoading: isAddressesLoading,
@@ -104,20 +104,20 @@ export default function HomeScreen({}: Props) {
 
   const handleAddAddressPress = useCallback(() => {
     handleCloseAddressSheet();
-    navigation.navigate('AddressSearch', { 
+    navigation.navigate('AddressSearch', {
       appPrefix: "deliveries",
-      origin: 'chain-home' 
+      origin: 'chain-home'
     });
   }, [handleCloseAddressSheet, navigation]);
 
   const handleUseCurrentLocation = useCallback(async () => {
     handleCloseAddressSheet();
     const currentLocation = await refreshCurrentLocation();
-    navigation.navigate('AddressChooseOnMap', { 
+    navigation.navigate('AddressChooseOnMap', {
       appPrefix: "deliveries",
       initialLatitude: currentLocation?.latitude,
       initialLongitude: currentLocation?.longitude,
-      origin: 'chain-home' 
+      origin: 'chain-home'
     });
   }, [handleCloseAddressSheet, navigation, refreshCurrentLocation]);
 
@@ -125,42 +125,44 @@ export default function HomeScreen({}: Props) {
     setSelectedMenuTemplateId(template.id);
   }, [setSelectedMenuTemplateId]);
 
-  return (
-    <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      {/* <AppSwitcherTopBar activeKey="deliveries" /> */}
-      <MultiVendorAddressHeader
-        addressVariant="label"
-        addresses={addresses}
-        onAddAddressPress={handleOpenAddressSheet}
-        onAddressPress={handleOpenAddressSheet}
-        rightAccessory={
-          <ChainMenuTemplateDropdown
-            hasError={hasMenuTemplatesError}
-            isLoading={isMenuTemplatesLoading}
-            items={menuTemplates}
-            onSelectTemplate={handleTemplateSelect}
-            selectedTemplateId={selectedMenuTemplateId}
-          />
-        }
-        showCartButton={false}
-      />
-      <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          {
-            paddingBottom: insets.bottom + 28,
-          },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
+  const handleSearchPress = useCallback(() => {
+    navigation.navigate('ChainTabSearch' as never);
+  }, [navigation]);
 
-        <ChainSpecialOffersBanner />
-        <ChainCategorySection isTemplatePending={isMenuTemplatesLoading} />
-        <ChainDealsSection isTemplatePending={isMenuTemplatesLoading} />
-      </ScrollView>
+  return (
+    <>
+      <DeliveryHomeScaffold
+        contentContainerStyle={styles.scrollContent}
+        headerProps={{
+          addressVariant: 'label',
+          addresses,
+          onAddAddressPress: handleOpenAddressSheet,
+          onAddressPress: handleOpenAddressSheet,
+          rightAccessory: (
+            <ChainMenuTemplateDropdown
+              hasError={hasMenuTemplatesError}
+              isLoading={isMenuTemplatesLoading}
+              items={menuTemplates}
+              onSelectTemplate={handleTemplateSelect}
+              selectedTemplateId={selectedMenuTemplateId}
+            />
+          ),
+          showCartButton: false,
+        }}
+        onSearchPress={handleSearchPress}
+      >
+        <HomeEntrance index={1} style={[styles.sectionGroup, { gap: spacing.section.default }]}>
+          <ChainSpecialOffersBanner />
+          <ChainCategorySection isTemplatePending={isMenuTemplatesLoading} />
+        </HomeEntrance>
+        <HomeEntrance index={2}>
+          <ChainDealsSection isTemplatePending={isMenuTemplatesLoading} />
+        </HomeEntrance>
+      </DeliveryHomeScaffold>
 
       <AddressSelectionBottomSheet
         addresses={addresses}
+        bottomOffset={addressSheetBottomOffset}
         isLoading={isAddressesLoading}
         isVisible={isAddressSheetVisible}
         onAddAddress={handleAddAddressPress}
@@ -170,15 +172,13 @@ export default function HomeScreen({}: Props) {
         selectingAddressId={selectingAddressId}
         selectedAddressId={selectedAddress?.id}
       />
-    </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
   scrollContent: {
-    gap: 20,
+    gap: 0,
   },
+  sectionGroup: {},
 });

@@ -82,10 +82,7 @@ export function useOrderTrackingViewModel({
   const riderId = resolveRiderId(order?.rider);
   const riderName =
     order?.rider?.name ||
-    t("ride_active_driver_fallback", {
-      ns: "rideSharing",
-      defaultValue: "Rider",
-    });
+    t("order_tracking_courier_fallback");
   const riderAvatarUri =
     typeof order?.rider?.profile === "string"
       ? order.rider.profile

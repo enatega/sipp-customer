@@ -21,7 +21,7 @@ export default function MainFilterAddressOptionRow({
   isSelected,
   onPress,
 }: Props) {
-  const { colors, typography } = useTheme();
+  const { colors, shape, spacing } = useTheme();
 
   return (
     <Pressable
@@ -31,35 +31,34 @@ export default function MainFilterAddressOptionRow({
       style={({ pressed }) => [
         styles.container,
         {
+          backgroundColor: isSelected ? colors.primarySoft : 'transparent',
+          borderRadius: shape.radius.control,
+          gap: spacing.md,
           opacity: pressed ? 0.8 : 1,
+          paddingHorizontal: spacing.md,
         },
       ]}
     >
-      <Icon type={iconType} name={iconName} size={24} color={colors.text} />
+      <Icon
+        type={iconType}
+        name={iconName}
+        size={22}
+        color={isSelected ? colors.primary : colors.textSubtle}
+      />
 
       <View style={styles.content}>
         <Text
           weight="medium"
-          style={[
-            styles.label,
-            {
-              fontSize: typography.size.sm2,
-              lineHeight: typography.lineHeight.sm2,
-            },
-          ]}
+          variant="label"
+          style={styles.label}
         >
           {label}
         </Text>
         {description ? (
           <Text
-            color={colors.mutedText}
-            style={[
-              styles.description,
-              {
-                fontSize: typography.size.xs2,
-                lineHeight: typography.lineHeight.sm,
-              },
-            ]}
+            color={colors.textSubtle}
+            style={styles.description}
+            variant="caption"
           >
             {description}
           </Text>
@@ -67,7 +66,17 @@ export default function MainFilterAddressOptionRow({
       </View>
 
       {isSelected ? (
-        <Icon type="Feather" name="check" size={22} color={colors.text} />
+        <View
+          style={[
+            styles.check,
+            {
+              backgroundColor: colors.primary,
+              borderRadius: shape.radius.pill,
+            },
+          ]}
+        >
+          <Icon type="Feather" name="check" size={15} color={colors.onPrimary} />
+        </View>
       ) : null}
     </Pressable>
   );
@@ -77,13 +86,19 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 12,
+    minHeight: 56,
   },
   content: {
     flex: 1,
   },
   description: {
     marginTop: 2,
+  },
+  check: {
+    alignItems: 'center',
+    height: 24,
+    justifyContent: 'center',
+    width: 24,
   },
   label: {
     flexShrink: 1,

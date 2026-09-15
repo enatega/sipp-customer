@@ -15,6 +15,7 @@ import useDeliveriesSeeAllScreenConfig from './useDeliveriesSeeAllScreenConfig';
 import useDeliveriesSeeAllScreenState from './useDeliveriesSeeAllScreenState';
 import type { DeliveryNearbyStore } from '../../api/types';
 import AppPopup from '../../../../general/components/AppPopup';
+import { pushStoreDetails } from '../../navigation/storeDetailsNavigation';
 
 type NavigationProp = NativeStackNavigationProp<DeliveriesStackParamList>;
 type SeeAllRouteProp = RouteProp<DeliveriesSeeAllParamList, 'SeeAllScreen'>;
@@ -186,7 +187,7 @@ export default function DeliveriesSeeAllScreen() {
               return;
             }
 
-            navigation.navigate('StoreDetails', { store: selectedClosedStore });
+            pushStoreDetails(navigation, selectedClosedStore);
             setSelectedClosedStore(null);
           },
           variant: 'secondary',

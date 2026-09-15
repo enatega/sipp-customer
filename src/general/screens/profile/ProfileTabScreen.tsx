@@ -19,6 +19,7 @@ import ProfileMenuItem from '../../components/profile/ProfileMenuItem';
 import ProfileMenuSection from '../../components/profile/ProfileMenuSection';
 import ProfileSkeleton from '../../components/profile/ProfileSkeleton';
 import WalletCard from '../../components/profile/WalletCard';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
 const ICON_SIZE = 20;
 
@@ -45,9 +46,10 @@ export default function ProfileTabScreen({
   user,
   wallet,
 }: Props) {
-  const { colors } = useTheme();
+  const { colors, spacing } = useTheme();
   const { t } = useTranslation('general');
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
   const navigation =
     useNavigation<NavigationProp<ProfileTabNavigationParamList>>();
   const logoutMutation = useAppLogout();
@@ -60,7 +62,10 @@ export default function ProfileTabScreen({
     return (
       <ScrollView
         style={[styles.scroll, { backgroundColor: colors.background }]}
-        contentContainerStyle={{ paddingTop: insets.top }}
+        contentContainerStyle={{
+          paddingBottom: tabBarHeight + insets.bottom + spacing.lg,
+          paddingTop: insets.top,
+        }}
       >
         <ProfileSkeleton hasFeatureCard />
       </ScrollView>
@@ -72,7 +77,13 @@ export default function ProfileTabScreen({
   return (
     <ScrollView
       style={[styles.scroll, { backgroundColor: colors.background }]}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top }]}
+      contentContainerStyle={[
+        styles.content,
+        {
+          paddingBottom: tabBarHeight + insets.bottom + spacing.lg,
+          paddingTop: insets.top,
+        },
+      ]}
       showsVerticalScrollIndicator={false}
     >
       <ProfileHeader
@@ -152,7 +163,6 @@ export default function ProfileTabScreen({
 const styles = StyleSheet.create({
   content: {
     gap: 16,
-    paddingBottom: 28,
   },
   scroll: {
     flex: 1,

@@ -2,16 +2,15 @@ import React from "react";
 import {
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import Icon from "../Icon";
 import Text from "../Text";
-import { typography } from "../../theme/typography";
 import AddressSelectionBottomSheet from "../address/AddressSelectionBottomSheet";
 import SearchInput from "./SearchInput";
 import RecentSearches from "./RecentSearches";
@@ -19,9 +18,12 @@ import SearchSuggestions from "./SearchSuggestions";
 import SearchSuggestionsSkeleton from "./SearchSuggestionsSkeleton";
 import type { GenericSearchMainContainerProps } from "./types";
 import { useTranslation } from "react-i18next";
+import { useTheme } from "../../theme/theme";
+import { useWindowClass } from "../../hooks/useWindowClass";
+import PressableScale from "../PressableScale";
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 
 export default function SearchMainContainer({
-  colors,
   inputRef,
   searchQuery,
   recommendations,
@@ -47,35 +49,125 @@ export default function SearchMainContainer({
   children,
 }: GenericSearchMainContainerProps) {
   const { t } = useTranslation("general");
+  const { colors: themeColors, layout, shape, spacing } = useTheme();
+  const { gutter } = useWindowClass();
+  const tabBarHeight = useBottomTabBarHeight();
+  const resolvedAddressLabel =
+    selectedAddressLabel ?? t("multi_vendor_address_label");
+
   return (
     <>
       <TouchableWithoutFeedback onPress={dismissKeyboard}>
         <SafeAreaView
-          style={[styles.safeArea, { backgroundColor: colors.background }]}
+          style={[styles.safeArea, { backgroundColor: themeColors.canvas }]}
         >
+          <LinearGradient
+            colors={[themeColors.primarySoft, themeColors.canvas]}
+            end={{ x: 0.5, y: 1 }}
+            locations={[0, 1]}
+            pointerEvents="none"
+            start={{ x: 0.5, y: 0 }}
+            style={styles.atmosphere}
+          />
           <KeyboardAvoidingView
-            style={styles.content}
+            style={[
+              styles.content,
+              {
+                gap: spacing.lg,
+                maxWidth: layout.contentMaxWidth.commerce,
+                paddingHorizontal: gutter,
+              },
+            ]}
             behavior={Platform.OS === "ios" ? "padding" : undefined}
           >
-            <SearchInput
-              ref={inputRef}
-              value={searchQuery}
-              onChangeText={handleChangeText}
-              placeholder={t("generic_list_search_placeholder")}
-              onFocus={handleFocus}
-              onBlur={handleBlur}
-              onClear={handleClear}
-              onSubmitEditing={handleSubmitEditing}
-            />
+            <View
+              style={{ gap: spacing.xs, paddingTop: spacing.md }}
+            >
+              <SearchInput
+                ref={inputRef}
+                value={searchQuery}
+                onChangeText={handleChangeText}
+                placeholder={t("search_screen_input_placeholder")}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+                onClear={handleClear}
+                onSubmitEditing={handleSubmitEditing}
+              />
+
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityLabel={`${t("searching_near")} ${resolvedAddressLabel}`}
+                onPress={addressSheet.onOpen}
+                pressedScale={0.985}
+                style={[
+                  styles.addressContext,
+                  {
+                    gap: spacing.xs,
+                    minHeight: layout.touchTarget.minimum,
+                    paddingHorizontal: spacing.sm,
+                  },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.addressIcon,
+                    {
+                      backgroundColor: themeColors.primarySoft,
+                      borderRadius: shape.radius.pill,
+                    },
+                  ]}
+                >
+                  <Icon
+                    type="Ionicons"
+                    name="location-outline"
+                    size={16}
+                    color={themeColors.primary}
+                  />
+                </View>
+                <Text
+                  color={themeColors.textSubtle}
+                  numberOfLines={1}
+                  variant="caption"
+                >
+                  {t("searching_near")}
+                </Text>
+                <Text
+                  numberOfLines={1}
+                  weight="semiBold"
+                  variant="caption"
+                  style={styles.addressValue}
+                >
+                  {resolvedAddressLabel}
+                </Text>
+                <Icon
+                  type="Ionicons"
+                  name="chevron-down"
+                  size={16}
+                  color={themeColors.primary}
+                />
+              </PressableScale>
+            </View>
 
             <ScrollView
               keyboardShouldPersistTaps="handled"
               keyboardDismissMode={
-                Platform.OS === "ios" ? "interactive" : "on-drag"
+                showRecentSearches
+                  ? "none"
+                  : Platform.OS === "ios"
+                    ? "interactive"
+                    : "on-drag"
               }
-              onScrollBeginDrag={dismissKeyboard}
+              onScrollBeginDrag={
+                showRecentSearches ? undefined : dismissKeyboard
+              }
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.scrollContent}
+              contentContainerStyle={[
+                styles.scrollContent,
+                {
+                  gap: spacing.section.default,
+                  paddingBottom: tabBarHeight + spacing.lg,
+                },
+              ]}
             >
               {showRecentSearches ? (
                 <RecentSearches
@@ -90,42 +182,21 @@ export default function SearchMainContainer({
               ) : null}
 
               {showIdleState ? (
-                <View style={styles.idleState}>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={t("multi_vendor_address_label")}
-                    onPress={addressSheet.onOpen}
-                    style={styles.addressButton}
-                  >
-                    <Text
-                      color={colors.mutedText}
-                      variant="caption"
-                      style={styles.addressPrefix}
-                    >
-                      {t("searching_near")}
-                    </Text>
-                    <Text
-                      numberOfLines={1}
-                      weight="medium"
-                      style={styles.addressValue}
-                    >
-                      {selectedAddressLabel ?? t("multi_vendor_address_label")}
-                    </Text>
-                    <Icon
-                      type="Ionicons"
-                      name="chevron-down"
-                      size={16}
-                      color={colors.text}
-                    />
-                  </Pressable>
-
+                <View style={{ gap: spacing.xl }}>
                   {isLoadingRecommendations ? (
                     <SearchSuggestionsSkeleton />
                   ) : (
-                    <SearchSuggestions
-                      recommendations={recommendations}
-                      onSuggestionPress={handleSuggestionPress}
-                    />
+                    <View style={[styles.suggestions, { gap: spacing.md }]}>
+                      {recommendations.length > 0 ? (
+                        <Text variant="sectionTitle" weight="extraBold">
+                          {t("search_suggestions_title")}
+                        </Text>
+                      ) : null}
+                      <SearchSuggestions
+                        recommendations={recommendations}
+                        onSuggestionPress={handleSuggestionPress}
+                      />
+                    </View>
                   )}
                 </View>
               ) : null}
@@ -138,6 +209,7 @@ export default function SearchMainContainer({
 
       <AddressSelectionBottomSheet
         addresses={addressSheet?.addresses}
+        bottomOffset={addressSheet?.bottomOffset}
         isLoading={addressSheet?.isLoading}
         isVisible={addressSheet?.isVisible}
         onAddAddress={addressSheet?.onAddAddress}
@@ -145,7 +217,7 @@ export default function SearchMainContainer({
         onSelectAddress={addressSheet?.onSelectAddress}
         onUseCurrentLocation={addressSheet?.onUseCurrentLocation}
         selectingAddressId={addressSheet?.selectingAddressId}
-        selectedAddressId={addressSheet?.selectedAddressId}
+        selectedAddressId={addressSheet?.selectedAddressId ?? undefined}
       />
     </>
   );
@@ -155,31 +227,36 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
+  atmosphere: {
+    height: 176,
+    left: 0,
+    position: "absolute",
+    right: 0,
+    top: 0,
+  },
   content: {
+    alignSelf: "center",
     flex: 1,
-    paddingHorizontal: 16,
-    gap: 12,
+    width: "100%",
   },
   scrollContent: {
-    paddingBottom: 24,
+    flexGrow: 1,
   },
-  idleState: {
-    gap: 12,
-  },
-  addressButton: {
-    flexDirection: "row",
+  addressContext: {
     alignItems: "center",
-    gap: 6,
-    paddingTop: 8,
-    paddingBottom: 4,
+    flexDirection: "row",
+    minWidth: 0,
+    width: "100%",
   },
-  addressPrefix: {
-    fontSize: typography.size.xs2,
-    lineHeight: typography.lineHeight.sm,
+  addressIcon: {
+    alignItems: "center",
+    height: 28,
+    justifyContent: "center",
+    width: 28,
   },
   addressValue: {
     flex: 1,
-    fontSize: typography.size.xs2,
-    lineHeight: typography.lineHeight.sm,
+    minWidth: 0,
   },
+  suggestions: {},
 });

@@ -61,6 +61,7 @@ export default function ShopTypeList() {
         onActionPress={handleSeeAll}
         onItemPress={(item) => handleShopTypeSeeAll(item.id)}
         title={t("multi_vendor_shop_types_title")}
+        variant="home"
       />
     </View>
   );

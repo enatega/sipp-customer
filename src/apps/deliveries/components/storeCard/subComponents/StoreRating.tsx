@@ -30,7 +30,7 @@ export default function StoreRating({
   reviewCount,
   cuisine,
 }: StoreRatingProps) {
-  const { colors } = useTheme();
+  const { colors, spacing } = useTheme();
   const hasRating = typeof rating === "number" && Number.isFinite(rating) && rating > 0;
   const hasReviewCount =
     typeof reviewCount === "number" &&
@@ -45,51 +45,57 @@ export default function StoreRating({
   }
 
   return (
-    <View style={[styles.row, { justifyContent: "space-between" }]}>
-      <View style={styles.row}>
-        {hasRating && (
-          <View style={styles.ratingContainer}>
-            <Icon
-              type="AntDesign"
-              name="star"
-              size={14}
-              color={colors.yellow500}
-            />
-            <Text
-              weight="semiBold"
-              style={[styles.rating, { color: colors.text }]}
-            >
-              {rating.toFixed(1)}
-            </Text>
-          </View>
-        )}
-
-        {hasReviewCount && (
-          <Text
-            weight="regular"
-            style={[
-              styles.reviewCount,
-              {
-                color: colors.mutedText,
-                fontSize: 12,
-                lineHeight: 18,
-              },
-            ]}
-          >
-            ({reviewCount.toLocaleString()}+)
-          </Text>
-        )}
-      </View>
-
-      {hasCuisine && (
+    <View
+      style={[styles.row, { gap: spacing.sm }]}
+    >
+      {hasCuisine ? (
         <Text
+          color={colors.textSubtle}
+          numberOfLines={1}
+          style={styles.cuisine}
+          variant="caption"
           weight="medium"
-          color={colors.mutedText}
-          style={{ fontSize: 12, lineHeight: 18 }}
         >
           {resolvedCuisine}
         </Text>
-      )}
+      ) : null}
+
+      {hasRating || hasReviewCount ? (
+        <View style={styles.row}>
+          {hasRating && (
+            <View style={styles.ratingContainer}>
+              <Icon
+                type="AntDesign"
+                name="star"
+                size={14}
+                color={colors.yellow500}
+              />
+              <Text
+                variant="caption"
+                weight="semiBold"
+                style={[styles.rating, { color: colors.text }]}
+              >
+                {rating.toFixed(1)}
+              </Text>
+            </View>
+          )}
+
+          {hasReviewCount && (
+            <Text
+              variant="caption"
+              weight="regular"
+              style={[
+                styles.reviewCount,
+                {
+                  color: colors.textSubtle,
+                },
+              ]}
+            >
+              ({reviewCount.toLocaleString()}+)
+            </Text>
+          )}
+        </View>
+      ) : null}
     </View>
   );
 }

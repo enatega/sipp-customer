@@ -1,8 +1,10 @@
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import Text from '../../../../../general/components/Text';
 import { useTheme } from '../../../../../general/theme/theme';
 import type { DeliveryShopType } from '../../../api/types';
+import PressableScale from '../../../../../general/components/PressableScale';
+import { useWindowClass } from '../../../../../general/hooks/useWindowClass';
 
 type Props = {
   items: DeliveryShopType[];
@@ -29,13 +31,17 @@ export default function MainSeeAllShopTypeTabs({
   selectedShopTypeId,
   onSelectShopType,
 }: Props) {
-  const { colors, typography } = useTheme();
+  const { colors, shape, spacing } = useTheme();
+  const { gutter } = useWindowClass();
 
   return (
-    <View style={[styles.container, { borderBottomColor: colors.border }]}> 
+    <View style={[styles.container, { backgroundColor: colors.canvas }]}> 
       <ScrollView
         horizontal
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          { gap: spacing.sm, paddingHorizontal: gutter, paddingVertical: spacing.sm },
+        ]}
         showsHorizontalScrollIndicator={false}
       >
         {items.map((shopType) => {
@@ -43,27 +49,30 @@ export default function MainSeeAllShopTypeTabs({
           const resolvedShopTypeName = decodeDisplayText(shopType.name);
 
           return (
-            <Pressable
+            <PressableScale
+              accessibilityLabel={resolvedShopTypeName}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: isSelected }}
               key={shopType.id}
               onPress={() => onSelectShopType(shopType.id)}
+              pressedScale={0.97}
               style={[
                 styles.tab,
                 {
-                  borderBottomColor: isSelected ? colors.primary : 'transparent',
+                  backgroundColor: isSelected ? colors.primary : colors.surfaceSunken,
+                  borderRadius: shape.radius.pill,
+                  paddingHorizontal: spacing.lg,
                 },
               ]}
             >
               <Text
+                color={isSelected ? colors.onPrimary : colors.textSubtle}
+                variant="label"
                 weight={isSelected ? 'semiBold' : 'medium'}
-                style={{
-                  color: isSelected ? colors.primary : colors.mutedText,
-                  fontSize: typography.size.xs2,
-                  lineHeight: typography.lineHeight.sm,
-                }}
               >
                 {resolvedShopTypeName}
               </Text>
-            </Pressable>
+            </PressableScale>
           );
         })}
       </ScrollView>
@@ -73,17 +82,13 @@ export default function MainSeeAllShopTypeTabs({
 
 const styles = StyleSheet.create({
   container: {
-    borderBottomWidth: 1,
   },
   content: {
     minWidth: '100%',
-    paddingHorizontal: 16,
   },
   tab: {
     alignItems: 'center',
-    borderBottomWidth: 3,
     justifyContent: 'center',
-    minHeight: 48,
-    paddingHorizontal: 12,
+    minHeight: 44,
   },
 });

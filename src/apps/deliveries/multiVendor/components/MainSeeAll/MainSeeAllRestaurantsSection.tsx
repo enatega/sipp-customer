@@ -5,6 +5,7 @@ import SectionActionHeader from '../../../../../general/components/SectionAction
 import { DiscoveryResultsSkeleton, DiscoverySectionState } from '../../../components/discovery';
 import StoreCard from '../../../components/storeCard/StoreCard';
 import type { DeliveryNearbyStore } from '../../../api/types';
+import { useTheme } from '../../../../../general/theme/theme';
 
 type Props = {
   title: string;
@@ -33,6 +34,7 @@ export default function MainSeeAllRestaurantsSection({
   errorTitle,
   errorMessage,
 }: Props) {
+  const { spacing } = useTheme();
   const isEmpty = !isPending && !isError && items.length === 0;
   const shouldShowSeeAll = !isPending && !isError && items.length > 0;
 
@@ -61,7 +63,10 @@ export default function MainSeeAllRestaurantsSection({
           data={items}
           keyExtractor={(item) => item.storeId}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: spacing.lg, paddingTop: spacing.xs },
+          ]}
           renderItem={({ item }) => <StoreCard store={item} />}
         />
       )}

@@ -10,15 +10,15 @@ type Props = {
 };
 
 export default function Header({ title, subtitle, style }: Props) {
-  const { colors } = useTheme();
+  const { colors, spacing } = useTheme();
 
   return (
-    <View style={[styles.container, style]}>
-      <Text variant="title" weight="bold" style={styles.title}>
+    <View style={[styles.container, { gap: spacing.sm }, style]}>
+      <Text accessibilityRole="header" variant="title" weight="semiBold" style={styles.title}>
         {title}
       </Text>
       {subtitle ? (
-        <Text variant="caption" color={colors.mutedText}>
+        <Text variant="supporting" color={colors.textSubtle}>
           {subtitle}
         </Text>
       ) : null}
@@ -27,9 +27,7 @@ export default function Header({ title, subtitle, style }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    gap: 6,
-  },
+  container: {},
   title: {
     letterSpacing: -0.4,
   },

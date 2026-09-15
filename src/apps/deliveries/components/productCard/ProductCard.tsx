@@ -71,9 +71,9 @@ function buildTarget(
   };
 }
 
-export default function ProductCard({
+function ProductCard({
   product,
-  variant,
+  variant = 'rail',
   storeId,
   isFullWidth = false,
   onPress,
@@ -146,3 +146,5 @@ export default function ProductCard({
     />
   );
 }
+
+export default React.memo(ProductCard);

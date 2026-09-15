@@ -1,7 +1,8 @@
 import React from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import Text from '../Text';
 import { useTheme } from '../../theme/theme';
+import PressableScale from '../PressableScale';
 
 type Props = {
   label: string;
@@ -14,46 +15,40 @@ export default function MainFilterOptionChip({
   isSelected,
   onPress,
 }: Props) {
-  const { colors, typography } = useTheme();
+  const { colors, shape, spacing } = useTheme();
 
   return (
-    <Pressable
+    <PressableScale
+      accessibilityLabel={label}
       accessibilityRole="button"
       accessibilityState={{ selected: isSelected }}
       onPress={onPress}
-      style={({ pressed }) => [
+      pressedScale={0.97}
+      style={[
         styles.chip,
         {
-          backgroundColor: isSelected ? colors.blue100 : colors.surface,
-          borderColor: isSelected ? 'transparent' : colors.border,
-          opacity: pressed ? 0.85 : 1,
+          backgroundColor: isSelected ? colors.primary : colors.surfaceSunken,
+          borderRadius: shape.radius.pill,
+          paddingHorizontal: spacing.lg,
         },
       ]}
     >
       <Text
-        weight="medium"
-        color={isSelected ? colors.text : colors.mutedText}
-        style={[
-          styles.label,
-          {
-            fontSize: typography.size.sm2,
-            lineHeight: typography.lineHeight.sm2,
-          },
-        ]}
+        color={isSelected ? colors.onPrimary : colors.textSubtle}
+        style={styles.label}
+        variant="label"
+        weight={isSelected ? 'semiBold' : 'medium'}
       >
         {label}
       </Text>
-    </Pressable>
+    </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
   chip: {
-    borderRadius: 999,
-    borderWidth: 1,
-    minHeight: 32,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
+    justifyContent: 'center',
+    minHeight: 44,
   },
   label: {
     textAlign: 'center',

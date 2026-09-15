@@ -6,6 +6,7 @@ import Deals from '../../../components/deals/Deals';
 import { useDeals } from '../../../hooks';
 import type { DeliveriesStackParamList } from '../../../navigation/types';
 import type { GenericListFilters } from '../../../components/filters/types';
+import type { DeliveryNearbyStore } from '../../../api/types';
 
 type NavigationProp = NativeStackNavigationProp<DeliveriesStackParamList>;
 
@@ -14,10 +15,17 @@ type Props = {
   selectedCategoryId?: string | null;
   selectedShopTypeId?: string | null;
   filters?: GenericListFilters;
+  onClosedStorePress?: (store: DeliveryNearbyStore) => void;
 };
 
 export default function MultiVendorDealsSection(props: Props) {
-  const { search, selectedCategoryId, selectedShopTypeId, filters } = props;
+  const {
+    search,
+    selectedCategoryId,
+    selectedShopTypeId,
+    filters,
+    onClosedStorePress,
+  } = props;
   const { t } = useTranslation('deliveries');
   const resolvedCategoryIds =
     selectedCategoryId ? [selectedCategoryId] : (filters?.category_ids ?? []);
@@ -57,6 +65,7 @@ export default function MultiVendorDealsSection(props: Props) {
       isError={hasDealsError}
       isPending={isDealsPending}
       items={dealsData}
+      onClosedStorePress={onClosedStorePress}
       onActionPress={() => {
         navigation.navigate('DealsSeeAll');
       }}

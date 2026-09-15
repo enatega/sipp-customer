@@ -8,17 +8,17 @@ type Props = {
 };
 
 export default function CategorySeeAllGridListHeader({ title }: Props) {
-  const { colors, typography } = useTheme();
+  const { colors } = useTheme();
 
   return (
     <Text
+      accessibilityRole="header"
+      variant="sectionTitle"
       weight="bold"
       style={[
         styles.title,
         {
           color: colors.text,
-          fontSize: typography.size.h5,
-          lineHeight: typography.lineHeight.h5,
         },
       ]}
     >

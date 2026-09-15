@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, View, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useTheme } from '../../../../general/theme/theme';
 import { useDeliveriesCurrencyLabel } from '../../../../general/stores/useAppConfigStore';
 import type { DeliveryShopTypeProduct } from '../../api/types';
@@ -11,6 +11,7 @@ import StoreRating from '../storeCard/subComponents/StoreRating';
 import { styles as storeCardStyles } from '../storeCard/styles';
 import type { ProductCardControlState } from './types';
 import { useTranslations } from '../../../../general/localization/LocalizationProvider';
+import PressableScale from '../../../../general/components/PressableScale';
 
 type Props = {
   isFullWidth?: boolean;
@@ -48,7 +49,7 @@ export default function RailProductCard({
   product,
   state,
 }: Props) {
-  const { colors } = useTheme();
+  const { colors, elevation, shape } = useTheme();
   const { t } = useTranslations('deliveries')
   const currencyLabel = useDeliveriesCurrencyLabel();
   const imageUrl =
@@ -56,7 +57,7 @@ export default function RailProductCard({
     product.storeImage ??
     product.storeLogo ??
     'https://placehold.co/400x400.png';
-  
+
   const resolvedOffer = resolveOfferLabel(
     product.dealAmount,
     product.dealType,
@@ -66,8 +67,9 @@ export default function RailProductCard({
   );
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.7}
+    <PressableScale
+      accessibilityLabel={product.productName}
+      accessibilityRole="button"
       onPress={onPress}
       style={[
         storeCardStyles.container,
@@ -76,8 +78,8 @@ export default function RailProductCard({
           : storeCardStyles.compactContainer,
         {
           backgroundColor: colors.surface,
-          borderColor: colors.border,
-          shadowColor: colors.shadowColor,
+          borderRadius: shape.radius.surface,
+          ...elevation.raised,
         },
       ]}
     >
@@ -96,14 +98,14 @@ export default function RailProductCard({
           reviewCount={product.reviewCount ?? undefined}
           cuisine={product.storeName ?? undefined}
         />
-        <View style={[storeCardStyles.line, { backgroundColor: colors.border }]} />
+        <View style={[storeCardStyles.line, { backgroundColor: colors.divider }]} />
         <StoreDeliveryInfo
           price={product.price ?? 0}
           deliveryTime={product.deliveryTime ?? ''}
           distance={product.distanceKm ?? 0}
         />
       </View>
-    </TouchableOpacity>
+    </PressableScale>
   );
 }
 

@@ -5,6 +5,7 @@ export type SearchLocation = {
 
 export type SearchAddressSheetConfig = {
   addresses: import("../../../../general/api/profileService").ProfileAddress[];
+  bottomOffset?: number;
   isLoading?: boolean;
   isVisible: boolean;
   onOpen: () => void;

@@ -1,24 +1,43 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, Share, StatusBar, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Platform,
+  RefreshControl,
+  Share,
+  StyleSheet,
+  View,
+  type LayoutChangeEvent,
+} from 'react-native';
+import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDeliveriesCurrencyLabel } from '../../../../../general/stores/useAppConfigStore';
 import AppPopup from '../../../../../general/components/AppPopup';
+import ListStateView from '../../../../../general/components/filterablePaginatedList/ListStateView';
 import Text from '../../../../../general/components/Text';
 import { showToast } from '../../../../../general/components/AppToast';
 import useDebouncedValue from '../../../../../general/hooks/useDebouncedValue';
+import { useWindowClass } from '../../../../../general/hooks/useWindowClass';
 import { useTheme } from '../../../../../general/theme/theme';
 import { useStoreProducts, useStoreView } from '../../../hooks';
+import { useCart } from '../../../hooks/useCart';
 import type {
   DeliveryNearbyStore,
+  DeliveryStoreDetailsProduct,
   DeliveryStoreTimings,
 } from '../../../api/types';
 import StoreDetailListHeader from '../../components/StoreDetails/StoreDetailListHeader';
-import StoreDetailProductsList from '../../components/StoreDetails/StoreDetailProductsList';
+import StoreDetailNavigationHeader from '../../components/StoreDetails/StoreDetailNavigationHeader';
 import StoreDetailsScreenSkeleton from '../../components/StoreDetails/StoreDetailsScreenSkeleton';
-import DeliveriesFloatingCartButton from '../../../components/navigation/DeliveriesFloatingCartButton';
+import StoreDetailCartBar from '../../components/StoreDetails/StoreDetailCartBar';
+import StoreDetailMenuNavigation from '../../components/StoreDetails/StoreDetailMenuNavigation';
+import StoreDetailSectionNavigation from '../../components/StoreDetails/StoreDetailSectionNavigation';
+import StoreDetailStickyCategories from '../../components/StoreDetails/StoreDetailStickyCategories';
+import StoreDetailMenuCardSkeleton from '../../components/StoreDetails/StoreDetailMenuCardSkeleton';
+import ProductCard from '../../../components/productCard/ProductCard';
 import { useToggleFavouriteMutation } from '../../hooks/useToggleFavouriteMutation';
 import type { MultiVendorStackParamList } from '../../navigation/types';
 import type { DeliveryProductActionTarget } from '../../../cart/productActionTypes';
@@ -32,6 +51,20 @@ type StoreDetailsParamList = {
 
 const SEARCH_DEBOUNCE_MS = 450;
 const MIN_SEARCH_QUERY_LENGTH = 2;
+const STORE_DETAIL_PRODUCT_SKELETON_COUNT = 4;
+
+type StoreDetailScreenListItem =
+  | { id: 'store-detail-menu'; type: 'menu' }
+  | { id: 'store-detail-section'; type: 'section' }
+  | { id: string; type: 'product'; product: DeliveryStoreDetailsProduct; isLast: boolean }
+  | { id: string; type: 'skeleton'; isLast: boolean }
+  | { id: 'store-detail-error'; type: 'error' }
+  | { id: 'store-detail-empty'; type: 'empty' };
+
+const STORE_DETAIL_BASE_LIST_DATA: StoreDetailScreenListItem[] = [
+  { id: 'store-detail-menu', type: 'menu' },
+  { id: 'store-detail-section', type: 'section' },
+];
 
 function getTodayStoreHours(
   storeTimings?: DeliveryStoreTimings | null,
@@ -87,7 +120,8 @@ function isStoreOrderAvailable(store?: {
 }
 
 export default function StoreDetailsScreen() {
-  const { colors } = useTheme();
+  const { colors, spacing } = useTheme();
+  const { gutter } = useWindowClass();
   const { t } = useTranslation('deliveries');
   const insets = useSafeAreaInsets();
   const currencyLabel = useDeliveriesCurrencyLabel();
@@ -97,9 +131,27 @@ export default function StoreDetailsScreen() {
   const [isInfoModalVisible, setIsInfoModalVisible] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string | null>(null);
+  const [listHeaderHeight, setListHeaderHeight] = useState<number | null>(null);
+  const [categoryRowOffset, setCategoryRowOffset] = useState<number | null>(null);
   const selectedStore = route.params?.store;
   const storeId = selectedStore?.storeId ?? '';
   const [optimisticFav, setOptimisticFav] = useState<boolean | null>(null);
+  const scrollY = useSharedValue(0);
+  const navigationHeaderHeight = insets.top + 60;
+
+  const handleScroll = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
+
+  const handleListHeaderLayout = useCallback((event: LayoutChangeEvent) => {
+    setListHeaderHeight(event.nativeEvent.layout.height);
+  }, []);
+
+  const handleCategoriesLayout = useCallback((event: LayoutChangeEvent) => {
+    setCategoryRowOffset(event.nativeEvent.layout.y);
+  }, []);
 
   const { mutate: toggleFavourite, isPending: isTogglingFavourite } = useToggleFavouriteMutation({
     storeId,
@@ -162,12 +214,15 @@ export default function StoreDetailsScreen() {
       enabled: Boolean(storeId),
     },
   );
+  const { data: cart } = useCart();
 
   useEffect(() => {
     setIsInfoModalVisible(false);
     setSearchValue('');
     setSelectedCategoryId(null);
     setSelectedSubcategoryId(null);
+    setListHeaderHeight(null);
+    setCategoryRowOffset(null);
   }, [storeId]);
 
   const store = storeData;
@@ -257,21 +312,23 @@ export default function StoreDetailsScreen() {
 
   const handleSharePress = useCallback(async () => {
     try {
+      const resolvedStoreName =
+        store?.name ?? selectedStore?.name ?? t('store_details_store_name');
       await Share.share({
-        message: storeName,
-        title: storeName,
+        message: resolvedStoreName,
+        title: resolvedStoreName,
       });
     } catch {
       // Ignore canceled/failed share action.
     }
-  }, [storeName]);
+  }, [selectedStore?.name, store?.name, t]);
 
   const handleCloseInfoModal = useCallback(() => {
     setIsInfoModalVisible(false);
   }, []);
 
   const handleStoreProductOpen = useCallback((target: DeliveryProductActionTarget) => {
-    if (!isStoreOrderAvailable(store)) {
+    if (!isStoreOrderAvailable(store ?? selectedStore)) {
       showToast.info(
         t('store_details_closed_store_title', {
           storeName: store?.name?.trim() || t('store_details_closed_store_fallback_name'),
@@ -284,7 +341,7 @@ export default function StoreDetailsScreen() {
     }
 
     navigation.navigate('ProductInfo', { productId: target.productId });
-  }, [navigation, store, t]);
+  }, [navigation, selectedStore, store, t]);
 
   const handleLoadMoreProducts = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -321,83 +378,127 @@ export default function StoreDetailsScreen() {
     typeof rawDistanceKm === 'number' && Number.isFinite(rawDistanceKm) && rawDistanceKm > 0
       ? `${rawDistanceKm.toFixed(1)} km`
       : null;
+  const rawMinimumOrder = store?.minimumOrder ?? selectedStore?.minimumOrder ?? null;
+  const minimumOrder =
+    typeof rawMinimumOrder === 'number' && Number.isFinite(rawMinimumOrder) && rawMinimumOrder > 0
+      ? t('store_details_minimum_order', {
+          amount: `${currencyLabel} ${rawMinimumOrder.toFixed(2)}`,
+        })
+      : null;
+  const rawDeliveryTime = store?.deliveryTime ?? selectedStore?.deliveryTime ?? null;
+  const deliveryTime =
+    typeof rawDeliveryTime === 'number' && Number.isFinite(rawDeliveryTime) && rawDeliveryTime > 0
+      ? t('store_details_delivery_minutes', { minutes: rawDeliveryTime })
+      : typeof rawDeliveryTime === 'string' && rawDeliveryTime.trim()
+        ? rawDeliveryTime.trim()
+        : null;
   const coverImageUrl =
     store?.coverImage ?? selectedStore?.coverImage ?? 'https://placehold.co/1400x800.png';
   const logoImageUrl = store?.logo ?? selectedStore?.logo ?? 'https://placehold.co/176x176.png';
-  const heroTitle = '';
-  const hours = getTodayStoreHours(store?.storeTimings) ?? t('store_status_closed');
+  const isStoreAvailable = isStoreOrderAvailable(store ?? selectedStore);
+  const hours = getTodayStoreHours(store?.storeTimings) ?? (
+    t('store_details_hours_unavailable')
+  );
+  const isFavourite = optimisticFav ?? storeData?.isFavorited ?? selectedStore?.isFavorite ?? false;
+  const storeType = store?.shopTypeName ?? selectedStore?.shopTypeName ?? null;
   const phone = store?.contact?.phone ?? null;
   const email = store?.contact?.email ?? null;
+  const address = store?.address ?? selectedStore?.address ?? null;
+  const tagLine = store?.tagLine ?? null;
   const sectionTitle = activeCategory?.name ?? t('store_details_all_offered_items');
+  const infoDescription = [
+    store?.description?.trim() || null,
+    address?.trim() ? t('store_details_info_address', { address: address.trim() }) : null,
+    phone?.trim() ? t('store_details_info_phone', { phone: phone.trim() }) : null,
+    email?.trim() ? t('store_details_info_email', { email: email.trim() }) : null,
+  ].filter((line): line is string => Boolean(line)).join('\n\n') || t('store_details_about_fallback');
+  const shouldShowCartBar = Boolean(cart && !cart.isEmpty && cart.totalItems > 0);
   const shouldShowProductSkeletons = !hasFetchedProducts && !productsData && !productsError;
-  const productsContentKey = [
-    activeCategoryId ?? 'offers',
-    activeSubcategoryId ?? 'all',
-    effectiveSearchValue || 'all',
-  ].join(':');
+  const shouldShowProductError =
+    hasFetchedProducts && Boolean(productsError) && products.length === 0;
+  const shouldShowProductEmpty =
+    hasFetchedProducts && !productsError && products.length === 0;
+  const screenListData = useMemo<StoreDetailScreenListItem[]>(() => {
+    if (shouldShowProductSkeletons) {
+      return [
+        ...STORE_DETAIL_BASE_LIST_DATA,
+        ...Array.from({ length: STORE_DETAIL_PRODUCT_SKELETON_COUNT }, (_, index) => ({
+          id: `store-detail-product-skeleton-${index}`,
+          isLast: index === STORE_DETAIL_PRODUCT_SKELETON_COUNT - 1,
+          type: 'skeleton' as const,
+        })),
+      ];
+    }
+
+    if (shouldShowProductError) {
+      return [...STORE_DETAIL_BASE_LIST_DATA, { id: 'store-detail-error', type: 'error' }];
+    }
+
+    if (shouldShowProductEmpty) {
+      return [...STORE_DETAIL_BASE_LIST_DATA, { id: 'store-detail-empty', type: 'empty' }];
+    }
+
+    return [
+      ...STORE_DETAIL_BASE_LIST_DATA,
+      ...products.map((product, index) => ({
+        id: `store-detail-product-${product.id}`,
+        isLast: index === products.length - 1,
+        product,
+        type: 'product' as const,
+      })),
+    ];
+  }, [products, shouldShowProductEmpty, shouldShowProductError, shouldShowProductSkeletons]);
+  const storeMenuProductAction = useMemo(
+    () => ({ onOpenProduct: handleStoreProductOpen }),
+    [handleStoreProductOpen],
+  );
+  const stickyCategoriesRevealOffset = listHeaderHeight != null && categoryRowOffset != null
+    ? Math.max(0, listHeaderHeight + categoryRowOffset - navigationHeaderHeight)
+    : Number.POSITIVE_INFINITY;
   const headerComponent = useMemo(
     () => (
       <StoreDetailListHeader
-        activeCategoryId={activeCategoryId}
-        activeSubcategoryId={activeSubcategoryId}
-        categories={categories}
         coverImageUrl={coverImageUrl}
         deliveryFee={deliveryFee}
+        deliveryTime={deliveryTime}
         distance={distance}
-        email={email}
-        heroTitle={heroTitle}
         hours={hours}
+        isStoreAvailable={isStoreAvailable}
         logoImageUrl={logoImageUrl}
-        onBackPress={handleBackPress}
-        onCategorySelect={handleCategorySelect}
-        onFavouritePress={handleFavouritePress}
+        minimumOrder={minimumOrder}
         onInfoPress={handleOpenInfoModal}
-        onSharePress={handleSharePress}
-        onSearchChange={setSearchValue}
-        onSubcategorySelect={handleSubcategorySelect}
-        phone={phone}
+        onLayout={handleListHeaderLayout}
         rating={rating}
         reviewCount={reviewCount}
-        isFavourite={optimisticFav ?? storeData?.isFavorited ?? selectedStore?.isFavorite ?? false}
-        isFavouriteLoading={isTogglingFavourite}
-        searchValue={searchValue}
-        sectionTitle={sectionTitle}
+        scrollY={scrollY}
         storeName={storeName}
-        subcategories={visibleSubcategories}
+        tagLine={tagLine}
+        storeType={storeType}
       />
     ),
     [
-      activeCategoryId,
-      activeSubcategoryId,
-      categories,
       coverImageUrl,
       deliveryFee,
+      deliveryTime,
       distance,
-      email,
-      heroTitle,
       hours,
       logoImageUrl,
-      handleBackPress,
-      handleCategorySelect,
-      handleFavouritePress,
+      minimumOrder,
       handleOpenInfoModal,
-      handleSharePress,
-      handleSubcategorySelect,
-      phone,
+      handleListHeaderLayout,
+      isStoreAvailable,
       rating,
       reviewCount,
-      optimisticFav,
-      isTogglingFavourite,
-      searchValue,
-      sectionTitle,
+      scrollY,
       storeName,
-      visibleSubcategories,
+      tagLine,
+      storeType,
     ],
   );
 
   if (!storeId) {
     return (
-      <View style={[styles.centeredState, { backgroundColor: colors.background }]}>
+      <View style={[styles.centeredState, { backgroundColor: colors.canvas }]}>
         <Text style={{ color: colors.mutedText }}>{t('store_details_store_missing')}</Text>
       </View>
     );
@@ -409,20 +510,23 @@ export default function StoreDetailsScreen() {
 
   if (storeError && !storeData) {
     return (
-      <View style={[styles.centeredState, { backgroundColor: colors.background }]}>
+      <View style={[styles.centeredState, { backgroundColor: colors.canvas }]}>
         <Text style={{ color: colors.mutedText }}>{t('store_details_load_error')}</Text>
       </View>
     );
   }
 
   return (
-    <>
-      <StatusBar
-        translucent
-        backgroundColor="transparent"
-        barStyle="light-content"
+    <View style={[styles.screen, { backgroundColor: colors.canvas }]}>
+      <LinearGradient
+        colors={[colors.primarySoft, colors.canvas, colors.surface]}
+        end={{ x: 0.82, y: 1 }}
+        locations={[0, 0.54, 1]}
+        pointerEvents="none"
+        start={{ x: 0.18, y: 0 }}
+        style={[StyleSheet.absoluteFill, styles.atmosphere]}
       />
-      <FlatList
+      <Animated.FlatList
         ListFooterComponent={
           isFetchingNextPage ? (
             <View style={styles.footerLoader}>
@@ -431,12 +535,22 @@ export default function StoreDetailsScreen() {
           ) : null
         }
         ListHeaderComponent={headerComponent}
-        contentContainerStyle={[styles.content, { backgroundColor: colors.background }]}
+        contentContainerStyle={[
+          styles.content,
+          {
+            backgroundColor: 'transparent',
+            paddingBottom: shouldShowCartBar ? insets.bottom + 112 : 24,
+          },
+        ]}
         contentInsetAdjustmentBehavior="never"
-        data={PRODUCT_LIST_DATA}
+        data={screenListData}
+        initialNumToRender={Platform.OS === 'android' ? 5 : 7}
         keyExtractor={(item) => item.id}
+        maxToRenderPerBatch={Platform.OS === 'android' ? 5 : 7}
         onEndReached={handleLoadMoreProducts}
         onEndReachedThreshold={0.4}
+        onScroll={handleScroll}
+        removeClippedSubviews={Platform.OS === 'android'}
         refreshControl={(
           <RefreshControl
             refreshing={(isStoreRefetching || isProductsRefetching) && !isStorePending}
@@ -446,59 +560,150 @@ export default function StoreDetailsScreen() {
             tintColor={colors.primary}
           />
         )}
-        renderItem={() => (
-          <StoreDetailProductsList
-            activeCategoryId={activeCategoryId}
-            categories={categories}
-            contentLayoutKey={productsContentKey}
-            emptyText={t('store_details_no_items')}
-            errorText={productsError?.message ?? t('store_details_load_error')}
-            hasError={Boolean(productsError)}
-            hasFetchedProducts={hasFetchedProducts}
-            onCategorySelect={handleCategorySelect}
-            onRetry={() => {
-              void refetchProducts();
-            }}
-            products={products}
-            productAction={{ onOpenProduct: handleStoreProductOpen }}
-            shouldShowProductSkeletons={shouldShowProductSkeletons}
-            storeId={storeId}
-          />
-        )}
+        renderItem={({ item }) => {
+          if (item.type === 'menu') {
+            return (
+              <StoreDetailMenuNavigation
+                activeCategoryId={activeCategoryId}
+                categories={categories}
+                onCategorySelect={handleCategorySelect}
+                onCategoriesLayout={handleCategoriesLayout}
+                onSearchChange={setSearchValue}
+                searchValue={searchValue}
+              />
+            );
+          }
+
+          if (item.type === 'section') {
+            return (
+              <StoreDetailSectionNavigation
+                activeSubcategoryId={activeSubcategoryId}
+                onSubcategorySelect={handleSubcategorySelect}
+                sectionTitle={sectionTitle}
+                subcategories={visibleSubcategories}
+              />
+            );
+          }
+
+          if (item.type === 'error') {
+            return (
+              <View style={[styles.stateCell, { paddingHorizontal: gutter }]}>
+                <ListStateView
+                  actionLabel={t('generic_list_retry')}
+                  description={productsError?.message ?? t('store_details_load_error')}
+                  onActionPress={() => {
+                    void refetchProducts();
+                  }}
+                  title={t('generic_list_error_title')}
+                  variant="error"
+                />
+              </View>
+            );
+          }
+
+          if (item.type === 'empty') {
+            return (
+              <View style={[styles.stateCell, { paddingHorizontal: gutter }]}>
+                <ListStateView
+                  description={t('store_details_no_items')}
+                  variant="empty"
+                />
+              </View>
+            );
+          }
+
+          if (item.type === 'skeleton') {
+            return (
+              <View
+                style={{
+                  paddingBottom: item.isLast ? spacing.xxl : spacing.md,
+                  paddingHorizontal: gutter,
+                  paddingTop: spacing.xs,
+                }}
+              >
+                <StoreDetailMenuCardSkeleton />
+              </View>
+            );
+          }
+
+          return (
+            <View
+              style={{
+                paddingBottom: item.isLast ? spacing.xxl : spacing.md,
+                paddingHorizontal: gutter,
+                paddingTop: spacing.xs,
+              }}
+            >
+              <ProductCard
+                product={item.product}
+                productAction={storeMenuProductAction}
+                storeId={storeId}
+                variant="storeMenu"
+              />
+            </View>
+          );
+        }}
+        scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
-        style={{ backgroundColor: colors.background }}
+        style={styles.list}
+        updateCellsBatchingPeriod={Platform.OS === 'android' ? 32 : 50}
+        windowSize={Platform.OS === 'android' ? 7 : 9}
+      />
+      <StoreDetailStickyCategories
+        activeCategoryId={activeCategoryId}
+        categories={categories}
+        onSelect={handleCategorySelect}
+        revealOffset={stickyCategoriesRevealOffset}
+        scrollY={scrollY}
+        top={navigationHeaderHeight}
+      />
+      <StoreDetailNavigationHeader
+        backAccessibilityLabel={t('store_details_action_back')}
+        favouriteAccessibilityLabel={t(
+          isFavourite
+            ? 'store_details_action_remove_favorite'
+            : 'store_details_action_favorite',
+        )}
+        isFavourite={isFavourite}
+        isFavouriteLoading={isTogglingFavourite}
+        logoImageUrl={logoImageUrl}
+        onBackPress={handleBackPress}
+        onFavouritePress={handleFavouritePress}
+        onSharePress={handleSharePress}
+        scrollY={scrollY}
+        shareAccessibilityLabel={t('store_details_action_share')}
+        storeName={storeName}
       />
       <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
-        <DeliveriesFloatingCartButton
-          style={[
-            styles.floatingCartButton,
-            { bottom: insets.bottom + 86 },
-          ]}
+        <StoreDetailCartBar
+          bottomInset={insets.bottom}
+          cart={cart}
+          horizontalInset={16}
         />
       </View>
 
       <AppPopup
-        description={store?.description?.trim() || t('store_details_about_fallback')}
+        description={infoDescription}
         dismissOnOverlayPress
         onRequestClose={handleCloseInfoModal}
         primaryAction={{
           label: t('store_details_close'),
           onPress: handleCloseInfoModal,
         }}
-        showPrimaryAction={false}
         title={t('store_details_about_title')}
         visible={isInfoModalVisible}
 
       />
-    </>
+    </View>
   );
 }
 
-const PRODUCT_LIST_DATA = [{ id: 'store-detail-products' }] as const;
-
 const styles = StyleSheet.create({
+  atmosphere: {
+    opacity: 0.42,
+  },
   content: {
-    paddingBottom: 24,
+    flexGrow: 1,
   },
   centeredState: {
     alignItems: 'center',
@@ -510,8 +715,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
   },
-  floatingCartButton: {
-    position: 'absolute',
-    right: 16,
+  list: {
+    backgroundColor: 'transparent',
+  },
+  screen: {
+    flex: 1,
+  },
+  stateCell: {
+    minHeight: 180,
+    paddingBottom: 24,
+    paddingTop: 4,
   },
 });

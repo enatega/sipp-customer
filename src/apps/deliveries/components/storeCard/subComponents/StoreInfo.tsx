@@ -15,7 +15,7 @@ export default function StoreInfo({ name, trailingLabel }: StoreInfoProps) {
   return (
     <View style={styles.nameContainer}>
       <Text
-        variant="subtitle"
+        variant="cardTitle"
         weight="semiBold"
         style={[styles.name, { color: colors.text }]}
         numberOfLines={1}
@@ -26,7 +26,8 @@ export default function StoreInfo({ name, trailingLabel }: StoreInfoProps) {
       {trailingLabel ? (
         <Text
           weight="medium"
-          color={colors.mutedText}
+          color={colors.textSubtle}
+          variant="caption"
           numberOfLines={1}
           style={styles.location}
         >

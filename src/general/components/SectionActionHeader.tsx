@@ -1,13 +1,16 @@
 import React from 'react';
-import { Pressable, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import Text from './Text';
 import { useTheme } from '../theme/theme';
+import { Ionicons } from '@expo/vector-icons';
+import PressableScale from './PressableScale';
 
 type Props = {
   title: string;
   actionLabel?: string;
   onActionPress?: () => void;
   style?: StyleProp<ViewStyle>;
+  density?: 'default' | 'compact';
 };
 
 export default function SectionActionHeader({
@@ -15,46 +18,62 @@ export default function SectionActionHeader({
   actionLabel,
   onActionPress,
   style,
+  density = 'default',
 }: Props) {
-  const { colors, typography } = useTheme();
+  const { colors, layout, shape, spacing } = useTheme();
+  const isCompact = density === 'compact';
 
   return (
     <View style={[styles.container, style]}>
       <Text
-        weight="extraBold"
-        style={{
-          fontSize: typography.size.lg,
-          letterSpacing: -0.36,
-          lineHeight: typography.lineHeight.lg,
-        }}
+        accessibilityRole="header"
+        variant={isCompact ? 'cardTitle' : 'sectionTitle'}
+        weight={isCompact ? 'bold' : 'extraBold'}
+        numberOfLines={2}
+        style={styles.title}
       >
         {title}
       </Text>
 
       {actionLabel ? (
-        <Pressable
+        <PressableScale
           accessibilityRole="button"
+          accessibilityLabel={actionLabel}
+          accessibilityState={{ disabled: !onActionPress }}
+          disabled={!onActionPress}
           onPress={onActionPress}
+          pressedScale={0.97}
           style={[
             styles.actionButton,
             {
-              backgroundColor: colors.blue100,
-              shadowColor: colors.shadowColor,
+              borderRadius: shape.radius.control,
+              gap: spacing.xs,
+              minHeight: isCompact ? 36 : layout.touchTarget.minimum,
+              paddingLeft: isCompact ? spacing.xs : spacing.sm,
             },
           ]}
         >
           <Text
-            weight="medium"
-            style={{
-              color: colors.text,
-              fontSize: typography.size.sm2,
-              lineHeight: 22,
-              fontWeight: '700',
-            }}
+            variant={isCompact ? 'caption' : 'label'}
+            weight="semiBold"
+            color={colors.primary}
           >
             {actionLabel}
           </Text>
-        </Pressable>
+          <View
+            style={[
+              styles.actionIcon,
+              {
+                backgroundColor: isCompact ? 'transparent' : colors.primarySoft,
+                borderRadius: shape.radius.pill,
+                height: isCompact ? 18 : 24,
+                width: isCompact ? 18 : 24,
+              },
+            ]}
+          >
+            <Ionicons color={colors.primary} name="chevron-forward" size={14} />
+          </View>
+        </PressableScale>
       ) : null}
     </View>
   );
@@ -68,14 +87,15 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     alignItems: 'center',
-    borderRadius: 5,
+    flexDirection: 'row',
     justifyContent: 'center',
-    minHeight: 30,
-    minWidth: 76,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
+  },
+  actionIcon: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: {
+    flex: 1,
+    minWidth: 0,
   },
 });

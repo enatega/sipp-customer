@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import BannerSwiper from '../../../../general/components/BannerSwiper';
 import { useTheme } from '../../../../general/theme/theme';
 import type {
@@ -11,11 +11,13 @@ import type {
 import type { DeliveriesStackParamList } from '../../navigation/types';
 import SpecialOffersBannerCard from './SpecialOffersBannerCard';
 import SpecialOffersBannerSkeleton from './SpecialOffersBannerSkeleton';
+import { useWindowClass } from '../../../../general/hooks/useWindowClass';
 
 type Props = {
   banners: DeliveryBanner[];
   isPending: boolean;
   onIndexChange?: (index: number) => void;
+  variant?: 'default' | 'home';
 };
 
 type BannerActionHandler = (banner: DeliveryBanner) => void;
@@ -56,13 +58,18 @@ export default function SpecialOffersBanner({
   banners,
   isPending,
   onIndexChange,
+  variant = 'default',
 }: Props) {
   const navigation = useNavigation<NavigationProp<DeliveriesStackParamList>>();
-  const { colors } = useTheme();
-  const { width } = useWindowDimensions();
+  const { colors, layout, shape, spacing } = useTheme();
+  const { gutter, width } = useWindowClass();
   const [bannerIndex, setBannerIndex] = useState(0);
-  const bannerSidePadding = 20;
-  const bannerWidth = width - bannerSidePadding * 2;
+  const isHomeVariant = variant === 'home';
+  const bannerSidePadding = isHomeVariant ? gutter + spacing.sm : gutter;
+  const bannerWidth = Math.min(
+    width - bannerSidePadding * 2,
+    layout.contentMaxWidth.commerce,
+  );
   const activeBannerIndex =
     banners.length > 0 ? Math.min(bannerIndex, banners.length - 1) : 0;
   const navigateToStore = useCallback(
@@ -133,7 +140,7 @@ export default function SpecialOffersBanner({
   );
 
   if (isPending) {
-    return <SpecialOffersBannerSkeleton />;
+    return <SpecialOffersBannerSkeleton variant={variant} />;
   }
 
   if (banners.length === 0) {
@@ -151,6 +158,7 @@ export default function SpecialOffersBanner({
         renderItem={({ item }) => (
           <SpecialOffersBannerCard
             banner={item}
+            height={isHomeVariant ? 164 : 176}
             onPress={() => handleBannerPress(item)}
             sidePadding={bannerSidePadding}
             width={bannerWidth}
@@ -158,7 +166,12 @@ export default function SpecialOffersBanner({
         )}
       />
 
-      <View style={styles.bannerDots}>
+      <View
+        style={[
+          styles.bannerDots,
+          { gap: spacing.xs, marginTop: isHomeVariant ? spacing.xs : spacing.sm },
+        ]}
+      >
         {banners.map((item, index) => (
           <View
             key={item.id}
@@ -172,6 +185,7 @@ export default function SpecialOffersBanner({
                   index === activeBannerIndex
                     ? colors.primary
                     : colors.iconDisabled,
+                borderRadius: shape.radius.pill,
               },
             ]}
           />
@@ -187,12 +201,9 @@ const styles = StyleSheet.create({
   },
   bannerDots: {
     flexDirection: 'row',
-    gap: 4,
     justifyContent: 'center',
-    marginTop: 10,
   },
   bannerDot: {
-    borderRadius: 999,
     height: 6,
   },
   bannerDotActive: {

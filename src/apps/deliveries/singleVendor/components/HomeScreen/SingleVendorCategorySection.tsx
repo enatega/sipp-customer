@@ -12,11 +12,15 @@ import ProductCard from '../../../components/productCard/ProductCard';
 import type { DeliveriesStackParamList } from '../../../navigation/types';
 import useSingleVendorCategories from '../../hooks/useSingleVendorCategories';
 import useSingleVendorCategoryProductSections from '../../hooks/useSingleVendorCategoryProductSections';
+import { useTheme } from '../../../../../general/theme/theme';
+import { useWindowClass } from '../../../../../general/hooks/useWindowClass';
 
 type NavigationProp = NativeStackNavigationProp<DeliveriesStackParamList>;
 
 export default function SingleVendorCategorySection() {
   const { t } = useTranslation('deliveries');
+  const { spacing } = useTheme();
+  const { gutter } = useWindowClass();
   const navigation = useNavigation<NavigationProp>();
   const { data = [], isPending } = useSingleVendorCategories();
   const productSections = useSingleVendorCategoryProductSections(data);
@@ -39,7 +43,7 @@ export default function SingleVendorCategorySection() {
   );
 
   return (
-    <View style={styles.content}>
+    <View style={[styles.content, { gap: spacing.section.default }]}>
       <DiscoveryCategorySection
         actionLabel={t('multi_vendor_see_all')}
         items={data}
@@ -50,7 +54,10 @@ export default function SingleVendorCategorySection() {
 
       {productSections.map(
         ({ category, data: products = [], error, isPending: isProductsPending }) => (
-          <View key={category.id} style={styles.resultSection}>
+          <View
+            key={category.id}
+            style={[styles.resultSection, { paddingHorizontal: gutter }]}
+          >
             <DiscoveryCategoryResultsSection
               title={category.name}
               actionLabel={t('multi_vendor_see_all')}
@@ -81,10 +88,6 @@ export default function SingleVendorCategorySection() {
 }
 
 const styles = StyleSheet.create({
-  content: {
-    gap: 12,
-  },
-  resultSection: {
-    paddingHorizontal: 16,
-  },
+  content: {},
+  resultSection: {},
 });

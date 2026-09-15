@@ -34,7 +34,7 @@ function toPositiveNumber(value: number | string) {
 }
 
 export default function StoreDeliveryInfo({ price, deliveryTime, distance }: StoreDeliveryInfoProps) {
-  const { colors } = useTheme();
+  const { colors, spacing } = useTheme();
   const currencyLabel = useDeliveriesCurrencyLabel();
   const deliveryTimeValue = toPositiveNumber(deliveryTime);
   const distanceValue = toPositiveNumber(distance);
@@ -68,32 +68,25 @@ export default function StoreDeliveryInfo({ price, deliveryTime, distance }: Sto
   }
 
   return (
-    <View style={styles.row}>
-      {infoItems.map((item, index) => (
-        <React.Fragment key={`${item.iconName}-${item.label}`}>
-          {index > 0 ? (
-            <Icon
-              type="Entypo"
-              name="dot-single"
-              size={16}
-              color={colors.border}
-            />
-          ) : null}
-          <View style={[styles.infoItem, index === 0 ? { gap: 6 } : null]}>
-            <Icon
-              type={item.iconType}
-              name={item.iconName}
-              size={16}
-              color={colors.mutedText}
-            />
-            <Text
-              weight="medium"
-              style={[styles.infoText, { color: colors.mutedText }]}
-            >
-              {item.label}
-            </Text>
-          </View>
-        </React.Fragment>
+    <View
+      style={[styles.deliveryInfoRow, { gap: spacing.md }]}
+    >
+      {infoItems.map((item) => (
+        <View key={`${item.iconName}-${item.label}`} style={styles.infoItem}>
+          <Icon
+            type={item.iconType}
+            name={item.iconName}
+            size={16}
+            color={colors.textSubtle}
+          />
+          <Text
+            variant="caption"
+            weight="medium"
+            style={[styles.infoText, { color: colors.textSubtle }]}
+          >
+            {item.label}
+          </Text>
+        </View>
       ))}
     </View>
   );

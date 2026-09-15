@@ -13,7 +13,7 @@ export default function TopBrandsListSkeleton() {
             borderRadius={styles.imageWrap.borderRadius}
           >
             <View style={styles.imageContainer}>
-              <Skeleton width={76} height={76} borderRadius={10} />
+              <Skeleton width={84} height={84} borderRadius={12} />
             </View>
           </Skeleton>
 
@@ -33,16 +33,16 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   card: {
-    borderRadius: 6,
+    borderRadius: 16,
     gap: 0,
-    height: 140,
+    height: 168,
     overflow: 'hidden',
-    width: 100,
+    width: 112,
   },
   imageWrap: {
-    borderRadius: 6,
-    height: 100,
-    width: 100,
+    borderRadius: 16,
+    height: 112,
+    width: 112,
   },
   imageContainer: {
     alignItems: 'center',
@@ -50,8 +50,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   content: {
-    gap: 2,
-    paddingHorizontal: 6,
-    paddingVertical: 4,
+    gap: 4,
+    padding: 8,
   },
 });

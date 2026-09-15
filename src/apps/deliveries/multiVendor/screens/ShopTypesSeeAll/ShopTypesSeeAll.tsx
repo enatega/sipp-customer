@@ -10,7 +10,7 @@ export default function ShopTypesSeeAll() {
   const navigation = useNavigation();
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+    <View style={[styles.screen, { backgroundColor: colors.canvas }]}> 
       <ScreenHeader showBack={navigation.canGoBack()} />
       <ShopTypesSeeAllContainer />
     </View>
@@ -18,8 +18,5 @@ export default function ShopTypesSeeAll() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    paddingBottom: 6,
-  },
   screen: { flex: 1 },
 });

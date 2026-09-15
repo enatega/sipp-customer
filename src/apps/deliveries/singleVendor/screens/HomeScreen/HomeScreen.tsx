@@ -1,12 +1,9 @@
 import React, { useCallback } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AddressSelectionBottomSheet from '../../../../../general/components/address/AddressSelectionBottomSheet';
-import MultiVendorAddressHeader from '../../../components/MultiVendorAddressHeader';
-import Header from '../../../../../general/components/Header';
 import { showToast } from '../../../../../general/components/AppToast';
 import { useTheme } from '../../../../../general/theme/theme';
 import { useCartCount } from '../../../hooks/useCart';
@@ -15,18 +12,20 @@ import useCurrentLocation from '../../../../../general/hooks/useCurrentLocation'
 import useAddressSelectionSheet from '../../../../../general/hooks/useAddressSelectionSheet';
 import useSavedAddresses from '../../../../../general/hooks/useSavedAddresses';
 import useSelectSavedAddress from '../../../../../general/hooks/useSelectSavedAddress';
-// import AppSwitcherTopBar from '../../../../../general/components/appSwitch/AppSwitcherTopBar';
 import type { DeliveriesStackParamList } from '../../../navigation/types';
 import SingleVendorCategorySection from '../../components/HomeScreen/SingleVendorCategorySection';
 import SingleVendorDealsSection from '../../components/HomeScreen/SingleVendorDealsSection';
 import SingleVendorSpecialOffersBanner from '../../components/HomeScreen/SingleVendorSpecialOffersBanner';
+import HomeEntrance from '../../../components/home/HomeEntrance';
+import DeliveryHomeScaffold from '../../../components/home/DeliveryHomeScaffold';
+import useDeliveriesTabSheetOffset from '../../../hooks/useDeliveriesTabSheetOffset';
 
 export default function HomeScreen() {
-  const { colors } = useTheme();
+  const { spacing } = useTheme();
   const { t } = useTranslation('deliveries');
-  const insets = useSafeAreaInsets();
   const navigation =
     useNavigation<NativeStackNavigationProp<DeliveriesStackParamList>>();
+  const addressSheetBottomOffset = useDeliveriesTabSheetOffset();
   const {
     addresses,
     isLoading: isAddressesLoading,
@@ -65,20 +64,20 @@ export default function HomeScreen() {
 
   const handleAddAddressPress = useCallback(() => {
     handleCloseAddressSheet();
-    navigation.navigate('AddressSearch', { 
+    navigation.navigate('AddressSearch', {
       appPrefix: "deliveries",
-      origin: 'single-vendor-home' 
+      origin: 'single-vendor-home'
     });
   }, [handleCloseAddressSheet, navigation]);
 
   const handleUseCurrentLocation = useCallback(async () => {
     handleCloseAddressSheet();
     const currentLocation = await refreshCurrentLocation();
-    navigation.navigate('AddressChooseOnMap', { 
+    navigation.navigate('AddressChooseOnMap', {
       appPrefix: "deliveries",
       initialLatitude: currentLocation?.latitude,
       initialLongitude: currentLocation?.longitude,
-      origin: 'single-vendor-home' 
+      origin: 'single-vendor-home'
     });
   }, [handleCloseAddressSheet, navigation, refreshCurrentLocation]);
 
@@ -86,40 +85,35 @@ export default function HomeScreen() {
     navigation.navigate('Cart');
   }, [navigation]);
 
+  const handleSearchPress = useCallback(() => {
+    navigation.navigate('SingleVendorTabSearch' as never);
+  }, [navigation]);
+
   return (
-    <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      {/* <AppSwitcherTopBar activeKey="deliveries" /> */}
-      <MultiVendorAddressHeader
-        addresses={addresses}
-        cartCount={cartCount?.totalItems}
-        onAddAddressPress={handleOpenAddressSheet}
-        onAddressPress={handleOpenAddressSheet}
-        onCartPress={handleCartPress}
-      />
-      <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          {
-            paddingBottom: insets.bottom + 28,
-          },
-        ]}
-        showsVerticalScrollIndicator={false}
+    <>
+      <DeliveryHomeScaffold
+        contentContainerStyle={styles.scrollContent}
+        headerProps={{
+          addresses,
+          cartCount: cartCount?.totalItems,
+          onAddAddressPress: handleOpenAddressSheet,
+          onAddressPress: handleOpenAddressSheet,
+          onCartPress: handleCartPress,
+        }}
+        onSearchPress={handleSearchPress}
       >
-
-        {/* <View style={styles.content}>
-          <Header
-            title={t('single_vendor_title')}
-            subtitle={t('single_vendor_home_subtitle')}
-          />
-        </View> */}
-
-        <SingleVendorSpecialOffersBanner />
-        <SingleVendorCategorySection />
-        <SingleVendorDealsSection />
-      </ScrollView>
+        <HomeEntrance index={1} style={[styles.sectionGroup, { gap: spacing.section.default }]}>
+          <SingleVendorSpecialOffersBanner />
+          <SingleVendorCategorySection />
+        </HomeEntrance>
+        <HomeEntrance index={2}>
+          <SingleVendorDealsSection />
+        </HomeEntrance>
+      </DeliveryHomeScaffold>
 
       <AddressSelectionBottomSheet
         addresses={addresses}
+        bottomOffset={addressSheetBottomOffset}
         isLoading={isAddressesLoading}
         isVisible={isAddressSheetVisible}
         onAddAddress={handleAddAddressPress}
@@ -129,18 +123,13 @@ export default function HomeScreen() {
         selectingAddressId={selectingAddressId}
         selectedAddressId={selectedAddress?.id}
       />
-    </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  content: {
-    paddingHorizontal: 20,
-  },
-  screen: {
-    flex: 1,
-  },
   scrollContent: {
-    gap: 20,
+    gap: 0,
   },
+  sectionGroup: {},
 });

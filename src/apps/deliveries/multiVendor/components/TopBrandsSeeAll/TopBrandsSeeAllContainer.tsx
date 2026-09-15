@@ -8,6 +8,8 @@ import TopBrandsSeeAllErrorState from './TopBrandsSeeAllErrorState';
 import TopBrandsSeeAllItem from './TopBrandsSeeAllItem';
 import TopBrandsSeeAllSkeleton from './TopBrandsSeeAllSkeleton';
 import useTopBrandNavigation from '../../hooks/useTopBrandNavigation';
+import { useWindowClass } from '../../../../../general/hooks/useWindowClass';
+import { useTheme } from '../../../../../general/theme/theme';
 
 type TopBrandsSeeAllContainerProps = {
   searchValue: string;
@@ -16,6 +18,9 @@ type TopBrandsSeeAllContainerProps = {
 export default function TopBrandsSeeAllContainer({
   searchValue,
 }: TopBrandsSeeAllContainerProps) {
+  const { layout, spacing } = useTheme();
+  const { gutter, isCompact, isMedium } = useWindowClass();
+  const columns = isCompact ? 2 : isMedium ? 3 : 4;
   const debouncedSearchValue = useDebouncedValue(searchValue.trim(), 500);
   const { canOpenBrand, openTopBrand } = useTopBrandNavigation();
   const {
@@ -62,8 +67,9 @@ export default function TopBrandsSeeAllContainer({
 
   return (
     <FlatList
+      key={`top-brands-${columns}`}
       data={topBrands}
-      numColumns={2}
+      numColumns={columns}
       keyExtractor={(item, index) => `${item.name}-${index}`}
       renderItem={({ item }) => (
         <TopBrandsSeeAllItem
@@ -75,8 +81,16 @@ export default function TopBrandsSeeAllContainer({
       keyboardDismissMode="on-drag"
       keyboardShouldPersistTaps="handled"
       ListEmptyComponent={<TopBrandsSeeAllEmptyState />}
-      contentContainerStyle={styles.emptyContent}
-      columnWrapperStyle={styles.row}
+      contentContainerStyle={[
+        styles.emptyContent,
+        {
+          maxWidth: layout.contentMaxWidth.commerce,
+          paddingBottom: spacing.section.default,
+          paddingHorizontal: gutter,
+        },
+      ]}
+      columnWrapperStyle={[styles.row, { gap: spacing.md, marginBottom: spacing.lg }]}
+      style={styles.list}
       onEndReached={handleLoadMore}
       onEndReachedThreshold={0.4}
       showsVerticalScrollIndicator={false}
@@ -87,11 +101,12 @@ export default function TopBrandsSeeAllContainer({
 const styles = StyleSheet.create({
   emptyContent: {
     flexGrow: 1,
-    paddingHorizontal: 16,
-    paddingBottom: 24,
+  },
+  list: {
+    alignSelf: 'center',
+    width: '100%',
   },
   row: {
-    justifyContent: 'space-between',
-    marginBottom: 16,
+    justifyContent: 'flex-start',
   },
 });

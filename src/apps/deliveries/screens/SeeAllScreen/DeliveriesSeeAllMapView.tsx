@@ -5,6 +5,7 @@ import SeeAllMapView from '../../../../general/screens/SeeAllScreen/components/S
 import type { DeliveriesSeeAllParamList, SeeAllItem } from '../../navigation/sharedTypes';
 import { mapStoreFromSeeAllItem } from './components/renderers';
 import type { DeliveryNearbyStore } from '../../api/types';
+import { pushStoreDetails } from '../../navigation/storeDetailsNavigation';
 
 type SeeAllMapRouteProp = RouteProp<DeliveriesSeeAllParamList, 'SeeAllMapView'>;
 
@@ -24,7 +25,7 @@ export default function DeliveriesSeeAllMapView() {
         return;
       }
 
-      navigation.navigate('StoreDetails', { store: item as DeliveryNearbyStore });
+      pushStoreDetails(navigation, item as DeliveryNearbyStore);
     },
     [navigation],
   );

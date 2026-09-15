@@ -3,39 +3,42 @@ import { Keyboard, Pressable, StyleSheet } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../../../../../general/theme/theme";
 import Text from "../../../../../general/components/Text";
-import SearchHeader from "../../../components/seeAllHeader/SearchHeader";
+import DeliveriesSeeAllHeader from "../../../screens/SeeAllScreen/components/DeliveriesSeeAllHeader";
 import TopBrandsSeeAllContainer from "../../components/TopBrandsSeeAll/TopBrandsSeeAllContainer";
+import { useWindowClass } from "../../../../../general/hooks/useWindowClass";
 
 export default function TopBrandsSeeAll() {
-  const { colors, typography } = useTheme();
+  const { colors, spacing } = useTheme();
+  const { gutter } = useWindowClass();
   const { t } = useTranslation("deliveries");
   const [searchValue, setSearchValue] = useState("");
 
   return (
     <Pressable
-      style={[styles.screen, { backgroundColor: colors.background }]}
+      style={[styles.screen, { backgroundColor: colors.canvas }]}
       onPress={() => Keyboard.dismiss()}
     >
-      <SearchHeader
+      <DeliveriesSeeAllHeader
         searchPlaceholder={t("store_details_search_placeholder")}
         searchValue={searchValue}
         onSearchChangeText={setSearchValue}
         isSearchEditable
-        backAccessibilityLabel={t("support_back_action")}
-        filterAccessibilityLabel={t("store_details_search_placeholder")}
-        mapAccessibilityLabel={t("store_details_search_placeholder")}
+        onOpenFilters={() => {}}
+        onMapPress={() => {}}
         isSearchVisible
         isFilterVisible={false}
         isMapVisible={false}
       />
       <Text
+        accessibilityRole="header"
+        variant="sectionTitle"
         weight="bold"
         style={[
           styles.title,
           {
             color: colors.text,
-            fontSize: typography.size.h5,
-            lineHeight: typography.lineHeight.h5,
+            marginBottom: spacing.lg,
+            paddingHorizontal: gutter,
           },
         ]}
       >
@@ -48,8 +51,7 @@ export default function TopBrandsSeeAll() {
 
 const styles = StyleSheet.create({
   title: {
-    marginBottom: 16,
-    paddingHorizontal: 16,
+    marginTop: 4,
   },
   screen: { flex: 1 },
 });

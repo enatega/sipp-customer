@@ -5,5 +5,11 @@ import { useMobileBanners } from '../../../hooks';
 export default function SpecialOffersBanner() {
   const { data: banners = [], isPending } = useMobileBanners();
 
-  return <SharedSpecialOffersBanner banners={banners} isPending={isPending} />;
+  return (
+    <SharedSpecialOffersBanner
+      banners={banners}
+      isPending={isPending}
+      variant="home"
+    />
+  );
 }

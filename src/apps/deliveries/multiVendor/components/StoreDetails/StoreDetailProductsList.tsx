@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import PagerView, { type PagerViewOnPageSelectedEvent } from 'react-native-pager-view';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../../../../general/theme/theme';
+import { useWindowClass } from '../../../../../general/hooks/useWindowClass';
 import type {
   DeliveryStoreDetailsFilterItem,
   DeliveryStoreDetailsProduct,
@@ -30,11 +31,7 @@ const STORE_DETAIL_PRODUCT_SKELETON_ITEMS = Array.from({ length: 4 }, (_, index)
 const MIN_PAGER_HEIGHT = 1;
 const LIST_STATE_MIN_HEIGHT = 180;
 const OFFERS_PAGE_KEY = 'offers';
-const PAGE_HORIZONTAL_PADDING = 16;
-const PRODUCT_CARD_ASPECT_RATIO = 1.15;
-const PRODUCT_CARD_CONTENT_HEIGHT = 72;
-const PRODUCT_CARD_VERTICAL_MARGIN = 12;
-const PRODUCT_CARD_WIDTH_RATIO = 0.48;
+const STORE_MENU_ROW_ESTIMATED_HEIGHT = 136;
 
 type StoreDetailSkeletonItem = (typeof STORE_DETAIL_PRODUCT_SKELETON_ITEMS)[number];
 type StoreDetailListItem = DeliveryStoreDetailsProduct | StoreDetailSkeletonItem;
@@ -78,7 +75,8 @@ export default function StoreDetailProductsList({
   shouldShowProductSkeletons,
   storeId,
 }: Props) {
-  const { colors } = useTheme();
+  const { spacing } = useTheme();
+  const { gutter } = useWindowClass();
   const { t } = useTranslation('deliveries');
   const { width } = useWindowDimensions();
   const pagerViewRef = React.useRef<PagerView>(null);
@@ -97,15 +95,8 @@ export default function StoreDetailProductsList({
     () => (shouldShowProductSkeletons ? STORE_DETAIL_PRODUCT_SKELETON_ITEMS : products),
     [products, shouldShowProductSkeletons],
   );
-  const estimatedGridHeight = React.useMemo(() => {
-    const pageContentWidth = Math.max(width - PAGE_HORIZONTAL_PADDING * 2, 0);
-    const cardWidth = pageContentWidth * PRODUCT_CARD_WIDTH_RATIO;
-
-    return Math.ceil(
-      cardWidth / PRODUCT_CARD_ASPECT_RATIO +
-      PRODUCT_CARD_CONTENT_HEIGHT +
-      PRODUCT_CARD_VERTICAL_MARGIN,
-    );
+  const estimatedRowHeight = React.useMemo(() => {
+    return Math.min(width, STORE_MENU_ROW_ESTIMATED_HEIGHT);
   }, [width]);
   const shouldShowActiveErrorState =
     hasFetchedProducts && hasError && products.length === 0 && !shouldShowProductSkeletons;
@@ -115,7 +106,7 @@ export default function StoreDetailProductsList({
     !shouldShowProductSkeletons &&
     !shouldShowActiveErrorState;
   const activeContentMinHeight = activeListData.length > 0
-    ? estimatedGridHeight
+    ? estimatedRowHeight
     : shouldShowActiveErrorState || shouldShowActiveEmptyState
       ? LIST_STATE_MIN_HEIGHT
       : MIN_PAGER_HEIGHT;
@@ -209,14 +200,19 @@ export default function StoreDetailProductsList({
           <View
             collapsable={false}
             key={pageKey}
-            style={[styles.page, { backgroundColor: colors.background }]}
+            style={{
+              backgroundColor: 'transparent',
+              paddingBottom: spacing.xl,
+              paddingHorizontal: gutter,
+              paddingTop: spacing.xs,
+            }}
           >
             <View
               key={pageContentKey}
               onLayout={(event) => handlePageLayout(pageCategoryId, event)}
             >
               {pageData.length > 0 ? (
-                <View style={styles.grid}>
+                <View style={{ gap: spacing.md }}>
                   {pageData.map((item) =>
                     isStoreDetailSkeletonItem(item) ? (
                       <StoreDetailMenuCardSkeleton key={item.id} />
@@ -258,15 +254,6 @@ export default function StoreDetailProductsList({
 const styles = StyleSheet.create({
   pager: {
     width: '100%',
-  },
-  page: {
-    paddingHorizontal: 16,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    rowGap: 4,
   },
   stateView: {
     flex: 0,

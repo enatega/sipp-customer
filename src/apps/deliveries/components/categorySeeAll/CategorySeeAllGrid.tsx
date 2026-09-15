@@ -6,6 +6,8 @@ import CategorySeeAllGridErrorState from './CategorySeeAllGridErrorState';
 import CategorySeeAllGridItem from './CategorySeeAllGridItem';
 import CategorySeeAllGridListHeader from './CategorySeeAllGridListHeader';
 import CategorySeeAllGridSkeleton from './CategorySeeAllGridSkeleton';
+import { useWindowClass } from '../../../../general/hooks/useWindowClass';
+import { useTheme } from '../../../../general/theme/theme';
 
 type Props = {
   data: DeliveryDiscoveryCategoryItem[];
@@ -32,6 +34,11 @@ export default function CategorySeeAllGrid({
   refetch,
   title,
 }: Props) {
+  const { layout, spacing } = useTheme();
+  const { gutter, isCompact, isMedium, width } = useWindowClass();
+  const columns = isCompact ? (width < 360 ? 2 : 3) : isMedium ? 4 : 6;
+  const contentWidth = Math.min(width, layout.contentMaxWidth.commerce) - gutter * 2;
+  const itemSize = (contentWidth - spacing.md * (columns - 1)) / columns;
   const handleLoadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
       void fetchNextPage();
@@ -55,32 +62,42 @@ export default function CategorySeeAllGrid({
 
   return (
     <FlatList
+      key={`category-grid-${columns}`}
       data={data}
-      numColumns={3}
+      numColumns={columns}
       keyExtractor={(item) => item.id}
       ListHeaderComponent={<CategorySeeAllGridListHeader title={title} />}
       ListEmptyComponent={<CategorySeeAllGridEmptyState />}
       renderItem={({ item }) => (
-        <CategorySeeAllGridItem item={item} onPress={onItemPress} />
+        <CategorySeeAllGridItem item={item} onPress={onItemPress} size={itemSize} />
       )}
       onEndReached={handleLoadMore}
       onEndReachedThreshold={0.4}
-      contentContainerStyle={styles.listContent}
-      columnWrapperStyle={styles.row}
+      contentContainerStyle={[
+        styles.listContent,
+        {
+          maxWidth: layout.contentMaxWidth.commerce,
+          paddingBottom: spacing.section.default,
+          paddingHorizontal: gutter,
+        },
+      ]}
+      columnWrapperStyle={[styles.row, { gap: spacing.md, marginBottom: spacing.xl }]}
+      style={styles.list}
       showsVerticalScrollIndicator={false}
     />
   );
 }
 
 const styles = StyleSheet.create({
+  list: {
+    alignSelf: 'center',
+    width: '100%',
+  },
   listContent: {
     flexGrow: 1,
-    paddingHorizontal: 10,
     paddingTop: 4,
-    paddingBottom: 24,
   },
   row: {
     justifyContent: 'flex-start',
-    marginBottom: 28,
   },
 });

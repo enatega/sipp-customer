@@ -60,11 +60,6 @@ export default function SharedNavigator() {
       params?: SharedStackParamList[SharedAppRouteName],
     ) => {
       const routeName = APP_ROUTE_BY_ID[id];
-      if (routeName === "DeveloperMode") {
-        navigation.navigate(routeName);
-        return;
-      }
-
       if (!routeName) {
         return;
       }

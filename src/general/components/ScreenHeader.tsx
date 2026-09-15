@@ -1,15 +1,12 @@
 import React from 'react';
-import {
-  Pressable,
-  StyleSheet,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { StyleSheet, View, ViewStyle } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/theme';
 import Text, { TextVariant } from './Text';
+import IconButton from './IconButton';
+import { useTranslation } from 'react-i18next';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -51,6 +48,7 @@ export default function ScreenHeader({
   variant = 'arrow',
 }: Props) {
   const { colors } = useTheme();
+  const { t } = useTranslation('general');
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
 
@@ -80,17 +78,17 @@ export default function ScreenHeader({
         {leftSlot
           ? leftSlot
           : canGoBack && (
-            <Pressable
+            <IconButton
               onPress={handleBack}
-              style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
-              accessibilityRole="button"
-              accessibilityLabel="Go back"
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <View style={[styles.backButton, { backgroundColor: colors.backgroundTertiary }]}>
-                <Ionicons name={variant === 'close' ? 'close' : 'arrow-back'} size={24} color={colors.text} />
-              </View>
-            </Pressable>
+              accessibilityLabel={t('navigation_back')}
+              icon={(
+                <Ionicons
+                  name={variant === 'close' ? 'close' : 'arrow-back'}
+                  size={22}
+                  color={colors.text}
+                />
+              )}
+            />
           )}
       </View>
 
@@ -98,8 +96,10 @@ export default function ScreenHeader({
       {title ? (
         <Text
           numberOfLines={1}
-          weight="bold"
+          variant={titleVariant}
+          weight="semiBold"
           color={colors.text}
+          accessibilityRole="header"
           style={styles.title}
         >
           {title}
@@ -134,16 +134,8 @@ const styles = StyleSheet.create({
   rightSide: {
     alignItems: 'flex-end',
   },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   title: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 18,
   },
 });
