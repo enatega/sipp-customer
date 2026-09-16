@@ -111,8 +111,6 @@ const OrdersListSection = ({
       renderItem={({ item }) => (
         <OrderListCard
           order={item}
-          statusLabel={getStatusLabel(item, variant, t)}
-          statusTone={getStatusTone(item, variant)}
           onPress={(order) => handleOrderPress(order)}
         />
       )}
@@ -120,7 +118,7 @@ const OrdersListSection = ({
         styles.listContent,
         { paddingBottom: tabBarHeight + spacing.lg },
       ]}
-      ItemSeparatorComponent={() => <View style={styles.separator} />}
+      ItemSeparatorComponent={() => <View style={{ height: spacing.md }} />}
       showsVerticalScrollIndicator={false}
       ListHeaderComponent={
         <Text
@@ -207,38 +205,6 @@ const getEmptyDescription = (
   }
 };
 
-const getStatusLabel = (
-  item: DeliveryOrderListItem,
-  variant: Props["variant"],
-  t: (key: string) => string,
-) => {
-  switch (variant) {
-    case "active":
-      return t("orders_status_ongoing");
-    case "scheduled":
-      return t("orders_status_upcoming");
-    case "past":
-    default:
-      return item.orderStatus === "cancelled"
-        ? t("orders_status_cancelled")
-        : t("orders_status_delivered");
-  }
-};
-
-const getStatusTone = (
-  item: DeliveryOrderListItem,
-  variant: Props["variant"],
-) => {
-  switch (variant) {
-    case "active":
-    case "scheduled":
-      return "warning" as const;
-    case "past":
-    default:
-      return item.orderStatus === "cancelled" ? "danger" : "success";
-  }
-};
-
 const styles = StyleSheet.create({
   heading: {
     letterSpacing: -0.36,
@@ -246,10 +212,6 @@ const styles = StyleSheet.create({
   },
   listContent: {
     flexGrow: 1,
-    // paddingHorizontal: 16,
     paddingTop: 12,
-  },
-  separator: {
-    height: 12,
   },
 });

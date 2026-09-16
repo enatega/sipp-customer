@@ -1,9 +1,10 @@
 import React from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Text from '../Text';
 import { useTheme } from '../../theme/theme';
 import MyProfileInfoRow from './MyProfileInfoRow';
+import PressableScale from '../PressableScale';
 
 type Props = {
   imageUri: string | null | undefined;
@@ -38,14 +39,20 @@ export default function MyProfileInfoCard({
   onPressAvatar,
   onEditName,
 }: Props) {
-  const { colors } = useTheme();
+  const { colors, elevation } = useTheme();
 
   return (
-    <View style={[styles.card, { borderColor: colors.border }]}>
+    <View
+      style={[
+        styles.card,
+        elevation.subtle,
+        { backgroundColor: colors.surface, borderColor: colors.divider },
+      ]}
+    >
       {/* Avatar + name */}
       <View style={styles.avatarSection}>
         <View style={styles.avatarContainer}>
-          <Pressable
+          <PressableScale
             onPress={onPressAvatar}
             style={[styles.avatarWrapper, { backgroundColor: colors.backgroundTertiary }]}
             accessibilityRole={onPressAvatar ? 'button' : undefined}
@@ -60,15 +67,18 @@ export default function MyProfileInfoCard({
             ) : (
               <View style={[styles.avatar, { backgroundColor: colors.backgroundTertiary }]} />
             )}
-          </Pressable>
-          <Pressable
+          </PressableScale>
+          <PressableScale
             onPress={onEditAvatar}
             accessibilityRole="button"
             accessibilityLabel={editLabel}
-            style={[styles.editAvatarButton, { backgroundColor: colors.backgroundTertiary }]}
+            style={[
+              styles.editAvatarButton,
+              { backgroundColor: colors.primary, borderColor: colors.surface },
+            ]}
           >
-            <Ionicons name="pencil" size={12} color={colors.text} />
-          </Pressable>
+            <Ionicons name="pencil" size={12} color={colors.onPrimary} />
+          </PressableScale>
         </View>
         <Text weight="bold" style={styles.name} numberOfLines={1}>
           {displayName}
@@ -97,7 +107,7 @@ export default function MyProfileInfoCard({
   );
 }
 
-const AVATAR_SIZE = 64;
+const AVATAR_SIZE = 76;
 
 const styles = StyleSheet.create({
   avatar: {
@@ -111,8 +121,8 @@ const styles = StyleSheet.create({
   },
   avatarSection: {
     alignItems: 'center',
-    gap: 3,
-    paddingVertical: 24,
+    gap: 8,
+    paddingVertical: 12,
   },
   avatarWrapper: {
     borderRadius: AVATAR_SIZE / 2,
@@ -121,11 +131,11 @@ const styles = StyleSheet.create({
     width: AVATAR_SIZE,
   },
   card: {
-    borderRadius: 8,
+    borderRadius: 20,
     borderWidth: 1,
-    gap: 24,
+    gap: 16,
     marginHorizontal: 16,
-    padding: 16,
+    padding: 18,
   },
   divider: {
     height: 1,
@@ -135,19 +145,20 @@ const styles = StyleSheet.create({
   },
   editAvatarButton: {
     alignItems: 'center',
-    borderRadius: 12,
-    bottom: 0,
-    height: 24,
+    borderRadius: 15,
+    borderWidth: 2,
+    bottom: -2,
+    height: 30,
     justifyContent: 'center',
     position: 'absolute',
-    right: -4,
-    width: 24,
+    right: -3,
+    width: 30,
   },
   infoSection: {
     gap: 12,
   },
   name: {
-    fontSize: 18,
-    lineHeight: 28,
+    fontSize: 20,
+    lineHeight: 30,
   },
 });

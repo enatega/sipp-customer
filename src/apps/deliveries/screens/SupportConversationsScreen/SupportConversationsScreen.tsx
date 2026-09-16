@@ -1,14 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import SupportHeader from '../../../../general/components/support/SupportHeader';
-import Text from '../../../../general/components/Text';
 import { useAuthSessionQuery } from '../../../../general/hooks/useAuthQueries';
 import { useTheme } from '../../../../general/theme/theme';
 import SupportDeleteConversationModal from '../../components/support/SupportDeleteConversationModal';
 import SupportConversationsSkeleton from '../../components/support/SupportConversationsSkeleton';
 import SupportConversationSectionTitle from '../../components/support/SupportConversationSectionTitle';
+import SupportStatePanel from '../../components/support/SupportStatePanel';
 import SupportSwipeableConversationItem from '../../components/support/SupportSwipeableConversationItem';
 import { useSupportConversations } from '../../hooks/useSupportChatQueries';
 import { SupportHomeNavigationProp } from '../../navigation/supportNavigationTypes';
@@ -134,6 +134,7 @@ export default function SupportConversationsScreen() {
         <View style={styles.searchContainer}>
           <TextInput
             accessibilityLabel={t('support_search_action')}
+            autoFocus
             autoCapitalize="none"
             autoCorrect={false}
             onChangeText={setSearchQuery}
@@ -156,13 +157,30 @@ export default function SupportConversationsScreen() {
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        refreshControl={(
+          <RefreshControl
+            refreshing={supportChatBoxesQuery.isRefetching}
+            tintColor={colors.primary}
+            onRefresh={() => {
+              void supportChatBoxesQuery.refetch();
+            }}
+          />
+        )}
       >
         {supportChatBoxesQuery.isPending ? (
           <SupportConversationsSkeleton />
         ) : supportChatBoxesQuery.isError ? (
-          <View style={styles.centerState}>
-            <Text color={colors.danger}>{supportChatBoxesQuery.error.message}</Text>
-          </View>
+          <SupportStatePanel
+            actionLabel={t('support_retry')}
+            description={t('support_error_description')}
+            iconName="cloud-offline-outline"
+            isActionPending={supportChatBoxesQuery.isRefetching}
+            onAction={() => {
+              void supportChatBoxesQuery.refetch();
+            }}
+            title={t('support_error_title')}
+            tone="danger"
+          />
         ) : (
           <>
             {filteredConversationGroups.recent.length ? (
@@ -229,13 +247,23 @@ export default function SupportConversationsScreen() {
             ) : null}
 
             {!hasConversationResults ? (
-              <View style={styles.centerState}>
-                <Text color={colors.mutedText}>
-                  {normalizedSearchQuery
-                    ? t('support_conversations_no_results')
-                    : t('support_conversations_empty')}
-                </Text>
-              </View>
+              normalizedSearchQuery ? (
+                <SupportStatePanel
+                  description={t('support_conversations_no_results')}
+                  iconName="search-outline"
+                  title={t('support_conversations_no_results_title')}
+                />
+              ) : (
+                <SupportStatePanel
+                  actionLabel={t('support_conversations_empty_action')}
+                  description={t('support_conversations_empty_description')}
+                  iconName="chatbubble-ellipses-outline"
+                  onAction={() => navigation.navigate('SupportChat', {
+                    agentName: t('support_chat_agent_name'),
+                  })}
+                  title={t('support_conversations_empty_title')}
+                />
+              )
             ) : null}
           </>
         )}
@@ -252,13 +280,6 @@ export default function SupportConversationsScreen() {
 }
 
 const styles = StyleSheet.create({
-  centerState: {
-    alignItems: 'center',
-    gap: 12,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 48,
-  },
   searchContainer: {
     paddingBottom: 12,
     paddingHorizontal: 16,

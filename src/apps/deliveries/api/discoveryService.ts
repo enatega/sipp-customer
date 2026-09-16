@@ -2,9 +2,9 @@ import apiClient from '../../../general/api/apiClient';
 import type {
     ApiResponse,
     DeliveryBanner,
+    DeliveryBannersApiResponse,
     DeliveryDealsApiResponse,
     DeliveryDealsParams,
-    DeliveryBannersApiResponse,
     DeliveryBannersParams,
     DeliveryNearbyStore,
     DeliveryNearbyStoresApiResponse,
@@ -587,52 +587,29 @@ export const discoveryService = {
         }
     },
 
-    /** Fetch mobile banners for deliveries home discovery. */
+    /** Fetch mobile banners from the public deliveries carousel endpoint. */
     getMobileBanners: async (
         params: DeliveryBannersParams = {},
     ): Promise<DeliveryBanner[]> => {
         const { offset = 0, limit = 10 } = params;
-        const query = { offset, limit };
+        const response = await apiClient.get<DeliveryBannersApiResponse>(
+            '/api/v1/deliveries/banners/mobile',
+            { offset, limit },
+        );
 
-        const parseBanners = (response: DeliveryBannersApiResponse): DeliveryBanner[] => {
-            if (Array.isArray(response)) {
-                return response;
-            }
-
-            if (isPaginatedBannersResponse(response)) {
-                return response.items;
-            }
-
-            if (isWrappedBannersResponse(response)) {
-                return response.data;
-            }
-
-            return [];
-        };
-
-        try {
-            const response = await apiClient.get<DeliveryBannersApiResponse>(
-                '/api/v1/apps/deliveries/banners/mobile',
-                query,
-            );
-
-            return parseBanners(response);
-        } catch (primaryError) {
-            try {
-                const fallbackResponse = await apiClient.get<DeliveryBannersApiResponse>(
-                    '/api/v1/deliveries/banners/mobile',
-                    query,
-                );
-
-                return parseBanners(fallbackResponse);
-            } catch (fallbackError) {
-                console.error('mobile banners request failed', {
-                    fallbackError,
-                    primaryError,
-                });
-                throw fallbackError;
-            }
+        if (Array.isArray(response)) {
+            return response;
         }
+
+        if (isPaginatedBannersResponse(response)) {
+            return response.items;
+        }
+
+        if (isWrappedBannersResponse(response)) {
+            return response.data;
+        }
+
+        return [];
     },
 
     /** Fetch top brands for deliveries home discovery. */

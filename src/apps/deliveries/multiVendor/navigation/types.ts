@@ -5,13 +5,16 @@ import type {
 } from "../../api/types";
 import type { ProductCardVariant } from '../../components/productCard/types';
 import type { SupportedCardType } from '../../../../general/components/filterablePaginatedList';
-import type { SeeAllListingType } from '../../navigation/sharedTypes';
+import type {
+  DeliverySearchRouteParams,
+  SeeAllListingType,
+} from '../../navigation/sharedTypes';
 
 export type SeeAllItem = DeliveryNearbyStore | DeliveryShopTypeProduct;
 
 export type MultiVendorBottomTabParamList = {
   MultiVendorTabHome: undefined;
-  MultiVendorTabSearch: undefined;
+  MultiVendorTabSearch: DeliverySearchRouteParams | undefined;
   MultiVendorTabOrders: undefined;
   MultiVendorTabProfile: undefined;
 };

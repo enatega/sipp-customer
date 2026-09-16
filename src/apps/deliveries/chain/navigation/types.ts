@@ -1,6 +1,8 @@
+import type { DeliverySearchRouteParams } from '../../navigation/sharedTypes';
+
 export type ChainBottomTabParamList = {
   ChainTabHome: undefined;
-  ChainTabSearch: undefined;
+  ChainTabSearch: DeliverySearchRouteParams | undefined;
   ChainTabOrders: undefined;
   ChainTabProfile: undefined;
 };

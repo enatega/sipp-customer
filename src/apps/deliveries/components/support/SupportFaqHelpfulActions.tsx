@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import Button from '../../../../general/components/Button';
@@ -10,8 +10,34 @@ type Props = {
 };
 
 export default function SupportFaqHelpfulActions({ onPressHelpful }: Props) {
-  const { colors, typography } = useTheme();
+  const { colors, shape, spacing, typography } = useTheme();
   const { t } = useTranslation('deliveries');
+  const [feedback, setFeedback] = useState<boolean | null>(null);
+
+  const handleFeedback = (isHelpful: boolean) => {
+    setFeedback(isHelpful);
+    onPressHelpful?.(isHelpful);
+  };
+
+  if (feedback !== null) {
+    return (
+      <View
+        accessibilityLiveRegion="polite"
+        style={[
+          styles.thankYou,
+          {
+            backgroundColor: colors.successSoft,
+            borderRadius: shape.radius.surface,
+            padding: spacing.lg,
+          },
+        ]}
+      >
+        <Text color={colors.successText} weight="semiBold">
+          {t('support_faq_feedback_thanks')}
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { borderTopColor: colors.border }]}>
@@ -27,13 +53,13 @@ export default function SupportFaqHelpfulActions({ onPressHelpful }: Props) {
         <Button
           label={t('support_faq_feedback_yes')}
           variant="secondary"
-          onPress={() => onPressHelpful?.(true)}
+          onPress={() => handleFeedback(true)}
           style={styles.button}
         />
         <Button
           label={t('support_faq_feedback_no')}
           variant="secondary"
-          onPress={() => onPressHelpful?.(false)}
+          onPress={() => handleFeedback(false)}
           style={styles.button}
         />
       </View>
@@ -58,5 +84,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
     width: '100%',
+  },
+  thankYou: {
+    alignItems: 'center',
+    marginTop: 20,
   },
 });

@@ -7,15 +7,15 @@ export default function MyProfileSkeleton() {
     <View style={styles.container}>
       {/* Info card skeleton */}
       <View style={styles.cardWrapper}>
-        <Skeleton width="100%" height={320} borderRadius={8} />
+        <Skeleton width="100%" height={332} borderRadius={20} />
       </View>
 
       {/* Addresses section skeleton */}
       <View style={styles.addressSection}>
         <Skeleton width={120} height={20} borderRadius={4} />
-        <Skeleton width="100%" height={72} borderRadius={8} />
-        <Skeleton width="100%" height={72} borderRadius={8} />
-        <Skeleton width="100%" height={48} borderRadius={6} />
+        <Skeleton width="100%" height={78} borderRadius={16} />
+        <Skeleton width="100%" height={78} borderRadius={16} />
+        <Skeleton width="100%" height={52} borderRadius={14} />
       </View>
     </View>
   );

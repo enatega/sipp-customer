@@ -52,7 +52,9 @@ export const styles = StyleSheet.create({
     top: 8,
     left: 8,
   },
-  content: {},
+  content: {
+    minHeight: 87,
+  },
   nameContainer: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -77,7 +79,8 @@ export const styles = StyleSheet.create({
   deliveryInfoRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    minHeight: 18,
+    overflow: 'hidden',
   },
   ratingContainer: {
     flexDirection: 'row',
@@ -111,9 +114,12 @@ export const styles = StyleSheet.create({
   infoItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexShrink: 1,
     gap: 4,
+    minWidth: 0,
   },
   infoText: {
+    flexShrink: 1,
     fontSize: 12,
     lineHeight: 16,
   },

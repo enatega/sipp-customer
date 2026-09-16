@@ -18,11 +18,21 @@ const OrderListErrorState = ({
   isRetrying = false,
   onRetry,
 }: Props) => {
-  const { colors } = useTheme();
+  const { colors, shape, spacing } = useTheme();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.content}>
+    <View style={styles.container}>
+      <View
+        style={[
+          styles.content,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+            borderRadius: shape.radius.hero,
+            padding: spacing.xxl,
+          },
+        ]}
+      >
         <View
           style={[
             styles.iconWrapper,
@@ -67,9 +77,9 @@ const styles = StyleSheet.create({
   },
   content: {
     alignItems: "center",
-    flex: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     justifyContent: "center",
-    paddingHorizontal: 24,
+    marginTop: 12,
   },
   iconWrapper: {
     alignItems: "center",

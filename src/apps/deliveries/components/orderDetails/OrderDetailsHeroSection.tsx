@@ -1,9 +1,8 @@
-import React from "react";
 import { Ionicons } from "@expo/vector-icons";
+import React from "react";
 import { Image, StyleSheet, View } from "react-native";
 import Text from "../../../../general/components/Text";
 import { useTheme } from "../../../../general/theme/theme";
-import OrderDetailsStatusBadge from "./OrderDetailsStatusBadge";
 
 type Props = {
   logoUri?: string | null;
@@ -26,171 +25,139 @@ export default function OrderDetailsHeroSection({
   statusTitle,
   statusTone,
 }: Props) {
-  const { colors, typography } = useTheme();
+  const { colors, shape, spacing } = useTheme();
   const trimmedAddress = storeAddress?.trim() ?? "";
   const normalizedOrderCode = orderCode?.trim() || null;
   const formattedDate = formatHeroOrderDateTime(orderedAt);
+  const palette = statusTone === "success"
+    ? { background: colors.successSoft, foreground: colors.successText, icon: "checkmark-circle" as const }
+    : statusTone === "danger"
+      ? { background: colors.dangerSoft, foreground: colors.dangerText, icon: "close-circle" as const }
+      : { background: colors.primarySoft, foreground: colors.primary, icon: "time" as const };
 
   return (
-    <View style={styles.hero}>
-      <View style={styles.topRow}>
+    <View style={{ gap: spacing.lg }}>
+      <View
+        style={[
+          styles.statusPanel,
+          {
+            backgroundColor: palette.background,
+            borderRadius: shape.radius.surface,
+            padding: spacing.lg,
+          },
+        ]}
+      >
+        <View style={[styles.statusIcon, { backgroundColor: colors.surface, borderRadius: shape.radius.pill }]}>
+          <Ionicons color={palette.foreground} name={palette.icon} size={24} />
+        </View>
+        <View style={styles.statusCopy}>
+          <Text color={palette.foreground} variant="cardTitle" weight="bold">
+            {statusTitle}
+          </Text>
+          {statusMessage ? (
+            <Text color={palette.foreground} variant="supporting" weight="medium">
+              {statusMessage}
+            </Text>
+          ) : null}
+        </View>
+      </View>
+
+      <View style={styles.storeRow}>
         <View
           style={[
             styles.logoWrap,
-            { backgroundColor: colors.blue50 },
+            { backgroundColor: colors.surfaceSunken, borderRadius: shape.radius.surface },
           ]}
         >
           {logoUri ? (
             <Image source={{ uri: logoUri }} style={styles.logoImage} />
           ) : (
-            <Ionicons color={colors.primary} name="storefront-outline" size={24} />
+            <Ionicons color={colors.primary} name="storefront-outline" size={26} />
           )}
         </View>
 
-        <View style={styles.primaryContent}>
-          <View style={styles.metaRow}>
-            {normalizedOrderCode ? (
-              <Text
-                style={[
-                  styles.orderCode,
-                  {
-                    color: colors.mutedText,
-                    fontSize: typography.size.xs,
-                    lineHeight: typography.lineHeight.xs2,
-                  },
-                ]}
-                weight="medium"
-              >
-                {normalizedOrderCode}
-              </Text>
-            ) : (
-              <View />
-            )}
-
-            <OrderDetailsStatusBadge label={statusTitle} tone={statusTone} />
-          </View>
-
-          <Text
-            style={[
-              styles.storeName,
-              {
-                color: colors.text,
-                fontSize: typography.size.lg,
-                lineHeight: typography.lineHeight.xs2,
-              },
-            ]}
-            weight="bold"
-            numberOfLines={2}
-          >
+        <View style={styles.storeCopy}>
+          <Text color={colors.textStrong} numberOfLines={2} variant="cardTitle" weight="bold">
             {storeName}
           </Text>
-
           {trimmedAddress ? (
-            <Text
-              style={[
-                styles.address,
-                {
-                  color: colors.text,
-                  fontSize: typography.size.md,
-                  lineHeight: typography.lineHeight.xs2,
-                },
-              ]}
-              weight="semiBold"
-              numberOfLines={3}
-            >
+            <Text color={colors.textSubtle} numberOfLines={2} variant="supporting" weight="medium">
               {trimmedAddress}
             </Text>
           ) : null}
-
-          <View style={styles.dateRow}>
-            <Ionicons color={colors.iconMuted} name="calendar-outline" size={18} />
-            <Text
-              style={[
-                styles.metaText,
-                {
-                  color: colors.mutedText,
-                  fontSize: typography.size.sm2,
-                  lineHeight: typography.lineHeight.xs2,
-                },
-              ]}
-              weight="medium"
-            >
-              {formattedDate}
-            </Text>
-          </View>
         </View>
       </View>
 
-
+      <View style={[styles.metaRow, { borderTopColor: colors.divider, paddingTop: spacing.md }]}> 
+        {normalizedOrderCode ? (
+          <View style={styles.metaItem}>
+            <Ionicons color={colors.iconMuted} name="receipt-outline" size={17} />
+            <Text color={colors.textSubtle} numberOfLines={1} variant="caption" weight="semiBold">
+              {normalizedOrderCode}
+            </Text>
+          </View>
+        ) : null}
+        <View style={styles.metaItem}>
+          <Ionicons color={colors.iconMuted} name="calendar-outline" size={17} />
+          <Text color={colors.textSubtle} numberOfLines={1} variant="caption" weight="medium">
+            {formattedDate}
+          </Text>
+        </View>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  address: {
-    letterSpacing: -0.2,
-  },
-  dateRow: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 8,
-    marginTop: 4,
-  },
-  hero: {
-    gap: 16,
-  },
   logoImage: {
-    borderRadius: 16,
     height: "100%",
     width: "100%",
   },
   logoWrap: {
     alignItems: "center",
-    borderRadius: 16,
-    height: 42,
+    height: 64,
     justifyContent: "center",
     overflow: "hidden",
-    width: 42,
+    width: 64,
   },
-  metaText: {
-    letterSpacing: 0,
-  },
-  metaRow: {
-    alignItems: "flex-start",
-    columnGap: 12,
+  metaItem: {
+    alignItems: "center",
     flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  orderCode: {
-    alignSelf: "center",
-    flex: 1,
-    textTransform: "uppercase",
-  },
-  primaryContent: {
-    flex: 1,
     gap: 6,
     minWidth: 0,
   },
-  statusLabel: {
-    letterSpacing: 0.6,
-  },
-  statusMessage: {
-    marginTop: 2,
-  },
-  statusSection: {
-    borderRadius: 16,
-    borderWidth: 1,
-    gap: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-  },
-  storeName: {
-    letterSpacing: -0.4,
-  },
-  topRow: {
-    alignItems: "flex-start",
-    columnGap: 16,
+  metaRow: {
+    alignItems: "center",
+    borderTopWidth: StyleSheet.hairlineWidth,
     flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 14,
+  },
+  statusCopy: {
+    flex: 1,
+    gap: 2,
+    minWidth: 0,
+  },
+  statusIcon: {
+    alignItems: "center",
+    height: 44,
+    justifyContent: "center",
+    width: 44,
+  },
+  statusPanel: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 12,
+  },
+  storeCopy: {
+    flex: 1,
+    gap: 3,
+    minWidth: 0,
+  },
+  storeRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 14,
   },
 });
 

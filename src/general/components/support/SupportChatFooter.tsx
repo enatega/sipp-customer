@@ -7,11 +7,12 @@ import { useTheme } from '../../theme/theme';
 
 type Props = {
   ctaLabel: string;
+  iconName?: keyof typeof Ionicons.glyphMap;
   onPress: () => void;
 };
 
-export default function SupportChatFooter({ ctaLabel, onPress }: Props) {
-  const { colors } = useTheme();
+export default function SupportChatFooter({ ctaLabel, iconName = 'chatbubble-ellipses-outline', onPress }: Props) {
+  const { colors, shape } = useTheme();
   const insets = useSafeAreaInsets();
 
   return (
@@ -26,10 +27,10 @@ export default function SupportChatFooter({ ctaLabel, onPress }: Props) {
       ]}
     >
       <Button
-        icon={<Ionicons name="chatbubble-ellipses-outline" size={22} color={colors.white} />}
+        icon={<Ionicons name={iconName} size={22} color={colors.onPrimary} />}
         label={ctaLabel}
         onPress={onPress}
-        style={styles.footerButton}
+        style={[styles.footerButton, { borderRadius: shape.radius.control }]}
       />
     </View>
   );
@@ -42,7 +43,6 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   footerButton: {
-    borderRadius: 6,
-    minHeight: 44,
+    minHeight: 52,
   },
 });

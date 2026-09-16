@@ -1,19 +1,28 @@
-import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import React, {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MapView, { LatLng, Region } from 'react-native-maps';
 import Icon from '../../../components/Icon';
 import Map, { MapMarker } from '../../../components/Map';
+import PressableScale from '../../../components/PressableScale';
 import { useTheme } from '../../../theme/theme';
 import MapStoreBottomSheet from './MapStoreBottomSheet';
-import MapStoreMarker from './MapStoreMarker';
-import {
-  SEE_ALL_DEFAULT_USER_COORDINATE,
-  toSeeAllMapStore,
-  type SeeAllMapStoreSource,
-} from './mapStoreUtils';
+import { toSeeAllMapStore, type SeeAllMapStoreSource } from './mapStoreUtils';
 import SeeAllMapLoadingState from './SeeAllMapLoadingState';
+
+const STORE_MARKER = require('../../../assets/map-markers/store.png');
+const SELECTED_STORE_MARKER = require('../../../assets/map-markers/store-selected.png');
+const SELECTED_STORE_MARKER_ID = '__selected-store-highlight__';
+const STORE_MARKER_ANCHOR = { x: 0.5, y: 0.92 } as const;
+const STORE_MARKER_CENTER_OFFSET = { x: 0, y: -20 } as const;
 
 const DEFAULT_REGION: Region = {
   latitude: 24.8607,
@@ -32,6 +41,25 @@ function getRegionFromCoordinates(coordinate: LatLng): Region {
     latitude: coordinate.latitude,
     longitude: coordinate.longitude,
     ...FOCUSED_DELTA,
+  };
+}
+
+function getInitialRegion(coordinates: LatLng[]): Region {
+  if (coordinates.length === 0) return DEFAULT_REGION;
+  if (coordinates.length === 1) return getRegionFromCoordinates(coordinates[0]);
+
+  const latitudes = coordinates.map(({ latitude }) => latitude);
+  const longitudes = coordinates.map(({ longitude }) => longitude);
+  const minLatitude = Math.min(...latitudes);
+  const maxLatitude = Math.max(...latitudes);
+  const minLongitude = Math.min(...longitudes);
+  const maxLongitude = Math.max(...longitudes);
+
+  return {
+    latitude: (minLatitude + maxLatitude) / 2,
+    longitude: (minLongitude + maxLongitude) / 2,
+    latitudeDelta: Math.max((maxLatitude - minLatitude) * 1.45, 0.035),
+    longitudeDelta: Math.max((maxLongitude - minLongitude) * 1.45, 0.035),
   };
 }
 
@@ -56,7 +84,11 @@ function SeeAllMapViewComponent<TItem>({
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const mapRef = useRef<MapView | null>(null);
-  const hasInitializedSelectionRef = useRef(false);
+  const hasFitInitialStoresRef = useRef(false);
+  const hasAutoSelectedStoreRef = useRef(false);
+  const pendingSelectionRef = useRef<string | null>(null);
+  const selectionFrameRef = useRef<number | null>(null);
+  const [isMapReady, setIsMapReady] = useState(false);
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
 
   const storeItems = useMemo(
@@ -69,8 +101,6 @@ function SeeAllMapViewComponent<TItem>({
   );
 
   const isLoading = items.length === 0;
-  const userCoordinate = SEE_ALL_DEFAULT_USER_COORDINATE;
-
   const storesWithCoordinates = useMemo(
     () => storeItems.filter(({ store }) => Boolean(store.coordinate)),
     [storeItems],
@@ -78,116 +108,157 @@ function SeeAllMapViewComponent<TItem>({
 
   const selectedStore =
     storeItems.find(({ store }) => store.id === selectedStoreId) ?? null;
+  const storeCoordinates = useMemo(
+    () => storesWithCoordinates.map(({ store }) => store.coordinate!) as LatLng[],
+    [storesWithCoordinates],
+  );
+  const initialRegion = useMemo(
+    () => getInitialRegion(storeCoordinates),
+    [storeCoordinates],
+  );
 
-  const markers = useMemo<MapMarker[]>(
+  const selectStore = useCallback((storeId: string) => {
+    pendingSelectionRef.current = storeId;
+    if (selectionFrameRef.current !== null) return;
+
+    selectionFrameRef.current = requestAnimationFrame(() => {
+      selectionFrameRef.current = null;
+      const nextStoreId = pendingSelectionRef.current;
+      pendingSelectionRef.current = null;
+      if (!nextStoreId) return;
+
+      setSelectedStoreId((currentStoreId) =>
+        currentStoreId === nextStoreId ? currentStoreId : nextStoreId,
+      );
+    });
+  }, []);
+
+  const clearSelectedStore = useCallback(() => {
+    pendingSelectionRef.current = null;
+    if (selectionFrameRef.current !== null) {
+      cancelAnimationFrame(selectionFrameRef.current);
+      selectionFrameRef.current = null;
+    }
+    setSelectedStoreId(null);
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (selectionFrameRef.current !== null) {
+        cancelAnimationFrame(selectionFrameRef.current);
+      }
+    },
+    [],
+  );
+
+  const baseMarkers = useMemo<MapMarker[]>(
     () =>
       storesWithCoordinates.map((store) => ({
         id: store.store.id,
         coordinate: store.store.coordinate!,
         active: true,
-        zIndex: store.store.id === selectedStoreId ? 3 : 1,
-        keyOverride: `${store.store.id}-${store.store.id === selectedStoreId ? 'selected' : 'default'}`,
-        onPress: () => setSelectedStoreId(store.store.id),
-        tracksViewChanges: true,
-        render: (
-          <MapStoreMarker
-            title={store.store.title}
-            isSelected={store.store.id === selectedStoreId}
-          />
-        ),
+        anchor: STORE_MARKER_ANCHOR,
+        centerOffset: STORE_MARKER_CENTER_OFFSET,
+        image: STORE_MARKER,
+        zIndex: 1,
+        onPress: () => selectStore(store.store.id),
+        tracksViewChanges: false,
       })),
-    [selectedStoreId, storesWithCoordinates],
+    [selectStore, storesWithCoordinates],
+  );
+
+  // Keep the store marker list immutable on selection. Moving one permanently
+  // mounted highlight avoids Fabric re-inserting Google map children on iOS.
+  const selectedMarker = useMemo<MapMarker>(
+    () => ({
+      id: SELECTED_STORE_MARKER_ID,
+      coordinate: selectedStore?.store.coordinate ?? {
+        latitude: DEFAULT_REGION.latitude,
+        longitude: DEFAULT_REGION.longitude,
+      },
+      active: Boolean(selectedStore?.store.coordinate),
+      anchor: STORE_MARKER_ANCHOR,
+      centerOffset: STORE_MARKER_CENTER_OFFSET,
+      image: SELECTED_STORE_MARKER,
+      tappable: false,
+      tracksViewChanges: false,
+      zIndex: 2,
+    }),
+    [selectedStore?.store.coordinate],
+  );
+
+  const markers = useMemo<MapMarker[]>(
+    () => [...baseMarkers, selectedMarker],
+    [baseMarkers, selectedMarker],
   );
 
   useEffect(() => {
-    if (!mapRef.current) {
+    if (!isMapReady || !mapRef.current || hasFitInitialStoresRef.current) return;
+    if (storeCoordinates.length === 0) return;
+
+    hasFitInitialStoresRef.current = true;
+    if (storeCoordinates.length === 1) {
+      mapRef.current.animateToRegion(getRegionFromCoordinates(storeCoordinates[0]), 240);
       return;
     }
 
-    if (selectedStore?.store.coordinate) {
-      mapRef.current.animateToRegion(
-        getRegionFromCoordinates(selectedStore.store.coordinate),
-        350,
-      );
-      return;
-    }
-
-    const coordinates = storesWithCoordinates
-      .map(({ store }) => store.coordinate)
-      .filter(Boolean) as LatLng[];
-
-    if (coordinates.length === 1) {
-      mapRef.current.animateToRegion(getRegionFromCoordinates(coordinates[0]), 350);
-      return;
-    }
-
-    if (coordinates.length > 1) {
-      mapRef.current.fitToCoordinates(coordinates, {
-        animated: true,
-        edgePadding: {
-          top: 180,
-          right: 48,
-          bottom: 260,
-          left: 48,
-        },
-      });
-      return;
-    }
-
-    mapRef.current.animateToRegion(getRegionFromCoordinates(userCoordinate), 350);
-  }, [selectedStore, storesWithCoordinates, userCoordinate]);
+    mapRef.current.fitToCoordinates(storeCoordinates, {
+      animated: true,
+      edgePadding: { top: 120, right: 44, bottom: 300, left: 44 },
+    });
+  }, [isMapReady, storeCoordinates]);
 
   useEffect(() => {
-    if (!hasInitializedSelectionRef.current) {
-      hasInitializedSelectionRef.current = true;
+    if (!hasAutoSelectedStoreRef.current && storesWithCoordinates.length > 0) {
+      hasAutoSelectedStoreRef.current = true;
       setSelectedStoreId(storesWithCoordinates[0]?.store.id ?? null);
       return;
     }
 
-    if (!selectedStoreId) {
-      return;
+    if (
+      selectedStoreId &&
+      !storesWithCoordinates.some(({ store }) => store.id === selectedStoreId)
+    ) {
+      clearSelectedStore();
     }
-
-    if (storesWithCoordinates.some(({ store }) => store.id === selectedStoreId)) {
-      return;
-    }
-
-    setSelectedStoreId(null);
-  }, [selectedStoreId, storesWithCoordinates]);
+  }, [clearSelectedStore, selectedStoreId, storesWithCoordinates]);
 
   return (
     <View style={styles.container}>
       <Map
         ref={mapRef}
-        initialRegion={
-          userCoordinate
-            ? getRegionFromCoordinates(userCoordinate)
-            : DEFAULT_REGION
-        }
+        initialRegion={initialRegion}
+        loadingEnabled
+        moveOnMarkerPress={false}
+        onMapReady={() => setIsMapReady(true)}
+        pitchEnabled={false}
+        rotateEnabled={false}
+        showsBuildings={false}
         showsMyLocationButton={false}
         showsCompass={false}
+        showsIndoorLevelPicker={false}
+        showsPointsOfInterest={false}
         toolbarEnabled={false}
         markers={markers}
         useGoogleProvider
       />
 
       <View style={[styles.header, { top: insets.top + 8 }]}>
-        <Pressable
+        <PressableScale
           accessibilityRole="button"
           accessibilityLabel={t('see_all_back_label')}
           onPress={onBack}
-          style={({ pressed }) => [
+          style={[
             styles.headerButton,
             {
               backgroundColor: colors.surface,
               borderColor: colors.border,
               shadowColor: colors.shadowColor,
-              opacity: pressed ? 0.82 : 1,
             },
           ]}
         >
           <Icon type="Ionicons" name="arrow-back" size={20} color={colors.text} />
-        </Pressable>
+        </PressableScale>
       </View>
 
       {isLoading ? (
@@ -199,7 +270,7 @@ function SeeAllMapViewComponent<TItem>({
 
       <MapStoreBottomSheet
         store={selectedStore?.store ?? null}
-        onClose={() => setSelectedStoreId(null)}
+        onClose={clearSelectedStore}
         onViewStore={() => {
           if (!selectedStore) {
             return;

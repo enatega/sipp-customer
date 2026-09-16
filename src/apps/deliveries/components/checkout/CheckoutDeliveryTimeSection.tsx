@@ -1,7 +1,8 @@
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import PressableScale from '../../../../general/components/PressableScale';
 import Text from '../../../../general/components/Text';
 import { useTheme } from '../../../../general/theme/theme';
 import type { CheckoutOrderType } from '../../api/orderServiceTypes';
@@ -24,137 +25,113 @@ export default function CheckoutDeliveryTimeSection({
   scheduledLabel,
   onSelectMode,
 }: Props) {
-  const { colors, typography } = useTheme();
+  const { colors, layout, shape, spacing } = useTheme();
   const { t } = useTranslation('deliveries');
 
   return (
-    <View style={styles.section}>
+    <View style={[styles.section, { gap: spacing.md }]}>
       <Text
-        weight="extraBold"
-        style={{
-          color: colors.text,
-          fontSize: typography.size.h5,
-          lineHeight: typography.lineHeight.h5,
-        }}
+        accessibilityRole="header"
+        variant="sectionTitle"
+        weight="bold"
       >
         {t(orderType === 'pickup'
           ? 'checkout_collection_time_title'
           : 'checkout_delivery_time_title')}
       </Text>
 
-      <Pressable
+      <View style={[styles.options, { gap: spacing.sm }]}>
+      <PressableScale
         accessibilityRole="radio"
         accessibilityState={{ selected: selectedMode === 'standard' }}
         onPress={() => onSelectMode('standard')}
         style={[
           styles.option,
           {
-            backgroundColor: colors.surface,
-            borderColor: selectedMode === 'standard' ? colors.blue800 : colors.border,
-            shadowColor: colors.shadowColor,
+            backgroundColor: selectedMode === 'standard' ? colors.primarySoft : colors.surface,
+            borderColor: selectedMode === 'standard' ? colors.primary : colors.border,
+            borderRadius: shape.radius.control,
+            gap: spacing.sm,
+            minHeight: layout.touchTarget.comfortable + 12,
+            padding: spacing.md,
           },
         ]}
       >
         <Ionicons
-          color={selectedMode === 'standard' ? colors.blue800 : colors.border}
+          color={selectedMode === 'standard' ? colors.primary : colors.iconMuted}
           name={selectedMode === 'standard' ? 'radio-button-on' : 'radio-button-off'}
-          size={18}
+          size={20}
         />
-        <View style={styles.optionText}>
+        <View style={[styles.optionText, { gap: spacing.xs }]}>
           <Text
-            weight="medium"
-            style={{
-              color: colors.text,
-              fontSize: typography.size.sm2,
-              lineHeight: typography.lineHeight.md,
-            }}
+            numberOfLines={1}
+            variant="label"
+            weight="semiBold"
           >
             {t('checkout_delivery_time_standard')}
           </Text>
-          <Text
-            style={{
-              color: colors.mutedText,
-              fontSize: typography.size.xs2,
-              lineHeight: typography.lineHeight.sm,
-            }}
-          >
+          <Text color={colors.textSubtle} numberOfLines={2} variant="caption">
             {t('checkout_delivery_time_standard_eta')}
           </Text>
         </View>
-      </Pressable>
+      </PressableScale>
 
-      <Pressable
+      <PressableScale
         accessibilityRole="radio"
         accessibilityState={{ selected: selectedMode === 'schedule', disabled: !isScheduleEnabled }}
         disabled={!isScheduleEnabled}
-        onPress={() => {
-          onSelectMode('schedule');
-          onSchedulePress();
-        }}
+        onPress={selectedMode === 'schedule'
+          ? onSchedulePress
+          : () => onSelectMode('schedule')}
         style={[
           styles.option,
           {
-            backgroundColor: colors.surface,
-            borderColor: selectedMode === 'schedule' ? colors.blue800 : colors.border,
-            opacity: isScheduleEnabled ? 1 : 0.5,
-            shadowColor: colors.shadowColor,
+            backgroundColor: selectedMode === 'schedule' ? colors.primarySoft : colors.surface,
+            borderColor: selectedMode === 'schedule' ? colors.primary : colors.border,
+            borderRadius: shape.radius.control,
+            gap: spacing.sm,
+            minHeight: layout.touchTarget.comfortable + 12,
+            padding: spacing.md,
           },
         ]}
       >
         <Ionicons
-          color={selectedMode === 'schedule' ? colors.blue800 : colors.border}
+          color={selectedMode === 'schedule' ? colors.primary : colors.iconMuted}
           name={selectedMode === 'schedule' ? 'radio-button-on' : 'radio-button-off'}
-          size={18}
+          size={20}
         />
-        <View style={styles.optionText}>
+        <View style={[styles.optionText, { gap: spacing.xs }]}>
           <Text
-            weight="medium"
-            style={{
-              color: colors.text,
-              fontSize: typography.size.sm2,
-              lineHeight: typography.lineHeight.md,
-            }}
+            numberOfLines={1}
+            variant="label"
+            weight="semiBold"
           >
             {t('checkout_delivery_time_schedule')}
           </Text>
-          <Text
-            style={{
-              color: colors.mutedText,
-              fontSize: typography.size.xs2,
-              lineHeight: typography.lineHeight.sm,
-            }}
-          >
+          <Text color={colors.textSubtle} numberOfLines={2} variant="caption">
             {selectedMode === 'schedule' && scheduledLabel
               ? scheduledLabel
               : t('checkout_delivery_time_schedule_hint')}
           </Text>
         </View>
-      </Pressable>
+      </PressableScale>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  option: {
-    alignItems: 'flex-start',
-    borderRadius: 6,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 8,
-    minHeight: 50,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-  },
   optionText: {
     flex: 1,
-    gap: 2,
   },
-  section: {
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+  options: {
+    flexDirection: 'row',
   },
+  option: {
+    alignItems: 'flex-start',
+    borderWidth: 1,
+    flex: 1,
+    flexDirection: 'row',
+  },
+  section: {},
 });

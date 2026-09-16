@@ -1,5 +1,5 @@
 import type { SocketAck, SocketReceivedMessage, SocketSentMessage } from '../../../general/services/socket';
-import type { DeliveryOrderStatus } from '../api/ordersServiceTypes';
+import type { DeliveryOrderEta, DeliveryOrderStatus } from '../api/ordersServiceTypes';
 
 export type DeliveriesSocketAck<TResponse = unknown> = SocketAck<TResponse>;
 
@@ -13,13 +13,16 @@ export type DeliveriesServerEventMap = {
     latitude?: number;
     longitude?: number;
     riderUserId?: string;
+    eta?: DeliveryOrderEta | null;
   };
   'order-status-updated': {
     orderId?: string;
     riderId?: string | null;
+    riderUserId?: string | null;
     riderStatus?: string | null;
     status?: DeliveryOrderStatus;
     updatedAt?: string;
+    eta?: DeliveryOrderEta | null;
   };
   'rider-status-updated': {
     orderId?: string;

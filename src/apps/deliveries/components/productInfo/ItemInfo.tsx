@@ -1,176 +1,166 @@
 import React from "react";
-import { Pressable, Share, StyleSheet, View } from "react-native";
-import { useTranslation } from 'react-i18next';
+import { StyleSheet, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import Text from "../../../../general/components/Text";
-import Icon from "../../../../general/components/Icon";
 import { useTheme } from "../../../../general/theme/theme";
+import DeliveryOfferBadge from "../DeliveryOfferBadge";
 
 type Props = {
+  categoryLabel?: string | null;
   name: string;
   description?: string | null;
+  isAvailable: boolean;
   priceLabel: string;
   originalPriceLabel?: string | null;
   offerLabel?: string | null;
+  ratingLabel?: string | null;
+  unavailableLabel: string;
 };
 
 export default function ItemInfo({
+  categoryLabel,
   name,
   description,
+  isAvailable,
   priceLabel,
   originalPriceLabel,
   offerLabel,
+  ratingLabel,
+  unavailableLabel,
 }: Props) {
-  const { colors, typography } = useTheme();
-  const { t } = useTranslation('deliveries');
-
-  const handleSharePress = React.useCallback(() => {
-    const shareText = [name, priceLabel, description]
-      .map((value) => (typeof value === 'string' ? value.trim() : ''))
-      .filter(Boolean)
-      .join('\n');
-
-    if (!shareText) {
-      return;
-    }
-
-    void Share.share({
-      message: shareText,
-      title: name,
-    }).catch(() => {
-      // Ignore canceled/failed share action.
-    });
-  }, [description, name, priceLabel]);
+  const { colors, shape, spacing } = useTheme();
 
   return (
-    <View style={styles.container}>
-      <Text
-        color={colors.text}
-        weight="extraBold"
-        style={[
-          styles.title,
-          {
-            fontSize: typography.size.lg,
-            lineHeight: typography.lineHeight.xl,
-          },
-        ]}
-      >
-        {name}
-      </Text>
+    <View style={[styles.container, { gap: spacing.md }]}>
+      <View style={[styles.titleRow, { gap: spacing.md }]}>
+        <Text
+          accessibilityRole="header"
+          numberOfLines={3}
+          style={styles.title}
+          variant="title"
+          weight="extraBold"
+        >
+          {name}
+        </Text>
 
-      <View style={styles.metaRow}>
-        <View style={styles.priceRow}>
+        <View style={styles.priceBlock}>
           {originalPriceLabel ? (
-            <Text
-              color={colors.fontSecondColor}
-              style={[
-                styles.originalPrice,
-                {
-                  fontSize: typography.size.sm,
-                  lineHeight: typography.lineHeight.md,
-                },
-              ]}
-            >
+            <Text color={colors.textSubtle} style={styles.originalPrice} variant="caption">
               {originalPriceLabel}
             </Text>
           ) : null}
-          <Text
-            color={colors.blue800}
-            weight="medium"
-            style={{
-              fontSize: typography.size.md,
-              lineHeight: typography.lineHeight.md,
-            }}
-          >
+          <Text color={colors.textStrong} variant="numeric" weight="extraBold">
             {priceLabel}
           </Text>
-          {offerLabel ? (
-            <View style={[styles.offerBadge, { backgroundColor: colors.secondary }]}>
-              <Text
-                color={colors.blue800}
-                weight="medium"
-                style={{
-                  fontSize: typography.size.xxs,
-                  lineHeight: typography.lineHeight.xxs,
-                }}
-              >
-                {offerLabel}
-              </Text>
-            </View>
-          ) : null}
         </View>
-
-        <Pressable
-          accessibilityLabel={t('store_details_action_share')}
-          accessibilityRole="button"
-          onPress={handleSharePress}
-          style={({ pressed }) => [
-            styles.shareButton,
-            {
-              backgroundColor: colors.backgroundTertiary,
-              shadowColor: colors.shadowColor,
-              opacity: pressed ? 0.7 : 1,
-            },
-          ]}
-        >
-          <Icon
-            color={colors.iconColor}
-            name="upload"
-            size={16}
-            type="Feather"
-          />
-        </Pressable>
       </View>
-      {description && (
-        <Text
-          color={colors.text}
-          style={{
-            fontSize: typography.size.md,
-            lineHeight: typography.lineHeight.md + 2,
-          }}
-        >
+
+      <View style={[styles.badges, { gap: spacing.sm }]}>
+        {offerLabel ? <DeliveryOfferBadge label={offerLabel} size="compact" /> : null}
+        {!isAvailable ? (
+          <View
+            style={[
+              styles.statusBadge,
+              {
+                backgroundColor: colors.dangerSoft,
+                borderRadius: shape.radius.pill,
+                gap: spacing.xs,
+                paddingHorizontal: spacing.sm,
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.statusDot,
+                { backgroundColor: colors.danger, borderRadius: shape.radius.pill },
+              ]}
+            />
+            <Text color={colors.dangerText} variant="badge" weight="bold">
+              {unavailableLabel}
+            </Text>
+          </View>
+        ) : null}
+        {ratingLabel ? (
+          <View
+            style={[
+              styles.metadataBadge,
+              {
+                backgroundColor: colors.warningSoft,
+                borderRadius: shape.radius.pill,
+                gap: spacing.xs,
+                paddingHorizontal: spacing.sm,
+              },
+            ]}
+          >
+            <Ionicons color={colors.warning} name="star" size={12} />
+            <Text color={colors.warningText} variant="badge" weight="bold">
+              {ratingLabel}
+            </Text>
+          </View>
+        ) : null}
+        {categoryLabel ? (
+          <View
+            style={[
+              styles.metadataBadge,
+              {
+                backgroundColor: colors.surfaceSunken,
+                borderRadius: shape.radius.pill,
+                paddingHorizontal: spacing.sm,
+              },
+            ]}
+          >
+            <Text color={colors.textSubtle} numberOfLines={1} variant="badge" weight="semiBold">
+              {categoryLabel}
+            </Text>
+          </View>
+        ) : null}
+      </View>
+
+      {description ? (
+        <Text color={colors.textSubtle} variant="body">
           {description}
         </Text>
-      )}
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    paddingTop: 8,
+    paddingBottom: 20,
   },
-  metaRow: {
+  badges: {
     alignItems: "center",
     flexDirection: "row",
-    justifyContent: "space-between",
+    flexWrap: "wrap",
   },
-  priceRow: {
+  metadataBadge: {
     alignItems: "center",
     flexDirection: "row",
-    gap: 12,
+    minHeight: 26,
   },
   originalPrice: {
     textDecorationLine: "line-through",
   },
-  offerBadge: {
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+  priceBlock: {
+    alignItems: "flex-end",
+    flexShrink: 0,
   },
-  shareButton: {
+  statusBadge: {
     alignItems: "center",
-    borderRadius: 16,
-    height: 32,
-    justifyContent: "center",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    width: 32,
+    flexDirection: "row",
+    minHeight: 26,
+  },
+  statusDot: {
+    height: 6,
+    width: 6,
   },
   title: {
-    letterSpacing: -0.36,
+    flex: 1,
+    minWidth: 0,
+  },
+  titleRow: {
+    alignItems: "flex-start",
+    flexDirection: "row",
   },
 });

@@ -1,8 +1,10 @@
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useDeliveriesCurrencyLabel } from '../../../general/stores/useAppConfigStore';
 import Text from '../Text';
+import PressableScale from '../PressableScale';
 import { useTheme } from '../../theme/theme';
 
 type Props = {
@@ -24,14 +26,21 @@ export default function WalletCard({
 
   return (
     <View style={styles.wrapper}>
-      <LinearGradient
-        colors={[colors.bannerGradientStart, colors.bannerGradientEnd]}
-        start={{ x: 1, y: 0.5 }}
-        end={{ x: 0, y: 0.5 }}
-        style={styles.gradient}
+      <PressableScale
+        accessibilityLabel={buttonLabel}
+        accessibilityRole="button"
+        onPress={onPressWallet}
+        style={styles.pressable}
       >
-        {/* Balance info row — fills width, pushes button to the right */}
-        <View style={styles.row}>
+        <LinearGradient
+          colors={[colors.bannerGradientStart, colors.bannerGradientEnd]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.gradient}
+        >
+          <View style={[styles.iconWell, { backgroundColor: colors.glassHighlight }]}> 
+            <Ionicons name="wallet-outline" size={22} color={colors.white} />
+          </View>
           <View style={styles.balanceSection}>
             <Text weight="medium" color={colors.white} style={styles.label}>
               {balanceLabel}
@@ -40,36 +49,18 @@ export default function WalletCard({
               {formattedBalance}
             </Text>
           </View>
-        </View>
-
-        {/* Button pinned bottom-right */}
-        <View style={styles.buttonRow}>
-          <Pressable
-            onPress={onPressWallet}
-            accessibilityRole="button"
-            accessibilityLabel={buttonLabel}
-            style={({ pressed }) => [
-              styles.button,
-              {
-                backgroundColor: colors.surface,
-                borderColor: colors.border,
-                opacity: pressed ? 0.85 : 1,
-              },
-            ]}
-          >
-            <Text weight="medium" color={colors.text} style={styles.buttonText}>
-              {buttonLabel}
-            </Text>
-          </Pressable>
-        </View>
-      </LinearGradient>
+          <View style={[styles.arrow, { backgroundColor: colors.glassHighlight }]}> 
+            <Ionicons name="arrow-forward" size={19} color={colors.white} />
+          </View>
+        </LinearGradient>
+      </PressableScale>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   amount: {
-    fontSize: 18,
+    fontSize: 20,
     letterSpacing: -0.27,
     lineHeight: 22,
   },
@@ -77,38 +68,34 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 6,
   },
-  button: {
+  arrow: {
     alignItems: 'center',
-    borderRadius: 6,
-    borderWidth: 1,
-    height: 32,
+    borderRadius: 20,
+    height: 40,
     justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  buttonRow: {
-    alignItems: 'flex-start',
-  },
-  buttonText: {
-    fontSize: 14,
-    lineHeight: 16,
+    width: 40,
   },
   gradient: {
-    borderRadius: 12,
-    gap: 24,
-    height: 156,
-    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 18,
+    flexDirection: 'row',
+    gap: 12,
+    minHeight: 104,
     overflow: 'hidden',
     padding: 16,
+  },
+  iconWell: {
+    alignItems: 'center',
+    borderRadius: 16,
+    height: 52,
+    justifyContent: 'center',
+    width: 52,
   },
   label: {
     fontSize: 14,
     lineHeight: 22,
   },
-  row: {
-    flexDirection: 'row',
-    gap: 9,
-  },
+  pressable: { borderRadius: 18, overflow: 'hidden' },
   wrapper: {
     paddingHorizontal: 16,
   },

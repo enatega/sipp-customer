@@ -1,7 +1,8 @@
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import PressableScale from '../../../../general/components/PressableScale';
 import Text from '../../../../general/components/Text';
 import { useDeliveriesCurrencyLabel } from '../../../../general/stores/useAppConfigStore';
 import { useTheme } from '../../../../general/theme/theme';
@@ -19,32 +20,19 @@ export default function CheckoutTipSection({
   onCustomTipPress,
   onSelectTip,
 }: Props) {
-  const { colors, typography } = useTheme();
+  const { colors, layout, shape, spacing } = useTheme();
   const { t } = useTranslation('deliveries');
   const currencyLabel = useDeliveriesCurrencyLabel();
   const isCustomSelected = selectedTip > 0 && !TIP_OPTIONS.includes(selectedTip as (typeof TIP_OPTIONS)[number]);
+  const choices = [0, ...TIP_OPTIONS];
 
   return (
-    <View style={styles.section}>
-      <View style={styles.header}>
-        <Text
-          weight="extraBold"
-          style={{
-            color: colors.text,
-            fontSize: typography.size.h5,
-            lineHeight: typography.lineHeight.h5,
-          }}
-        >
+    <View style={[styles.section, { gap: spacing.md }]}>
+      <View style={[styles.header, { gap: spacing.xs }]}>
+        <Text accessibilityRole="header" variant="sectionTitle" weight="bold">
           {t('checkout_tip_title')}
         </Text>
-
-        <Text
-          style={{
-            color: colors.mutedText,
-            fontSize: typography.size.sm2,
-            lineHeight: typography.lineHeight.md,
-          }}
-        >
+        <Text color={colors.textSubtle} variant="supporting">
           {t('checkout_tip_description')}
         </Text>
       </View>
@@ -52,89 +40,81 @@ export default function CheckoutTipSection({
       <ScrollView
         horizontal
         bounces={false}
-        contentContainerStyle={styles.optionsRow}
+        contentContainerStyle={[styles.optionsRow, { gap: spacing.sm }]}
         showsHorizontalScrollIndicator={false}
       >
-        {TIP_OPTIONS.map((amount) => {
+        {choices.map((amount) => {
           const isSelected = selectedTip === amount;
 
           return (
-            <Pressable
+            <PressableScale
               key={amount}
-              accessibilityRole="button"
-              onPress={() => onSelectTip(isSelected ? 0 : amount)}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: isSelected }}
+              onPress={() => onSelectTip(amount)}
               style={[
                 styles.optionButton,
                 {
-                  backgroundColor: isSelected ? colors.blue50 : colors.surface,
-                  borderColor: isSelected ? colors.blue800 : colors.border,
+                  backgroundColor: isSelected ? colors.primarySoft : colors.surface,
+                  borderColor: isSelected ? colors.primary : colors.border,
+                  borderRadius: shape.radius.pill,
+                  minHeight: layout.touchTarget.minimum,
+                  paddingHorizontal: spacing.lg,
                 },
               ]}
             >
               <Text
-                weight="medium"
-                style={{
-                  color: colors.text,
-                  fontSize: typography.size.sm2,
-                  lineHeight: typography.lineHeight.md,
-                }}
+                color={isSelected ? colors.primary : colors.text}
+                variant="label"
+                weight={isSelected ? 'semiBold' : 'medium'}
               >
-                {`${currencyLabel} ${amount}`}
+                {amount === 0 ? t('checkout_tip_none') : `${currencyLabel} ${amount}`}
               </Text>
-            </Pressable>
+            </PressableScale>
           );
         })}
 
-        <Pressable
-          accessibilityRole="button"
+        <PressableScale
+          accessibilityRole="radio"
+          accessibilityState={{ selected: isCustomSelected }}
           onPress={onCustomTipPress}
           style={[
             styles.optionButton,
             {
-              backgroundColor: isCustomSelected ? colors.blue50 : colors.surface,
-              borderColor: isCustomSelected ? colors.blue800 : colors.border,
+              backgroundColor: isCustomSelected ? colors.primarySoft : colors.surface,
+              borderColor: isCustomSelected ? colors.primary : colors.border,
+              borderRadius: shape.radius.pill,
+              gap: spacing.xs,
+              minHeight: layout.touchTarget.minimum,
+              paddingHorizontal: spacing.lg,
             },
           ]}
         >
-          <Ionicons color={colors.text} name="add" size={14} />
+          <Ionicons color={isCustomSelected ? colors.primary : colors.text} name="add" size={16} />
           <Text
-            weight="medium"
-            style={{
-              color: colors.text,
-              fontSize: typography.size.sm2,
-              lineHeight: typography.lineHeight.md,
-            }}
+            color={isCustomSelected ? colors.primary : colors.text}
+            variant="label"
+            weight={isCustomSelected ? 'semiBold' : 'medium'}
           >
             {t('checkout_tip_custom')}
           </Text>
-        </Pressable>
+        </PressableScale>
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    gap: 6,
-  },
+  header: {},
   optionButton: {
     alignItems: 'center',
-    borderRadius: 6,
     borderWidth: 1,
     flexDirection: 'row',
     flexShrink: 0,
-    gap: 8,
-    height: 32,
     justifyContent: 'center',
-    paddingHorizontal: 12,
   },
   optionsRow: {
     flexDirection: 'row',
-    gap: 8,
   },
-  section: {
-    gap: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
+  section: {},
 });

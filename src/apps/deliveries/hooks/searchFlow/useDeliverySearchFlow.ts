@@ -1,5 +1,7 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  CommonActions,
+  useIsFocused,
   useNavigation,
   useRoute,
   type RouteProp,
@@ -27,6 +29,7 @@ import useSearchKeyboardState from "../../../../general/hooks/searchFlow/useSear
 import useSelectSavedAddress from "../../../../general/hooks/useSelectSavedAddress";
 import { type DeliverySearchFlowOptions } from "./types";
 import useDeliveriesTabSheetOffset from "../useDeliveriesTabSheetOffset";
+import type { DeliverySearchRouteParams } from "../../navigation/sharedTypes";
 
 type DeliveriesNavigationProp =
   NativeStackNavigationProp<DeliveriesStackParamList>;
@@ -35,6 +38,11 @@ type SearchRouteName =
   | "MultiVendorTabSearch"
   | "SingleVendorTabSearch"
   | "ChainTabSearch";
+
+type SearchRouteParamList = Record<
+  SearchRouteName,
+  DeliverySearchRouteParams | undefined
+>;
 
 function getAddressFlowOrigin(routeName: string): AddressFlowOrigin {
   if (routeName === "MultiVendorTabSearch") {
@@ -53,14 +61,42 @@ export default function useDeliverySearchFlow(
 ) {
   const navigation = useNavigation<DeliveriesNavigationProp>();
   const addressSheetBottomOffset = useDeliveriesTabSheetOffset();
-  const route =
-    useRoute<
-      RouteProp<Record<SearchRouteName, object | undefined>, SearchRouteName>
-    >();
+  const route = useRoute<RouteProp<SearchRouteParamList, SearchRouteName>>();
+  const isScreenFocused = useIsFocused();
+  const lastAutoFocusRequestId = useRef<number | undefined>(undefined);
   const { colors } = useTheme();
   const { t } = useTranslation("deliveries");
   const { inputRef, isFocused, dismissKeyboard, handleFocus, handleBlur } =
     useSearchKeyboardState();
+  const autoFocusRequestId = route.params?.autoFocusRequestId;
+
+  useEffect(() => {
+    if (
+      !isScreenFocused ||
+      autoFocusRequestId === undefined ||
+      lastAutoFocusRequestId.current === autoFocusRequestId
+    ) {
+      return;
+    }
+
+    lastAutoFocusRequestId.current = autoFocusRequestId;
+
+    const frame = requestAnimationFrame(() => {
+      inputRef.current?.focus();
+      navigation.dispatch({
+        ...CommonActions.setParams({ autoFocusRequestId: undefined }),
+        source: route.key,
+      });
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [
+    autoFocusRequestId,
+    inputRef,
+    isScreenFocused,
+    navigation,
+    route.key,
+  ]);
   const origin = getAddressFlowOrigin(route.name);
   const { latitude, longitude, selectedAddress, selectedAddressLabel } =
     useAddress();

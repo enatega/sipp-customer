@@ -1,14 +1,23 @@
 import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import type { NavigationProp } from '@react-navigation/native';
-import type { DeliveryOrderAgainItem } from '../../api/types';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { DeliveryOrderAgainItem, DeliveryStoreViewApiResponse } from '../../api/types';
 import type { CartResponse } from '../../api/cartServiceTypes';
+import { useCheckoutCouponStore } from '../../stores/useCheckoutCouponStore';
+import { useWindowClass } from '../../../../general/hooks/useWindowClass';
+import { useTheme } from '../../../../general/theme/theme';
 import CartClearPopup from './CartClearPopup';
 import CartEmptyState from './CartEmptyState';
+import CartFeeInfoModal from './CartFeeInfoModal';
 import CartFooter from './CartFooter';
 import CartHeader from './CartHeader';
 import CartItemsSection from './CartItemsSection';
+import CartMerchantSummary from './CartMerchantSummary';
+import CartOrderSummary from './CartOrderSummary';
 import CartRecommendationsSection from './CartRecommendationsSection';
+import CartStatusBanner from './CartStatusBanner';
 import { formatCartPrice } from './cartUtils';
 
 type Props = {
@@ -25,10 +34,11 @@ type Props = {
   onConfirmClearCart: () => void;
   onItemPendingChange?: (itemId: string, isPending: boolean) => void;
   onOpenClearCart: () => void;
-  onSetItemQuantity: (itemId: string, quantity: number) => Promise<void>;
   onOpenFeeModal: () => void;
   onRemoveItem: (itemId: string) => void;
+  onSetItemQuantity: (itemId: string, quantity: number) => Promise<void>;
   recommendations: DeliveryOrderAgainItem[];
+  store?: DeliveryStoreViewApiResponse;
 };
 
 export default function CartScreenContent({
@@ -45,22 +55,24 @@ export default function CartScreenContent({
   onConfirmClearCart,
   onItemPendingChange,
   onOpenClearCart,
-  onSetItemQuantity,
   onOpenFeeModal,
   onRemoveItem,
+  onSetItemQuantity,
   recommendations,
+  store,
 }: Props) {
-  const handleBack = React.useCallback(() => {
-    navigation.goBack();
-  }, [navigation]);
+  const { colors, layout, spacing } = useTheme();
+  const { gutter } = useWindowClass();
+  const insets = useSafeAreaInsets();
+  const selectedCoupon = useCheckoutCouponStore((state) => state.selectedCoupon);
+
+  const handleBack = React.useCallback(() => navigation.goBack(), [navigation]);
 
   const handleStartShopping = React.useCallback(() => {
     if (!cart.storeId) {
       navigation.navigate('MultiVendor', {
         screen: 'MultiVendorTabs',
-        params: {
-          screen: 'MultiVendorTabHome',
-        },
+        params: { screen: 'MultiVendorTabHome' },
       });
       return;
     }
@@ -71,31 +83,30 @@ export default function CartScreenContent({
         store: {
           storeId: cart.storeId,
           vendorId: '',
-          name: '',
+          name: store?.name ?? '',
         },
       },
     });
-  }, [cart.storeId, navigation]);
+  }, [cart.storeId, navigation, store?.name]);
 
   const handleRecommendationPress = React.useCallback(
-    (productId: string) => {
-      navigation.navigate('ProductInfo', { productId });
-    },
+    (productId: string) => navigation.navigate('ProductInfo', { productId }),
     [navigation],
   );
 
-  const footer = (
-    <CartFooter
-      amountLabel={formatCartPrice(cart.finalPrice)}
-      disabled={cart.isEmpty || isMutatingCart}
-      itemCount={cart.totalItems}
-      onCheckoutPress={onCheckoutPress}
-    />
-  );
+  const handlePromoPress = React.useCallback(() => {
+    navigation.navigate('Coupons');
+  }, [navigation]);
 
   if (cart.isEmpty) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.canvas }]}>
+        <LinearGradient
+          colors={[colors.primarySoft, colors.canvas, colors.canvas]}
+          locations={[0, 0.38, 1]}
+          pointerEvents="none"
+          style={StyleSheet.absoluteFillObject}
+        />
         <CartHeader onBackPress={handleBack} />
         <CartEmptyState onStartShoppingPress={handleStartShopping} />
       </View>
@@ -103,35 +114,85 @@ export default function CartScreenContent({
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.canvas }]}>
+      <LinearGradient
+        colors={[colors.primarySoft, colors.canvas, colors.canvas]}
+        locations={[0, 0.28, 1]}
+        pointerEvents="none"
+        style={StyleSheet.absoluteFillObject}
+      />
+
       <CartHeader
         clearDisabled={isMutatingCart}
+        itemCount={cart.totalItems}
         onBackPress={handleBack}
         onClearPress={onOpenClearCart}
       />
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            gap: spacing.section.default,
+            maxWidth: layout.contentMaxWidth.readable,
+            paddingBottom: insets.bottom + 132,
+            paddingHorizontal: gutter,
+            paddingTop: spacing.sm,
+          },
+        ]}
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/*
-        <CartStatusBanner onInfoPress={onOpenFeeModal} totalPrice={cart.finalPrice} />
-        */}
+        <CartMerchantSummary
+          fallbackName={recommendations[0]?.storeName}
+          onPress={handleStartShopping}
+          store={store}
+        />
+
+        <CartStatusBanner
+          minimumOrder={store?.minimumOrder}
+          onInfoPress={onOpenFeeModal}
+          totalPrice={cart.totalPrice}
+        />
+
         <CartItemsSection
           isUpdatingItemId={isUpdatingItemId}
           items={cart.items}
           onAddMorePress={handleStartShopping}
           onItemPendingChange={onItemPendingChange}
-          onSetItemQuantity={onSetItemQuantity}
           onRemoveItem={onRemoveItem}
+          onSetItemQuantity={onSetItemQuantity}
         />
+
+        <CartOrderSummary
+          discountAmount={cart.discountAmount}
+          finalPrice={cart.finalPrice}
+          onFeeInfoPress={onOpenFeeModal}
+          onPromoPress={handlePromoPress}
+          promoCode={selectedCoupon?.code}
+          subtotal={cart.totalPrice}
+        />
+
         <CartRecommendationsSection
           items={recommendations}
           onItemPress={handleRecommendationPress}
         />
       </ScrollView>
 
-      {footer}
+      <CartFooter
+        amountLabel={formatCartPrice(cart.finalPrice)}
+        disabled={cart.isEmpty || isMutatingCart}
+        itemCount={cart.totalItems}
+        onCheckoutPress={onCheckoutPress}
+      />
+
+      <CartFeeInfoModal
+        currentSubtotal={cart.totalPrice}
+        deliveryFee={store?.baseFee}
+        minimumOrder={store?.minimumOrder}
+        onClose={onCloseFeeModal}
+        visible={isFeeModalVisible}
+      />
 
       <CartClearPopup
         isSubmitting={isClearingCart}
@@ -148,7 +209,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    gap: 8,
-    paddingBottom: 24,
+    alignSelf: 'center',
+    width: '100%',
   },
 });

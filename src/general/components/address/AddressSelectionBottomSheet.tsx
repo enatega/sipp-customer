@@ -174,7 +174,16 @@ export default function AddressSelectionBottomSheet({
   }
 
   return (
-    <View accessibilityViewIsModal style={styles.overlay}>
+    <View
+      accessibilityViewIsModal
+      style={[
+        styles.overlay,
+        {
+          elevation: layout.layer.modal,
+          zIndex: layout.layer.modal,
+        },
+      ]}
+    >
       <Pressable
         accessibilityLabel={t('address_selector_close')}
         accessibilityRole="button"

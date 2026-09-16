@@ -1,6 +1,8 @@
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import PressableScale from '../../../../general/components/PressableScale';
+import Surface from '../../../../general/components/Surface';
 import Text from '../../../../general/components/Text';
 import { useTheme } from '../../../../general/theme/theme';
 import CheckoutInfoRow from './CheckoutInfoRow';
@@ -32,116 +34,108 @@ export default function CheckoutPaymentSection({
   promoTitle,
   promoSubtitle,
 }: Props) {
-  const { colors, typography } = useTheme();
+  const { colors, layout, shape, spacing } = useTheme();
   const { t } = useTranslation('deliveries');
 
   return (
-    <View style={styles.section}>
-      <View style={styles.header}>
-        <Text
-          weight="extraBold"
-          style={{
-            color: colors.text,
-            fontSize: typography.size.h5,
-            lineHeight: typography.lineHeight.h5,
-          }}
-        >
-          {t('checkout_payment_title')}
-        </Text>
-      </View>
+    <View style={[styles.section, { gap: spacing.md }]}>
+      <Text accessibilityRole="header" variant="sectionTitle" weight="bold">
+        {t('checkout_payment_title')}
+      </Text>
 
-      <CheckoutInfoRow
-        title={paymentTitle}
-        subtitle={paymentSubtitle}
-        iconName={paymentIconName}
-        onPress={onPaymentPress}
-      />
+      <Surface outlined style={[styles.surface, { padding: spacing.xs }]}>
+        <CheckoutInfoRow
+          title={paymentTitle}
+          subtitle={paymentSubtitle}
+          iconName={paymentIconName}
+          onPress={onPaymentPress}
+          showDivider
+        />
 
-      <CheckoutInfoRow
-        title={promoTitle ?? t('checkout_promo_title')}
-        subtitle={promoSubtitle ?? t('checkout_promo_subtitle')}
-        iconName="ticket-outline"
-        onPress={onPromoPress}
-      />
-      {isPromoApplied && promoCode ? (
-        <View style={styles.appliedRow}>
-          <View style={[styles.codeChip, { borderColor: colors.border, backgroundColor: colors.surface }]}>
-            <Text color={colors.text} weight="medium" style={styles.codeChipText}>
-              {promoCode}
-            </Text>
+        <CheckoutInfoRow
+          title={promoTitle ?? t('checkout_promo_title')}
+          subtitle={promoSubtitle ?? t('checkout_promo_subtitle')}
+          iconName="ticket-outline"
+          onPress={onPromoPress}
+        />
+
+        {isPromoApplied && promoCode ? (
+          <View style={[styles.appliedRow, { gap: spacing.sm, padding: spacing.sm, paddingTop: spacing.xs }]}>
+            <View
+              style={[
+                styles.codeChip,
+                {
+                  backgroundColor: colors.successSoft,
+                  borderRadius: shape.radius.pill,
+                },
+              ]}
+            >
+              <Text color={colors.successText} numberOfLines={1} variant="caption" weight="semiBold">
+                {promoCode}
+              </Text>
+            </View>
+            <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel={t('checkout_promo_remove')}
+              onPress={onPromoRemove}
+              style={[
+                styles.removeButton,
+                {
+                  backgroundColor: colors.surfaceSunken,
+                  borderRadius: shape.radius.control,
+                  minHeight: layout.touchTarget.minimum,
+                  paddingHorizontal: spacing.md,
+                },
+              ]}
+            >
+              <Text color={colors.textSubtle} variant="label" weight="semiBold">
+                {t('checkout_promo_remove')}
+              </Text>
+            </PressableScale>
           </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t('checkout_promo_remove')}
-            onPress={onPromoRemove}
-            style={({ pressed }) => [
-              styles.removeButton,
-              { backgroundColor: colors.backgroundTertiary, opacity: pressed ? 0.7 : 1 },
-            ]}
-          >
-            <Text color={colors.text} weight="medium" style={styles.removeText}>
-              {t('checkout_promo_remove')}
-            </Text>
-          </Pressable>
-        </View>
-      ) : null}
+        ) : null}
+      </Surface>
 
       {errorMessage ? (
-        <Text
-          style={{
-            color: colors.danger,
-            fontSize: typography.size.xs2,
-            lineHeight: typography.lineHeight.sm,
-            paddingHorizontal: 16,
-          }}
+        <View
+          style={[
+            styles.error,
+            {
+              backgroundColor: colors.dangerSoft,
+              borderRadius: shape.radius.control,
+              padding: spacing.md,
+            },
+          ]}
         >
-          {errorMessage}
-        </Text>
+          <Text color={colors.dangerText} variant="caption" weight="medium">
+            {errorMessage}
+          </Text>
+        </View>
       ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    paddingHorizontal: 16,
-  },
   appliedRow: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 2,
   },
   codeChip: {
     alignItems: 'center',
-    borderRadius: 10,
-    borderWidth: 1,
     justifyContent: 'center',
-    minHeight: 34,
-    minWidth: 84,
+    minHeight: 32,
+    minWidth: 80,
     paddingHorizontal: 14,
-    paddingVertical: 6,
   },
-  codeChipText: {
-    fontSize: 15,
-    lineHeight: 22,
-  },
+  error: {},
   removeButton: {
     alignItems: 'center',
-    borderRadius: 12,
     justifyContent: 'center',
-    minHeight: 34,
-    minWidth: 96,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
   },
-  removeText: {
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  section: {
-    gap: 4,
-    paddingTop: 12,
+  section: {},
+  surface: {
+    overflow: 'hidden',
   },
 });

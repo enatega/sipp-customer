@@ -49,4 +49,4 @@ yarn-error.*
 # IDE
 .idea/
 .vscode/
-
+graphify-out/

@@ -4,6 +4,7 @@ import { isCustomizationSectionRequired } from "../../cart/cartCustomizationRule
 import type { ProductInfoCustomizationSection } from "../../api/productInfoServiceTypes";
 
 export type ProductSelectionOption = {
+  description: string | null;
   optionId: string;
   groupId: string;
   label: string;
@@ -22,6 +23,8 @@ export type ProductSelectionSection = {
   helperText: string | null;
   isMarkedRequired: boolean;
   label: string;
+  maxSelect: number;
+  minSelect: number;
   required: boolean;
   selectionType: "single" | "multiple";
   options: ProductSelectionOption[];
@@ -39,8 +42,11 @@ const buildSelectableSections = (
     isMarkedRequired: section.required,
     label: section.name,
     required: isCustomizationSectionRequired(section),
+    maxSelect: section.maxSelect,
+    minSelect: section.minSelect,
     selectionType: normalizeSelectionType(section.selectionType),
     options: section.options.map((option) => ({
+      description: option.description,
       optionId: option.optionId,
       groupId: section.groupId,
       label: option.title,
@@ -79,6 +85,7 @@ const buildVariationOptions = (
 
         return {
           groupId: section.groupId,
+          description: firstOption.description,
           helperText: section.helperText,
           isMarkedRequired: section.required,
           label: section.name,
@@ -96,6 +103,7 @@ const buildVariationOptions = (
 
   return primarySection.options.map((option) => ({
     groupId: primarySection.groupId,
+    description: option.description,
     helperText: primarySection.helperText,
     isMarkedRequired: primarySection.required,
     label: option.title,
@@ -136,7 +144,13 @@ type Props = {
 
 export default function useProductSelectionState({ variations, addons }: Props) {
   const variationOptions = useMemo(() => buildVariationOptions(variations), [variations]);
-  const addonSections = useMemo(() => buildSelectableSections(addons), [addons]);
+  const addonSections = useMemo(
+    () =>
+      buildSelectableSections(addons).sort(
+        (left, right) => Number(right.required) - Number(left.required),
+      ),
+    [addons],
+  );
   const [selectedVariationKey, setSelectedVariationKey] = useState<string | null>(
     () =>
       variationOptions[0]
@@ -225,6 +239,28 @@ export default function useProductSelectionState({ variations, addons }: Props) 
     [addonSections, selectedAddonOptionIdsByGroup],
   );
 
+  const incompleteRequiredGroupIds = useMemo(
+    () =>
+      addonSections
+        .filter((section) => {
+          if (!section.required) {
+            return false;
+          }
+
+          const selectedCount =
+            selectedAddonOptionIdsByGroup[section.groupId]?.length ?? 0;
+          return selectedCount < Math.max(1, section.minSelect);
+        })
+        .map((section) => section.groupId),
+    [addonSections, selectedAddonOptionIdsByGroup],
+  );
+  const isRequiredVariationComplete = useMemo(
+    () =>
+      !variationOptions.some((option) => option.required) ||
+      selectedVariation !== null,
+    [selectedVariation, variationOptions],
+  );
+
   const cartSelectionInputs = useMemo<CartSelectionInput[]>(
     () => [
       ...(selectedVariation
@@ -265,7 +301,9 @@ export default function useProductSelectionState({ variations, addons }: Props) 
             : [optionId]
           : currentSelections.includes(optionId)
             ? currentSelections.filter((itemId) => itemId !== optionId)
-            : [...currentSelections, optionId];
+            : section.maxSelect > 0 && currentSelections.length >= section.maxSelect
+              ? currentSelections
+              : [...currentSelections, optionId];
 
       const nextState =
         nextSelections.length > 0
@@ -284,6 +322,9 @@ export default function useProductSelectionState({ variations, addons }: Props) 
   return {
     addonSections,
     cartSelectionInputs,
+    incompleteRequiredGroupIds,
+    isSelectionComplete:
+      isRequiredVariationComplete && incompleteRequiredGroupIds.length === 0,
     selectedAddonsTotal,
     selectedAddonOptionIdsByGroup,
     selectedVariation,

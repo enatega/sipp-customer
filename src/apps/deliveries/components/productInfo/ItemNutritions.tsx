@@ -21,88 +21,61 @@ export default function ItemNutritions({
   nutritionTitle,
 }: Props) {
   const { t } = useTranslation("deliveries");
-  const { colors, typography } = useTheme();
+  const { colors, spacing } = useTheme();
   const hasIngredients = Boolean(ingredients?.trim());
   const hasUsage = Boolean(usage?.trim());
   const hasNutrition = nutrition.length > 0;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { gap: spacing.lg, paddingVertical: spacing.lg }]}>
       {hasIngredients ? (
-        <View style={styles.section}>
-          <Text
-            color={colors.text}
-            style={[
-              styles.heading,
-              {
-                fontSize: typography.size.h5,
-                lineHeight: typography.lineHeight.h5,
-              },
-            ]}
-          >
+        <View style={[styles.section, { gap: spacing.sm }]}>
+          <Text color={colors.text} variant="cardTitle" weight="bold">
             {t("ingredients")}
           </Text>
-          <Text color={colors.mutedText} style={styles.body}>
+          <Text color={colors.textSubtle} variant="body">
             {ingredients}
           </Text>
         </View>
       ) : null}
 
       {hasIngredients && (hasUsage || hasNutrition) ? (
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+        <View style={[styles.divider, { backgroundColor: colors.divider }]} />
       ) : null}
 
       {hasUsage ? (
-        <View style={styles.section}>
-          <Text
-            color={colors.text}
-            style={[
-              styles.heading,
-              {
-                fontSize: typography.size.h5,
-                lineHeight: typography.lineHeight.h5,
-              },
-            ]}
-          >
+        <View style={[styles.section, { gap: spacing.sm }]}>
+          <Text color={colors.text} variant="cardTitle" weight="bold">
             {t("usage")}
           </Text>
-          <Text color={colors.mutedText} style={styles.body}>
+          <Text color={colors.textSubtle} variant="body">
             {usage}
           </Text>
         </View>
       ) : null}
 
       {hasUsage && hasNutrition ? (
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+        <View style={[styles.divider, { backgroundColor: colors.divider }]} />
       ) : null}
 
       {hasNutrition ? (
-        <View style={styles.section}>
-          <Text
-            color={colors.text}
-            style={[
-              styles.heading,
-              {
-                fontSize: typography.size.h5,
-                lineHeight: typography.lineHeight.h5,
-              },
-            ]}
-          >
+        <View style={[styles.section, { gap: spacing.sm }]}>
+          <Text color={colors.text} variant="cardTitle" weight="bold">
             {nutritionTitle || t("nutrition_facts")}
           </Text>
           {amountPer ? (
-            <Text color={colors.iconDisabled} style={styles.body}>
+            <Text color={colors.textSubtle} variant="caption">
               {`${t("amount_per")} ${amountPer}`}
             </Text>
           ) : null}
 
-          <View style={styles.nutritionList}>
+          <View style={[styles.nutritionList, { gap: spacing.sm }]}>
             {nutrition.map((item) => (
               <View key={item.id} style={styles.nutritionRow}>
-                <Text color={colors.text} style={styles.body}>
+                <Text color={colors.text} variant="body">
                   {item.label}
                 </Text>
-                <Text color={colors.mutedText} style={styles.body}>
+                <Text color={colors.textSubtle} variant="body" weight="semiBold">
                   {item.value}
                 </Text>
               </View>
@@ -115,32 +88,17 @@ export default function ItemNutritions({
 }
 
 const styles = StyleSheet.create({
-  body: {
-    fontSize: 14,
-    lineHeight: 22,
-  },
-  container: {
-    paddingHorizontal: 16,
-  },
+  container: {},
   divider: {
-    height: 1,
-    marginVertical: 8,
-  },
-  heading: {
-    fontWeight: "800",
-    letterSpacing: -0.36,
+    height: StyleSheet.hairlineWidth,
   },
   nutritionList: {
-    gap: 10,
-    marginTop: 12,
+    marginTop: 4,
   },
   nutritionRow: {
     alignItems: "center",
     flexDirection: "row",
     justifyContent: "space-between",
   },
-  section: {
-    gap: 8,
-    paddingVertical: 12,
-  },
+  section: {},
 });

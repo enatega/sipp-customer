@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import Text from '../Text';
@@ -15,6 +15,7 @@ import {
   getSelectedSavedAddressId,
 } from '../../utils/address';
 import MyProfileAddressCard from './MyProfileAddressCard';
+import PressableScale from '../PressableScale';
 
 type Props = {
   addAddressLabel: string;
@@ -92,17 +93,16 @@ export default function SavedAddressesList({
         );
       })}
 
-      <Pressable
+      <PressableScale
         accessibilityLabel={addAddressLabel}
         accessibilityRole="button"
         disabled={isSelectionPending}
         onPress={onAddAddress}
-        style={({ pressed }) => [
+        style={[
           isCompact ? styles.compactAddButton : styles.cardAddButton,
           {
             backgroundColor: isCompact ? 'transparent' : colors.surface,
             borderColor: isCompact ? 'transparent' : colors.border,
-            opacity: isSelectionPending ? 0.55 : pressed ? 0.85 : 1,
           },
         ]}
       >
@@ -124,7 +124,7 @@ export default function SavedAddressesList({
         >
           {addAddressLabel}
         </Text>
-      </Pressable>
+      </PressableScale>
     </View>
   );
 }
@@ -135,13 +135,15 @@ const styles = StyleSheet.create({
   },
   cardAddButton: {
     alignItems: 'center',
-    borderRadius: 6,
+    borderRadius: 14,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 8,
     justifyContent: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    minHeight: 52,
+    overflow: 'hidden',
+    paddingVertical: 10,
   },
   cardList: {
     gap: 12,

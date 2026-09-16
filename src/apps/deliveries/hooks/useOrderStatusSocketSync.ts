@@ -133,7 +133,7 @@ export function useOrderStatusSocketSync(orderId?: string, options?: Options) {
                 ? {
                     ...(current.rider ?? {}),
                     id: payload.riderId,
-                    userId: current.rider?.userId ?? payload.riderId,
+                    userId: payload.riderUserId ?? current.rider?.userId ?? null,
                   }
                 : current.rider;
             const nextOrderLogs =
@@ -151,6 +151,7 @@ export function useOrderStatusSocketSync(orderId?: string, options?: Options) {
 
             return {
               ...current,
+              eta: payload.eta ?? current.eta,
               status: nextStatus,
               rider: nextRider,
               orderLogs: nextOrderLogs,

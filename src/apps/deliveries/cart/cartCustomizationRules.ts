@@ -21,8 +21,12 @@ export function summarizeCartCustomizations(
   customizations?: ProductInfoCustomizationsResponse | null,
   selectedOptions?: CartSelectionInput[],
 ): CartCustomizationSummary {
-  const selectedGroupIds = new Set(
-    (selectedOptions ?? []).map((option) => option.groupId),
+  const selectedOptionCountByGroup = (selectedOptions ?? []).reduce<Record<string, number>>(
+    (counts, option) => {
+      counts[option.groupId] = (counts[option.groupId] ?? 0) + 1;
+      return counts;
+    },
+    {},
   );
   const variationSections = customizations?.variations ?? [];
   const addonSections = customizations?.addons ?? [];
@@ -33,12 +37,16 @@ export function summarizeCartCustomizations(
     isCustomizationSectionRequired(section),
   );
   const hasSelectedVariation = variationSections.some((section) =>
-    selectedGroupIds.has(section.groupId),
+    (selectedOptionCountByGroup[section.groupId] ?? 0) > 0,
   );
   const hasRequiredAddons = requiredAddonGroupIds.length > 0;
-  const isAddonSelectionComplete = requiredAddonGroupIds.every((groupId) =>
-    selectedGroupIds.has(groupId),
-  );
+  const isAddonSelectionComplete = addonSections
+    .filter((section) => isCustomizationSectionRequired(section))
+    .every(
+      (section) =>
+        (selectedOptionCountByGroup[section.groupId] ?? 0) >=
+        Math.max(1, section.minSelect),
+    );
   const hasRequiredGroups = hasRequiredVariationChoice || hasRequiredAddons;
   const requiredGroupIds = [
     ...(hasRequiredVariationChoice ? ['__variation__'] : []),

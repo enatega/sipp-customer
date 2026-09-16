@@ -20,6 +20,7 @@ type Props = {
   hasCustomizationContext: boolean;
   product: ProductInfoResponse;
   quantity: number;
+  onAddedToCart: () => void;
   selectedOptions: CartSelectionInput[];
 };
 
@@ -28,10 +29,11 @@ export default function useProductInfoCartFlow({
   hasCustomizationContext,
   product,
   quantity,
+  onAddedToCart,
   selectedOptions,
 }: Props) {
   const { t } = useTranslation('deliveries');
-  const { showMutationError, showMutationSuccess } = useCartMutationFeedback();
+  const { showMutationError } = useCartMutationFeedback();
   const addCartItemMutation = useAddCartItemMutation();
   const storeConflictResolution = useCartStoreConflictResolution();
   const productActionTarget = useMemo(
@@ -59,21 +61,16 @@ export default function useProductInfoCartFlow({
       selectedOptions: selectedOptions.length > 0 ? selectedOptions : undefined,
     });
 
-    showMutationSuccess('add', {
-      product: product.name,
-      quantity,
-    });
+    onAddedToCart();
   }, [
     addCartItemMutation,
-    product.name,
     product.productId,
     quantity,
+    onAddedToCart,
     selectedOptions,
-    showMutationSuccess,
   ]);
 
   const handleAddToCart = useCallback(async () => {
-
     const shouldShowBlockedFeedback =
       isAddDisabled || decision.kind === 'open_product_info';
 

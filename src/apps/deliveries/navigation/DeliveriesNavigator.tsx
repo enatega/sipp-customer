@@ -10,6 +10,7 @@ import CheckoutScreen from "../screens/CheckoutScreen/CheckoutScreen";
 import RateOrderScreen from '../screens/RateOrderScreen/RateOrderScreen';
 import OrderDetailsScreen from '../screens/OrderDetailsScreen/OrderDetailsScreen';
 import OrderTrackingScreen from '../screens/OrderTrackingScreen/OrderTrackingScreen';
+import OrderConfirmationScreen from '../screens/OrderConfirmationScreen/OrderConfirmationScreen';
 import DeliveriesMyProfileScreen from "../screens/profile/DeliveriesMyProfileScreen";
 import DeliveriesEditProfileScreen from "../screens/profile/DeliveriesEditProfileScreen";
 import SettingsScreen from "../screens/SettingsScreen/SettingsScreen";
@@ -286,6 +287,11 @@ export default function DeliveriesNavigator() {
       <Stack.Screen
         name="OrderTrackingScreen"
         component={OrderTrackingScreen}
+        options={sharedScreenOptions}
+      />
+      <Stack.Screen
+        name="OrderConfirmation"
+        component={OrderConfirmationScreen}
         options={sharedScreenOptions}
       />
       <Stack.Screen

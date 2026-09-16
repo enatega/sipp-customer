@@ -1,95 +1,137 @@
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import PressableScale from '../../../../general/components/PressableScale';
 import Text from '../../../../general/components/Text';
+import { useWindowClass } from '../../../../general/hooks/useWindowClass';
 import { useTheme } from '../../../../general/theme/theme';
 
 type Props = {
   clearDisabled?: boolean;
+  itemCount?: number;
   onBackPress: () => void;
   onClearPress?: () => void;
 };
 
 export default function CartHeader({
   clearDisabled = false,
+  itemCount,
   onBackPress,
   onClearPress,
 }: Props) {
-  const { colors, typography } = useTheme();
+  const { colors, layout, shape, spacing } = useTheme();
   const { t } = useTranslation('deliveries');
   const insets = useSafeAreaInsets();
+  const { gutter } = useWindowClass();
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 10 }]}>
-      <Pressable
-        accessibilityLabel={t('store_details_action_back')}
-        accessibilityRole="button"
-        onPress={onBackPress}
-        style={[styles.backButton, { backgroundColor: colors.surfaceSoft }]}
-      >
-        <Ionicons color={colors.text} name="chevron-back" size={20} />
-      </Pressable>
-
-      <Text
-        weight="semiBold"
-        style={{
-          color: colors.text,
-          fontSize: typography.size.lg,
-          lineHeight: typography.lineHeight.lg,
-        }}
-      >
-        {t('cart_title')}
-      </Text>
-
-      {onClearPress ? (
-        <Pressable
-          accessibilityLabel={t('cart_clear_action')}
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.canvas,
+          paddingBottom: spacing.sm,
+          paddingHorizontal: gutter,
+          paddingTop: insets.top + spacing.sm,
+        },
+      ]}
+    >
+      <View style={[styles.inner, { maxWidth: layout.contentMaxWidth.readable }]}>
+        <PressableScale
+          accessibilityLabel={t('store_details_action_back')}
           accessibilityRole="button"
-          accessibilityState={{ disabled: clearDisabled }}
-          disabled={clearDisabled}
-          onPress={onClearPress}
+          onPress={onBackPress}
           style={[
-            styles.actionButton,
+            styles.iconButton,
             {
-              backgroundColor: colors.surfaceSoft,
-              opacity: clearDisabled ? 0.55 : 1,
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              borderRadius: shape.radius.pill,
+              height: layout.touchTarget.minimum,
+              width: layout.touchTarget.minimum,
             },
           ]}
         >
-          <Ionicons color={colors.danger} name="trash-outline" size={18} />
-        </Pressable>
-      ) : (
-        <View style={styles.trailingSpace} />
-      )}
+          <Ionicons color={colors.text} name="chevron-back" size={21} />
+        </PressableScale>
+
+        <View style={[styles.titleRow, { gap: spacing.sm }]}>
+          <Text numberOfLines={1} variant="sectionTitle" weight="bold">
+            {t('cart_title')}
+          </Text>
+          {typeof itemCount === 'number' && itemCount > 0 ? (
+            <View
+              style={[
+                styles.countBadge,
+                {
+                  backgroundColor: colors.primarySoft,
+                  borderRadius: shape.radius.pill,
+                },
+              ]}
+            >
+              <Text color={colors.primary} variant="badge" weight="bold">
+                {itemCount}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+
+        {onClearPress ? (
+          <PressableScale
+            accessibilityLabel={t('cart_clear_action')}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: clearDisabled }}
+            disabled={clearDisabled}
+            onPress={onClearPress}
+            style={[
+              styles.iconButton,
+              {
+                backgroundColor: colors.dangerSoft,
+                borderRadius: shape.radius.pill,
+                height: layout.touchTarget.minimum,
+                width: layout.touchTarget.minimum,
+              },
+            ]}
+          >
+            <Ionicons color={colors.danger} name="trash-outline" size={19} />
+          </PressableScale>
+        ) : (
+          <View style={{ width: layout.touchTarget.minimum }} />
+        )}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  actionButton: {
-    alignItems: 'center',
-    borderRadius: 20,
-    height: 40,
-    justifyContent: 'center',
-    width: 40,
-  },
   container: {
+    width: '100%',
+  },
+  countBadge: {
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 22,
+    minWidth: 22,
+    paddingHorizontal: 6,
+  },
+  iconButton: {
+    alignItems: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  inner: {
+    alignItems: 'center',
+    alignSelf: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingBottom: 12,
-    paddingHorizontal: 16,
+    width: '100%',
   },
-  backButton: {
+  titleRow: {
     alignItems: 'center',
-    borderRadius: 20,
-    height: 40,
+    flexDirection: 'row',
     justifyContent: 'center',
-    width: 40,
-  },
-  trailingSpace: {
-    width: 40,
   },
 });

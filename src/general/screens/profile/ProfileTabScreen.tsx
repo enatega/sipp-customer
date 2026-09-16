@@ -30,6 +30,7 @@ type Props = {
   onOpenCoupons?: () => void;
   onOpenFavourites?: () => void;
   onOpenNotifications?: () => void;
+  onOpenOrders?: () => void;
   subtitle?: string;
   user: ProfileUser | null;
   wallet: WalletResponse['data'] | null;
@@ -42,6 +43,7 @@ export default function ProfileTabScreen({
   onOpenCoupons,
   onOpenFavourites,
   onOpenNotifications,
+  onOpenOrders,
   subtitle,
   user,
   wallet,
@@ -90,7 +92,33 @@ export default function ProfileTabScreen({
         name={user?.name}
         imageUri={user?.image}
         subtitle={subtitle ?? t('profile_personal_account')}
+        editLabel={t('my_profile_edit')}
+        onPress={() => navigation.navigate('MyProfile')}
       />
+
+      <ProfileMenuSection title={t('profile_section_essentials')}>
+        <ProfileMenuItem
+          icon={<Ionicons name="receipt-outline" size={ICON_SIZE} color={colors.quickActionOrdersForeground} />}
+          iconSurfaceColor={colors.quickActionOrdersSurface}
+          label={t('profile_menu_orders')}
+          subtitle={t('profile_menu_orders_subtitle')}
+          onPress={onOpenOrders}
+        />
+        <ProfileMenuItem
+          icon={<Ionicons name="location-outline" size={ICON_SIZE} color={colors.quickActionBrowseForeground} />}
+          iconSurfaceColor={colors.quickActionBrowseSurface}
+          label={t('profile_menu_addresses')}
+          subtitle={t('profile_menu_addresses_subtitle')}
+          onPress={() => navigation.navigate('MyProfile')}
+        />
+        <ProfileMenuItem
+          icon={<Ionicons name="heart-outline" size={ICON_SIZE} color={colors.quickActionFavouritesForeground} />}
+          iconSurfaceColor={colors.quickActionFavouritesSurface}
+          label={t('profile_menu_favorites')}
+          subtitle={t('profile_menu_favorites_subtitle')}
+          onPress={favoritesEnabled ? onOpenFavourites : undefined}
+        />
+      </ProfileMenuSection>
 
       <WalletCard
         balance={wallet?.wallet_balance}
@@ -99,25 +127,16 @@ export default function ProfileTabScreen({
         onPressWallet={() => navigation.navigate('Wallet')}
       />
 
-      <ProfileMenuSection>
-        <ProfileMenuItem
-          icon={<Ionicons name="person-outline" size={ICON_SIZE} color={iconColor} />}
-          label={t('profile_menu_profile')}
-          onPress={() => navigation.navigate('MyProfile')}
-        />
+      <ProfileMenuSection title={t('profile_section_preferences')}>
         <ProfileMenuItem
           icon={<Ionicons name="notifications-outline" size={ICON_SIZE} color={iconColor} />}
           label={t('profile_menu_notifications')}
           onPress={onOpenNotifications}
         />
-        <ProfileMenuItem
-          icon={<Ionicons name="heart-outline" size={ICON_SIZE} color={iconColor} />}
-          label={t('profile_menu_favorites')}
-          onPress={favoritesEnabled ? onOpenFavourites : undefined}
-        />
         {couponsEnabled && (
         <ProfileMenuItem
-          icon={<Ionicons name="pricetag-outline" size={ICON_SIZE} color={iconColor} />}
+          icon={<Ionicons name="pricetag-outline" size={ICON_SIZE} color={colors.quickActionDealsForeground} />}
+          iconSurfaceColor={colors.quickActionDealsSurface}
           label={t('profile_menu_coupons')}
           onPress={onOpenCoupons}
         />
@@ -129,7 +148,7 @@ export default function ProfileTabScreen({
         />
       </ProfileMenuSection>
 
-      <ProfileMenuSection>
+      <ProfileMenuSection title={t('profile_section_more')}>
         <ProfileMenuItem
           icon={<Ionicons name="help-buoy-outline" size={ICON_SIZE} color={iconColor} />}
           label={t('profile_menu_support')}
@@ -149,8 +168,10 @@ export default function ProfileTabScreen({
 
       <ProfileMenuSection>
         <ProfileMenuItem
-          icon={<Ionicons name="log-out-outline" size={ICON_SIZE} color={iconColor} />}
+          icon={<Ionicons name="log-out-outline" size={ICON_SIZE} color={colors.danger} />}
+          iconSurfaceColor={colors.dangerSoft}
           label={t('profile_menu_logout')}
+          tone="danger"
           onPress={() => {
             void handleLogout();
           }}
@@ -162,7 +183,7 @@ export default function ProfileTabScreen({
 
 const styles = StyleSheet.create({
   content: {
-    gap: 16,
+    gap: 20,
   },
   scroll: {
     flex: 1,

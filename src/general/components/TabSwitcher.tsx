@@ -5,6 +5,7 @@ import { useTheme } from '../theme/theme';
 import Text from './Text';
 
 type Tab = {
+  disabled?: boolean;
   key: string;
   label: string;
 };
@@ -17,12 +18,13 @@ type Props = {
 };
 
 type TabOptionProps = {
+  disabled?: boolean;
   isActive: boolean;
   label: string;
   onPress: () => void;
 };
 
-function TabOption({ isActive, label, onPress }: TabOptionProps) {
+function TabOption({ disabled = false, isActive, label, onPress }: TabOptionProps) {
   const { colors, elevation, motion, shape, spacing } = useTheme();
   const isReducedMotionEnabled = useReducedMotion();
   const emphasis = useRef(new Animated.Value(isActive ? 1 : 0)).current;
@@ -44,12 +46,19 @@ function TabOption({ isActive, label, onPress }: TabOptionProps) {
     <Pressable
       accessibilityLabel={label}
       accessibilityRole="tab"
-      accessibilityState={{ selected: isActive }}
+      accessibilityState={{ disabled, selected: isActive }}
+      disabled={disabled}
       android_ripple={Platform.OS === 'android'
         ? { borderless: false, color: colors.statePressed, foreground: true }
         : undefined}
       onPress={onPress}
-      style={[styles.tabPressable, { borderRadius: shape.radius.control }]}
+      style={[
+        styles.tabPressable,
+        {
+          borderRadius: shape.radius.control,
+          opacity: disabled ? motion.opacity.disabled : 1,
+        },
+      ]}
     >
       <Animated.View
         style={[
@@ -98,6 +107,7 @@ export default function TabSwitcher({ tabs, activeKey, onChange, style }: Props)
       {tabs.map((tab) => (
         <TabOption
           key={tab.key}
+          disabled={tab.disabled}
           isActive={tab.key === activeKey}
           label={tab.label}
           onPress={() => onChange(tab.key)}

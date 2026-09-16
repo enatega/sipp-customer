@@ -7,23 +7,33 @@ const hasValidGoogleIosUrlScheme = googleIosUrlScheme?.startsWith('com.googleuse
 
 module.exports = {
   expo: {
-    name: 'EnategaSuperApp',
+    name: 'Sip',
     slug: 'EnategaSuperApp',
     version: '1.0.0',
    
     orientation: 'portrait',
     icon: './assets/icon.png',
-    userInterfaceStyle: 'light',
+    userInterfaceStyle: 'automatic',
     newArchEnabled: true,
     splash: {
-      image: './assets/splash-icon.png',
-      resizeMode: 'contain',
+      image: './assets/splash-light.png',
+      resizeMode: 'cover',
       backgroundColor: '#ffffff',
     },
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'com.enategasuper.app',
       usesAppleSignIn: true,
+      splash: {
+        image: './assets/splash-light.png',
+        resizeMode: 'cover',
+        backgroundColor: '#ffffff',
+        dark: {
+          image: './assets/splash-dark.png',
+          resizeMode: 'cover',
+          backgroundColor: '#00182d',
+        },
+      },
       config: {
         googleMapsApiKey,
       },
@@ -31,17 +41,27 @@ module.exports = {
         CFBundleAllowMixedLocalizations: true,
         ITSAppUsesNonExemptEncryption: false,
         NSLocationWhenInUseUsageDescription:
-          'Allow EnategaSuperApp to access your location to show nearby stores and delivery availability.',
+          'Allow Sip to access your location to show nearby stores and delivery availability.',
         NSCameraUsageDescription:
-          'Allow EnategaSuperApp to use your camera so you can take a profile photo and attach photos in support or chat messages.',
+          'Allow Sip to use your camera so you can take a profile photo and attach photos in support or chat messages.',
         NSPhotoLibraryUsageDescription:
-          'Allow EnategaSuperApp to access your photo library so you can choose a profile photo and attach existing photos in support or chat messages.',
+          'Allow Sip to access your photo library so you can choose a profile photo and attach existing photos in support or chat messages.',
       },
     },
     android: {
       adaptiveIcon: {
         foregroundImage: './assets/adaptive-icon.png',
         backgroundColor: '#ffffff',
+      },
+      splash: {
+        image: './assets/splash-light.png',
+        resizeMode: 'cover',
+        backgroundColor: '#ffffff',
+        dark: {
+          image: './assets/splash-dark.png',
+          resizeMode: 'cover',
+          backgroundColor: '#00182d',
+        },
       },
       config: {
         googleMaps: {
@@ -100,7 +120,7 @@ module.exports = {
         'expo-location',
         {
           locationWhenInUsePermission:
-            'Allow EnategaSuperApp to access your location to show nearby stores and delivery availability.',
+            'Allow Sip to access your location to show nearby stores and delivery availability.',
         },
       ],
       hasValidGoogleIosUrlScheme

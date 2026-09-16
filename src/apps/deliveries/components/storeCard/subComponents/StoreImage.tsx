@@ -1,5 +1,5 @@
 import React from "react";
-import { View } from "react-native";
+import { View, type ImageProps } from "react-native";
 import Image from "../../../../../general/components/Image";
 import Text from "../../../../../general/components/Text";
 import { useTheme } from "../../../../../general/theme/theme";
@@ -13,6 +13,7 @@ interface StoreImageProps {
   isClosed?: boolean;
   closedLabel?: string;
   layout?: "compact" | "fullWidth" | "resultRow";
+  resizeMode?: ImageProps["resizeMode"];
 }
 
 export default function StoreImage({
@@ -22,6 +23,7 @@ export default function StoreImage({
   isClosed = false,
   closedLabel,
   layout = "compact",
+  resizeMode = "cover",
 }: StoreImageProps) {
   const { colors, shape } = useTheme();
   const isResultRow = layout === "resultRow";
@@ -40,7 +42,11 @@ export default function StoreImage({
         },
       ]}
     >
-      <Image source={{ uri: imageUrl }} style={styles.image} />
+      <Image
+        resizeMode={resizeMode}
+        source={{ uri: imageUrl }}
+        style={styles.image}
+      />
 
       {isClosed ? (
         <View style={[styles.closedOverlay, { backgroundColor: colors.scrim }]}>

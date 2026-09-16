@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import Text from '../Text';
 import { useTheme } from '../../theme/theme';
 
@@ -28,7 +29,7 @@ export default function SupportTicketListItem({
   title,
   unreadCount,
 }: Props) {
-  const { colors, typography } = useTheme();
+  const { colors, elevation, shape, typography } = useTheme();
   const statusStyles = {
     danger: { backgroundColor: colors.red100, color: colors.danger },
     info: { backgroundColor: colors.blue100, color: colors.blue500 },
@@ -39,14 +40,17 @@ export default function SupportTicketListItem({
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityLabel={`${title}. ${statusLabel}. ${preview}`}
       onPress={onPress}
       style={({ pressed }) => [
         styles.card,
         {
-          backgroundColor: colors.background,
+          backgroundColor: colors.surface,
           borderColor: colors.border,
+          borderRadius: shape.radius.hero,
           opacity: pressed ? 0.94 : 1,
         },
+        elevation.subtle,
       ]}
     >
       <View style={[styles.topRow, { borderBottomColor: colors.border }]}>
@@ -99,6 +103,8 @@ export default function SupportTicketListItem({
             </Text>
           </View>
         ) : null}
+
+        <Ionicons color={colors.iconMuted} name="chevron-forward" size={20} />
       </View>
 
       <View style={styles.bottomRow}>
@@ -135,7 +141,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   card: {
-    borderRadius: 6,
     borderWidth: 1,
     overflow: 'hidden',
     paddingHorizontal: 16,
@@ -148,7 +153,7 @@ const styles = StyleSheet.create({
   },
   countBadge: {
     alignItems: 'center',
-    borderRadius: 4,
+    borderRadius: 10,
     flexShrink: 0,
     justifyContent: 'center',
     minWidth: 20,
@@ -178,4 +183,3 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
 });
-

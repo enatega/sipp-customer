@@ -94,7 +94,7 @@ export default function AddressDetailScreen() {
   const nav =
     useNavigation<NativeStackNavigationProp<AddressFlowHostParamList>>();
   const route = useRoute<RouteProp<AddressFlowParamList, 'AddressDetail'>>();
-  const { colors } = useTheme();
+  const { colors, elevation } = useTheme();
   const { t } = useTranslation('general');
   const insets = useSafeAreaInsets();
   const formRef = useRef<AddressDetailFormHandle>(null);
@@ -283,11 +283,12 @@ export default function AddressDetailScreen() {
         <View
           style={[
             styles.footer,
+            elevation.floating,
             {
-              backgroundColor: colors.background,
-              borderTopColor: colors.border,
-              bottom: 0,
-              paddingBottom: insets.bottom + 12,
+              backgroundColor: colors.surface,
+              borderColor: colors.divider,
+              bottom: Math.max(insets.bottom, 8),
+              paddingBottom: 12,
             },
           ]}
         >
@@ -305,13 +306,13 @@ export default function AddressDetailScreen() {
 
 const styles = StyleSheet.create({
   footer: {
-    borderTopWidth: 1,
-    bottom: 0,
-    left: 0,
-    paddingHorizontal: 16,
+    borderRadius: 22,
+    borderWidth: 1,
+    left: 12,
+    paddingHorizontal: 12,
     paddingTop: 12,
     position: 'absolute',
-    right: 0,
+    right: 12,
   },
   screen: { flex: 1 },
   scrollContent: { gap: 16, paddingTop: 16 },

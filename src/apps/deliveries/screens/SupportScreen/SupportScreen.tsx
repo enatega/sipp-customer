@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Linking } from 'react-native';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import SupportChatFooter from '../../../../general/components/support/SupportChatFooter';
 import SupportIssueDropdown from '../../../../general/components/support/SupportIssueDropdown';
@@ -12,17 +13,25 @@ import { showToast } from '../../../../general/components/AppToast';
 import { useAuthSessionQuery } from '../../../../general/hooks/useAuthQueries';
 import { useTheme } from '../../../../general/theme/theme';
 import { DELIVERIES_SUPPORT_PHONE_NUMBER } from '../../constants/support';
+import SupportActiveOrderCard from '../../components/support/SupportActiveOrderCard';
+import { getOrderStatusPresentation } from '../../components/orders/orderPresentation';
+import { useActiveOrders } from '../../hooks/useOrders';
 import { useSupportTicketFormConfigQuery } from '../../hooks/useSupportTicketFormConfigQuery';
-import { SupportHomeNavigationProp } from '../../navigation/supportNavigationTypes';
+import type { DeliveriesStackParamList } from '../../navigation/types';
 import { buildSupportOptions, orderSupportCategoryKeys } from '../../utils/supportFormOptions';
 
 export default function SupportScreen() {
-  const { colors, typography } = useTheme();
+  const { colors, elevation, shape, spacing, typography } = useTheme();
   const { t, i18n } = useTranslation('deliveries');
-  const navigation = useNavigation<SupportHomeNavigationProp>();
+  const navigation = useNavigation<NativeStackNavigationProp<DeliveriesStackParamList>>();
   const sessionQuery = useAuthSessionQuery();
+  const activeOrdersQuery = useActiveOrders({ limit: 1 });
   const supportTicketFormConfigQuery = useSupportTicketFormConfigQuery();
   const displayName = sessionQuery.data?.user?.name ?? t('support_guest_name');
+  const activeOrder = activeOrdersQuery.data?.pages[0]?.items[0];
+  const activeOrderStatus = activeOrder
+    ? getOrderStatusPresentation(activeOrder.orderStatus, t)
+    : undefined;
   const handleCallSupport = async () => {
     try {
       await Linking.openURL(`tel:${DELIVERIES_SUPPORT_PHONE_NUMBER}`);
@@ -76,11 +85,66 @@ export default function SupportScreen() {
 
         <Text
           color={colors.text}
+          variant="title"
           weight="extraBold"
-          style={[styles.headline, { fontSize: typography.size.h5, lineHeight: typography.lineHeight.h5 }]}
+          style={styles.headline}
         >
           {t('support_headline')}
         </Text>
+
+        {activeOrder && activeOrderStatus ? (
+          <View style={styles.section}>
+            <Text
+              accessibilityRole="header"
+              color={colors.textStrong}
+              variant="sectionTitle"
+              weight="bold"
+            >
+              {t('support_active_order_title')}
+            </Text>
+            <SupportActiveOrderCard
+              accessibilityLabel={t('support_active_order_accessibility', {
+                status: activeOrderStatus.label,
+                store: activeOrder.storeName,
+              })}
+              actionLabel={t('support_active_order_track')}
+              eyebrow={t('support_active_order_eyebrow')}
+              imageUri={activeOrder.storeImage ?? activeOrder.storeLogo ?? undefined}
+              onPress={() => navigation.navigate('OrderTrackingScreen', { orderId: activeOrder.orderId })}
+              statusLabel={activeOrderStatus.label}
+              statusTone={activeOrderStatus.tone}
+              storeName={activeOrder.storeName}
+            />
+          </View>
+        ) : null}
+
+        <View
+          style={[
+            styles.chatCard,
+            elevation.subtle,
+            {
+              backgroundColor: colors.primarySoft,
+              borderColor: colors.border,
+              borderRadius: shape.radius.hero,
+              padding: spacing.lg,
+            },
+          ]}
+        >
+          <View style={styles.chatCopy}>
+            <Text color={colors.textStrong} variant="cardTitle" weight="bold">
+              {t('support_chat_now_title')}
+            </Text>
+            <Text color={colors.textSubtle} variant="supporting">
+              {t('support_chat_now_description')}
+            </Text>
+          </View>
+          <SupportTopicItem
+            description={t('support_chat_now_action_description')}
+            iconName="chatbubble-ellipses-outline"
+            label={t('support_chat_cta')}
+            onPress={() => navigation.navigate('SupportChat', { agentName: t('support_chat_agent_name') })}
+          />
+        </View>
 
         <View style={styles.section}>
           <Text
@@ -92,19 +156,22 @@ export default function SupportScreen() {
           </Text>
 
           <SupportTopicItem
-            iconName="bag-outline"
-            label={t('support_topic_faq')}
-            onPress={() => navigation.navigate('SupportFaq')}
-          />
-          <SupportTopicItem
             iconName="chatbox-outline"
             label={t('support_topic_conversations')}
+            description={t('support_topic_conversations_description')}
             onPress={() => navigation.navigate('SupportConversations')}
           />
           <SupportTopicItem
             iconName="alert-circle-outline"
             label={t('support_topic_tickets')}
+            description={t('support_topic_tickets_description')}
             onPress={() => navigation.navigate('SupportTickets')}
+          />
+          <SupportTopicItem
+            iconName="help-circle-outline"
+            label={t('support_topic_faq')}
+            description={t('support_topic_faq_description')}
+            onPress={() => navigation.navigate('SupportFaq')}
           />
         </View>
 
@@ -139,8 +206,19 @@ export default function SupportScreen() {
       </ScrollView>
 
       <SupportChatFooter
-        ctaLabel={t('support_chat_cta')}
-        onPress={() => navigation.navigate('SupportChat', { agentName: t('support_chat_agent_name') })}
+        ctaLabel={t('support_report_issue_cta')}
+        iconName="alert-circle-outline"
+        onPress={() => {
+          const selectedOption = issueOptions.find((option) => option.value === 'appointment_support')
+            ?? issueOptions[0];
+
+          if (selectedOption) {
+            navigation.navigate('SupportContactForm', {
+              issueLabel: selectedOption.label,
+              issueValue: selectedOption.value,
+            });
+          }
+        }}
       />
     </View>
   );
@@ -150,14 +228,22 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 16,
     paddingTop: 12,
-    paddingBottom: 24,
+    paddingBottom: 32,
+  },
+  chatCard: {
+    borderWidth: StyleSheet.hairlineWidth,
+    marginBottom: 28,
+  },
+  chatCopy: {
+    gap: 6,
+    marginBottom: 8,
   },
   greeting: {
     marginBottom: 8,
   },
   headline: {
-    marginBottom: 28,
-    maxWidth: 320,
+    marginBottom: 24,
+    maxWidth: 360,
   },
   screen: {
     flex: 1,
@@ -166,8 +252,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   section: {
-    gap: 12,
-    marginBottom: 24,
+    gap: 10,
+    marginBottom: 28,
   },
   sectionTitle: {
     marginBottom: 4,

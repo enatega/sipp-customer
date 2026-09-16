@@ -13,7 +13,7 @@ import {
   useRemoveCartItemMutation,
   useUpdateCartItemQuantityMutation,
 } from '../../hooks/useCartMutations';
-import { useStoreRecommendedProducts } from '../../hooks';
+import { useStoreRecommendedProducts, useStoreView } from '../../hooks';
 
 export default function CartScreen() {
   const { colors } = useTheme();
@@ -29,10 +29,7 @@ export default function CartScreen() {
     error: cartError,
     refetch: refetchCart,
   } = useCart();
-  console.log('cart_Data',JSON.stringify(cart,null,2));
-  console.log('cart_storeId____',cart?.storeId);
-  
-  
+  const { data: store } = useStoreView(cart?.storeId ?? '');
   const { data: recommendations = [] } = useStoreRecommendedProducts(cart?.storeId);
   const { clearCart, isClearing } = useClearCartAction({
     onSuccess: () => {
@@ -141,7 +138,7 @@ export default function CartScreen() {
 
   if (isCartPending && !cart) {
     return (
-      <View style={{ backgroundColor: colors.background, flex: 1 }}>
+      <View style={{ backgroundColor: colors.canvas, flex: 1 }}>
         <CartScreenSkeleton />
       </View>
     );
@@ -149,7 +146,7 @@ export default function CartScreen() {
 
   if (!cart || cartError) {
     return (
-      <View style={{ backgroundColor: colors.background, flex: 1 }}>
+      <View style={{ backgroundColor: colors.canvas, flex: 1 }}>
         <CartScreenErrorState
           onRetry={() => {
             void refetchCart();
@@ -160,7 +157,7 @@ export default function CartScreen() {
   }
 
   return (
-    <View style={{ backgroundColor: colors.background, flex: 1 }}>
+    <View style={{ backgroundColor: colors.canvas, flex: 1 }}>
       <CartScreenContent
         cart={cart}
         isClearCartVisible={isClearCartVisible}
@@ -179,6 +176,7 @@ export default function CartScreen() {
         onRemoveItem={handleRemoveItem}
         onSetItemQuantity={handleSetItemQuantity}
         recommendations={recommendations}
+        store={store}
       />
     </View>
   );

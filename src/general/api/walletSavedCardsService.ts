@@ -27,7 +27,7 @@ export type WalletSetDefaultCardResponse = {
   message: string;
 };
 
-export type WalletTransactionType = 'cashback' | 'booking' | 'refund';
+export type WalletTransactionType = 'cashback' | 'booking' | 'refund' | 'topup';
 
 export type WalletTransaction = {
   id: string;
@@ -35,6 +35,8 @@ export type WalletTransaction = {
   title: string;
   subtitle: string;
   time: string;
+  amount?: number;
+  status?: string;
 };
 
 export type WalletTransactionsResponse = {
@@ -60,20 +62,26 @@ type WalletTransactionApiItem = {
 function normalizeWalletTransactionType(value?: string): WalletTransactionType {
   const normalized = value?.toLowerCase();
   if (normalized === 'refund') return 'refund';
+  if (normalized === 'topup' || normalized === 'top_up' || normalized === 'deposit') return 'topup';
   if (normalized === 'cashback' || normalized === 'loyalty') return 'cashback';
   return 'booking';
 }
 
 function mapWalletTransaction(item: WalletTransactionApiItem, index: number): WalletTransaction {
+  const parsedAmount = typeof item.amount === 'number'
+    ? item.amount
+    : typeof item.amount === 'string' && item.amount.trim().length > 0
+      ? Number(item.amount)
+      : undefined;
+
   return {
     id: item.id ?? `wallet_txn_${index}`,
     type: normalizeWalletTransactionType(item.type),
     title: item.title ?? item.message ?? 'Transaction',
-    subtitle:
-      item.subtitle ??
-      item.description ??
-      `${item.amount ?? ''}${item.status ? ` · ${item.status}` : ''}`,
+    subtitle: item.subtitle ?? item.description ?? '',
     time: item.createdAt ?? item.created_at ?? '',
+    amount: Number.isFinite(parsedAmount) ? parsedAmount : undefined,
+    status: item.status,
   };
 }
 

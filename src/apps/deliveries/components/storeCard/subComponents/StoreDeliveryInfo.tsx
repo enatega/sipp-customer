@@ -7,9 +7,14 @@ import { useTheme } from "../../../../../general/theme/theme";
 import { styles } from "../styles";
 
 interface StoreDeliveryInfoProps {
-  price: number;
-  deliveryTime: number | string;
-  distance: number;
+  price?: number | null;
+  deliveryTime?: number | string | null;
+  distance?: number | null;
+  fallbackLabels?: {
+    price: string;
+    deliveryTime: string;
+    distance: string;
+  };
 }
 
 function formatDeliveryTime(value: number | string) {
@@ -24,41 +29,60 @@ function formatPrice(value: number, currencyLabel: string) {
   return `${currencyLabel} ${value}`;
 }
 
-function toPositiveNumber(value: number | string) {
+function toPositiveNumber(value: number | string | null | undefined) {
   if (typeof value === "number") {
     return Number.isFinite(value) && value > 0 ? value : null;
+  }
+
+  if (typeof value !== "string") {
+    return null;
   }
 
   const parsedValue = Number.parseFloat(value);
   return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : null;
 }
 
-export default function StoreDeliveryInfo({ price, deliveryTime, distance }: StoreDeliveryInfoProps) {
+export default function StoreDeliveryInfo({
+  price,
+  deliveryTime,
+  distance,
+  fallbackLabels,
+}: StoreDeliveryInfoProps) {
   const { colors, spacing } = useTheme();
   const currencyLabel = useDeliveriesCurrencyLabel();
   const deliveryTimeValue = toPositiveNumber(deliveryTime);
   const distanceValue = toPositiveNumber(distance);
   const priceValue = toPositiveNumber(price);
-  const infoItems = [
+  const priceLabel =
     priceValue != null
+      ? formatPrice(priceValue, currencyLabel)
+      : fallbackLabels?.price;
+  const deliveryTimeLabel =
+    deliveryTimeValue != null && deliveryTime != null
+      ? formatDeliveryTime(deliveryTime)
+      : fallbackLabels?.deliveryTime;
+  const distanceLabel =
+    distanceValue != null ? `${distanceValue} km` : fallbackLabels?.distance;
+  const infoItems = [
+    priceLabel
       ? {
           iconName: "bicycle",
           iconType: "Ionicons" as const,
-          label: formatPrice(priceValue, currencyLabel),
+          label: priceLabel,
         }
       : null,
-    deliveryTimeValue != null
+    deliveryTimeLabel
       ? {
           iconName: "time-outline",
           iconType: "Ionicons" as const,
-          label: formatDeliveryTime(deliveryTime),
+          label: deliveryTimeLabel,
         }
       : null,
-    distanceValue != null
+    distanceLabel
       ? {
           iconName: "location-outline",
           iconType: "Ionicons" as const,
-          label: `${distanceValue} km`,
+          label: distanceLabel,
         }
       : null,
   ].filter((item): item is NonNullable<typeof item> => item != null);
@@ -80,6 +104,7 @@ export default function StoreDeliveryInfo({ price, deliveryTime, distance }: Sto
             color={colors.textSubtle}
           />
           <Text
+            numberOfLines={1}
             variant="caption"
             weight="medium"
             style={[styles.infoText, { color: colors.textSubtle }]}

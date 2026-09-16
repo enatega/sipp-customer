@@ -30,14 +30,7 @@ export default function CheckoutSummaryDetails({
   );
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          borderTopColor: colors.border,
-        },
-      ]}
-    >
+    <View style={styles.container}>
       <View style={styles.items}>
         {lineItems.map((item) => (
           <CheckoutSummaryLine
@@ -90,9 +83,7 @@ export default function CheckoutSummaryDetails({
 
 const styles = StyleSheet.create({
   container: {
-    borderTopWidth: 1,
     gap: 14,
-    paddingTop: 14,
   },
   items: {
     gap: 10,

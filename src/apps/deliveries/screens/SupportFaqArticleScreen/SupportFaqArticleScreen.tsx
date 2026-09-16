@@ -4,7 +4,7 @@ import { useRoute } from '@react-navigation/native';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import SupportChatFooter from '../../../../general/components/support/SupportChatFooter';
-import ScreenHeader from '../../../../general/components/ScreenHeader';
+import SupportHeader from '../../../../general/components/support/SupportHeader';
 import Text from '../../../../general/components/Text';
 import { useTheme } from '../../../../general/theme/theme';
 import SupportFaqHelpfulActions from '../../components/support/SupportFaqHelpfulActions';
@@ -12,7 +12,7 @@ import { SupportFaqArticleRouteProp, type SupportFaqNavigationProp } from '../..
 import { getSupportFaqArticleById } from '../../utils/supportFaqArticles';
 
 export default function SupportFaqArticleScreen() {
-  const { colors, typography } = useTheme();
+  const { colors, shape, spacing, typography } = useTheme();
   const { t } = useTranslation('deliveries');
   const navigation = useNavigation<SupportFaqNavigationProp>();
   const route = useRoute<SupportFaqArticleRouteProp>();
@@ -20,7 +20,11 @@ export default function SupportFaqArticleScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <ScreenHeader title="" />
+      <SupportHeader
+        backAccessibilityLabel={t('support_back_action')}
+        rightAccessibilityLabel={t('support_header_action')}
+        title={t('support_faq_header_title')}
+      />
 
       <ScrollView
         style={styles.scroll}
@@ -35,7 +39,17 @@ export default function SupportFaqArticleScreen() {
           {t(article.titleKey)}
         </Text>
 
-        <View style={styles.body}>
+        <View
+          style={[
+            styles.body,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              borderRadius: shape.radius.hero,
+              padding: spacing.xl,
+            },
+          ]}
+        >
           {article.bodyKeys.map((bodyKey) => (
             <Text
               key={bodyKey}
@@ -60,6 +74,7 @@ export default function SupportFaqArticleScreen() {
 
 const styles = StyleSheet.create({
   body: {
+    borderWidth: StyleSheet.hairlineWidth,
     gap: 20,
   },
   content: {

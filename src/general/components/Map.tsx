@@ -22,6 +22,7 @@ export type MapMarker = {
   title?: string;
   description?: string;
   anchor?: MapMarkerProps['anchor'];
+  centerOffset?: MapMarkerProps['centerOffset'];
   zIndex?: number;
   rotation?: number;
   flat?: MapMarkerProps['flat'];
@@ -60,28 +61,41 @@ function MapMarkerItem({ marker }: { marker: MapMarker }) {
   const coordinate = isActive ? marker.coordinate : HIDDEN_COORDINATE;
   const opacity = isActive ? marker.opacity ?? 1 : 0;
   const tappable = isActive ? marker.tappable : false;
-  const tracksViewChanges = marker.tracksViewChanges ?? Boolean(marker.render);
+  // Custom marker views are snapshots by default. Continuously tracking them is
+  // expensive on both platforms and has caused unstable marker remounts on iOS.
+  const tracksViewChanges = marker.tracksViewChanges ?? false;
 
-  return (
-    <Marker
-      coordinate={coordinate}
-      opacity={opacity}
-      title={marker.title}
-      description={marker.description}
-      anchor={marker.anchor}
-      zIndex={marker.zIndex}
-      rotation={marker.rotation}
-      flat={marker.flat}
-      draggable={marker.draggable}
-      tappable={tappable}
-      onPress={marker.onPress}
-      tracksViewChanges={tracksViewChanges}
-      image={marker.render ? undefined : marker.image}
-      icon={marker.render ? undefined : marker.icon}
-    >
-      {marker.render}
-    </Marker>
-  );
+  const markerProps: MapMarkerProps = {
+    identifier: marker.id,
+    coordinate,
+    opacity,
+    title: marker.title,
+    description: marker.description,
+    anchor: marker.anchor,
+    centerOffset: marker.centerOffset,
+    zIndex: marker.zIndex,
+    rotation: marker.rotation,
+    flat: marker.flat,
+    draggable: marker.draggable,
+    tappable,
+    onPress: marker.onPress,
+    tracksViewChanges,
+  };
+
+  if (marker.render !== undefined && marker.render !== null) {
+    return <Marker {...markerProps}>{marker.render}</Marker>;
+  }
+
+  return <Marker {...markerProps} image={marker.image} icon={marker.icon} />;
+}
+
+function areMarkerPointsEqual(
+  a: MapMarkerProps['anchor'] | MapMarkerProps['centerOffset'],
+  b: MapMarkerProps['anchor'] | MapMarkerProps['centerOffset'],
+) {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return a.x === b.x && a.y === b.y;
 }
 
 const MemoizedMarker = memo(MapMarkerItem, (prev, next) => {
@@ -95,7 +109,8 @@ const MemoizedMarker = memo(MapMarkerItem, (prev, next) => {
   if (a.coordinate.longitude !== b.coordinate.longitude) return false;
   if (a.title !== b.title) return false;
   if (a.description !== b.description) return false;
-  if (a.anchor !== b.anchor) return false;
+  if (!areMarkerPointsEqual(a.anchor, b.anchor)) return false;
+  if (!areMarkerPointsEqual(a.centerOffset, b.centerOffset)) return false;
   if (a.zIndex !== b.zIndex) return false;
   if (a.rotation !== b.rotation) return false;
   if (a.flat !== b.flat) return false;

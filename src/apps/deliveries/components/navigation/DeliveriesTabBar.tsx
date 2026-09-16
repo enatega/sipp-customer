@@ -47,9 +47,14 @@ function DeliveriesTabBar({ descriptors, insets, navigation, state }: BottomTabB
     const descriptor = descriptors[route.key];
     const options = descriptor.options;
     const isFocused = state.index === index;
-    const color = isFocused
-      ? options.tabBarActiveTintColor ?? colors.primary
-      : options.tabBarInactiveTintColor ?? colors.iconMuted;
+    const usesGlassContrastTreatment = Platform.OS === 'ios';
+    const color = usesGlassContrastTreatment
+      ? isFocused
+        ? colors.primary
+        : colors.glassControlForeground
+      : isFocused
+        ? options.tabBarActiveTintColor ?? colors.primary
+        : options.tabBarInactiveTintColor ?? colors.iconMuted;
     const label = typeof options.tabBarLabel === 'string'
       ? options.tabBarLabel
       : options.title ?? route.name;
@@ -85,7 +90,6 @@ function DeliveriesTabBar({ descriptors, insets, navigation, state }: BottomTabB
         style={[
           styles.tab,
           {
-            borderRadius: shape.radius.control,
             gap: spacing.xxs,
           },
         ]}
@@ -93,25 +97,26 @@ function DeliveriesTabBar({ descriptors, insets, navigation, state }: BottomTabB
       >
         <View style={styles.iconWrap}>
           {options.tabBarIcon?.({ color, focused: isFocused, size: 26 })}
-          {isFocused ? (
-            <View
-              pointerEvents="none"
-              style={[
-                styles.activeDot,
-                { backgroundColor: colors.primary, borderRadius: shape.radius.pill },
-              ]}
-            />
-          ) : null}
         </View>
         <Text
           allowFontScaling={false}
           color={color}
           numberOfLines={1}
           variant="caption"
-          weight={isFocused ? 'semiBold' : 'regular'}
+          weight={isFocused ? 'bold' : 'semiBold'}
         >
           {label}
         </Text>
+        <View
+          pointerEvents="none"
+          style={[
+            styles.activeIndicator,
+            {
+              backgroundColor: isFocused ? colors.primary : 'transparent',
+              borderRadius: shape.radius.pill,
+            },
+          ]}
+        />
       </PressableScale>
     );
   };
@@ -147,7 +152,7 @@ function DeliveriesTabBar({ descriptors, insets, navigation, state }: BottomTabB
       >
         <View pointerEvents="none" style={styles.glassLayer}>
           <PlatformGlassSurface
-            effectStyle="clear"
+            effectStyle="regular"
             style={[
               styles.glass,
               {
@@ -158,7 +163,7 @@ function DeliveriesTabBar({ descriptors, insets, navigation, state }: BottomTabB
           />
         </View>
 
-        <View style={[styles.row, { paddingHorizontal: spacing.sm }]}>
+        <View style={[styles.row, { paddingHorizontal: spacing.sm }]}> 
           {renderTab(0)}
           {renderTab(1)}
           <View pointerEvents="box-none" style={styles.cartSlot}>
@@ -173,11 +178,9 @@ function DeliveriesTabBar({ descriptors, insets, navigation, state }: BottomTabB
 }
 
 const styles = StyleSheet.create({
-  activeDot: {
-    bottom: -1,
+  activeIndicator: {
     height: 3,
-    position: 'absolute',
-    width: 3,
+    width: 20,
   },
   cartButton: {
     position: 'absolute',

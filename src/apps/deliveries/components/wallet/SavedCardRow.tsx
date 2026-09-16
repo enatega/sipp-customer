@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import Text from '../../../../general/components/Text';
 import { useTheme } from '../../../../general/theme/theme';
 
@@ -22,6 +23,7 @@ export default function SavedCardRow({
   onPress,
 }: Props) {
   const { colors } = useTheme();
+  const { t } = useTranslation('deliveries');
   const normalizedBrand = brand.toLowerCase();
   const brandLabel = normalizedBrand === 'visa'
     ? 'VISA'
@@ -32,11 +34,12 @@ export default function SavedCardRow({
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.container, { opacity: pressed ? 0.7 : 1 }]}
+      disabled={!onPress}
+      style={({ pressed }) => [styles.container, { borderBottomColor: colors.divider, opacity: pressed ? 0.72 : 1 }]}
       accessibilityRole="button"
       accessibilityLabel={`${brand} card ${holderName}`}
     >
-      <View style={[styles.brandBadge, { backgroundColor: colors.backgroundTertiary }]}>
+      <View style={[styles.brandBadge, { backgroundColor: colors.surfaceSunken }]}> 
         <View style={[styles.brandChip, { borderColor: colors.border, backgroundColor: colors.surface }]}>
           <Text weight="bold" color={colors.primary} style={styles.brandText}>
             {brandLabel}
@@ -61,10 +64,11 @@ export default function SavedCardRow({
       {isDefault ? (
         <View style={[styles.defaultBadge, { backgroundColor: colors.successSoft }]}>
           <Text weight="semiBold" color={colors.success} style={styles.defaultText}>
-            DEFAULT
+            {t('wallet_default_card')}
           </Text>
         </View>
       ) : null}
+      {!isDefault && onPress ? <Ionicons name="chevron-forward" size={18} color={colors.iconMuted} /> : null}
     </Pressable>
   );
 }
@@ -76,19 +80,20 @@ const styles = StyleSheet.create({
     gap: 16,
     paddingVertical: 12,
     paddingHorizontal: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   copy: {
     flex: 1,
     gap: 2,
   },
   defaultBadge: {
-    borderRadius: 6,
+    borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
   defaultText: {
-    fontSize: 10,
-    lineHeight: 14,
+    fontSize: 11,
+    lineHeight: 15,
   },
   brandBadge: {
     width: 56,

@@ -4,6 +4,7 @@ import { useNavigation, type NavigationProp } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { CardField, useConfirmSetupIntent } from '@stripe/stripe-react-native';
+import { Ionicons } from '@expo/vector-icons';
 import ScreenHeader from '../../../../../general/components/ScreenHeader';
 import Text from '../../../../../general/components/Text';
 import Button from '../../../../../general/components/Button';
@@ -93,11 +94,21 @@ export default function AddCardScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
+        <View style={styles.intro}>
+          <View style={[styles.secureIcon, { backgroundColor: colors.successSoft }]}> 
+            <Ionicons name="shield-checkmark-outline" size={24} color={colors.successText} />
+          </View>
+          <View style={styles.introCopy}>
+            <Text color={colors.text} weight="semiBold" style={styles.introTitle}>{t('wallet_card_secure_title')}</Text>
+            <Text color={colors.mutedText} style={styles.introBody}>{t('wallet_card_secure_description')}</Text>
+          </View>
+        </View>
+        <View style={[styles.formCard, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
         <View style={styles.fieldGroup}>
           <Text weight="medium" color={colors.text} style={styles.label}>
             {t('wallet_name_on_card')}
           </Text>
-          <View style={[styles.inputRow, { borderColor: colors.border }]}>
+          <View style={[styles.inputRow, { borderColor: colors.border, backgroundColor: colors.surfaceSunken }]}> 
             <TextInput
               value={holderName}
               onChangeText={setHolderName}
@@ -114,15 +125,15 @@ export default function AddCardScreen() {
             {t('wallet_card_number_label')}
           </Text>
           {hasStripeKey ? (
-            <View style={[styles.cardFieldWrap, { borderColor: colors.border, backgroundColor: colors.background }]}>
+            <View style={[styles.cardFieldWrap, { borderColor: colors.border, backgroundColor: colors.surfaceSunken }]}> 
               <CardField
                 postalCodeEnabled={false}
                 placeholders={{
                   number: '4242 4242 4242 4242',
                 }}
                 cardStyle={{
-                  backgroundColor: colors.background,
-                  borderColor: colors.background,
+                  backgroundColor: colors.surfaceSunken,
+                  borderColor: colors.surfaceSunken,
                   borderWidth: 0,
                   textColor: colors.text,
                   placeholderColor: colors.mutedText,
@@ -134,18 +145,20 @@ export default function AddCardScreen() {
               />
             </View>
           ) : (
-            <View style={[styles.inputRow, { borderColor: colors.border }]}>
+            <View style={[styles.inputRow, { borderColor: colors.border, backgroundColor: colors.surfaceSunken }]}> 
               <Text color={colors.mutedText}>{t('wallet_stripe_publishable_key_missing')}</Text>
             </View>
           )}
         </View>
+        </View>
 
-        <Text color={colors.mutedText} style={[styles.secureText, { fontSize: typography.size.sm2 }]}>
-          {t('wallet_pay_securely')}
-        </Text>
+        <View style={styles.stripeRow}>
+          <Ionicons name="lock-closed-outline" size={15} color={colors.mutedText} />
+          <Text color={colors.mutedText} style={[styles.secureText, { fontSize: typography.size.sm2 }]}>{t('wallet_pay_securely')} Stripe</Text>
+        </View>
       </ScrollView>
 
-      <View style={[styles.footer, { backgroundColor: colors.background }]}>
+      <View style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.divider }]}> 
         <Button
           label={t('wallet_save_card')}
           onPress={() => {
@@ -163,12 +176,13 @@ export default function AddCardScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scroll: { flex: 1 },
-  scrollContent: { padding: 16, gap: 20, paddingBottom: 140 },
+  scrollContent: { padding: 16, gap: 18, paddingBottom: 140 },
+  formCard: { borderRadius: 16, borderWidth: 1, gap: 20, padding: 16 },
   fieldGroup: { gap: 6 },
   label: { fontSize: 14, lineHeight: 22 },
   inputRow: {
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: 12,
     height: 48,
     paddingHorizontal: 14,
     justifyContent: 'center',
@@ -176,7 +190,7 @@ const styles = StyleSheet.create({
   input: { flex: 1, fontSize: 16, lineHeight: 24 },
   cardFieldWrap: {
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: 12,
     height: 54,
     justifyContent: 'center',
     overflow: 'hidden',
@@ -189,10 +203,17 @@ const styles = StyleSheet.create({
   secureText: {
     lineHeight: 22,
   },
+  intro: { alignItems: 'center', flexDirection: 'row', gap: 12 },
+  introBody: { fontSize: 13, lineHeight: 19 },
+  introCopy: { flex: 1, gap: 2 },
+  introTitle: { fontSize: 16, lineHeight: 22 },
+  secureIcon: { alignItems: 'center', borderRadius: 18, height: 56, justifyContent: 'center', width: 56 },
+  stripeRow: { alignItems: 'center', flexDirection: 'row', gap: 7, justifyContent: 'center' },
   footer: {
+    borderTopWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 34,
   },
-  saveButton: { borderRadius: 8 },
+  saveButton: { borderRadius: 12 },
 });

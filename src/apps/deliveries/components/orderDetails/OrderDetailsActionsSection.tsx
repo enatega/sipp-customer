@@ -2,8 +2,7 @@ import React from "react";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
 import { StyleSheet, View } from "react-native";
-
-
+import { Ionicons } from "@expo/vector-icons";
 import Button from "../../../../general/components/Button";
 import { useTheme } from "../../../../general/theme/theme";
 import type { DeliveriesStackParamList } from "../../navigation/types";
@@ -34,7 +33,7 @@ export default function OrderDetailsActionsSection({
   shouldShowRateOrder,
   shouldShowTrackProgress,
   shouldShowOrderAgain,
-  onIncreaseTip,
+  onIncreaseTip: _onIncreaseTip,
   isOrderAgainLoading = false,
   isCancelOrderLoading = false,
   onCancelOrder,
@@ -44,16 +43,21 @@ export default function OrderDetailsActionsSection({
   storeName,
 }: Props) {
   const { t } = useTranslation("deliveries");
-  const { colors, typography } = useTheme();
+  const { colors, shape, typography } = useTheme();
   const secondaryButtonStyle = {
     backgroundColor: colors.surface,
-    borderColor: colors.primary,
+    borderColor: colors.border,
+    borderRadius: shape.radius.surface,
+    minHeight: 56,
   } as const;
   const labelStyle = {
     fontSize: typography.size.md2,
     lineHeight: typography.lineHeight.md2,
   } as const;
-  const shouldUseTwoColumnLayout = shouldShowTrackProgress && shouldShowOrderAgain;
+  const primaryButtonStyle = {
+    borderRadius: shape.radius.surface,
+    minHeight: 56,
+  } as const;
 
   return (
     <View style={styles.container}>
@@ -62,18 +66,10 @@ export default function OrderDetailsActionsSection({
           isLoading={isCancelOrderLoading}
           label={t('order_cancel_confirm')}
           onPress={onCancelOrder}
-          style={secondaryButtonStyle}
           labelStyle={labelStyle}
-          variant="secondary"
+          variant="danger"
         />
       ) : null}
-      {/* {onIncreaseTip ? (
-        <Button
-          label={t("order_details_increase_tip")}
-          onPress={onIncreaseTip}
-          style={secondaryButtonStyle}
-        />
-      ) : null} */}
 
       {shouldShowRateOrder ? (
         <Button
@@ -93,31 +89,36 @@ export default function OrderDetailsActionsSection({
           variant="secondary"
         />
       ) : null}
-      <View style={shouldUseTwoColumnLayout ? styles.row : styles.stack}>
-        {shouldShowOrderAgain ? (
-          <Button
-            isLoading={isOrderAgainLoading}
-            label={t("order_details_order_again")}
-            onPress={onOrderAgain}
-            style={[
-              shouldUseTwoColumnLayout ? styles.rowButton : styles.primaryButton,
-              secondaryButtonStyle,
-            ]}
-            labelStyle={labelStyle}
-            variant="secondary"
-          />
-        ) : null}
+      <View style={styles.stack}>
         {shouldShowTrackProgress ? (
           <Button
+            icon={<Ionicons color={colors.onPrimary} name="navigate-circle-outline" size={21} />}
             label={t("order_details_track_progress")}
             onPress={() =>
               navigation.navigate("OrderTrackingScreen", { orderId })
             }
-            style={shouldUseTwoColumnLayout ? styles.rowButton : undefined}
+            style={primaryButtonStyle}
             labelStyle={labelStyle}
           />
         ) : null}
+        {shouldShowOrderAgain ? (
+          <Button
+            icon={<Ionicons color={colors.primary} name="refresh-outline" size={21} />}
+            isLoading={isOrderAgainLoading}
+            label={t("order_details_order_again")}
+            onPress={onOrderAgain}
+            style={secondaryButtonStyle}
+            labelStyle={labelStyle}
+            variant="secondary"
+          />
+        ) : null}
       </View>
+      <Button
+        icon={<Ionicons color={colors.primary} name="headset-outline" size={19} />}
+        label={t("order_details_get_help")}
+        onPress={() => navigation.navigate("Support")}
+        variant="ghost"
+      />
     </View>
   );
 }
@@ -127,16 +128,6 @@ const styles = StyleSheet.create({
     gap: 14,
     paddingBottom: 24,
     paddingTop: 8,
-  },
-  primaryButton: {
-    marginTop: 0,
-  },
-  row: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  rowButton: {
-    flex: 1,
   },
   stack: {
     gap: 12,

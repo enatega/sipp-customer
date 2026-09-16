@@ -1,10 +1,11 @@
 import React, { memo } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Text from '../../components/Text';
 import { useTheme } from '../../theme/theme';
 import type { AddressType } from '../../api/addressService';
 import AddressTypeDetailField from './AddressTypeDetailField';
+import PressableScale from '../../components/PressableScale';
 
 export type AddressDetailValues = {
   apartmentFloorTower: string;
@@ -203,15 +204,12 @@ function AddressTypeDetailsCard({
         ))}
       </View>
 
-      <Pressable
+      <PressableScale
         accessibilityLabel={labels.setAsDefaultAddress}
         accessibilityRole="checkbox"
         accessibilityState={{ checked: setAsDefault }}
         onPress={onToggleDefault}
-        style={({ pressed }) => [
-          styles.defaultRow,
-          { opacity: pressed ? 0.8 : 1 },
-        ]}
+        style={styles.defaultRow}
       >
         <View
           style={[
@@ -229,7 +227,7 @@ function AddressTypeDetailsCard({
         <Text weight="semiBold" style={styles.defaultLabel}>
           {labels.setAsDefaultAddress}
         </Text>
-      </Pressable>
+      </PressableScale>
     </View>
   );
 }
@@ -261,6 +259,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: 12,
+    borderRadius: 14,
+    minHeight: 48,
+    overflow: 'hidden',
   },
   fields: {
     gap: 16,

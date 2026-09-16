@@ -128,6 +128,9 @@ export default function SwipeableBottomSheet({
       : initialHeight,
   );
   const isDragging = useRef(false);
+  const isClosing = useRef(false);
+  const hasNotifiedCollapse = useRef(false);
+  const activeAnimation = useRef<Animated.CompositeAnimation | null>(null);
   const currentState = useRef<BottomSheetState>(resolvedInitialState);
   const hasPresented = useRef(!shouldAnimateOnMount);
 
@@ -151,14 +154,22 @@ export default function SwipeableBottomSheet({
         return;
       }
 
-      Animated.timing(animatedHeight, {
+      const presentationAnimation = Animated.timing(animatedHeight, {
         toValue: target,
         duration: motion.duration.standard,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: false,
-      }).start(() => {
+      });
+
+      activeAnimation.current = presentationAnimation;
+      presentationAnimation.start(({ finished }) => {
+        if (!finished) {
+          return;
+        }
+
         startHeight.current = target;
         hasPresented.current = true;
+        activeAnimation.current = null;
         onStateChange?.(currentState.current);
       });
       return;
@@ -190,28 +201,63 @@ export default function SwipeableBottomSheet({
     };
   }, [animatedHeight, onHeightChange]);
 
+  useEffect(() => () => {
+    activeAnimation.current?.stop();
+  }, []);
+
   const animateTo = useCallback((state: BottomSheetState) => {
+    if (state === 'collapsed' && isClosing.current) {
+      return;
+    }
+
     const targetHeight = getHeightForState(state);
     currentState.current = state;
+    isClosing.current = state === 'collapsed';
+
+    if (state !== 'collapsed') {
+      hasNotifiedCollapse.current = false;
+    }
+
     onStateChange?.(state);
 
     if (isReducedMotionEnabled) {
       animatedHeight.setValue(targetHeight);
       startHeight.current = targetHeight;
-      if (state === 'collapsed') {
+      if (state === 'collapsed' && !hasNotifiedCollapse.current) {
+        hasNotifiedCollapse.current = true;
         onCollapsed?.();
       }
       return;
     }
 
-    Animated.spring(animatedHeight, {
-      toValue: targetHeight,
-      useNativeDriver: false,
-      tension: motion.spring.responsive.stiffness,
-      friction: motion.spring.responsive.damping,
-    }).start(() => {
+    activeAnimation.current?.stop();
+
+    const transition = state === 'collapsed'
+      ? Animated.timing(animatedHeight, {
+          toValue: targetHeight,
+          duration: motion.duration.quick,
+          easing: Easing.in(Easing.cubic),
+          useNativeDriver: false,
+        })
+      : Animated.spring(animatedHeight, {
+          toValue: targetHeight,
+          useNativeDriver: false,
+          tension: motion.spring.responsive.stiffness,
+          friction: motion.spring.responsive.damping,
+          overshootClamping: true,
+        });
+
+    activeAnimation.current = transition;
+    transition.start(({ finished }) => {
+      if (!finished) {
+        return;
+      }
+
       startHeight.current = targetHeight;
-      if (state === 'collapsed') {
+      activeAnimation.current = null;
+
+      if (state === 'collapsed' && !hasNotifiedCollapse.current) {
+        hasNotifiedCollapse.current = true;
         onCollapsed?.();
       }
     });
@@ -219,6 +265,7 @@ export default function SwipeableBottomSheet({
     animatedHeight,
     getHeightForState,
     isReducedMotionEnabled,
+    motion.duration.quick,
     motion.spring.responsive.damping,
     motion.spring.responsive.stiffness,
     onCollapsed,
@@ -258,6 +305,9 @@ export default function SwipeableBottomSheet({
         onPanResponderTerminationRequest: () => false,
         onPanResponderGrant: () => {
           isDragging.current = true;
+          isClosing.current = false;
+          hasNotifiedCollapse.current = false;
+          activeAnimation.current?.stop();
           animatedHeight.stopAnimation((value) => {
             startHeight.current = value;
           });

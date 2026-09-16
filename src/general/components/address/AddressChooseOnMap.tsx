@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import * as Location from 'expo-location';
 import MapView, { LatLng, Region } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,6 +11,7 @@ import Icon from '../../components/Icon';
 import Text from '../../components/Text';
 import useCurrentLocation from '../../hooks/useCurrentLocation';
 import useDebouncedValue from '../../hooks/useDebouncedValue';
+import PressableScale from '../../components/PressableScale';
 
 export type MapAddressResult = {
   description: string;
@@ -88,7 +89,7 @@ function AddressChooseOnMap({
   locatingLabel,
   fallbackLabel,
 }: Props) {
-  const { colors } = useTheme();
+  const { colors, elevation } = useTheme();
   const insets = useSafeAreaInsets();
   const mapRef = useRef<MapView | null>(null);
   const latestReqId = useRef(0);
@@ -211,21 +212,22 @@ function AddressChooseOnMap({
 
       <View pointerEvents="box-none" style={styles.overlay}>
         <View style={[styles.header, { top: insets.top + 8 }]}>
-          <Pressable
+          <PressableScale
             onPress={onBackPress}
             accessibilityRole="button"
             accessibilityLabel="Back"
             style={[
               styles.headerButton,
-              { backgroundColor: colors.surface, borderColor: colors.border, shadowColor: colors.shadowColor },
+              elevation.floating,
+              { backgroundColor: colors.surface, borderColor: colors.glassBorder },
             ]}
           >
             <Icon type="Ionicons" name="arrow-back" size={22} color={colors.text} />
-          </Pressable>
+          </PressableScale>
         </View>
 
         <View pointerEvents="none" style={styles.centerMarkerWrap}>
-          <View style={[styles.addressChip, { backgroundColor: colors.surface, shadowColor: colors.shadowColor }]}>
+          <View style={[styles.addressChip, elevation.floating, { backgroundColor: colors.surface }]}> 
             <Text variant="caption" weight="semiBold" numberOfLines={1} style={styles.chipTitle}>
               {chipTitle}
             </Text>
@@ -236,15 +238,25 @@ function AddressChooseOnMap({
             ) : null}
           </View>
           <View style={styles.markerStack}>
-            <View style={[styles.markerHalo, { backgroundColor: 'rgba(35, 70, 232, 0.16)' }]} />
-            <View style={[styles.markerDotOuter, { backgroundColor: '#7DD3FC' }]}>
-              <View style={[styles.markerDotInner, { backgroundColor: colors.primary }]} />
+            <View style={[styles.markerHalo, { backgroundColor: colors.primarySoft }]} />
+            <View style={[styles.markerDotOuter, { backgroundColor: colors.blue100 }]}> 
+              <View style={[styles.markerDotInner, { backgroundColor: colors.primary, borderColor: colors.surface }]} />
             </View>
-            <View style={[styles.markerStem, { backgroundColor: '#7DD3FC' }]} />
+            <View style={[styles.markerStem, { backgroundColor: colors.blue100 }]} />
           </View>
         </View>
 
-        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) + 18 }]}>
+        <View
+          style={[
+            styles.footer,
+            elevation.floating,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.divider,
+              paddingBottom: Math.max(insets.bottom, 16),
+            },
+          ]}
+        >
           <MapCurrentLocationButton
             onPress={handleCurrentLocation}
             isLoading={isLoadingCurrentLocation}
@@ -267,14 +279,12 @@ export default memo(AddressChooseOnMap);
 
 const styles = StyleSheet.create({
   addressChip: {
-    borderRadius: 8,
-    elevation: 4,
+    borderRadius: 16,
     maxWidth: 300,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.16,
-    shadowRadius: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
   centerMarkerWrap: {
     alignItems: 'center',
@@ -286,13 +296,9 @@ const styles = StyleSheet.create({
   chipSubtitle: { marginTop: 2, textAlign: 'center' },
   chipTitle: { textAlign: 'center' },
   confirmBtn: {
-    borderRadius: 6,
+    borderRadius: 14,
     borderWidth: 0,
-    elevation: 4,
-    minHeight: 44,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.14,
-    shadowRadius: 6,
+    minHeight: 50,
   },
   container: { flex: 1 },
   currentLocationBtn: {
@@ -304,22 +310,27 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
     width: 40,
   },
-  footer: { gap: 12, paddingHorizontal: 16 },
+  footer: {
+    borderRadius: 24,
+    borderWidth: 1,
+    bottom: 12,
+    gap: 12,
+    left: 12,
+    paddingHorizontal: 14,
+    paddingTop: 14,
+    position: 'absolute',
+    right: 12,
+  },
   header: { left: 16, position: 'absolute', zIndex: 2 },
   headerButton: {
     alignItems: 'center',
     borderRadius: 20,
     borderWidth: 1,
-    elevation: 3,
     height: 40,
     justifyContent: 'center',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
     width: 40,
   },
   markerDotInner: {
-    borderColor: '#FFFFFF',
     borderRadius: 9,
     borderWidth: 2,
     height: 18,

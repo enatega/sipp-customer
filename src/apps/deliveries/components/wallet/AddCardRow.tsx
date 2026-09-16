@@ -15,16 +15,17 @@ export default function AddCardRow({ label, onPress }: Props) {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.container, { opacity: pressed ? 0.7 : 1 }]}
+      style={({ pressed }) => [styles.container, { opacity: pressed ? 0.72 : 1 }]}
       accessibilityRole="button"
       accessibilityLabel={label}
     >
-      <View style={[styles.iconWrap, { backgroundColor: colors.backgroundTertiary }]}>
-        <Ionicons name="card-outline" size={28} color={colors.text} />
+      <View style={[styles.iconWrap, { backgroundColor: colors.primarySoft }]}> 
+        <Ionicons name="add" size={22} color={colors.primary} />
       </View>
       <Text weight="medium" color={colors.text} style={styles.label}>
         {label}
       </Text>
+      <Ionicons name="chevron-forward" size={18} color={colors.iconMuted} />
     </Pressable>
   );
 }
@@ -38,9 +39,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   iconWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },

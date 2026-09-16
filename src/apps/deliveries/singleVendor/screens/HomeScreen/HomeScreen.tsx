@@ -1,6 +1,10 @@
 import React, { useCallback } from 'react';
 import { StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import {
+  type CompositeNavigationProp,
+  useNavigation,
+} from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import AddressSelectionBottomSheet from '../../../../../general/components/address/AddressSelectionBottomSheet';
@@ -19,12 +23,20 @@ import SingleVendorSpecialOffersBanner from '../../components/HomeScreen/SingleV
 import HomeEntrance from '../../../components/home/HomeEntrance';
 import DeliveryHomeScaffold from '../../../components/home/DeliveryHomeScaffold';
 import useDeliveriesTabSheetOffset from '../../../hooks/useDeliveriesTabSheetOffset';
+import type { SingleVendorBottomTabParamList } from '../../navigation/types';
+
+type NavProp = CompositeNavigationProp<
+  BottomTabNavigationProp<
+    SingleVendorBottomTabParamList,
+    'SingleVendorTabHome'
+  >,
+  NativeStackNavigationProp<DeliveriesStackParamList>
+>;
 
 export default function HomeScreen() {
   const { spacing } = useTheme();
   const { t } = useTranslation('deliveries');
-  const navigation =
-    useNavigation<NativeStackNavigationProp<DeliveriesStackParamList>>();
+  const navigation = useNavigation<NavProp>();
   const addressSheetBottomOffset = useDeliveriesTabSheetOffset();
   const {
     addresses,
@@ -86,7 +98,9 @@ export default function HomeScreen() {
   }, [navigation]);
 
   const handleSearchPress = useCallback(() => {
-    navigation.navigate('SingleVendorTabSearch' as never);
+    navigation.navigate('SingleVendorTabSearch', {
+      autoFocusRequestId: Date.now(),
+    });
   }, [navigation]);
 
   return (

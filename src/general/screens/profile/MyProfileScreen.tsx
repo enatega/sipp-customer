@@ -203,6 +203,11 @@ export default function MyProfileScreen({ profilePrefix }: Props) {
                 <Text weight="bold" style={styles.sectionTitle}>
                   {t('my_profile_my_addresses')}
                 </Text>
+                <View style={[styles.countBadge, { backgroundColor: colors.primarySoft }]}> 
+                  <Text weight="bold" color={colors.primary} style={styles.countText}>
+                    {addresses.length}
+                  </Text>
+                </View>
               </View>
 
               <SavedAddressesList
@@ -246,12 +251,26 @@ const styles = StyleSheet.create({
   },
   content: {
     gap: 24,
-    paddingBottom: 28,
+    paddingBottom: 40,
+    paddingTop: 8,
+  },
+  countBadge: {
+    alignItems: 'center',
+    borderRadius: 13,
+    height: 26,
+    justifyContent: 'center',
+    minWidth: 26,
+    paddingHorizontal: 8,
+  },
+  countText: {
+    fontSize: 12,
+    lineHeight: 16,
   },
   screen: {
     flex: 1,
   },
   sectionHeader: {
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
   },

@@ -1,6 +1,7 @@
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Text from '../Text';
+import PressableScale from '../PressableScale';
 import { useTheme } from '../../theme/theme';
 
 type Props = {
@@ -27,11 +28,15 @@ export default function MyProfileInfoRow({
           {label}
         </Text>
         {isEditable && editLabel ? (
-          <Pressable onPress={onEdit} accessibilityRole="button">
-            <Text weight="medium" color={colors.text} style={styles.editText}>
+          <PressableScale
+            onPress={onEdit}
+            accessibilityRole="button"
+            style={[styles.editButton, { backgroundColor: colors.primarySoft }]}
+          >
+            <Text weight="bold" color={colors.primary} style={styles.editText}>
               {editLabel}
             </Text>
-          </Pressable>
+          </PressableScale>
         ) : null}
       </View>
       <Text weight="medium" color={colors.mutedText} style={styles.infoValue}>
@@ -42,9 +47,15 @@ export default function MyProfileInfoRow({
 }
 
 const styles = StyleSheet.create({
+  editButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
   editText: {
-    fontSize: 14,
-    lineHeight: 22,
+    fontSize: 12,
+    lineHeight: 16,
   },
   infoLabel: {
     fontSize: 14,
@@ -52,7 +63,7 @@ const styles = StyleSheet.create({
   },
   infoRow: {
     gap: 4,
-    height: 44,
+    minHeight: 48,
     justifyContent: 'center',
   },
   infoRowHeader: {

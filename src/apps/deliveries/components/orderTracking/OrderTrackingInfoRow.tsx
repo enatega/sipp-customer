@@ -1,9 +1,10 @@
 import React from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, StyleSheet, View, type TextStyle, type ViewStyle } from "react-native";
+import { StyleSheet, View, type TextStyle, type ViewStyle } from "react-native";
 import Text from "../../../../general/components/Text";
 import { useTheme } from "../../../../general/theme/theme";
 import Icon from "../../../../general/components/Icon";
+import PressableScale from "../../../../general/components/PressableScale";
 
 type Props = {
   containerStyle?: ViewStyle;
@@ -37,11 +38,16 @@ export default function OrderTrackingInfoRow({
   const { colors, typography } = useTheme();
 
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole="button"
       hitSlop={8}
       onPress={onPress}
-      style={[styles.container, isCompact && styles.containerCompact, containerStyle]}
+      style={[
+        styles.container,
+        { borderRadius: 12 },
+        isCompact && styles.containerCompact,
+        containerStyle,
+      ]}
     >
       <View
         style={[
@@ -90,7 +96,7 @@ export default function OrderTrackingInfoRow({
         name={trailingIconName}
         size={20}
       />
-    </Pressable>
+    </PressableScale>
   );
 }
 

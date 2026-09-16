@@ -1,9 +1,10 @@
 import React from "react";
-import { FlatList, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import Text from "../../../../general/components/Text";
 import { useTheme } from "../../../../general/theme/theme";
 import ProductOptionRow from "./ProductOptionRow";
+import ProductOptionSectionHeader from "./ProductOptionSectionHeader";
 import type { ProductVariationOption } from "./useProductSelectionState";
 
 type Props = {
@@ -22,47 +23,41 @@ export default function ItemSizes({
   formatPrice,
 }: Props) {
   const { t } = useTranslation("deliveries");
-  const { colors, typography } = useTheme();
+  const { spacing } = useTheme();
+  const isRequired = variations.some((variation) => variation.required);
 
   if (variations.length === 0) {
     return null;
   }
 
   return (
-    <View style={styles.container}>
-      <Text
-        color={colors.text}
-        weight="extraBold"
-        style={{
-          fontSize: typography.size.lg,
-          letterSpacing: -0.36,
-          lineHeight: typography.lineHeight.xl,
-        }}
-      >
-        {t("choose_variation")}
-      </Text>
-      <Text color={colors.iconDisabled} style={styles.subtitle}>
-        {helperText || t("select_one")}
-      </Text>
+    <View style={[styles.container, { gap: spacing.md }]}>
+      <ProductOptionSectionHeader
+        helperText={helperText || t("select_one")}
+        isRequired={isRequired}
+        optionalLabel={t("optional_label")}
+        requiredLabel={t("required_label")}
+        title={t("choose_variation")}
+      />
 
-      <View accessibilityRole="radiogroup" style={styles.options}>
-        <FlatList
-          data={variations}
-          keyExtractor={(item) => item.groupId}
-          renderItem={({ item }) => (
-            <ProductOptionRow
-              controlType="radio"
-              isSelected={
-                selectedVariationKey === `${item.groupId}:${item.optionId}`
-              }
-              label={item.label}
-              onPress={() => onSelect(item.groupId, item.optionId)}
-              priceLabel={item.price === 0 ? t("free") : formatPrice(item.price ?? 0)}
-            />
-          )}
-          scrollEnabled={false}
-          ItemSeparatorComponent={() => <View style={styles.separator} />}
-        />
+      <View
+        accessibilityRole="radiogroup"
+        style={[styles.options, { gap: spacing.sm }]}
+      >
+        {variations.map((item) => (
+          <ProductOptionRow
+            controlType="radio"
+            description={item.description}
+            isSelected={
+              selectedVariationKey === `${item.groupId}:${item.optionId}`
+            }
+            key={`${item.groupId}:${item.optionId}`}
+            label={item.label}
+            onPress={() => onSelect(item.groupId, item.optionId)}
+            presentation="tile"
+            priceLabel={item.price === 0 ? t("free") : formatPrice(item.price ?? 0)}
+          />
+        ))}
       </View>
     </View>
   );
@@ -70,19 +65,10 @@ export default function ItemSizes({
 
 const styles = StyleSheet.create({
   container: {
-    gap: 2,
-    paddingHorizontal: 16,
-    paddingBottom: 4,
-    paddingTop: 16,
+    paddingVertical: 20,
   },
   options: {
-    paddingTop: 12,
-  },
-  separator: {
-    height: 12,
-  },
-  subtitle: {
-    fontSize: 14,
-    lineHeight: 22,
+    flexDirection: "row",
+    flexWrap: "wrap",
   },
 });

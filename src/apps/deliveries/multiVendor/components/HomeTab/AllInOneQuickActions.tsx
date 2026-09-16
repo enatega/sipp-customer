@@ -13,7 +13,16 @@ type QuickAction = {
   id: HomeQuickActionId;
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
   labelKey: string;
-  tone: 'primarySoft' | 'cardPeach' | 'cardMint' | 'cardLavender';
+  foreground:
+    | 'quickActionBrowseForeground'
+    | 'quickActionDealsForeground'
+    | 'quickActionOrdersForeground'
+    | 'quickActionFavouritesForeground';
+  surface:
+    | 'quickActionBrowseSurface'
+    | 'quickActionDealsSurface'
+    | 'quickActionOrdersSurface'
+    | 'quickActionFavouritesSurface';
 };
 
 const ACTIONS: QuickAction[] = [
@@ -21,25 +30,29 @@ const ACTIONS: QuickAction[] = [
     id: 'browse',
     icon: 'storefront-outline',
     labelKey: 'multi_vendor_home_quick_browse',
-    tone: 'primarySoft',
+    foreground: 'quickActionBrowseForeground',
+    surface: 'quickActionBrowseSurface',
   },
   {
     id: 'deals',
     icon: 'tag-outline',
     labelKey: 'multi_vendor_home_quick_deals',
-    tone: 'cardPeach',
+    foreground: 'quickActionDealsForeground',
+    surface: 'quickActionDealsSurface',
   },
   {
     id: 'orders',
     icon: 'history',
     labelKey: 'multi_vendor_home_quick_orders',
-    tone: 'cardMint',
+    foreground: 'quickActionOrdersForeground',
+    surface: 'quickActionOrdersSurface',
   },
   {
     id: 'favourites',
     icon: 'heart-outline',
     labelKey: 'multi_vendor_home_quick_favourites',
-    tone: 'cardLavender',
+    foreground: 'quickActionFavouritesForeground',
+    surface: 'quickActionFavouritesSurface',
   },
 ];
 
@@ -74,8 +87,8 @@ export default function AllInOneQuickActions({ onActionPress }: Props) {
           style={[
             styles.action,
             {
-              backgroundColor: colors[action.tone],
-              borderColor: colors.border,
+              backgroundColor: colors[action.surface],
+              borderColor: colors.divider,
               borderRadius: shape.radius.surface,
               gap: spacing.sm,
               paddingHorizontal: spacing.xs,
@@ -93,13 +106,13 @@ export default function AllInOneQuickActions({ onActionPress }: Props) {
             ]}
           >
             <MaterialCommunityIcons
-              color={colors.primary}
+              color={colors[action.foreground]}
               name={action.icon}
               size={24}
             />
           </View>
           <Text
-            color={colors.textStrong}
+            color={colors[action.foreground]}
             numberOfLines={2}
             style={styles.label}
             variant="caption"

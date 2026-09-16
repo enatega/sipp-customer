@@ -38,7 +38,13 @@ Generated visual boards are compositional references. They do not override real 
 - Phase 5 Home/Search received the user’s move-forward acceptance after its screenshot-led corrections.
 - Phase 6.1 is implemented for Store Details: it now has bounded UI-thread merchant-media parallax, a shallow scroll-responsive hero transition, persistent adaptive navigation controls, a compact identity header on collapse, real-data merchant hierarchy, secondary business information in the info popup, and loading geometry matched to the destination composition.
 - Phase 6.2 is in progress through the reference-led Store Details composition: search and primary categories form one sticky menu-navigation layer, primary categories use image-aware canonical capsules, subcategories use the quieter secondary grammar, menu products use information-dense horizontal commerce rows, and the floating cart has become a full-width real-data commerce bar with guarded platform material.
+- Phase 6.3 is in progress for Product Detail and configuration: the screen now uses immersive product media, bounded UI-thread parallax, one overlapping information/configuration surface, required-first options with enforced API min/max limits, immediate configured-price feedback, rounded full-row selection targets, a single floating commerce action, and destination-matched loading geometry.
+- Phase 7.1 is implemented for Cart: one live merchant context, optimistic tactile quantity controls, a unified editable-item surface, API-backed minimum-order progress, honest promo/price disclosure, data-faithful recommendations, and a navigation-safe platform-material checkout dock now form one purchase hierarchy.
+- Phase 7.2 is implemented for Checkout: real merchant context, canonical fulfillment selection, grouped delivery and note surfaces, two-up schedule choices, refined payment/promo and tip controls, an always-visible API-backed price breakdown, polished payment/schedule/detail editors, and a stable iOS Liquid Glass/Android tonal order action now form one scannable decision flow.
+- Phase 7.3 is implemented for Confirmation: every successful cash, wallet, saved-card, and hosted-Stripe path now enters one dedicated confirmation route with a checkout snapshot for immediate continuity, live order-detail hydration, a single bounded success transition, concise milestones, and direct tracking, receipt, help, and home continuations.
+- Phase 8.1 is in progress for Orders and Order Details: the active-first hub now uses exact backend status language, stable progress cues, reduced-motion-safe updates, and coherent loading/error/empty states; details now lead with live status and merchant identity, expose the real timeline, and retain transaction, tracking, reorder, rating, cancellation, and help actions in one semantic composition.
 - The Store Details visual authority is the supplied premium reference plus its implementation brief. Fidelity means reproducing its connected hero/identity/menu rhythm with SIP tokens and live data—not merely retaining the same section order. The authored motion moment is a coordinated cover scale/parallax, real-tagline media treatment, morphing asymmetric hero contour, merchant-card handoff, collapsed-title crossfade, and sticky menu navigation.
+- Review-derived constraints are binding for every later phase: independently composed dark surfaces; rounded, clipped Android state layers; whole-control touch targets; bottom sheets that clear persistent navigation; shadow clearance outside clipping parents; one-shot focus handoff; UI-thread scroll motion; and no decorative material, elevation, or animation that compromises legibility or responsiveness.
 
 ## Architecture decisions before screen work
 
@@ -333,11 +339,26 @@ Implementation:
 - Keep final price and primary action stable while preview data refreshes.
 - Cover address, schedule, payment, coupon, tip, note, Stripe, network, and order-placement recovery states.
 
+Implemented composition:
+
+- Live store identity and item count establish order context before fulfillment decisions.
+- Delivery/pickup, address, contact-free handoff, timing, notes, payment, promo, and rider tip use the shared semantic surface and rounded selection grammar.
+- Price lines remain visible in the scroll content while the total and place-order action stay in a safe-area-aware platform-material dock.
+- Supported iOS devices receive native Liquid Glass through the guarded shared surface; earlier iOS uses system material and Android uses the semantic elevated surface.
+- Payment method, scheduling, custom tip, and note editors retain real state while using full touch targets, adaptive widths, clipped Android state layers, and reduced-motion-safe tactile feedback.
+
 ### 7.3 Confirmation chain
 
 - Transition from final checkout state to a concise order confirmation without losing order context.
 - Success motion runs once and remains under 340ms; reduced motion resolves immediately.
 - Tracking is the primary continuation; receipt and support remain available.
+
+Implemented composition:
+
+- Checkout resets into a dedicated confirmation route rather than showing a transient success toast and jumping immediately into tracking.
+- Order reference, merchant, item count, total, fulfilment mode, schedule/ETA, and live status copy resolve from the created order when available, with the checkout preview retained as an immediate non-fabricated snapshot.
+- The confirmation mark and content resolve once in a bounded native-driver transition; Reduce Motion resolves immediately.
+- Tracking replaces the transient confirmation screen, while receipt and support remain directly accessible and closing returns to the correct delivery-mode root.
 
 Phase 7 exit gate:
 
@@ -374,9 +395,20 @@ Implementation:
 
 - Treat map, ETA, timeline, courier contact, and order/help as one composition.
 - Use a two-detent opaque information sheet over the map.
+- Preserve the current ring-based ETA as the tracking screen’s recognizable authored motif, but rebuild its surrounding hierarchy so it communicates status, next step, and timing without dominating the map.
+- Move sheet drag/scroll arbitration to one gesture-aware owner so the sheet reliably follows vertical drags from both the handle/ring area and scroll content.
+- Treat a straight origin-to-destination segment as an explicit route-unavailable fallback; prefer the routed polyline and communicate degraded routing rather than presenting the fallback as a normal route.
 - Reserve Liquid Glass for compact controls floating over the map.
 - Reconcile current legacy/modern variants into one visual contract before removing either path.
 - Animate route/status changes causally; avoid looping map or status decoration.
+
+Implementation progress (2026-09-16):
+
+- The modern composition is now the single rendered tracking contract.
+- The map remains layout-stable while one shared two-detent sheet owns vertical dragging; the ETA ring and status header are the large, reliable gesture target.
+- Real road geometry is preferred through the existing route service. A failed route is visibly dashed and labeled as a temporary direct guide instead of masquerading as a routed path.
+- The ring, progress, timeline, courier, delivery details, items, notes, and summary use live order data and semantic light/dark tokens; compact map controls use native Liquid Glass where supported and tonal material elsewhere.
+- Status-ring motion is bounded and Reduce Motion aware, map markers stop unnecessary Android redraws, and loading geometry matches the final map/sheet composition.
 
 Phase 8 exit gate:
 
@@ -391,6 +423,13 @@ Phase 8 exit gate:
 - Reuse row, section, header, and status owners.
 - Keep address search, map choice, and address detail as one recoverable flow.
 
+Implemented composition:
+
+- Profile now opens with delivery essentials—Orders, Addresses, Favorites, and Wallet—before preferences and support, with semantic pastel icon wells, grouped surfaces, tactile rounded feedback, and the existing live user/wallet/navigation contracts.
+- My Profile and saved addresses share the same elevated surface, spacing, touch-target, selected-state, and Android clipping grammar; address counts and edit affordances stay clear without adding decorative nesting.
+- Favorites uses store-shaped loading geometry, a quiet colorful empty state, explicit retry recovery, and a compact saved-store summary while retaining pagination, pull-to-refresh, and live favorite mutations.
+- Address search, suggestion rows, type selection, map confirmation, and detail saving now form one consistent flow with focus-responsive controls, two-column address-type choices, semantic map markers, and safe-area-aware floating confirmation surfaces.
+
 ### 9.2 Wallet and coupons
 
 Primary targets:
@@ -404,6 +443,13 @@ Implementation:
 - Make balance, payment method, rewards, coupons, and ledger visually trustworthy.
 - Align transaction numbers and statuses consistently.
 - Treat payment entry as sensitive, calm, and native rather than decorative.
+
+Implemented composition:
+
+- Wallet now separates branded balance identity from calm financial controls, with fixed-width monetary values, explicit rewards conversion, quick top-up amounts, secure saved-card treatment, and recoverable loading, empty, and error states.
+- The transaction contract preserves backend amount and status data; recent and full-ledger rows align signed amounts, semantic credit/debit cues, normalized status, and localized timestamps consistently.
+- Card entry uses one quiet protected form surface, clear Stripe security context, native input behavior, and a stable save action rather than promotional decoration.
+- Coupons use the configured delivery currency, distinguish active and expired states, keep store attribution visible, expose retry recovery, and replace the development-only success image with a theme-safe semantic confirmation treatment.
 
 ### 9.3 Support
 

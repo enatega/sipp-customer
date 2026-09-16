@@ -3,12 +3,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import BottomSheetHandle from '../../../../general/components/BottomSheetHandle';
 import Button from '../../../../general/components/Button';
+import PressableScale from '../../../../general/components/PressableScale';
+import SwipeableBottomSheet from '../../../../general/components/SwipeableBottomSheet';
 import Text from '../../../../general/components/Text';
 import { useTheme } from '../../../../general/theme/theme';
-import SwipeableBottomSheet from '../../../../general/components/SwipeableBottomSheet';
-import type { CheckoutPaymentMethod } from '../../api/orderServiceTypes';
 import type { WalletSavedCard } from '../../../../general/api/walletSavedCardsService';
+import type { CheckoutPaymentMethod } from '../../api/orderServiceTypes';
 import {
   getCheckoutPaymentMethodSubtitle,
   getCheckoutPaymentMethodTitle,
@@ -31,6 +33,71 @@ type Props = {
   selectedMethod: CheckoutPaymentMethod;
 };
 
+type PaymentOptionProps = {
+  description: string;
+  disabled: boolean;
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  isSelected: boolean;
+  label: string;
+  onPress: () => void;
+};
+
+function PaymentOption({
+  description,
+  disabled,
+  icon,
+  isSelected,
+  label,
+  onPress,
+}: PaymentOptionProps) {
+  const { colors, layout, shape, spacing } = useTheme();
+
+  return (
+    <PressableScale
+      accessibilityRole="radio"
+      accessibilityState={{ disabled, selected: isSelected }}
+      disabled={disabled}
+      onPress={onPress}
+      style={[
+        styles.option,
+        {
+          backgroundColor: isSelected ? colors.primarySoft : colors.surface,
+          borderColor: isSelected ? colors.primary : colors.border,
+          borderRadius: shape.radius.surface,
+          gap: spacing.md,
+          minHeight: layout.touchTarget.comfortable + 16,
+          padding: spacing.md,
+        },
+      ]}
+    >
+      <View
+        style={[
+          styles.optionIcon,
+          {
+            backgroundColor: isSelected ? colors.surfaceElevated : colors.surfaceSunken,
+            borderRadius: shape.radius.control,
+          },
+        ]}
+      >
+        <Ionicons color={isSelected ? colors.primary : colors.text} name={icon} size={21} />
+      </View>
+      <View style={[styles.optionText, { gap: spacing.xs }]}>
+        <Text numberOfLines={1} variant="label" weight="semiBold">
+          {label}
+        </Text>
+        <Text color={colors.textSubtle} numberOfLines={2} variant="caption">
+          {description}
+        </Text>
+      </View>
+      <Ionicons
+        color={isSelected ? colors.primary : colors.iconDisabled}
+        name={isSelected ? 'radio-button-on' : 'radio-button-off'}
+        size={21}
+      />
+    </PressableScale>
+  );
+}
+
 export default function CheckoutPaymentMethodBottomSheet({
   isCardEnabled,
   isCashEnabled,
@@ -48,28 +115,29 @@ export default function CheckoutPaymentMethodBottomSheet({
   selectedMethod,
 }: Props) {
   const insets = useSafeAreaInsets();
-  const { height } = useWindowDimensions();
-  const { colors, typography } = useTheme();
+  const { height, width } = useWindowDimensions();
+  const { colors, elevation, layout, shape, spacing } = useTheme();
   const { t } = useTranslation('deliveries');
   const [draftMethod, setDraftMethod] = React.useState<CheckoutPaymentMethod>(selectedMethod);
   const hasSavedCards = savedCards.length > 0;
-  const isCardSelectable = isCardEnabled;
   const visibleCardCount = draftMethod === 'stripe' ? savedCards.length + 1 : 0;
-  const estimatedContentHeight =
-    72 + // header + top spacing
-    70 + // cash option
-    70+ // wallet option
-    70 + // card option
-    (visibleCardCount > 0 ? Math.min(visibleCardCount, 4) * 54 + 12 : 0) + // saved cards + add card
-    76 + // footer button
-    Math.max(insets.bottom, 18);
-  const sheetHeight = Math.min(Math.max(estimatedContentHeight, 324), Math.min(height * 0.78, 520));
+  const estimatedContentHeight = 116
+    + (3 * 84)
+    + (visibleCardCount > 0 ? Math.min(visibleCardCount, 4) * 58 + spacing.md : 0)
+    + 88
+    + Math.max(insets.bottom, spacing.lg);
+  const sheetHeight = Math.min(Math.max(estimatedContentHeight, 430), Math.min(height * 0.84, 640));
+  const horizontalInset = width > layout.contentMaxWidth.readable
+    ? (width - layout.contentMaxWidth.readable) / 2
+    : 0;
+  const isConfirmDisabled = (draftMethod === 'cod' && !isCashEnabled)
+    || (draftMethod === 'stripe' && (!isCardEnabled || !selectedCardId))
+    || (draftMethod === 'wallet' && !isWalletEnabled);
 
   React.useEffect(() => {
-    if (!isVisible) {
-      return;
+    if (isVisible) {
+      setDraftMethod(selectedMethod);
     }
-    setDraftMethod(selectedMethod);
   }, [isVisible, selectedMethod]);
 
   if (!isVisible) {
@@ -77,209 +145,182 @@ export default function CheckoutPaymentMethodBottomSheet({
   }
 
   return (
-    <View style={styles.overlay}>
-      <Pressable style={[styles.backdrop, { backgroundColor: colors.overlayDark20 }]} onPress={onClose} />
+    <View style={[styles.overlay, { zIndex: layout.layer.modal }]}>
+      <Pressable
+        accessibilityLabel={t('checkout_payment_close')}
+        accessibilityRole="button"
+        onPress={onClose}
+        style={[styles.backdrop, { backgroundColor: colors.scrim }]}
+      />
       <SwipeableBottomSheet
-        expandedHeight={sheetHeight}
         collapsedHeight={0}
+        expandedHeight={sheetHeight}
+        handle={<BottomSheetHandle color={colors.iconDisabled} />}
+        horizontalInset={horizontalInset}
         initialState="expanded"
+        modal
         onStateChange={(state) => {
           if (state === 'collapsed') {
             onClose();
           }
         }}
-        style={[styles.sheet, { backgroundColor: colors.background, shadowColor: colors.shadowColor }]}
+        style={[
+          styles.sheet,
+          elevation.overlay,
+          {
+            backgroundColor: colors.surfaceElevated,
+            borderTopLeftRadius: shape.radius.sheet,
+            borderTopRightRadius: shape.radius.sheet,
+          },
+        ]}
       >
-        <View style={styles.header}>
-          <View style={styles.headerSpacer} />
-          <Text
-            weight="extraBold"
-            style={{ color: colors.text, fontSize: typography.size.h5, lineHeight: typography.lineHeight.h5 }}
-          >
-            {t('checkout_payment_selector_title')}
-          </Text>
-          <Pressable
+        <View style={[styles.header, { gap: spacing.md, paddingHorizontal: spacing.lg }]}>
+          <View style={styles.headerCopy}>
+            <Text accessibilityRole="header" variant="sectionTitle" weight="bold">
+              {t('checkout_payment_selector_title')}
+            </Text>
+            <Text color={colors.textSubtle} variant="caption">
+              {t('checkout_payment_selector_description')}
+            </Text>
+          </View>
+          <PressableScale
+            accessibilityLabel={t('checkout_payment_close')}
+            accessibilityRole="button"
+            hitSlop={8}
             onPress={onClose}
-            style={({ pressed }) => [
+            style={[
               styles.closeButton,
-              { backgroundColor: colors.backgroundTertiary, opacity: pressed ? 0.7 : 1 },
+              {
+                backgroundColor: colors.surfaceSunken,
+                borderRadius: shape.radius.pill,
+                minHeight: layout.touchTarget.minimum,
+              },
             ]}
           >
-            <Ionicons name="close" size={18} color={colors.text} />
-          </Pressable>
+            <Ionicons name="close" size={20} color={colors.text} />
+          </PressableScale>
         </View>
 
         <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.content}
           bounces={false}
+          contentContainerStyle={[styles.content, { gap: spacing.md, padding: spacing.lg }]}
+          showsVerticalScrollIndicator={false}
         >
-          <Pressable
-            accessibilityRole="radio"
-            accessibilityState={{ disabled: !isCashEnabled, selected: draftMethod === 'cod' }}
+          <PaymentOption
+            description={getCheckoutPaymentMethodSubtitle('cod', t)}
             disabled={!isCashEnabled}
+            icon="cash-outline"
+            isSelected={draftMethod === 'cod'}
+            label={getCheckoutPaymentMethodTitle('cod', t)}
             onPress={() => setDraftMethod('cod')}
-            style={[
-              styles.option,
-              {
-                borderColor: draftMethod === 'cod' ? colors.primary : colors.border,
-                borderWidth: draftMethod === 'cod' ? 2 : 1,
-                opacity: isCashEnabled ? 1 : 0.45,
-              },
-            ]}
-          >
-            <Ionicons name="cash-outline" size={22} color={colors.text} />
-            <View style={styles.optionText}>
-              <Text weight="medium" style={{ color: colors.text, fontSize: typography.size.sm2, lineHeight: typography.lineHeight.md }}>
-                {getCheckoutPaymentMethodTitle('cod', t)}
-              </Text>
-              <Text style={{ color: colors.mutedText, fontSize: typography.size.xs2, lineHeight: typography.lineHeight.sm }}>
-                {getCheckoutPaymentMethodSubtitle('cod', t)}
-              </Text>
-            </View>
-            <Ionicons name={draftMethod === 'cod' ? 'radio-button-on' : 'radio-button-off'} size={20} color={draftMethod === 'cod' ? colors.primary : colors.iconDisabled} />
-          </Pressable>
-
-          <Pressable
-            accessibilityRole="radio"
-            accessibilityState={{ disabled: !isCardSelectable, selected: draftMethod === 'stripe' }}
-            disabled={!isCardSelectable}
+          />
+          <PaymentOption
+            description={isCardEnabled
+              ? hasSavedCards
+                ? getCheckoutPaymentMethodSubtitle('stripe', t)
+                : t('checkout_payment_add_card_required')
+              : t('checkout_payment_card_unavailable')}
+            disabled={!isCardEnabled}
+            icon="card-outline"
+            isSelected={draftMethod === 'stripe'}
+            label={getCheckoutPaymentMethodTitle('stripe', t)}
             onPress={() => setDraftMethod('stripe')}
-            style={[
-              styles.option,
-              {
-                borderColor: draftMethod === 'stripe' ? colors.primary : colors.border,
-                borderWidth: draftMethod === 'stripe' ? 2 : 1,
-                opacity: isCardSelectable ? 1 : 0.45,
-              },
-            ]}
-          >
-            <Ionicons name="card-outline" size={22} color={colors.text} />
-            <View style={styles.optionText}>
-              <Text weight="medium" style={{ color: colors.text, fontSize: typography.size.sm2, lineHeight: typography.lineHeight.md }}>
-                {getCheckoutPaymentMethodTitle('stripe', t)}
-              </Text>
-              <Text style={{ color: colors.mutedText, fontSize: typography.size.xs2, lineHeight: typography.lineHeight.sm }}>
-                {isCardEnabled
-                  ? hasSavedCards
-                    ? getCheckoutPaymentMethodSubtitle('stripe', t)
-                    : t('checkout_payment_add_card_required')
-                  : t('checkout_payment_card_unavailable')}
-              </Text>
-            </View>
-            <Ionicons name={draftMethod === 'stripe' ? 'radio-button-on' : 'radio-button-off'} size={20} color={draftMethod === 'stripe' ? colors.primary : colors.iconDisabled} />
-          </Pressable>
-
-          <Pressable
-  accessibilityRole="radio"
-  accessibilityState={{ disabled: !isWalletEnabled, selected: draftMethod === 'wallet' }}
-  disabled={!isWalletEnabled}
-  onPress={() => setDraftMethod('wallet')}
-  style={[
-    styles.option,
-    {
-      borderColor: draftMethod === 'wallet' ? colors.primary : colors.border,
-      borderWidth: draftMethod === 'wallet' ? 2 : 1,
-      opacity: isWalletEnabled ? 1 : 0.45,
-    },
-  ]}
->
-  <Ionicons name="wallet-outline" size={22} color={colors.text} />
-
-  <View style={styles.optionText}>
-    <Text
-      weight="medium"
-      style={{
-        color: colors.text,
-        fontSize: typography.size.sm2,
-        lineHeight: typography.lineHeight.md,
-      }}
-    >
-      {getCheckoutPaymentMethodTitle('wallet', t)}
-    </Text>
-
-    <Text
-      style={{
-        color: colors.mutedText,
-        fontSize: typography.size.xs2,
-        lineHeight: typography.lineHeight.sm,
-      }}
-    >
-      {isWalletEnabled
-        ? t('checkout_payment_wallet_balance', { currency: currencyLabel, amount: walletBalance.toFixed(2) })
-        : t('checkout_payment_wallet_insufficient_balance')}
-    </Text>
-  </View>
-
-  <Ionicons
-    name={draftMethod === 'wallet' ? 'radio-button-on' : 'radio-button-off'}
-    size={20}
-    color={draftMethod === 'wallet' ? colors.primary : colors.iconDisabled}
-  />
-</Pressable>
+          />
+          <PaymentOption
+            description={isWalletEnabled
+              ? t('checkout_payment_wallet_balance', {
+                currency: currencyLabel,
+                amount: walletBalance.toFixed(2),
+              })
+              : t('checkout_payment_wallet_insufficient_balance')}
+            disabled={!isWalletEnabled}
+            icon="wallet-outline"
+            isSelected={draftMethod === 'wallet'}
+            label={getCheckoutPaymentMethodTitle('wallet', t)}
+            onPress={() => setDraftMethod('wallet')}
+          />
 
           {draftMethod === 'stripe' ? (
-            <View style={styles.cardsWrap}>
-              {hasSavedCards ? savedCards.map((card) => (
-                <Pressable
-                  key={card.id}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: selectedCardId === card.id }}
-                  disabled={isSavingCardSelection}
-                  onPress={() => onSelectCard(card.id)}
-                  style={[
-                    styles.cardOption,
-                    {
-                      borderColor: selectedCardId === card.id ? colors.primary : colors.border,
-                      opacity: isSavingCardSelection ? 0.6 : 1,
-                    },
-                  ]}
-                >
-                  <View style={styles.cardOptionTextWrap}>
-                    <Text
-                      weight="medium"
-                      style={{ color: colors.text, fontSize: typography.size.sm2, lineHeight: typography.lineHeight.md }}
-                    >
-                      {`${card.brand.toUpperCase()} (•••• ${card.last4})`}
-                    </Text>
-                    <Text
-                      style={{ color: colors.mutedText, fontSize: typography.size.xs2, lineHeight: typography.lineHeight.sm }}
-                    >
-                      {`${String(card.expMonth).padStart(2, '0')}/${String(card.expYear).slice(-2)}`}
-                    </Text>
-                  </View>
-                  <Ionicons
-                    name={selectedCardId === card.id ? 'radio-button-on' : 'radio-button-off'}
-                    size={18}
-                    color={selectedCardId === card.id ? colors.primary : colors.iconDisabled}
-                  />
-                </Pressable>
-              )) : null}
+            <View style={[styles.cardsWrap, { gap: spacing.sm }]}>
+              {savedCards.map((card) => {
+                const isSelected = selectedCardId === card.id;
 
-              <Pressable
+                return (
+                  <PressableScale
+                    key={card.id}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: isSelected }}
+                    disabled={isSavingCardSelection}
+                    onPress={() => onSelectCard(card.id)}
+                    style={[
+                      styles.cardOption,
+                      {
+                        backgroundColor: isSelected ? colors.primarySoft : colors.surface,
+                        borderColor: isSelected ? colors.primary : colors.border,
+                        borderRadius: shape.radius.control,
+                        gap: spacing.md,
+                        minHeight: layout.touchTarget.comfortable,
+                        paddingHorizontal: spacing.md,
+                      },
+                    ]}
+                  >
+                    <Ionicons color={colors.text} name="card-outline" size={19} />
+                    <View style={styles.cardOptionTextWrap}>
+                      <Text numberOfLines={1} variant="label" weight="semiBold">
+                        {`${card.brand.toUpperCase()} (•••• ${card.last4})`}
+                      </Text>
+                      <Text color={colors.textSubtle} variant="caption">
+                        {`${String(card.expMonth).padStart(2, '0')}/${String(card.expYear).slice(-2)}`}
+                      </Text>
+                    </View>
+                    <Ionicons
+                      color={isSelected ? colors.primary : colors.iconDisabled}
+                      name={isSelected ? 'radio-button-on' : 'radio-button-off'}
+                      size={19}
+                    />
+                  </PressableScale>
+                );
+              })}
+
+              <PressableScale
+                accessibilityRole="button"
                 onPress={onManageCards}
-                style={({ pressed }) => [
+                style={[
                   styles.addCardButton,
-                  { borderColor: colors.border, backgroundColor: colors.surface, opacity: pressed ? 0.7 : 1 },
+                  {
+                    backgroundColor: colors.surfaceSunken,
+                    borderRadius: shape.radius.control,
+                    gap: spacing.sm,
+                    minHeight: layout.touchTarget.comfortable,
+                  },
                 ]}
               >
-                <Ionicons name="add" size={16} color={colors.text} />
-                <Text
-                  weight="medium"
-                  style={{ color: colors.text, fontSize: typography.size.sm2, lineHeight: typography.lineHeight.md }}
-                >
+                <Ionicons name="add" size={18} color={colors.primary} />
+                <Text color={colors.primary} variant="label" weight="semiBold">
                   {t('wallet_add_card')}
                 </Text>
-              </Pressable>
+              </PressableScale>
             </View>
           ) : null}
         </ScrollView>
 
-        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 18) }]}>
+        <View
+          style={[
+            styles.footer,
+            {
+              backgroundColor: colors.surfaceElevated,
+              paddingBottom: Math.max(insets.bottom, spacing.lg),
+              paddingHorizontal: spacing.lg,
+              paddingTop: spacing.md,
+            },
+          ]}
+        >
           <Button
+            disabled={isConfirmDisabled}
+            fullWidth
             label={t('checkout_payment_selector_confirm')}
             onPress={() => onConfirm(draftMethod)}
-            disabled={(draftMethod === 'stripe' && !selectedCardId) || (draftMethod === 'wallet' && !isWalletEnabled)}
+            size="large"
           />
         </View>
       </SwipeableBottomSheet>
@@ -288,84 +329,57 @@ export default function CheckoutPaymentMethodBottomSheet({
 }
 
 const styles = StyleSheet.create({
+  addCardButton: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  backdrop: StyleSheet.absoluteFillObject,
+  cardOption: {
+    alignItems: 'center',
+    borderWidth: 1,
+    flexDirection: 'row',
+  },
+  cardOptionTextWrap: {
+    flex: 1,
+    minWidth: 0,
+  },
+  cardsWrap: {},
+  closeButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 48,
+  },
+  content: {},
+  footer: {},
+  header: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    paddingBottom: 4,
+  },
+  headerCopy: {
+    flex: 1,
+  },
+  option: {
+    alignItems: 'center',
+    borderWidth: 1,
+    flexDirection: 'row',
+  },
+  optionIcon: {
+    alignItems: 'center',
+    height: 42,
+    justifyContent: 'center',
+    width: 42,
+  },
+  optionText: {
+    flex: 1,
+    minWidth: 0,
+  },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'flex-end',
   },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-  },
   sheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    elevation: 8,
-    paddingTop: 12,
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.16,
-    shadowRadius: 10,
-  },
-  header: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingBottom: 8,
-    paddingHorizontal: 16,
-  },
-  headerSpacer: {
-    height: 32,
-    width: 32,
-  },
-  closeButton: {
-    alignItems: 'center',
-    borderRadius: 999,
-    height: 32,
-    justifyContent: 'center',
-    width: 32,
-  },
-  content: {
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingTop: 8,
-  },
-  option: {
-    alignItems: 'center',
-    borderRadius: 6,
-    flexDirection: 'row',
-    gap: 8,
-    minHeight: 56,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  optionText: {
-    flex: 1,
-  },
-  cardsWrap: {
-    gap: 8,
-  },
-  cardOption: {
-    alignItems: 'center',
-    borderRadius: 6,
-    borderWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    minHeight: 44,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  cardOptionTextWrap: {
-    flex: 1,
-  },
-  addCardButton: {
-    alignItems: 'center',
-    borderRadius: 6,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 6,
-    justifyContent: 'center',
-    minHeight: 40,
-  },
-  footer: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
+    overflow: 'hidden',
   },
 });

@@ -1,109 +1,90 @@
-import React from "react";
-import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import React, { useEffect, useState } from "react";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { LinearGradient } from "expo-linear-gradient";
+import Animated from "react-native-reanimated";
 import {
-  Animated,
-  Pressable,
   StyleSheet,
   type StyleProp,
   type ImageStyle,
   type ViewStyle,
   View,
-  useWindowDimensions,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../../../general/theme/theme";
 
 type Props = {
+  accessibilityLabel: string;
   containerStyle?: StyleProp<ViewStyle>;
   imageUri: string;
   imageStyle?: StyleProp<ImageStyle>;
-  showCloseButton?: boolean;
 };
 
 export const getProductInfoHeaderMaxHeight = (width: number) =>
   Math.min(Math.max(width * 0.82, 300), 420);
 
-export const getProductInfoHeaderMinHeight = (width: number) =>
-  Math.min(Math.max(width * 0.34, 112), 144);
-
 export default function ImageHeader({
+  accessibilityLabel,
   containerStyle,
   imageUri,
   imageStyle,
-  showCloseButton = true,
 }: Props) {
-  const navigation = useNavigation();
-  const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
   const { colors } = useTheme();
-  const headerHeight = getProductInfoHeaderMaxHeight(width);
+  const [hasImageError, setHasImageError] = useState(false);
+  const hasImage = Boolean(imageUri.trim()) && !hasImageError;
+
+  useEffect(() => {
+    setHasImageError(false);
+  }, [imageUri]);
 
   return (
     <View
       style={[
         styles.container,
-        { backgroundColor: colors.background, height: headerHeight },
+        { backgroundColor: colors.primarySoft },
         containerStyle,
       ]}
     >
-      <View style={styles.imageWrapper}>
+      {hasImage ? (
         <Animated.Image
+          accessibilityLabel={accessibilityLabel}
+          accessible
+          onError={() => setHasImageError(true)}
           source={{ uri: imageUri }}
           resizeMode="cover"
           style={[styles.image, imageStyle]}
         />
-      </View>
-      {showCloseButton ? (
-        <View style={[styles.closeButtonContainer, { top: insets.top + 8 }]}>
-          <Pressable
-            accessibilityLabel="Go back"
-            accessibilityRole="button"
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            onPress={() => navigation.goBack()}
-            style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
-          >
-            <View
-              style={[
-                styles.closeButton,
-                {
-                  backgroundColor: colors.backgroundTertiary,
-                  shadowColor: colors.shadowColor,
-                },
-              ]}
-            >
-              <Ionicons name="close" size={24} color={colors.text} />
-            </View>
-          </Pressable>
+      ) : (
+        <View style={styles.fallback}>
+          <View style={[styles.fallbackHalo, { backgroundColor: colors.surfaceElevated }]}>
+            <MaterialCommunityIcons color={colors.primary} name="food-outline" size={42} />
+          </View>
         </View>
-      ) : null}
+      )}
+
+      <LinearGradient
+        colors={[colors.mediaScrimStart, colors.mediaScrimEnd]}
+        pointerEvents="none"
+        style={StyleSheet.absoluteFill}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    width: "100%",
-  },
-  closeButton: {
-    alignItems: "center",
-    borderRadius: 20,
-    height: 40,
-    justifyContent: "center",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    width: 40,
-  },
-  closeButtonContainer: {
-    position: "absolute",
-    left: 16,
-    zIndex: 2,
-  },
-  imageWrapper: {
-    height: "100%",
     overflow: "hidden",
     width: "100%",
+  },
+  fallback: {
+    alignItems: "center",
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+  },
+  fallbackHalo: {
+    alignItems: "center",
+    borderRadius: 42,
+    height: 84,
+    justifyContent: "center",
+    width: 84,
   },
   image: {
     height: "100%",

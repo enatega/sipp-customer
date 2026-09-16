@@ -10,6 +10,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../../../../general/components/Button';
 import Text from '../../../../general/components/Text';
+import { useWindowClass } from '../../../../general/hooks/useWindowClass';
 import { useTheme } from '../../../../general/theme/theme';
 import CheckoutHeader from './CheckoutHeader';
 import { CHECKOUT_MESSAGE_MAX_LENGTH } from './checkoutMessageUtils';
@@ -36,13 +37,15 @@ export default function CheckoutMessageEditorScreen({
   value,
 }: Props) {
   const insets = useSafeAreaInsets();
-  const { colors, typography } = useTheme();
+  const { colors, layout, shape, spacing, typography } = useTheme();
+  const { gutter } = useWindowClass();
+  const [isFocused, setIsFocused] = React.useState(false);
   const trimmedValue = value.trim();
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={[styles.screen, { backgroundColor: colors.background }]}
+      style={[styles.screen, { backgroundColor: colors.canvas }]}
     >
       <CheckoutHeader
         backIconName="close"
@@ -51,34 +54,36 @@ export default function CheckoutMessageEditorScreen({
       />
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          { gap: spacing.lg, paddingHorizontal: gutter },
+        ]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.copyBlock}>
-          <Text
-            weight="extraBold"
-            style={{
-              fontSize: typography.size.h5,
-              lineHeight: typography.lineHeight.h5,
-            }}
-          >
+        <View style={[styles.contentInner, { gap: spacing.md, maxWidth: layout.contentMaxWidth.readable }]}>
+          <Text color={colors.textSubtle} variant="supporting">
             {description}
           </Text>
-        </View>
 
-        <View
+          <View
           style={[
             styles.inputWrapper,
             {
               backgroundColor: colors.surface,
-              borderColor: colors.border,
+              borderColor: isFocused ? colors.primary : colors.border,
+              borderRadius: shape.radius.surface,
+              borderWidth: isFocused ? shape.borderWidth.selected : shape.borderWidth.hairline,
+              padding: spacing.lg,
             },
           ]}
         >
           <TextInput
+            autoFocus
             multiline
             onChangeText={onChangeText}
+            onBlur={() => setIsFocused(false)}
+            onFocus={() => setIsFocused(true)}
             placeholder={placeholder}
             placeholderTextColor={colors.mutedText}
             style={[
@@ -92,9 +97,9 @@ export default function CheckoutMessageEditorScreen({
             textAlignVertical="top"
             value={value}
           />
-        </View>
+          </View>
 
-        <Text
+          <Text
           color={colors.mutedText}
           style={[
             styles.counter,
@@ -105,60 +110,61 @@ export default function CheckoutMessageEditorScreen({
           ]}
         >
           {value.length}/{CHECKOUT_MESSAGE_MAX_LENGTH}
-        </Text>
+          </Text>
+        </View>
       </ScrollView>
 
       <View
         style={[
           styles.footer,
           {
-            backgroundColor: colors.background,
-            borderColor: colors.border,
+            backgroundColor: colors.surfaceElevated,
+            borderColor: colors.divider,
             paddingBottom: Math.max(insets.bottom, 12),
+            paddingHorizontal: gutter,
           },
         ]}
       >
-        <Button
-          label={ctaLabel}
-          onPress={onSavePress}
-          disabled={trimmedValue.length === 0}
-          style={styles.button}
-        />
+        <View style={[styles.footerInner, { maxWidth: layout.contentMaxWidth.readable }]}>
+          <Button
+            disabled={trimmedValue.length === 0}
+            fullWidth
+            label={ctaLabel}
+            onPress={onSavePress}
+            size="large"
+          />
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  button: {
-    minHeight: 44,
-  },
   content: {
-    gap: 12,
-    paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 24,
   },
-  copyBlock: {
-    gap: 6,
+  contentInner: {
+    marginHorizontal: 'auto',
+    width: '100%',
   },
   counter: {
     textAlign: 'right',
   },
   footer: {
-    paddingHorizontal: 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
     paddingTop: 12,
+  },
+  footerInner: {
+    marginHorizontal: 'auto',
+    width: '100%',
   },
   input: {
     flex: 1,
     padding: 0,
   },
   inputWrapper: {
-    borderRadius: 6,
-    borderWidth: 1,
     minHeight: 112,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
   },
   screen: {
     flex: 1,

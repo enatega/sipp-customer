@@ -1,8 +1,9 @@
-import React, { memo } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import React, { memo, useState } from 'react';
+import { ActivityIndicator, StyleSheet, TextInput, View } from 'react-native';
 import { useTheme } from '../../theme/theme';
 import Icon from '../../components/Icon';
 import Text from '../../components/Text';
+import PressableScale from '../../components/PressableScale';
 
 type Props = {
   value: string;
@@ -22,13 +23,17 @@ function AddressSearchInput({
   isLoading = false,
 }: Props) {
   const { colors, typography } = useTheme();
+  const [isFocused, setIsFocused] = useState(false);
 
   return (
     <View style={styles.container}>
       <View
         style={[
           styles.inputWrapper,
-          { backgroundColor: colors.surface, borderColor: colors.border },
+          {
+            backgroundColor: colors.surface,
+            borderColor: isFocused ? colors.primary : colors.border,
+          },
         ]}
       >
         <Icon type="Feather" name="search" size={16} color={colors.iconMuted} />
@@ -38,26 +43,28 @@ function AddressSearchInput({
           placeholderTextColor={colors.mutedText}
           value={value}
           onChangeText={onChangeText}
+          onBlur={() => setIsFocused(false)}
+          onFocus={() => setIsFocused(true)}
           autoFocus
           returnKeyType="search"
           accessibilityLabel={placeholder}
         />
         {isLoading && <ActivityIndicator size="small" color={colors.primary} />}
       </View>
-      <Pressable
+      <PressableScale
         onPress={onChooseOnMap}
         accessibilityRole="button"
         accessibilityLabel={chooseOnMapLabel}
-        style={({ pressed }) => [
+        style={[
           styles.mapButton,
-          { backgroundColor: colors.backgroundTertiary, opacity: pressed ? 0.8 : 1 },
+          { backgroundColor: colors.primarySoft },
         ]}
       >
         <Icon type="Ionicons" name="map-outline" size={16} color={colors.primary} />
         <Text variant="caption" weight="semiBold" color={colors.primary}>
           {chooseOnMapLabel}
         </Text>
-      </Pressable>
+      </PressableScale>
     </View>
   );
 }
@@ -75,11 +82,11 @@ const styles = StyleSheet.create({
   },
   inputWrapper: {
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: 16,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 8,
-    height: 44,
+    height: 54,
     paddingHorizontal: 12,
   },
   mapButton: {
@@ -88,6 +95,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     flexDirection: 'row',
     gap: 6,
+    minHeight: 40,
+    overflow: 'hidden',
     paddingHorizontal: 14,
     paddingVertical: 8,
   },

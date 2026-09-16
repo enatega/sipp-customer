@@ -12,7 +12,7 @@ type Props = {
 };
 
 export default function CartRecommendationsSection({ items, onItemPress }: Props) {
-  const { colors, typography } = useTheme();
+  const { spacing } = useTheme();
   const { t } = useTranslation('deliveries');
 
   if (items.length === 0) {
@@ -20,20 +20,13 @@ export default function CartRecommendationsSection({ items, onItemPress }: Props
   }
 
   return (
-    <View style={styles.container}>
-      <Text
-        weight="extraBold"
-        style={{
-          color: colors.text,
-          fontSize: typography.size.h5,
-          lineHeight: typography.lineHeight.h5,
-        }}
-      >
+    <View style={[styles.container, { gap: spacing.md, paddingTop: spacing.sm }]}>
+      <Text accessibilityRole="header" variant="sectionTitle" weight="bold">
         {t('cart_recommended_title')}
       </Text>
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { gap: spacing.md, paddingRight: spacing.lg }]}
         horizontal
         showsHorizontalScrollIndicator={false}
       >
@@ -51,11 +44,7 @@ export default function CartRecommendationsSection({ items, onItemPress }: Props
 
 const styles = StyleSheet.create({
   container: {
-    gap: 14,
-    paddingHorizontal: 16,
-    paddingTop: 8,
+    width: '100%',
   },
-  content: {
-    gap: 12,
-  },
+  content: {},
 });

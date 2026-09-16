@@ -5,31 +5,39 @@ import { useTheme } from '../../theme/theme';
 
 type Props = {
   attachmentAccessibilityLabel: string;
+  disabled?: boolean;
   isSending?: boolean;
   messageAccessibilityLabel: string;
-  onAttachmentPress: () => void;
+  onAttachmentPress?: () => void;
   onChangeText: (value: string) => void;
   onSend: () => void;
   placeholder: string;
+  showAttachment?: boolean;
   value: string;
 };
 
 export default function ChatComposer({
   attachmentAccessibilityLabel,
+  disabled = false,
   isSending = false,
   messageAccessibilityLabel,
   onAttachmentPress,
   onChangeText,
   onSend,
   placeholder,
+  showAttachment = true,
   value,
 }: Props) {
   const { colors, typography } = useTheme();
-  const isDisabled = !value.trim() || isSending;
+  const isDisabled = disabled || !value.trim() || isSending;
 
   return (
     <View style={[styles.container, { borderTopColor: colors.border, backgroundColor: colors.background }]}>
       <TextInput
+        accessibilityLabel={messageAccessibilityLabel}
+        accessibilityState={{ disabled }}
+        editable={!disabled}
+        multiline
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
@@ -45,18 +53,23 @@ export default function ChatComposer({
       />
 
       <View style={styles.actions}>
-        <Pressable
-          accessibilityLabel={attachmentAccessibilityLabel}
-          accessibilityRole="button"
-          onPress={onAttachmentPress}
-          style={styles.iconWrap}
-        >
-          <Ionicons name="add" size={30} color={colors.iconColor} />
-        </Pressable>
+        {showAttachment && onAttachmentPress ? (
+          <Pressable
+            accessibilityLabel={attachmentAccessibilityLabel}
+            accessibilityRole="button"
+            accessibilityState={{ disabled }}
+            disabled={disabled}
+            onPress={onAttachmentPress}
+            style={[styles.iconWrap, { opacity: disabled ? 0.45 : 1 }]}
+          >
+            <Ionicons name="add" size={30} color={colors.iconColor} />
+          </Pressable>
+        ) : <View />}
 
         <Pressable
           accessibilityLabel={messageAccessibilityLabel}
           accessibilityRole="button"
+          accessibilityState={{ disabled: isDisabled, busy: isSending }}
           disabled={isDisabled}
           onPress={onSend}
           style={[

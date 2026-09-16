@@ -31,6 +31,8 @@ type Props = {
   style?: ViewStyle;
   /** 'arrow' shows arrow-back (default), 'close' shows an X */
   variant?: 'arrow' | 'close';
+  /** Optional foreground override for headers rendered over media or branded color. */
+  foregroundColor?: string;
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -46,6 +48,7 @@ export default function ScreenHeader({
   onBack,
   style,
   variant = 'arrow',
+  foregroundColor,
 }: Props) {
   const { colors } = useTheme();
   const { t } = useTranslation('general');
@@ -85,7 +88,7 @@ export default function ScreenHeader({
                 <Ionicons
                   name={variant === 'close' ? 'close' : 'arrow-back'}
                   size={22}
-                  color={colors.text}
+                  color={foregroundColor ?? colors.text}
                 />
               )}
             />
@@ -98,7 +101,7 @@ export default function ScreenHeader({
           numberOfLines={1}
           variant={titleVariant}
           weight="semiBold"
-          color={colors.text}
+          color={foregroundColor ?? colors.text}
           accessibilityRole="header"
           style={styles.title}
         >

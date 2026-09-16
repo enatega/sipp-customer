@@ -28,6 +28,8 @@ import {
 import ExtendableOrderItems from "../orderItems/ExtendableOrderItems";
 import OrderDetailsSection from "./OrderDetailsSection";
 import CartStoreConflictModal from "../cart/CartStoreConflictModal";
+import { useWindowClass } from "../../../../general/hooks/useWindowClass";
+import OrderDetailsTimelineSection from "./OrderDetailsTimelineSection";
 
 type Props = {
   navigation: NativeStackNavigationProp<
@@ -39,7 +41,8 @@ type Props = {
 
 export default function MainContainer({ navigation, orderId }: Props) {
   const { t } = useTranslation("deliveries");
-  const { colors, typography } = useTheme();
+  const { colors, elevation, shape, spacing, typography } = useTheme();
+  const { gutter } = useWindowClass();
   useOrderStatusSocketSync(orderId);
   const orderDetailsQuery = useOrderDetails(orderId);
   const orderStatus = orderDetailsQuery.data?.status;
@@ -73,17 +76,17 @@ export default function MainContainer({ navigation, orderId }: Props) {
       return null;
     }
 
-    return `ORDER #${cleanedCode}`;
-  }, [order?.orderCode, order?.orderId, order?.summary.orderNumber]);
+    return t("order_details_reference", { number: cleanedCode });
+  }, [order?.orderCode, order?.orderId, order?.summary.orderNumber, t]);
   const paymentMethodLabel = useMemo(() => {
     const value = order?.paymentMethod?.trim();
 
     if (!value) {
-      return "-";
+      return t("order_details_unavailable");
     }
 
     return value.charAt(0).toUpperCase() + value.slice(1);
-  }, [order?.paymentMethod]);
+  }, [order?.paymentMethod, t]);
   const isPaid = order?.paymentStatus?.trim().toLowerCase() === "paid";
 
   if (orderDetailsQuery.isLoading) {
@@ -123,19 +126,27 @@ export default function MainContainer({ navigation, orderId }: Props) {
 
   const cardStyle = [
     styles.card,
+    elevation.subtle,
     {
       backgroundColor: colors.surface,
       borderColor: colors.border,
-      shadowColor: colors.shadowColor,
+      borderRadius: shape.radius.hero,
+      padding: spacing.lg,
     },
   ] as const;
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <ScreenHeader title={t("order_details_title")} />
+    <View style={[styles.screen, { backgroundColor: colors.canvas }]}> 
+      <ScreenHeader
+        title={t("order_details_title")}
+        style={{ backgroundColor: colors.canvas }}
+      />
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          { gap: spacing.lg, paddingHorizontal: gutter, paddingBottom: spacing.xxxl },
+        ]}
         contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
       >
@@ -151,6 +162,12 @@ export default function MainContainer({ navigation, orderId }: Props) {
             statusTone={statusTone}
           />
         </View>
+
+        {!isPastOrder && order.timeline?.length > 0 ? (
+          <View style={cardStyle}>
+            <OrderDetailsTimelineSection items={order.timeline ?? []} />
+          </View>
+        ) : null}
 
         {order.scheduledAt ? (
           <View style={cardStyle}>
@@ -195,7 +212,7 @@ export default function MainContainer({ navigation, orderId }: Props) {
                     }}
                     weight="medium"
                   >
-                    Payment Method
+                    {t("order_details_payment_method")}
                   </Text>
                   <View style={styles.paymentValueRow}>
                     <Text
@@ -235,7 +252,7 @@ export default function MainContainer({ navigation, orderId }: Props) {
                         }}
                         weight="semiBold"
                       >
-                        Paid
+                        {t("order_details_paid")}
                       </Text>
                     </View>
                   ) : null}
@@ -310,19 +327,9 @@ export default function MainContainer({ navigation, orderId }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 20,
-    borderWidth: 1,
-    gap: 0,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   content: {
-    gap: 16,
-    paddingBottom: 32,
-    paddingHorizontal: 16,
     paddingTop: 8,
   },
   paidBadge: {

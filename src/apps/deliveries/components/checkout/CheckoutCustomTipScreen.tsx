@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../../../../general/components/Button';
 import Text from '../../../../general/components/Text';
+import { useWindowClass } from '../../../../general/hooks/useWindowClass';
 import { useDeliveriesCurrencyLabel } from '../../../../general/stores/useAppConfigStore';
 import { useTheme } from '../../../../general/theme/theme';
 import CheckoutHeader from './CheckoutHeader';
@@ -30,7 +31,9 @@ export default function CheckoutCustomTipScreen({
 }: Props) {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation('deliveries');
-  const { colors, typography } = useTheme();
+  const { colors, layout, shape, spacing, typography } = useTheme();
+  const { gutter } = useWindowClass();
+  const [isFocused, setIsFocused] = React.useState(false);
   const currencyLabel = useDeliveriesCurrencyLabel();
   const parsedTip = Number.parseFloat(tipValue);
   const isSaveDisabled = !Number.isFinite(parsedTip) || parsedTip <= 0;
@@ -40,7 +43,7 @@ export default function CheckoutCustomTipScreen({
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={keyboardVerticalOffset}
-      style={[styles.screen, { backgroundColor: colors.background }]}
+      style={[styles.screen, { backgroundColor: colors.canvas }]}
     >
       <CheckoutHeader
         backIconName="close"
@@ -49,27 +52,29 @@ export default function CheckoutCustomTipScreen({
       />
 
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          { gap: spacing.lg, paddingHorizontal: gutter },
+        ]}
         keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Text
-          color={colors.mutedText}
-          style={{
-            fontSize: typography.size.sm2,
-            lineHeight: typography.lineHeight.md,
-          }}
-        >
-          {t('checkout_tip_description')}
-        </Text>
+        <View style={[styles.contentInner, { gap: spacing.lg, maxWidth: layout.contentMaxWidth.readable }]}>
+          <Text color={colors.textSubtle} variant="supporting">
+            {t('checkout_tip_description')}
+          </Text>
 
-        <View
+          <View
           style={[
             styles.inputWrapper,
             {
               backgroundColor: colors.surface,
-              borderColor: colors.border,
+              borderColor: isFocused ? colors.primary : colors.border,
+              borderRadius: shape.radius.surface,
+              borderWidth: isFocused ? shape.borderWidth.selected : shape.borderWidth.hairline,
+              gap: spacing.md,
+              paddingHorizontal: spacing.lg,
             },
           ]}
         >
@@ -87,6 +92,8 @@ export default function CheckoutCustomTipScreen({
             autoFocus
             keyboardType="decimal-pad"
             onChangeText={onChangeTipValue}
+            onBlur={() => setIsFocused(false)}
+            onFocus={() => setIsFocused(true)}
             placeholder={t('checkout_tip_custom_placeholder')}
             placeholderTextColor={colors.mutedText}
             style={[
@@ -98,6 +105,7 @@ export default function CheckoutCustomTipScreen({
             ]}
             value={tipValue}
           />
+          </View>
         </View>
       </ScrollView>
 
@@ -105,37 +113,44 @@ export default function CheckoutCustomTipScreen({
         style={[
           styles.footer,
           {
-            backgroundColor: colors.background,
-            borderColor: colors.border,
+            backgroundColor: colors.surfaceElevated,
+            borderColor: colors.divider,
             paddingBottom: Math.max(insets.bottom, 12),
+            paddingHorizontal: gutter,
           },
         ]}
       >
-        <Button
-          disabled={isSaveDisabled}
-          label={t('checkout_tip_custom_done')}
-          onPress={onSavePress}
-          style={styles.button}
-        />
+        <View style={[styles.footerInner, { maxWidth: layout.contentMaxWidth.readable }]}>
+          <Button
+            disabled={isSaveDisabled}
+            fullWidth
+            label={t('checkout_tip_custom_done')}
+            onPress={onSavePress}
+            size="large"
+          />
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  button: {
-    minHeight: 44,
-  },
   content: {
     flexGrow: 1,
-    gap: 12,
-    paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 24,
   },
+  contentInner: {
+    marginHorizontal: 'auto',
+    width: '100%',
+  },
   footer: {
-    paddingHorizontal: 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
     paddingTop: 12,
+  },
+  footerInner: {
+    marginHorizontal: 'auto',
+    width: '100%',
   },
   input: {
     flex: 1,
@@ -146,13 +161,9 @@ const styles = StyleSheet.create({
   },
   inputWrapper: {
     alignItems: 'baseline',
-    borderRadius: 6,
-    borderWidth: 1,
     flexDirection: 'row',
-    gap: 8,
-    minHeight: 48,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    minHeight: 62,
+    paddingVertical: 12,
   },
   screen: {
     flex: 1,

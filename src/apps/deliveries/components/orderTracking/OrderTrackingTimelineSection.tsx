@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import type {
   DeliveryOrderLogItem,
   DeliveryOrderTimelineItem,
@@ -15,7 +16,8 @@ type Props = {
 };
 
 export default function OrderTrackingTimelineSection({ timeline, orderLogs }: Props) {
-  const entries = getOrderTrackingTimelineEntries(timeline, orderLogs);
+  const { t } = useTranslation("deliveries");
+  const entries = getOrderTrackingTimelineEntries(timeline, orderLogs, t);
 
   return (
     <View style={styles.container}>

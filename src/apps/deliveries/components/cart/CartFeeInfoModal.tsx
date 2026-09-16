@@ -1,36 +1,72 @@
 import React from 'react';
 import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../../../../general/components/Button';
 import BottomSheetHandle from '../../../../general/components/BottomSheetHandle';
+import PressableScale from '../../../../general/components/PressableScale';
 import SwipeableBottomSheet from '../../../../general/components/SwipeableBottomSheet';
 import Text from '../../../../general/components/Text';
 import { useTheme } from '../../../../general/theme/theme';
-import { CART_MINIMUM_SPEND, CART_SMALL_ORDER_FEE, formatCartPrice } from './cartUtils';
+import { formatCartPrice } from './cartUtils';
 
 type Props = {
-  visible: boolean;
+  currentSubtotal: number;
+  deliveryFee?: number | null;
+  minimumOrder?: number | null;
   onClose: () => void;
+  visible: boolean;
 };
 
-export default function CartFeeInfoModal({ visible, onClose }: Props) {
-  const { colors, typography } = useTheme();
+export default function CartFeeInfoModal({
+  currentSubtotal,
+  deliveryFee,
+  minimumOrder,
+  onClose,
+  visible,
+}: Props) {
+  const { colors, elevation, layout, shape, spacing } = useTheme();
   const { t } = useTranslation('deliveries');
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
-  const expandedHeight = Math.min(height * 0.5, 460) + insets.bottom;
+  const expandedHeight = Math.min(height * 0.54, 480) + insets.bottom;
 
-  if (!visible) {
-    return null;
-  }
+  if (!visible) return null;
+
+  const facts = [
+    {
+      icon: 'basket-outline' as const,
+      label: t('cart_fee_modal_current_subtotal'),
+      value: formatCartPrice(currentSubtotal),
+    },
+    minimumOrder && minimumOrder > 0
+      ? {
+          icon: 'shopping-outline' as const,
+          label: t('cart_fee_modal_minimum_order'),
+          value: formatCartPrice(minimumOrder),
+        }
+      : null,
+    typeof deliveryFee === 'number'
+      ? {
+          icon: 'bike-fast' as const,
+          label: t('cart_fee_modal_base_delivery'),
+          value: formatCartPrice(deliveryFee),
+        }
+      : null,
+  ].filter(Boolean) as Array<{
+    icon: 'basket-outline' | 'shopping-outline' | 'bike-fast';
+    label: string;
+    value: string;
+  }>;
 
   return (
-    <View pointerEvents="box-none" style={styles.modalRoot}>
+    <View pointerEvents="box-none" style={[styles.modalRoot, { zIndex: layout.layer.modal }]}>
       <Pressable
+        accessibilityLabel={t('store_details_close')}
+        accessibilityRole="button"
         onPress={onClose}
-        style={[styles.overlay, { backgroundColor: 'rgba(0, 0, 0, 0.45)' }]}
+        style={[styles.overlay, { backgroundColor: colors.scrim }]}
       />
 
       <SwipeableBottomSheet
@@ -40,135 +76,85 @@ export default function CartFeeInfoModal({ visible, onClose }: Props) {
         initialState="expanded"
         modal
         onStateChange={(state) => {
-          if (state === 'collapsed') {
-            onClose();
-          }
+          if (state === 'collapsed') onClose();
         }}
         style={[
           styles.sheet,
+          elevation.overlay,
           {
             backgroundColor: colors.surface,
-            shadowColor: colors.shadowColor,
-          }
+            borderTopLeftRadius: shape.radius.sheet,
+            borderTopRightRadius: shape.radius.sheet,
+          },
         ]}
       >
         <View
           style={[
             styles.content,
             {
-              paddingBottom: insets.bottom + 20,
+              gap: spacing.xl,
+              paddingBottom: insets.bottom + spacing.xl,
+              paddingHorizontal: spacing.xl,
             },
           ]}
         >
           <View style={styles.headerRow}>
-            <View style={styles.headerSpacer} />
-            <Text
-              variant="subtitle"
-              weight="extraBold"
-              numberOfLines={1}
-              style={[styles.headerTitle, { color: colors.text }]}
-            >
+            <View style={{ width: layout.touchTarget.minimum }} />
+            <Text numberOfLines={1} style={styles.headerTitle} variant="sectionTitle" weight="bold">
               {t('cart_fee_modal_title')}
             </Text>
-
-            <Pressable accessibilityRole="button" onPress={onClose} style={styles.closeButton}>
-              <Ionicons color={colors.mutedText} name="close" size={20} />
-            </Pressable>
+            <PressableScale
+              accessibilityLabel={t('store_details_close')}
+              accessibilityRole="button"
+              onPress={onClose}
+              style={[
+                styles.closeButton,
+                {
+                  backgroundColor: colors.surfaceSunken,
+                  borderRadius: shape.radius.pill,
+                  height: layout.touchTarget.minimum,
+                  width: layout.touchTarget.minimum,
+                },
+              ]}
+            >
+              <MaterialCommunityIcons color={colors.text} name="close" size={20} />
+            </PressableScale>
           </View>
 
-          <Text
-            style={{
-              color: colors.mutedText,
-              fontSize: typography.size.md,
-              lineHeight: typography.lineHeight.md + 2,
-            }}
-          >
-            {t('cart_fee_modal_description_prefix')}
-            <Text
-              weight="semiBold"
-              style={{
-                color: colors.text,
-                fontSize: typography.size.md,
-                lineHeight: typography.lineHeight.md + 2,
-              }}
-            >
-              {formatCartPrice(CART_MINIMUM_SPEND)}
-            </Text>
-            {t('cart_fee_modal_description_suffix')}
-          </Text>
-
-          <View style={styles.table}>
-            <View style={styles.tableHeader}>
-              <Text
-                weight="semiBold"
-                style={{
-                  color: colors.text,
-                  fontSize: typography.size.md2,
-                  lineHeight: typography.lineHeight.md,
-                }}
+          <View style={[styles.factList, { borderColor: colors.border, borderRadius: shape.radius.surface }]}>
+            {facts.map((fact, index) => (
+              <View
+                key={fact.label}
+                style={[
+                  styles.factRow,
+                  {
+                    borderBottomColor: colors.divider,
+                    borderBottomWidth: index === facts.length - 1 ? 0 : StyleSheet.hairlineWidth,
+                    gap: spacing.md,
+                    minHeight: layout.touchTarget.comfortable,
+                    paddingHorizontal: spacing.lg,
+                  },
+                ]}
               >
-                {t('cart_fee_modal_total_cart_value')}
-              </Text>
-              <Text
-                weight="semiBold"
-                style={{
-                  color: colors.text,
-                  fontSize: typography.size.md2,
-                  lineHeight: typography.lineHeight.md,
-                }}
-              >
-                {t('cart_fee_modal_service_fee')}
-              </Text>
-            </View>
-
-            <View style={styles.tableRow}>
-              <Text style={{ color: colors.mutedText }}>
-                {formatCartPrice(1)} - {formatCartPrice(CART_MINIMUM_SPEND - 0.01)}
-              </Text>
-              <Text style={{ color: colors.mutedText }}>{formatCartPrice(CART_SMALL_ORDER_FEE)}</Text>
-            </View>
-
-            <View style={styles.tableRow}>
-              <Text style={{ color: colors.mutedText }}>
-                {formatCartPrice(CART_MINIMUM_SPEND)} & {t('cart_fee_modal_above')}
-              </Text>
-              <Text style={{ color: colors.mutedText }}>{t('cart_fee_modal_no_fee')}</Text>
-            </View>
+                <MaterialCommunityIcons color={colors.primary} name={fact.icon} size={20} />
+                <Text color={colors.textSubtle} style={styles.factLabel} variant="body">
+                  {fact.label}
+                </Text>
+                <Text variant="body" weight="semiBold">
+                  {fact.value}
+                </Text>
+              </View>
+            ))}
           </View>
 
-          <Text
-            style={{
-              color: colors.mutedText,
-              fontSize: typography.size.sm,
-              lineHeight: typography.lineHeight.sm,
-            }}
-          >
-            {t('cart_fee_modal_note_prefix')}
-            <Text
-              weight="semiBold"
-              style={{
-                color: colors.text,
-                fontSize: typography.size.sm,
-                lineHeight: typography.lineHeight.sm,
-              }}
-            >
-              {formatCartPrice(CART_MINIMUM_SPEND)}
+          <View style={[styles.notice, { backgroundColor: colors.primarySoft, borderRadius: shape.radius.control, gap: spacing.md, padding: spacing.lg }]}>
+            <MaterialCommunityIcons color={colors.primary} name="information-outline" size={21} />
+            <Text color={colors.textSubtle} style={styles.noticeCopy} variant="supporting">
+              {t('cart_fee_modal_checkout_notice')}
             </Text>
-            {t('cart_fee_modal_note_middle')}
-            <Text
-              weight="semiBold"
-              style={{
-                color: colors.text,
-                fontSize: typography.size.sm,
-                lineHeight: typography.lineHeight.sm,
-              }}
-            >
-              {formatCartPrice(CART_SMALL_ORDER_FEE)}
-            </Text>
-            {t('cart_fee_modal_note_suffix')}
-          </Text>
+          </View>
 
-          <Button label={t('store_details_close')} onPress={onClose} style={styles.cta} />
+          <Button fullWidth label={t('store_details_close')} onPress={onClose} />
         </View>
       </SwipeableBottomSheet>
     </View>
@@ -178,67 +164,46 @@ export default function CartFeeInfoModal({ visible, onClose }: Props) {
 const styles = StyleSheet.create({
   closeButton: {
     alignItems: 'center',
-    height: 28,
     justifyContent: 'center',
-    width: 28,
+    overflow: 'hidden',
   },
-  cta: {
-    marginTop: 4,
+  content: {
+    paddingTop: 4,
+  },
+  factLabel: {
+    flex: 1,
+  },
+  factList: {
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
+  },
+  factRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
   },
   headerRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 12,
-  },
-  headerSpacer: {
-    height: 28,
-    width: 28,
   },
   headerTitle: {
     flex: 1,
     textAlign: 'center',
   },
-  content: {
-    gap: 16,
-    paddingHorizontal: 20,
-    paddingTop: 4,
-  },
-  handle: {
-    borderRadius: 999,
-    height: 4,
-    width: 40,
-  },
-  handleContainer: {
-    alignItems: 'center',
-    paddingBottom: 12,
-    paddingTop: 4,
-  },
   modalRoot: {
-    // flex: 1,
-    // justifyContent: 'flex-end',
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'flex-end',
+  },
+  notice: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+  },
+  noticeCopy: {
+    flex: 1,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    zIndex:999999
   },
   sheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    elevation: 8,
     paddingTop: 12,
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.16,
-    shadowRadius: 10,
-  },
-  table: {
-    gap: 14,
-  },
-  tableHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  tableRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
   },
 });

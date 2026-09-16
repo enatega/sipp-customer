@@ -20,6 +20,7 @@ import { useTheme } from '../../../general/theme/theme';
 import ChatComposer from '../components/chat/ChatComposer';
 import ChatMessageBubble from '../components/chat/ChatMessageBubble';
 import ChatQuickReplyChip from '../components/chat/ChatQuickReplyChip';
+import SupportStatePanel from '../components/support/SupportStatePanel';
 import { useDeliveriesSocketSession } from '../hooks';
 import { useSendSupportChatMessage } from '../hooks/useSupportChatMutations';
 import { useSupportChatBox, useSupportChatMessages } from '../hooks/useSupportChatQueries';
@@ -64,16 +65,17 @@ export default function SupportTicketDetailScreen() {
   const [draftMessage, setDraftMessage] = useState('');
   const [pendingMessages, setPendingMessages] = useState<TicketChatMessage[]>([]);
   const [realtimeMessages, setRealtimeMessages] = useState<TicketChatMessage[]>([]);
+  const isTicketClosed = ticket.statusTone === 'info';
   const resolvedChatBoxId = lockedTicketChatBoxId ?? chatBoxId;
   const supportChatBoxQuery = useSupportChatBox(resolvedChatBoxId);
   const supportChatMessagesQuery = useSupportChatMessages(resolvedChatBoxId);
   const refetchSupportChatBox = supportChatBoxQuery.refetch;
   const refetchSupportChatMessages = supportChatMessagesQuery.refetch;
   const supportChatSendMutation = useSendSupportChatMessage({
-    onError: (error) => {
+    onError: () => {
       showToast.error(
         t('support_chat_send_error_title'),
-        error.message || t('support_chat_send_error_message'),
+        t('support_chat_send_error_message'),
       );
     },
     onSuccess: (response) => {
@@ -88,6 +90,11 @@ export default function SupportTicketDetailScreen() {
       }
     },
   });
+  const statusTone = ticket.statusTone === 'danger'
+    ? { background: colors.dangerSoft, foreground: colors.dangerText }
+    : ticket.statusTone === 'info'
+      ? { background: colors.primarySoft, foreground: colors.primary }
+      : { background: colors.successSoft, foreground: colors.successText };
 
   useEffect(() => {
     setChatBoxId(lockedTicketChatBoxId);
@@ -190,50 +197,6 @@ export default function SupportTicketDetailScreen() {
       return undefined;
     }, [refetchSupportChatBox, refetchSupportChatMessages, resolvedChatBoxId]),
   );
-
-  useEffect(() => {
-    const rawServerMessages = getSupportChatMessages(supportChatMessagesQuery.data);
-
-    console.log('SupportTicketDetailScreen message debug', {
-      activeChatBoxId: activeChatBox?.id,
-      chatBoxId,
-      mappedMessageCount: messages.length,
-      mappedMessages: messages.map((message) => ({
-        id: message.id,
-        isCurrentUser: message.isCurrentUser,
-        text: message.text,
-        timeLabel: message.timeLabel,
-      })),
-      pendingCount: pendingMessages.length,
-      pendingMessages,
-      rawServerCount: rawServerMessages.length,
-      rawServerMessages: rawServerMessages.map((message) => ({
-        createdAt: message.createdAt ?? message.created_at,
-        id: getSupportChatMessageId(message),
-        senderId:
-          message.senderId ??
-          message.sender_id ??
-          getSupportChatParticipantId(message.sender),
-        text: message.text ?? message.message ?? '',
-      })),
-      resolvedChatBoxId,
-      realtimeCount: realtimeMessages.length,
-      realtimeMessages,
-      ticketChatBoxId: ticket.chatBoxId,
-      ticketId: ticket.id,
-    });
-  }, [
-    activeChatBox?.id,
-    chatBoxId,
-    messages,
-    pendingMessages,
-    realtimeMessages,
-    resolvedChatBoxId,
-    supportChatBoxQuery.data,
-    supportChatMessagesQuery.data,
-    ticket.chatBoxId,
-    ticket.id,
-  ]);
 
   const appendMessageToChatBoxCache = (
     nextChatBoxId: string,
@@ -483,6 +446,7 @@ export default function SupportTicketDetailScreen() {
           setPendingMessages((current) =>
             current.filter((message) => message.id !== pendingMessageId),
           );
+          setDraftMessage((current) => current || trimmedValue);
         },
         onSuccess: (response) => {
           setPendingMessages((current) =>
@@ -542,9 +506,9 @@ export default function SupportTicketDetailScreen() {
             {ticket.title}
           </Text>
 
-          <View style={[styles.statusChip, { backgroundColor: colors.green100 }]}>
+          <View style={[styles.statusChip, { backgroundColor: statusTone.background }]}> 
             <Text
-              color={colors.success}
+              color={statusTone.foreground}
               weight="medium"
               style={{ fontSize: typography.size.xs2, lineHeight: 18 }}
             >
@@ -580,18 +544,24 @@ export default function SupportTicketDetailScreen() {
           keyboardShouldPersistTaps="handled"
         >
           {resolvedChatBoxId
-          && (supportChatBoxQuery.isPending || supportChatMessagesQuery.isPending)
-          && messages.length === 0 ? (
+          && (supportChatBoxQuery.isPending || supportChatMessagesQuery.isPending) ? (
             <View style={styles.centerState}>
               <ActivityIndicator size="large" color={colors.primary} />
               <Text color={colors.mutedText}>{t('support_chat_loading')}</Text>
             </View>
           ) : supportChatBoxQuery.isError || supportChatMessagesQuery.isError ? (
-            <View style={styles.centerState}>
-              <Text color={colors.danger}>
-                {supportChatMessagesQuery.error?.message ?? supportChatBoxQuery.error?.message}
-              </Text>
-            </View>
+            <SupportStatePanel
+              actionLabel={t('support_retry')}
+              description={t('support_error_description')}
+              iconName="cloud-offline-outline"
+              isActionPending={supportChatBoxQuery.isRefetching || supportChatMessagesQuery.isRefetching}
+              onAction={() => {
+                void refetchSupportChatBox();
+                void refetchSupportChatMessages();
+              }}
+              title={t('support_error_title')}
+              tone="danger"
+            />
           ) : (
             <View style={styles.messageSection}>
               {messages.map((message) => (
@@ -602,27 +572,36 @@ export default function SupportTicketDetailScreen() {
                   timeLabel={message.timeLabel}
                 />
               ))}
+              {isTicketClosed ? (
+                <SupportStatePanel
+                  description={t('support_chat_closed_description')}
+                  iconName="checkmark-circle-outline"
+                  title={t('support_chat_closed_title')}
+                />
+              ) : null}
             </View>
           )}
         </ScrollView>
 
-        <View style={[styles.quickReplyRail, { borderTopColor: colors.border }]}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.quickReplyRow}
-            keyboardShouldPersistTaps="handled"
-          >
-            {quickReplies.map((reply) => (
-              <ChatQuickReplyChip
-                key={reply}
-                disabled={supportChatSendMutation.isPending}
-                label={reply}
-                onPress={() => handleAppendMessage(reply)}
-              />
-            ))}
-          </ScrollView>
-        </View>
+        {!isTicketClosed && !supportChatBoxQuery.isError && !supportChatMessagesQuery.isError ? (
+          <View style={[styles.quickReplyRail, { borderTopColor: colors.border }]}> 
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.quickReplyRow}
+              keyboardShouldPersistTaps="handled"
+            >
+              {quickReplies.map((reply) => (
+                <ChatQuickReplyChip
+                  key={reply}
+                  disabled={supportChatSendMutation.isPending}
+                  label={reply}
+                  onPress={() => handleAppendMessage(reply)}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        ) : null}
 
         <View
           style={[
@@ -636,12 +615,13 @@ export default function SupportTicketDetailScreen() {
         >
           <ChatComposer
             attachmentAccessibilityLabel={t('support_chat_add_attachment')}
+            disabled={isTicketClosed || supportChatBoxQuery.isError || supportChatMessagesQuery.isError}
             isSending={supportChatSendMutation.isPending}
             messageAccessibilityLabel={t('support_chat_send_message')}
-            onAttachmentPress={() => undefined}
             onChangeText={setDraftMessage}
             onSend={() => handleAppendMessage(draftMessage)}
             placeholder={t('support_chat_input_placeholder')}
+            showAttachment={false}
             value={draftMessage}
           />
         </View>

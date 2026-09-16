@@ -1,9 +1,12 @@
 import React from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Button from "../../../../general/components/Button";
 import Icon from "../../../../general/components/Icon";
+import PlatformGlassSurface from "../../../../general/components/PlatformGlassSurface";
+import PressableScale from "../../../../general/components/PressableScale";
+import { useWindowClass } from "../../../../general/hooks/useWindowClass";
 import Text from "../../../../general/components/Text";
 import { useTheme } from "../../../../general/theme/theme";
 
@@ -12,6 +15,7 @@ type Props = {
   totalPriceLabel: string;
   isSubmitting?: boolean;
   isDisabled?: boolean;
+  isAvailable?: boolean;
   onAddToCart: () => void;
   onIncrement: () => void;
   onDecrement: () => void;
@@ -22,94 +26,129 @@ export default function Footer({
   totalPriceLabel,
   isSubmitting = false,
   isDisabled = false,
+  isAvailable = true,
   onAddToCart,
   onIncrement,
   onDecrement,
 }: Props) {
   const { t } = useTranslation("deliveries");
-  const { colors, typography } = useTheme();
+  const { colors, elevation, layout, shape, spacing } = useTheme();
   const insets = useSafeAreaInsets();
+  const { gutter } = useWindowClass();
 
   return (
     <View
       style={[
-        styles.container,
+        styles.positioner,
         {
-          backgroundColor: colors.background,
-          borderTopColor: colors.border,
-          paddingBottom: insets.bottom + 12,
+          bottom: insets.bottom + spacing.sm,
+          paddingHorizontal: gutter,
         },
       ]}
+      pointerEvents="box-none"
     >
-      <View style={styles.row}>
-        <View style={styles.stepper}>
-          <Pressable
-            disabled={isSubmitting}
-            onPress={onDecrement}
-            style={({ pressed }) => [
-              styles.iconButton,
+      <View
+        style={[
+          styles.shadowShell,
+          elevation.overlay,
+          {
+            borderRadius: shape.radius.sheet,
+            maxWidth: layout.contentMaxWidth.readable,
+          },
+        ]}
+      >
+        <PlatformGlassSurface
+          effectStyle="regular"
+          style={[
+            styles.container,
+            {
+              borderColor: colors.glassBorder,
+              borderRadius: shape.radius.sheet,
+              gap: spacing.sm,
+              padding: spacing.sm,
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.stepper,
               {
-                backgroundColor: colors.background,
-                borderColor: colors.border,
-                shadowColor: colors.shadowColor,
-                opacity: isSubmitting ? 0.5 : pressed ? 0.7 : 1,
+                backgroundColor: colors.surfaceSunken,
+                borderRadius: shape.radius.control,
               },
             ]}
           >
-            <Icon
-              color={colors.iconColor}
-              name="remove"
-              size={14}
-              type="Ionicons"
+            <PressableScale
+              accessibilityLabel={t("cart_decrement_item")}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: isSubmitting || quantity <= 1 }}
+              disabled={isSubmitting || quantity <= 1}
+              onPress={onDecrement}
+              style={[
+                styles.iconButton,
+                {
+                  borderRadius: shape.radius.control,
+                  height: layout.touchTarget.minimum,
+                  width: layout.touchTarget.minimum,
+                },
+              ]}
+            >
+              <Icon
+                color={colors.iconColor}
+                name="remove"
+                size={14}
+                type="Ionicons"
+              />
+            </PressableScale>
+
+            <Text
+              color={colors.text}
+              weight="semiBold"
+              style={styles.quantity}
+              variant="numeric"
+            >
+              {quantity}
+            </Text>
+
+            <PressableScale
+              accessibilityLabel={t("cart_increment_item")}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: isSubmitting }}
+              disabled={isSubmitting}
+              onPress={onIncrement}
+              style={[
+                styles.iconButton,
+                {
+                  borderRadius: shape.radius.control,
+                  height: layout.touchTarget.minimum,
+                  width: layout.touchTarget.minimum,
+                },
+              ]}
+            >
+              <Icon
+                color={colors.iconColor}
+                name="add"
+                size={14}
+                type="Ionicons"
+              />
+            </PressableScale>
+          </View>
+
+          <View style={styles.cta}>
+            <Button
+              disabled={isDisabled}
+              fullWidth
+              isLoading={isSubmitting}
+              label={
+                isAvailable
+                  ? `${t("add_to_cart")}  ·  ${totalPriceLabel}`
+                  : t("product_info_unavailable")
+              }
+              onPress={onAddToCart}
+              variant="primary"
             />
-          </Pressable>
-
-          <Text
-            color={colors.text}
-            weight="semiBold"
-            style={{
-              fontSize: typography.size.lg,
-              fontVariant: ["tabular-nums"],
-              lineHeight: typography.lineHeight.lg,
-            }}
-          >
-            {quantity}
-          </Text>
-
-          <Pressable
-            disabled={isSubmitting}
-            onPress={onIncrement}
-            style={({ pressed }) => [
-              styles.iconButton,
-              {
-                backgroundColor: colors.background,
-                borderColor: colors.border,
-                shadowColor: colors.shadowColor,
-                opacity: isSubmitting ? 0.5 : pressed ? 0.7 : 1,
-              },
-            ]}
-          >
-            <Icon
-              color={colors.iconColor}
-              name="add"
-              size={14}
-              type="Ionicons"
-            />
-          </Pressable>
-        </View>
-
-        <Button
-          disabled={isDisabled}
-          isLoading={isSubmitting}
-          label={`${t("add_to_cart")} - ${totalPriceLabel}`}
-          labelStyle={{
-            fontSize: typography.size.sm2,
-            lineHeight: typography.lineHeight.sm2,
-          }}
-          onPress={onAddToCart}
-          style={styles.cta}
-          variant="primary"
-        />
+          </View>
+        </PlatformGlassSurface>
       </View>
     </View>
   );
@@ -117,34 +156,37 @@ export default function Footer({
 
 const styles = StyleSheet.create({
   container: {
-    borderTopWidth: 1,
-    paddingHorizontal: 16,
-    paddingTop: 12,
+    alignSelf: "center",
+    alignItems: "center",
+    borderWidth: StyleSheet.hairlineWidth,
+    flexDirection: "row",
+    overflow: "hidden",
+    width: "100%",
   },
   cta: {
-    borderRadius: 6,
     flex: 1,
-    minHeight: 44,
   },
   iconButton: {
     alignItems: "center",
-    borderRadius: 14,
-    borderWidth: 1,
-    height: 28,
     justifyContent: "center",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    width: 28,
   },
-  row: {
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 24,
+  positioner: {
+    left: 0,
+    position: "absolute",
+    right: 0,
+    zIndex: 30,
+  },
+  quantity: {
+    fontVariant: ["tabular-nums"],
+    minWidth: 24,
+    textAlign: "center",
+  },
+  shadowShell: {
+    alignSelf: "center",
+    width: "100%",
   },
   stepper: {
     alignItems: "center",
     flexDirection: "row",
-    gap: 10,
   },
 });

@@ -1,8 +1,35 @@
 import type {
+  DeliveryOrderEta,
   DeliveryOrderStatus,
   DeliveryOrderLogItem,
   DeliveryOrderTimelineItem,
 } from "../../api/ordersServiceTypes";
+
+export function formatEstimatedArrivalWindow(
+  eta: DeliveryOrderEta | null | undefined,
+) {
+  if (
+    typeof eta?.estimatedMinutes !== "number"
+    || !Number.isFinite(eta.estimatedMinutes)
+    || eta.estimatedMinutes <= 0
+  ) {
+    return null;
+  }
+
+  const calculatedAt = new Date(eta.calculatedAt);
+  const baseTime = Number.isNaN(calculatedAt.getTime())
+    ? new Date()
+    : calculatedAt;
+  const targetTime = baseTime.getTime() + eta.estimatedMinutes * 60_000;
+  const startTime = new Date(targetTime - 3 * 60_000);
+  const endTime = new Date(targetTime + 5 * 60_000);
+  const formatter = new Intl.DateTimeFormat(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+  return `${formatter.format(startTime)}–${formatter.format(endTime)}`;
+}
 
 export function formatTrackingEta(
   estimatedDeliveryTime: number | string | null | undefined,
@@ -93,6 +120,7 @@ export function formatTimelineLogTime(timestamp: string | null | undefined) {
 export function getOrderTrackingTimelineEntries(
   timeline: DeliveryOrderTimelineItem[] | null | undefined,
   orderLogs: DeliveryOrderLogItem[] | null | undefined,
+  translate?: (key: string) => string,
 ) {
   const statusTimes = buildStatusTimestampMap(orderLogs ?? []);
   const completedStatuses = CUSTOMER_STATUS_FLOW.filter((status) => Boolean(statusTimes[status]));
@@ -107,13 +135,18 @@ export function getOrderTrackingTimelineEntries(
     }));
   }
 
-  return completedStatuses.map((status, index) => ({
-    completedAt: statusTimes[status] ? formatTimelineLogTime(statusTimes[status]) : null,
-    key: `${status}-${index}`,
-    stepKey: status,
-    title: CUSTOMER_STATUS_LABELS[status] ?? status,
-    tone: "completed" as const,
-  }));
+  return completedStatuses.map((status, index) => {
+    const translationKey = CUSTOMER_STATUS_KEYS[status];
+    return {
+      completedAt: statusTimes[status] ? formatTimelineLogTime(statusTimes[status]) : null,
+      key: `${status}-${index}`,
+      stepKey: status,
+      title: (translationKey ? translate?.(translationKey) : null)
+        || CUSTOMER_STATUS_LABELS[status]
+        || status,
+      tone: "completed" as const,
+    };
+  });
 }
 
 const CUSTOMER_STATUS_LABELS: Partial<Record<DeliveryOrderStatus, string>> = {
@@ -126,6 +159,18 @@ const CUSTOMER_STATUS_LABELS: Partial<Record<DeliveryOrderStatus, string>> = {
   cancelled: "Order cancelled",
   rejected: "Order rejected",
   failed: "Order failed",
+};
+
+const CUSTOMER_STATUS_KEYS: Partial<Record<DeliveryOrderStatus, string>> = {
+  scheduled: "orders_status_scheduled",
+  pending: "orders_status_received",
+  accepted: "orders_status_confirmed",
+  preparing: "orders_status_preparing",
+  picked_up: "orders_status_on_the_way",
+  delivered: "orders_status_delivered",
+  cancelled: "orders_status_cancelled",
+  rejected: "orders_status_rejected",
+  failed: "orders_status_failed",
 };
 
 const CUSTOMER_STATUS_FLOW: DeliveryOrderStatus[] = [

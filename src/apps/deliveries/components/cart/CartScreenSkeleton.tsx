@@ -2,27 +2,54 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Skeleton from '../../../../general/components/Skeleton';
+import { useWindowClass } from '../../../../general/hooks/useWindowClass';
+import { useTheme } from '../../../../general/theme/theme';
 
 export default function CartScreenSkeleton() {
+  const { layout, shape, spacing } = useTheme();
   const insets = useSafeAreaInsets();
+  const { gutter } = useWindowClass();
 
   return (
     <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <Skeleton borderRadius={20} height={40} width={40} />
-        <Skeleton borderRadius={8} height={24} width={80} />
-        <View style={styles.trailingSpace} />
+      <View
+        style={[
+          styles.header,
+          {
+            paddingBottom: spacing.sm,
+            paddingHorizontal: gutter,
+            paddingTop: insets.top + spacing.sm,
+          },
+        ]}
+      >
+        <Skeleton borderRadius={shape.radius.pill} height={44} width={44} />
+        <Skeleton borderRadius={shape.radius.sm} height={26} width={92} />
+        <Skeleton borderRadius={shape.radius.pill} height={44} width={44} />
       </View>
 
-      <View style={styles.body}>
-        <Skeleton borderRadius={10} height={46} width="100%" />
-        <Skeleton borderRadius={8} height={28} width={110} />
-        <Skeleton borderRadius={10} height={88} width="100%" />
-        <Skeleton borderRadius={10} height={88} width="100%" />
-        <Skeleton borderRadius={8} height={28} width={180} />
-        <View style={styles.recommendationRow}>
-          <Skeleton borderRadius={12} height={210} width={282} />
-          <Skeleton borderRadius={12} height={210} width={282} />
+      <View
+        style={[
+          styles.body,
+          {
+            gap: spacing.section.default,
+            maxWidth: layout.contentMaxWidth.readable,
+            paddingHorizontal: gutter,
+            paddingTop: spacing.sm,
+          },
+        ]}
+      >
+        <Skeleton borderRadius={shape.radius.surface} height={82} width="100%" />
+        <View style={[styles.section, { gap: spacing.md }]}> 
+          <Skeleton borderRadius={shape.radius.sm} height={28} width={126} />
+          <Skeleton borderRadius={shape.radius.surface} height={254} width="100%" />
+        </View>
+        <Skeleton borderRadius={shape.radius.surface} height={214} width="100%" />
+        <View style={[styles.section, { gap: spacing.md }]}> 
+          <Skeleton borderRadius={shape.radius.sm} height={28} width={190} />
+          <View style={[styles.recommendationRow, { gap: spacing.md }]}> 
+            <Skeleton borderRadius={shape.radius.surface} height={230} width={196} />
+            <Skeleton borderRadius={shape.radius.surface} height={230} width={196} />
+          </View>
         </View>
       </View>
     </View>
@@ -31,8 +58,8 @@ export default function CartScreenSkeleton() {
 
 const styles = StyleSheet.create({
   body: {
-    gap: 20,
-    paddingHorizontal: 16,
+    alignSelf: 'center',
+    width: '100%',
   },
   container: {
     flex: 1,
@@ -41,14 +68,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingBottom: 12,
-    paddingHorizontal: 16,
   },
   recommendationRow: {
     flexDirection: 'row',
-    gap: 12,
   },
-  trailingSpace: {
-    width: 40,
+  section: {
+    width: '100%',
   },
 });

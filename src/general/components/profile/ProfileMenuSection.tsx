@@ -1,30 +1,39 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTheme } from '../../theme/theme';
+import Text from '../Text';
 
 type Props = {
   children: React.ReactNode;
+  title?: string;
 };
 
-export default function ProfileMenuSection({ children }: Props) {
-  const { colors } = useTheme();
+export default function ProfileMenuSection({ children, title }: Props) {
+  const { colors, elevation } = useTheme();
   const items = React.Children.toArray(children);
 
   return (
     <View style={styles.wrapper}>
-      <View style={[styles.container, { borderColor: colors.border }]}>
-        {items.map((child, index) => (
-          <React.Fragment key={index}>
-            {child}
-            {index < items.length - 1 && (
-              <View style={styles.dividerWrapper}>
-                <View
-                  style={[styles.divider, { backgroundColor: colors.border }]}
-                />
-              </View>
-            )}
-          </React.Fragment>
-        ))}
+      {title ? (
+        <Text weight="bold" style={styles.title}>
+          {title}
+        </Text>
+      ) : null}
+      <View style={[styles.surface, elevation.subtle, { backgroundColor: colors.surface }]}> 
+        <View style={[styles.container, { borderColor: colors.divider }]}> 
+          {items.map((child, index) => (
+            <React.Fragment key={index}>
+              {child}
+              {index < items.length - 1 && (
+                <View style={styles.dividerWrapper}>
+                  <View
+                    style={[styles.divider, { backgroundColor: colors.border }]}
+                  />
+                </View>
+              )}
+            </React.Fragment>
+          ))}
+        </View>
       </View>
     </View>
   );
@@ -32,10 +41,10 @@ export default function ProfileMenuSection({ children }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 8,
+    borderRadius: 18,
     borderWidth: 1,
     overflow: 'hidden',
-    paddingVertical: 8,
+    paddingVertical: 4,
   },
   divider: {
     height: 1,
@@ -44,6 +53,15 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   wrapper: {
+    gap: 8,
     paddingHorizontal: 16,
+  },
+  title: {
+    fontSize: 17,
+    lineHeight: 24,
+    paddingHorizontal: 2,
+  },
+  surface: {
+    borderRadius: 18,
   },
 });

@@ -15,6 +15,10 @@ export type SeeAllListingType =
 
 export type SeeAllItem = DeliveryNearbyStore | DeliveryShopTypeProduct;
 
+export type DeliverySearchRouteParams = {
+  autoFocusRequestId?: number;
+};
+
 export type DeliveriesSeeAllParamList = {
   SeeAllScreen: {
     queryType: SeeAllListingType;

@@ -99,7 +99,7 @@ function extractCreatedTicketId(response: {
 }
 
 export default function SupportContactFormScreen() {
-  const { colors, typography } = useTheme();
+  const { colors, shape, typography } = useTheme();
   const { t, i18n } = useTranslation('deliveries');
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<SupportHomeNavigationProp>();
@@ -122,7 +122,6 @@ export default function SupportContactFormScreen() {
   const [attachmentFileNames, setAttachmentFileNames] = useState<string[]>([]);
   const createSupportTicketMutation = useCreateSupportTicketMutation({
     onSuccess: async (response) => {
-      console.log('[SupportContactForm] ticket submit success:', response);
       showToast.success(
         t('support_form_submit_success_title'),
         t('support_form_submit_success_message'),
@@ -158,14 +157,10 @@ export default function SupportContactFormScreen() {
 
       navigation.goBack();
     },
-    onError: (error) => {
-      console.log('[SupportContactForm] ticket submit error:', {
-        message: error.message,
-        error,
-      });
+    onError: () => {
       showToast.error(
         t('support_form_submit_error_title'),
-        error.message,
+        t('support_form_submit_error_message'),
       );
     },
   });
@@ -320,24 +315,6 @@ export default function SupportContactFormScreen() {
     const normalizedBusinessType = normalizeTextValue(businessType);
     const normalizedTeamSize = normalizeTextValue(teamSize);
 
-    console.log('[SupportContactForm] submit pressed:', {
-      isBusinessJoiningFlow,
-      issueValue: normalizedIssueValue,
-      reasonValue,
-      email: trimmedEmail,
-      fullName: trimmedFullName,
-      countryRegion: normalizedCountryRegion,
-      countryRegionType: typeof countryRegion,
-      mobileNumber: trimmedMobileNumber,
-      businessName: trimmedBusinessName,
-      businessNameType: typeof businessName,
-      businessType: normalizedBusinessType,
-      businessTypeType: typeof businessType,
-      teamSize: normalizedTeamSize,
-      teamSizeType: typeof teamSize,
-      description: trimmedDescription,
-    });
-
     if (isBusinessJoiningFlow) {
       if (
         !trimmedEmail
@@ -350,17 +327,6 @@ export default function SupportContactFormScreen() {
         || !reasonValue
         || !trimmedDescription
       ) {
-        console.log('[SupportContactForm] business submit blocked by validation:', {
-          hasEmail: Boolean(trimmedEmail),
-          hasIssueValue: Boolean(trimmedIssueValue),
-          hasFullName: Boolean(trimmedFullName),
-          hasCountryRegion: Boolean(normalizedCountryRegion),
-          hasBusinessName: Boolean(trimmedBusinessName),
-          hasBusinessType: Boolean(normalizedBusinessType),
-          hasTeamSize: Boolean(normalizedTeamSize),
-          hasReasonValue: Boolean(reasonValue),
-          hasDescription: Boolean(trimmedDescription),
-        });
         return;
       }
 
@@ -379,18 +345,11 @@ export default function SupportContactFormScreen() {
         priority: 'low' as const,
       };
 
-      console.log('[SupportContactForm] business payload:', payload);
       createSupportTicketMutation.mutate(payload);
       return;
     }
 
     if (!trimmedEmail || !trimmedIssueValue || !reasonValue || !trimmedDescription) {
-      console.log('[SupportContactForm] standard submit blocked by validation:', {
-        hasEmail: Boolean(trimmedEmail),
-        hasIssueValue: Boolean(trimmedIssueValue),
-        hasReasonValue: Boolean(reasonValue),
-        hasDescription: Boolean(trimmedDescription),
-      });
       return;
     }
 
@@ -405,7 +364,6 @@ export default function SupportContactFormScreen() {
       priority: 'low' as const,
     };
 
-    console.log('[SupportContactForm] standard payload:', payload);
     createSupportTicketMutation.mutate(payload);
   };
 
@@ -485,8 +443,9 @@ export default function SupportContactFormScreen() {
           helperText={t('support_form_email_helper')}
           isRequired
         >
-          <View style={[styles.inputField, { backgroundColor: colors.background, borderColor: colors.border }]}>
+          <View style={[styles.inputField, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: shape.radius.control }]}> 
             <TextInput
+              accessibilityLabel={t('support_form_email_label')}
               autoCapitalize="none"
               keyboardType="email-address"
               onChangeText={(nextEmail) => {
@@ -504,8 +463,9 @@ export default function SupportContactFormScreen() {
         {isBusinessJoiningFlow ? (
           <>
             <SupportLabeledField label={t('support_form_full_name_label')} isRequired>
-              <View style={[styles.inputField, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <View style={[styles.inputField, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: shape.radius.control }]}> 
                 <TextInput
+                  accessibilityLabel={t('support_form_full_name_label')}
                   onChangeText={setFullName}
                   placeholder={t('support_form_full_name_placeholder')}
                   placeholderTextColor={colors.mutedText}
@@ -526,8 +486,9 @@ export default function SupportContactFormScreen() {
             </SupportLabeledField>
 
             <SupportLabeledField label={t('support_form_mobile_number_label')}>
-              <View style={[styles.inputField, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <View style={[styles.inputField, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: shape.radius.control }]}> 
                 <TextInput
+                  accessibilityLabel={t('support_form_mobile_number_label')}
                   keyboardType="phone-pad"
                   onChangeText={setMobileNumber}
                   placeholder={t('support_form_mobile_number_placeholder')}
@@ -539,8 +500,9 @@ export default function SupportContactFormScreen() {
             </SupportLabeledField>
 
             <SupportLabeledField label={t('support_form_business_name_label')} isRequired>
-              <View style={[styles.inputField, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <View style={[styles.inputField, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: shape.radius.control }]}> 
                 <TextInput
+                  accessibilityLabel={t('support_form_business_name_label')}
                   onChangeText={setBusinessName}
                   placeholder=" "
                   placeholderTextColor={colors.mutedText}
@@ -602,10 +564,13 @@ export default function SupportContactFormScreen() {
             <View
               style={[
                 styles.textAreaWrap,
-                { backgroundColor: colors.background, borderColor: colors.border },
+                { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: shape.radius.control },
               ]}
             >
               <TextInput
+                accessibilityLabel={isBusinessJoiningFlow
+                  ? t('support_form_business_description_label')
+                  : t('support_form_description_label')}
                 multiline
                 onChangeText={setDescription}
                 placeholder={t('support_form_description_placeholder')}
@@ -677,7 +642,6 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   inputField: {
-    borderRadius: 6,
     borderWidth: 1,
     minHeight: 48,
     paddingHorizontal: 12,
@@ -694,7 +658,6 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   textAreaWrap: {
-    borderRadius: 6,
     borderWidth: 1,
     height: 140,
     paddingHorizontal: 14,

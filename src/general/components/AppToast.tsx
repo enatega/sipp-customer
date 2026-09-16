@@ -14,7 +14,14 @@ import { useTheme } from '../theme/theme';
 
 type AlertType = 'success' | 'error' | 'info';
 
+export type ToastAction = {
+  accessibilityLabel?: string;
+  label: string;
+  onPress: () => void;
+};
+
 type ToastPayload = {
+  action?: ToastAction;
   type: AlertType;
   text1: string;
   text2?: string;
@@ -53,7 +60,7 @@ const iconByType: Record<AlertType, keyof typeof Ionicons.glyphMap> = {
 };
 
 export const AppToast = () => {
-  const { colors, typography } = useTheme();
+  const { colors, shape, spacing, typography } = useTheme();
   const insets = useSafeAreaInsets();
 
   const [toast, setToast] = useState<ToastPayload | null>(null);
@@ -200,6 +207,12 @@ export const AppToast = () => {
     return null;
   }
 
+  const handleActionPress = () => {
+    const action = toast.action;
+    hideToast();
+    action?.onPress();
+  };
+
   return (
     <View pointerEvents="box-none" style={styles.overlay}>
       <Animated.View
@@ -209,6 +222,7 @@ export const AppToast = () => {
             marginTop: topOffset,
             backgroundColor: palette.background,
             borderColor: `${palette.border}33`,
+            borderRadius: shape.radius.surface,
             opacity,
             transform: [{ translateY }],
           },
@@ -255,16 +269,56 @@ export const AppToast = () => {
                   {toast.text2}
                 </Text>
               )}
+
+              {toast.action ? (
+                <Pressable
+                  accessibilityLabel={
+                    toast.action.accessibilityLabel ?? toast.action.label
+                  }
+                  accessibilityRole="button"
+                  hitSlop={4}
+                  onPress={handleActionPress}
+                  style={({ pressed }) => [
+                    styles.action,
+                    {
+                      backgroundColor: `${palette.content}${pressed ? '22' : '12'}`,
+                      borderRadius: shape.radius.pill,
+                      marginTop: spacing.sm,
+                    },
+                  ]}
+                >
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      styles.actionLabel,
+                      {
+                        color: palette.content,
+                        fontSize: typography.size.sm,
+                        lineHeight: typography.lineHeight.sm2,
+                        fontWeight: '700',
+                      },
+                    ]}
+                  >
+                    {toast.action.label}
+                  </Text>
+                  <Ionicons
+                    color={palette.content}
+                    name="arrow-forward"
+                    size={15}
+                  />
+                </Pressable>
+              ) : null}
             </View>
           </View>
 
           <Pressable
             accessibilityLabel="Close alert"
-            hitSlop={8}
+            accessibilityRole="button"
+            hitSlop={6}
             onPress={hideToast}
             style={styles.closeButton}
           >
-            <Ionicons color={colors.iconMuted} name="close" size={18} />
+            <Ionicons color={palette.content} name="close" size={18} />
           </Pressable>
         </View>
 
@@ -289,6 +343,7 @@ const show = (
   text1: string,
   text2?: string,
   duration = DEFAULT_DURATION,
+  action?: ToastAction,
 ) => {
   const normalizedDuration = Math.min(
     TOAST_MAX_DURATION,
@@ -296,6 +351,7 @@ const show = (
   );
 
   emitToast({
+    action,
     type,
     text1,
     text2,
@@ -304,8 +360,13 @@ const show = (
 };
 
 export const showToast = {
-  success: (text1: string, text2?: string, duration?: number) => {
-    show('success', text1, text2, duration);
+  success: (
+    text1: string,
+    text2?: string,
+    duration?: number,
+    action?: ToastAction,
+  ) => {
+    show('success', text1, text2, duration, action);
   },
   error: (text1: string, text2?: string, duration?: number) => {
     show('error', text1, text2, duration);
@@ -318,6 +379,16 @@ export const showToast = {
 export default AppToast;
 
 const styles = StyleSheet.create({
+  action: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    minHeight: 36,
+    paddingHorizontal: 12,
+  },
+  actionLabel: {
+    marginRight: 6,
+  },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 9999,
@@ -326,7 +397,6 @@ const styles = StyleSheet.create({
   },
   container: {
     borderWidth: 1,
-    borderRadius: 8,
     marginHorizontal: 16,
     overflow: 'hidden',
   },
@@ -359,10 +429,10 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     alignItems: 'center',
-    height: 18,
+    height: 32,
     justifyContent: 'center',
-    marginTop: 1,
-    width: 18,
+    marginTop: -3,
+    width: 32,
   },
   timerTrack: {
     height: 3,

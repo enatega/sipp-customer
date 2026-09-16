@@ -1,8 +1,9 @@
 import React from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Text from '../Text';
 import { useTheme } from '../../theme/theme';
+import PressableScale from '../PressableScale';
 
 type Props = {
   typeLabel: string;
@@ -28,18 +29,17 @@ export default function MyProfileAddressCard({
   const { colors } = useTheme();
 
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole="button"
       accessibilityLabel={address || typeLabel}
       accessibilityState={{ busy: isSelecting, disabled: !onPress || isDisabled, selected: isSelected }}
       onPress={onPress}
       disabled={!onPress || isDisabled}
-      style={({ pressed }) => [
+      style={[
         styles.card,
         {
-          backgroundColor: isSelected ? colors.blue50 : colors.surface,
+          backgroundColor: isSelected ? colors.primarySoft : colors.surface,
           borderColor: isSelected ? colors.primary : colors.border,
-          opacity: isDisabled ? 0.65 : pressed && onPress ? 0.9 : 1,
         },
       ]}
     >
@@ -63,23 +63,22 @@ export default function MyProfileAddressCard({
         {isSelecting ? (
           <ActivityIndicator color={colors.primary} size="small" />
         ) : onMenuPress ? (
-          <Pressable
+          <PressableScale
             onPress={onMenuPress}
             accessibilityRole="button"
             accessibilityLabel={typeLabel}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            style={({ pressed }) => [
-              styles.menuButton,
-              { opacity: pressed ? 0.5 : 1 },
-            ]}
+            style={[styles.menuButton, { backgroundColor: colors.surfaceSunken }]}
           >
             <Ionicons name="ellipsis-vertical" size={18} color={colors.mutedText} />
-          </Pressable>
+          </PressableScale>
         ) : isSelected ? (
-          <Ionicons name="checkmark" size={22} color={colors.primary} />
+          <View style={[styles.selectedBadge, { backgroundColor: colors.primary }]}> 
+            <Ionicons name="checkmark" size={16} color={colors.onPrimary} />
+          </View>
         ) : null}
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -89,9 +88,10 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   card: {
-    borderRadius: 8,
+    borderRadius: 16,
     borderWidth: 1,
-    padding: 12,
+    overflow: 'hidden',
+    padding: 14,
   },
   content: {
     alignItems: 'center',
@@ -100,15 +100,25 @@ const styles = StyleSheet.create({
   },
   iconCircle: {
     alignItems: 'center',
-    borderRadius: 20,
-    height: 40,
+    borderRadius: 22,
+    height: 44,
     justifyContent: 'center',
-    width: 40,
+    width: 44,
   },
   menuButton: {
     alignItems: 'center',
+    borderRadius: 20,
+    height: 40,
     justifyContent: 'center',
-    padding: 4,
+    overflow: 'hidden',
+    width: 40,
+  },
+  selectedBadge: {
+    alignItems: 'center',
+    borderRadius: 14,
+    height: 28,
+    justifyContent: 'center',
+    width: 28,
   },
   textSection: {
     flex: 1,

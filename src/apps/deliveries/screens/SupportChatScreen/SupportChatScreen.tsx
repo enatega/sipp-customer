@@ -8,7 +8,6 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
 import { useQueryClient } from '@tanstack/react-query';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,6 +21,7 @@ import { useTheme } from '../../../../general/theme/theme';
 import ChatComposer from '../../components/chat/ChatComposer';
 import ChatMessageBubble from '../../components/chat/ChatMessageBubble';
 import ChatQuickReplyChip from '../../components/chat/ChatQuickReplyChip';
+import SupportStatePanel from '../../components/support/SupportStatePanel';
 import { useDeliveriesSocketSession } from '../../hooks';
 import { useSendSupportChatMessageToAdmin } from '../../hooks/useSupportChatMutations';
 import { deliveryKeys } from '../../api/queryKeys';
@@ -50,8 +50,6 @@ import type {
 } from '../../api/supportChatTypes';
 
 type SupportChatRouteProp = RouteProp<SupportNavigationParamList, 'SupportChat'>;
-
-const TEMP_SUPPORT_RECEIVER_ID = '79f6cbfa-2b05-49b8-9b31-01e84bc540d9';
 
 type PendingSupportMessage = {
   id: string;
@@ -93,8 +91,8 @@ export default function SupportChatScreen() {
   const refetchSupportChatBox = supportChatBoxQuery.refetch;
   const refetchSupportChatBoxes = supportChatBoxesQuery.refetch;
   const supportChatSendMutation = useSendSupportChatMessageToAdmin({
-    onError: (error) => {
-      showToast.error(t('support_chat_send_error_title'), error.message || t('support_chat_send_error_message'));
+    onError: () => {
+      showToast.error(t('support_chat_send_error_title'), t('support_chat_send_error_message'));
     },
     onSuccess: (response) => {
       const nextChatBoxId =
@@ -245,6 +243,12 @@ export default function SupportChatScreen() {
       fallbackParticipant,
     [activeChatBox, fallbackParticipant, sessionQuery.data?.user?.id],
   );
+  const conversationStatus = (
+    activeChatBox?.status
+    ?? supportActiveMessagesQuery.data?.status
+    ?? ''
+  ).trim().toLowerCase();
+  const isConversationClosed = ['closed', 'resolved', 'deleted'].includes(conversationStatus);
   const messages = useMemo(() => {
     const currentUserId = sessionQuery.data?.user?.id;
     const activeMessages = getSupportChatMessages(supportActiveMessagesQuery.data);
@@ -294,7 +298,7 @@ export default function SupportChatScreen() {
   const receiverId =
     route.params?.receiverId ||
     getSupportChatParticipantId(activeParticipant) ||
-    TEMP_SUPPORT_RECEIVER_ID;
+    undefined;
 
   const quickReplies = useMemo(
     () => [
@@ -388,11 +392,6 @@ export default function SupportChatScreen() {
       return;
     }
 
-    if (!receiverId) {
-      showToast.error(t('support_chat_send_error_title'), t('support_chat_missing_receiver_error'));
-      return;
-    }
-
     if (
       supportChatSendMutation.isPending
       && pendingMessages.some((message) => message.text.trim() === trimmed)
@@ -425,6 +424,7 @@ export default function SupportChatScreen() {
           setPendingMessages((current) =>
             current.filter((message) => message.id !== pendingMessageId),
           );
+          setDraftMessage((current) => current || trimmed);
         },
         onSuccess: (response) => {
           setPendingMessages((current) =>
@@ -454,37 +454,6 @@ export default function SupportChatScreen() {
     );
   };
 
-  const handleAttachmentPress = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (status !== 'granted') {
-      showToast.error(
-        t('support_chat_attachment_permission_title'),
-        t('support_chat_attachment_permission_message'),
-      );
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: false,
-      quality: 0.8,
-    });
-
-    if (result.canceled || result.assets.length === 0) {
-      return;
-    }
-
-    const asset = result.assets[0];
-
-    showToast.success(
-      t('support_chat_attachment_selected_title'),
-      t('support_chat_attachment_selected_message', {
-        fileName: asset.fileName ?? asset.uri.split('/').pop() ?? 'image',
-      }),
-    );
-  };
-
   const handleCallSupport = async () => {
     try {
       await Linking.openURL(`tel:${DELIVERIES_SUPPORT_PHONE_NUMBER}`);
@@ -495,8 +464,9 @@ export default function SupportChatScreen() {
   const showInitialLoadingState =
     (supportActiveMessagesQuery.isPending
       || supportChatBoxesQuery.isPending
-      || Boolean(chatBoxId && supportChatBoxQuery.isPending))
-    && messages.length === 0;
+      || Boolean(chatBoxId && supportChatBoxQuery.isPending));
+  const hasLoadError = Boolean(chatBoxId && supportChatBoxQuery.isError)
+    || (supportActiveMessagesQuery.isError && supportChatBoxesQuery.isError);
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
@@ -526,10 +496,22 @@ export default function SupportChatScreen() {
               <ActivityIndicator size="large" color={colors.primary} />
               <Text color={colors.mutedText}>{t('support_chat_loading')}</Text>
             </View>
-          ) : supportChatBoxQuery.isError ? (
-            <View style={styles.centerState}>
-              <Text color={colors.danger}>{supportChatBoxQuery.error.message}</Text>
-            </View>
+          ) : hasLoadError ? (
+            <SupportStatePanel
+              actionLabel={t('support_retry')}
+              description={t('support_error_description')}
+              iconName="cloud-offline-outline"
+              isActionPending={supportChatBoxQuery.isRefetching}
+              onAction={() => {
+                void supportActiveMessagesQuery.refetch();
+                void supportChatBoxesQuery.refetch();
+                if (chatBoxId) {
+                  void refetchSupportChatBox();
+                }
+              }}
+              title={t('support_error_title')}
+              tone="danger"
+            />
           ) : (
             <View style={styles.messageSection}>
               {messages.map((message) => (
@@ -540,27 +522,36 @@ export default function SupportChatScreen() {
                   timeLabel={message.timeLabel}
                 />
               ))}
+              {isConversationClosed ? (
+                <SupportStatePanel
+                  description={t('support_chat_closed_description')}
+                  iconName="checkmark-circle-outline"
+                  title={t('support_chat_closed_title')}
+                />
+              ) : null}
             </View>
           )}
         </ScrollView>
 
-        <View style={[styles.quickReplyRail, { borderTopColor: colors.border }]}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.quickReplyRow}
-            keyboardShouldPersistTaps="handled"
-          >
-            {quickReplies.map((reply) => (
-              <ChatQuickReplyChip
-                key={reply}
-                disabled={supportChatSendMutation.isPending}
-                label={reply}
-                onPress={() => appendMessage(reply)}
-              />
-            ))}
-          </ScrollView>
-        </View>
+        {!isConversationClosed && !hasLoadError ? (
+          <View style={[styles.quickReplyRail, { borderTopColor: colors.border }]}> 
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.quickReplyRow}
+              keyboardShouldPersistTaps="handled"
+            >
+              {quickReplies.map((reply) => (
+                <ChatQuickReplyChip
+                  key={reply}
+                  disabled={supportChatSendMutation.isPending}
+                  label={reply}
+                  onPress={() => appendMessage(reply)}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        ) : null}
 
         <View
           style={[
@@ -573,12 +564,13 @@ export default function SupportChatScreen() {
         >
           <ChatComposer
             attachmentAccessibilityLabel={t('support_chat_add_attachment')}
+            disabled={isConversationClosed || hasLoadError}
             isSending={supportChatSendMutation.isPending}
             messageAccessibilityLabel={t('support_chat_send_message')}
-            onAttachmentPress={handleAttachmentPress}
             onChangeText={setDraftMessage}
             onSend={() => appendMessage(draftMessage)}
             placeholder={t('support_chat_input_placeholder')}
+            showAttachment={false}
             value={draftMessage}
           />
         </View>

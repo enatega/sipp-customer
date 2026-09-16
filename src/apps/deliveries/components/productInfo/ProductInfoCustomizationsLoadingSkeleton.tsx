@@ -70,7 +70,6 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: 2,
-    paddingHorizontal: 16,
-    paddingBottom: 4,
+    paddingBottom: 8,
   },
 });

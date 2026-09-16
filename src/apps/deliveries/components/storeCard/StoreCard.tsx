@@ -79,13 +79,15 @@ export default function StoreCard({
   onClosedPress,
 }: StoreCardProps) {
   const { colors, elevation, shape, spacing } = useTheme();
-  const { t } = useTranslations("deliveries")
+  const { t } = useTranslations("deliveries");
   const currencyLabel = useDeliveriesCurrencyLabel();
   const navigation = useNavigation<NavigationProp>();
   const isProductItem = isProductStoreCardData(store);
   const isResultRow = layout === "resultRow";
   const isCompact = layout === "compact";
   const isPressable = Boolean(onPress) || !isProductItem;
+  const hasStoreCoverImage =
+    !isProductItem && Boolean(store.coverImage?.trim());
   const resolvedImageUrl = isProductItem
     ? store.productImage ||
       store.storeImage ||
@@ -105,11 +107,9 @@ export default function StoreCard({
   const resolvedCuisine = isProductItem
     ? store.storeName ?? undefined
     : store.shopTypeName ?? store.address ?? undefined;
-  const resolvedPrice = isProductItem ? store.price ?? 0 : store.baseFee ?? 0;
-  const resolvedDeliveryTime = isProductItem
-    ? store.deliveryTime ?? ""
-    : store.deliveryTime ?? 0;
-  const resolvedDistance = store.distanceKm ?? 0;
+  const resolvedPrice = isProductItem ? store.price : store.baseFee;
+  const resolvedDeliveryTime = store.deliveryTime;
+  const resolvedDistance = store.distanceKm;
   const isClosedStore =
     !isProductItem && showClosedOverlay && isStoreClosed(store);
 
@@ -158,6 +158,7 @@ export default function StoreCard({
         isClosed={isClosedStore}
         layout={layout}
         offer={resolvedOffer}
+        resizeMode={isProductItem || hasStoreCoverImage ? "cover" : "contain"}
       />
 
       <View
@@ -178,6 +179,7 @@ export default function StoreCard({
           rating={resolvedRating}
           reviewCount={resolvedReviewCount}
           cuisine={resolvedCuisine}
+          fallbackLabel={!isProductItem ? t("store_card_new") : undefined}
         />
         <View
           style={[
@@ -192,6 +194,17 @@ export default function StoreCard({
           price={resolvedPrice}
           deliveryTime={resolvedDeliveryTime}
           distance={resolvedDistance}
+          fallbackLabels={
+            !isProductItem
+              ? {
+                  price: t("store_card_delivery_fee_unavailable", {
+                    currency: currencyLabel,
+                  }),
+                  deliveryTime: t("store_card_delivery_time_unavailable"),
+                  distance: t("store_card_distance_unavailable"),
+                }
+              : undefined
+          }
         />
       </View>
     </PressableScale>

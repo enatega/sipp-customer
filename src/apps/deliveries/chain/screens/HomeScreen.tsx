@@ -1,6 +1,10 @@
 import React, { useCallback, useEffect } from 'react';
 import { StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import {
+  type CompositeNavigationProp,
+  useNavigation,
+} from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import AddressSelectionBottomSheet from '../../../../general/components/address/AddressSelectionBottomSheet';
@@ -23,14 +27,19 @@ import { useChainMenuStore } from '../stores/useChainMenuStore';
 import HomeEntrance from '../../components/home/HomeEntrance';
 import DeliveryHomeScaffold from '../../components/home/DeliveryHomeScaffold';
 import useDeliveriesTabSheetOffset from '../../hooks/useDeliveriesTabSheetOffset';
+import type { ChainBottomTabParamList } from '../navigation/types';
 
 type Props = Record<string, never>;
+
+type NavProp = CompositeNavigationProp<
+  BottomTabNavigationProp<ChainBottomTabParamList, 'ChainTabHome'>,
+  NativeStackNavigationProp<DeliveriesStackParamList>
+>;
 
 export default function HomeScreen({}: Props) {
   const { spacing } = useTheme();
   const { t } = useTranslation('deliveries');
-  const navigation =
-    useNavigation<NativeStackNavigationProp<DeliveriesStackParamList>>();
+  const navigation = useNavigation<NavProp>();
   const addressSheetBottomOffset = useDeliveriesTabSheetOffset();
   const {
     addresses,
@@ -126,7 +135,9 @@ export default function HomeScreen({}: Props) {
   }, [setSelectedMenuTemplateId]);
 
   const handleSearchPress = useCallback(() => {
-    navigation.navigate('ChainTabSearch' as never);
+    navigation.navigate('ChainTabSearch', {
+      autoFocusRequestId: Date.now(),
+    });
   }, [navigation]);
 
   return (

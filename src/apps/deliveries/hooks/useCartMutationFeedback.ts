@@ -1,6 +1,9 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { showToast } from '../../../general/components/AppToast';
+import {
+  showToast,
+  type ToastAction,
+} from '../../../general/components/AppToast';
 import {
   getCartMutationErrorFeedback,
   getCartMutationSuccessFeedback,
@@ -22,6 +25,10 @@ export function useCartMutationFeedback() {
     (
       kind: CartMutationFeedbackKind,
       params?: Record<string, string | number>,
+      options?: {
+        action?: ToastAction;
+        duration?: number;
+      },
     ) => {
       const feedback = getCartMutationSuccessFeedback(t, kind, params);
 
@@ -29,7 +36,12 @@ export function useCartMutationFeedback() {
         return;
       }
 
-      showToast.success(feedback.title, feedback.message);
+      showToast.success(
+        feedback.title,
+        feedback.message,
+        options?.duration,
+        options?.action,
+      );
     },
     [t],
   );

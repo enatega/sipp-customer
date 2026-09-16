@@ -1,8 +1,9 @@
 import React, { memo } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useTheme } from '../../theme/theme';
 import Icon from '../../components/Icon';
 import Text from '../../components/Text';
+import PressableScale from '../../components/PressableScale';
 
 type Props = {
   description: string;
@@ -18,21 +19,18 @@ function AddressSuggestionItem({ description, onPress, isRecent = false }: Props
   const secondaryText = parts.slice(1).join(',').trim() || undefined;
 
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={description}
-      style={({ pressed }) => [
-        styles.row,
-        { backgroundColor: pressed ? colors.backgroundTertiary : 'transparent' },
-      ]}
+      style={styles.row}
     >
-      <View style={[styles.iconCircle, { backgroundColor: colors.backgroundTertiary }]}>
+      <View style={[styles.iconCircle, { backgroundColor: colors.primarySoft }]}> 
         <Icon
           type="Ionicons"
           name={isRecent ? 'time-outline' : 'location-outline'}
           size={18}
-          color={colors.iconMuted}
+          color={colors.primary}
         />
       </View>
       <View style={styles.textWrap}>
@@ -45,7 +43,8 @@ function AddressSuggestionItem({ description, onPress, isRecent = false }: Props
           </Text>
         ) : null}
       </View>
-    </Pressable>
+      <Icon type="Ionicons" name="chevron-forward" size={17} color={colors.iconMuted} />
+    </PressableScale>
   );
 }
 
@@ -66,8 +65,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: 12,
+    marginHorizontal: 8,
+    minHeight: 62,
+    borderRadius: 14,
+    overflow: 'hidden',
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 9,
   },
   textWrap: {
     flex: 1,

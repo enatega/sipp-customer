@@ -19,6 +19,16 @@ export default function DeliveriesProfileTabScreen({
   const navigation = useNavigation<NavigationProp<DeliveriesStackParamList>>();
   const { user, wallet, isLoading } = useProfile('deliveries');
 
+  const handleOpenOrders = () => {
+    const orderRoute = navigation
+      .getState()
+      .routeNames.find((routeName) => routeName.endsWith('TabOrders'));
+
+    if (orderRoute) {
+      navigation.navigate(orderRoute as never);
+    }
+  };
+
   return (
     <ProfileTabScreen
       favoritesEnabled={favoritesEnabled}
@@ -26,6 +36,7 @@ export default function DeliveriesProfileTabScreen({
       onOpenCoupons={() => navigation.navigate('Coupons')}
       onOpenFavourites={onOpenFavourites}
       onOpenNotifications={() => navigation.navigate('Notifications')}
+      onOpenOrders={handleOpenOrders}
       user={user}
       wallet={wallet}
     />

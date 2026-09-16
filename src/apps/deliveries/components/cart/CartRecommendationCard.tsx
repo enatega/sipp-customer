@@ -1,11 +1,13 @@
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { StyleSheet, View } from 'react-native';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { useTranslation } from 'react-i18next';
 import type { DeliveryOrderAgainItem } from '../../api/types';
 import Image from '../../../../general/components/Image';
+import PressableScale from '../../../../general/components/PressableScale';
 import Text from '../../../../general/components/Text';
 import { useTheme } from '../../../../general/theme/theme';
-import { CART_SMALL_ORDER_FEE, formatCartPrice } from './cartUtils';
+import { formatCartPrice } from './cartUtils';
 
 type Props = {
   item: DeliveryOrderAgainItem;
@@ -13,171 +15,114 @@ type Props = {
 };
 
 export default function CartRecommendationCard({ item, onPress }: Props) {
-  const { colors, typography } = useTheme();
-  const imageUri =
-    item.productImage?.trim() ||
-    item.storeImage?.trim() ||
-    item.storeLogo?.trim() ||
-    'https://placehold.co/320x180.png';
+  const { colors, layout, shape, spacing } = useTheme();
+  const { t } = useTranslation('deliveries');
+  const [hasImageError, setHasImageError] = React.useState(false);
+  const imageUri = item.productImage?.trim() || item.storeImage?.trim() || item.storeLogo?.trim();
+  const price = item.discountedPrice ?? item.price ?? 0;
+  const originalPrice = item.originalPrice && item.originalPrice > price ? item.originalPrice : null;
 
   return (
-    <Pressable
+    <PressableScale
+      accessibilityLabel={t('cart_recommendation_accessibility', { product: item.productName })}
+      accessibilityRole="button"
       onPress={onPress}
       style={[
         styles.card,
         {
           backgroundColor: colors.surface,
           borderColor: colors.border,
-          shadowColor: colors.shadowColor,
+          borderRadius: shape.radius.surface,
         },
       ]}
     >
-      <View style={styles.imageWrap}>
-        <Image resizeMode="cover" source={{ uri: imageUri }} style={styles.image} />
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => undefined}
-          style={[styles.addButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
-        >
-          <Ionicons color={colors.text} name="add" size={18} />
-        </Pressable>
-      </View>
+      {imageUri && !hasImageError ? (
+        <Image
+          accessibilityLabel={item.productName}
+          onError={() => setHasImageError(true)}
+          resizeMode="cover"
+          source={{ uri: imageUri }}
+          style={[styles.image, { borderRadius: shape.radius.control }]}
+        />
+      ) : (
+        <View style={[styles.imageFallback, { backgroundColor: colors.primarySoft, borderRadius: shape.radius.control }]}>
+          <MaterialCommunityIcons color={colors.primary} name="food-outline" size={34} />
+        </View>
+      )}
 
-      <View style={styles.content}>
-        <Text
-          weight="semiBold"
-          style={{
-            color: colors.text,
-            fontSize: typography.size.md2,
-            lineHeight: typography.lineHeight.md,
-          }}
-        >
+      <View style={[styles.content, { gap: spacing.xs }]}>
+        <Text numberOfLines={2} variant="label" weight="bold">
           {item.productName}
         </Text>
-
-        <View style={styles.metaRow}>
-          <View style={styles.ratingRow}>
-            <Ionicons color={colors.yellow500} name="star" size={14} />
-            <Text
-              style={{
-                color: colors.text,
-                fontSize: typography.size.sm,
-                lineHeight: typography.lineHeight.sm,
-              }}
-            >
-              4.1
-            </Text>
-            <Text
-              style={{
-                color: colors.mutedText,
-                fontSize: typography.size.sm,
-                lineHeight: typography.lineHeight.sm,
-              }}
-            >
-              (5000+)
-            </Text>
-          </View>
-
-          {item.storeName ? (
-            <Text
-              style={{
-                color: colors.mutedText,
-                fontSize: typography.size.sm,
-                lineHeight: typography.lineHeight.sm,
-              }}
-            >
-              {item.storeName}
-            </Text>
-          ) : null}
-        </View>
-
-        <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-        <View style={styles.footerRow}>
-          <View style={styles.detailRow}>
-            <Ionicons color={colors.mutedText} name="bicycle-outline" size={14} />
-            <Text
-              style={{
-                color: colors.mutedText,
-                fontSize: typography.size.sm,
-                lineHeight: typography.lineHeight.sm,
-              }}
-            >
-              {formatCartPrice(CART_SMALL_ORDER_FEE)}
-            </Text>
-          </View>
-
-          <Text
-            style={{
-              color: colors.mutedText,
-              fontSize: typography.size.sm,
-              lineHeight: typography.lineHeight.sm,
-            }}
-          >
-            {formatCartPrice(item.price ?? 0)}
+        {item.storeName ? (
+          <Text color={colors.textSubtle} numberOfLines={1} variant="caption">
+            {item.storeName}
           </Text>
+        ) : null}
+        <View style={styles.priceRow}>
+          <View style={styles.priceCopy}>
+            <Text variant="body" weight="bold">
+              {formatCartPrice(price)}
+            </Text>
+            {originalPrice ? (
+              <Text color={colors.textSubtle} style={styles.originalPrice} variant="caption">
+                {formatCartPrice(originalPrice)}
+              </Text>
+            ) : null}
+          </View>
+          <View
+            style={[
+              styles.trailing,
+              {
+                backgroundColor: colors.primary,
+                borderRadius: shape.radius.pill,
+                height: layout.touchTarget.minimum,
+                width: layout.touchTarget.minimum,
+              },
+            ]}
+          >
+            <MaterialCommunityIcons color={colors.onPrimary} name="arrow-top-right" size={19} />
+          </View>
         </View>
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
-  addButton: {
-    alignItems: 'center',
-    borderRadius: 18,
-    borderWidth: 1,
-    height: 36,
-    justifyContent: 'center',
-    position: 'absolute',
-    right: 10,
-    top: 10,
-    width: 36,
-  },
   card: {
-    borderRadius: 12,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    width: 282,
+    padding: 10,
+    width: 196,
   },
   content: {
-    gap: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-  },
-  detailRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 4,
-  },
-  divider: {
-    height: 1,
-  },
-  footerRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flex: 1,
+    paddingTop: 10,
   },
   image: {
-    height: '100%',
+    height: 112,
     width: '100%',
   },
-  imageWrap: {
-    height: 140,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  metaRow: {
+  imageFallback: {
     alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    height: 112,
+    justifyContent: 'center',
+    width: '100%',
   },
-  ratingRow: {
-    alignItems: 'center',
+  originalPrice: {
+    textDecorationLine: 'line-through',
+  },
+  priceCopy: {
+    flex: 1,
+  },
+  priceRow: {
+    alignItems: 'flex-end',
     flexDirection: 'row',
-    gap: 4,
+    marginTop: 8,
+  },
+  trailing: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

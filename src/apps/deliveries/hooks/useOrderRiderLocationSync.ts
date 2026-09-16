@@ -3,6 +3,7 @@ import { AppState, type AppStateStatus } from "react-native";
 import { useAuthSessionQuery } from "../../../general/hooks/useAuthQueries";
 import { deliveriesSocketClient, subscribeDeliveriesEvent } from "../socket/deliveriesSocket";
 import type { DeliveriesServerEventMap } from "../socket/deliveriesSocket.types";
+import type { DeliveryOrderEta } from "../api/ordersServiceTypes";
 
 type Options = {
   enabled?: boolean;
@@ -11,6 +12,7 @@ type Options = {
 type RiderLocation = {
   latitude: number;
   longitude: number;
+  eta?: DeliveryOrderEta | null;
 };
 
 type RiderLocationEventPayload = DeliveriesServerEventMap["get-rider-location"];
@@ -32,6 +34,7 @@ function asRiderLocation(value: unknown): RiderLocation | null {
   return {
     latitude: payload.latitude,
     longitude: payload.longitude,
+    eta: payload.eta,
   };
 }
 
@@ -145,7 +148,12 @@ export function useOrderRiderLocationSync(
           return;
         }
 
-        setRiderLocation(nextLocation);
+        setRiderLocation((currentLocation) => ({
+          ...nextLocation,
+          eta: nextLocation.eta === undefined
+            ? currentLocation?.eta
+            : nextLocation.eta,
+        }));
       },
     );
   }, [isEnabled, token]);

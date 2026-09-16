@@ -3,6 +3,7 @@ import {
   FlatList,
   Image,
   Pressable,
+  ActivityIndicator,
   StyleSheet,
   TextInput,
   View,
@@ -25,9 +26,7 @@ import { useUseCouponMutation } from '../../hooks/useUseCouponMutation';
 import { useCheckoutCouponStore } from '../../stores/useCheckoutCouponStore';
 import { deliveryKeys } from '../../api/queryKeys';
 import type { Coupon } from '../../types/coupon';
-
-const CLAIM_SUCCESS_IMAGE =
-  'http://localhost:3845/assets/abc5efd0d6b50776e0ef97d3deb08ec78980372a.png';
+import { useDeliveriesCurrencyLabel } from '../../../../general/stores/useAppConfigStore';
 
 function toDayMonthYear(dateIso: string) {
   const date = new Date(dateIso);
@@ -46,6 +45,7 @@ export default function CouponsScreen() {
   const { colors } = useTheme();
   const { t } = useTranslation('deliveries');
   const insets = useSafeAreaInsets();
+  const currencyLabel = useDeliveriesCurrencyLabel();
   const queryClient = useQueryClient();
   const [code, setCode] = useState('');
   const [hasClaimSuccessState, setHasClaimSuccessState] = useState(false);
@@ -67,7 +67,7 @@ export default function CouponsScreen() {
       amountLabel:
         item.discount_type === 'PERCENTAGE'
           ? `${item.discount_value}%`
-          : `€${item.discount_value}`,
+          : `${currencyLabel} ${item.discount_value}`,
       badgeLabel: item.status.toLowerCase() === 'expired'
         ? t('coupon_status_expired')
         : t('coupon_valid_until', { date: toDayMonthYear(item.end_date) }),
@@ -79,13 +79,13 @@ export default function CouponsScreen() {
       isActive: item.is_active,
       isExpired: item.status.toLowerCase() === 'expired',
       id: item.id,
-      minOrderLabel: t('coupon_min_order', { value: item.min_order_value }),
+      minOrderLabel: t('coupon_min_order', { currency: currencyLabel, value: item.min_order_value }),
       status: item.status,
       subtitle: item.description,
       title: item.name,
       validUntil: toDayMonthYear(item.end_date),
     })),
-    [claimedCouponsQuery.data?.data, t],
+    [claimedCouponsQuery.data?.data, currencyLabel, t],
   );
 
   const keyExtractor = useCallback((item: Coupon) => item.id, []);
@@ -160,27 +160,35 @@ export default function CouponsScreen() {
   ]);
 
   const renderCoupon = useCallback(({ item }: { item: Coupon }) => (
-    <View style={[styles.couponCard, { backgroundColor: colors.gray100 }]}>
-      <View style={[styles.valueBlock, { backgroundColor: colors.blue800 }]}>
+    <View style={[styles.couponCard, { backgroundColor: colors.surface, borderColor: item.isActive ? colors.primary : colors.border }]}> 
+      <View style={[styles.valueBlock, { backgroundColor: item.isExpired ? colors.backgroundTertiary : colors.primarySoft }]}> 
+        <Ionicons name="ticket-outline" size={20} color={item.isExpired ? colors.iconMuted : colors.primary} />
         <Text
-          color={colors.white}
+          color={item.isExpired ? colors.mutedText : colors.primary}
           weight="bold"
           style={styles.valueAmount}
         >
           {item.amountLabel}
         </Text>
         <Text
-          color={colors.white}
-          weight="bold"
+          color={item.isExpired ? colors.mutedText : colors.primary}
+          weight="semiBold"
           style={styles.valueOff}
         >
           {t('coupon_off')}
         </Text>
       </View>
 
-      <View style={[styles.separator, { borderColor: colors.border }]} />
-
       <View style={styles.couponContent}>
+        <View style={styles.couponTopRow}>
+          <Text color={colors.text} weight="semiBold" numberOfLines={1} style={styles.couponTitle}>{item.title}</Text>
+          {item.isActive ? (
+            <View style={[styles.activeBadge, { backgroundColor: colors.successSoft }]}> 
+              <View style={[styles.activeDot, { backgroundColor: colors.success }]} />
+              <Text color={colors.successText} weight="semiBold" style={styles.activeText}>{t('coupon_active')}</Text>
+            </View>
+          ) : null}
+        </View>
         {item.offeredBy.length > 0 ? (
           <View style={styles.storeRow}>
             <View style={styles.storeAvatars}>
@@ -216,7 +224,7 @@ export default function CouponsScreen() {
                     },
                   ]}
                 >
-                  <Text color={colors.gray700} weight="medium" style={styles.moreStoresText}>
+                  <Text color={colors.textSubtle} weight="medium" style={styles.moreStoresText}>
                     +{item.offeredBy.length - 3}
                   </Text>
                 </View>
@@ -227,9 +235,6 @@ export default function CouponsScreen() {
             </Text>
           </View>
         ) : null}
-        <Text color={colors.text} weight="semiBold" style={styles.couponTitle}>
-          {item.title}
-        </Text>
         <Text color={colors.mutedText} weight="medium" style={styles.couponSubtitle}>
           {item.subtitle}
         </Text>
@@ -255,7 +260,7 @@ export default function CouponsScreen() {
             </Text>
           </View>
         </View>
-        <View style={[styles.useButtonWrap, { borderColor: colors.border }]}>
+        <View style={[styles.useButtonWrap, { backgroundColor: item.isActive ? colors.backgroundTertiary : colors.primarySoft }]}> 
           <Pressable
             accessibilityRole="button"
             disabled={useCouponMutation.isPending || item.isExpired}
@@ -270,7 +275,7 @@ export default function CouponsScreen() {
               void handleUseCoupon(item);
             }}
           >
-            <Text color={colors.blue800} weight="semiBold" style={styles.useButtonText}>
+            <Text color={item.isActive ? colors.text : colors.primary} weight="semiBold" style={styles.useButtonText}>
               {item.isActive ? t('coupon_deactivate') : t('coupon_use')}
             </Text>
           </Pressable>
@@ -280,7 +285,11 @@ export default function CouponsScreen() {
   ), [colors, handleUseCoupon, t, useCouponMutation.isPending]);
 
   const renderEmptyCouponsState = useCallback(() => {
-    if (claimedCouponsQuery.isPending || claimedCouponsQuery.isError) {
+    if (claimedCouponsQuery.isPending) {
+      return <ActivityIndicator color={colors.primary} style={styles.loading} />;
+    }
+
+    if (claimedCouponsQuery.isError) {
       return null;
     }
 
@@ -302,7 +311,7 @@ export default function CouponsScreen() {
         </Text>
       </View>
     );
-  }, [claimedCouponsQuery.isError, claimedCouponsQuery.isPending, colors.blue50, colors.blue800, colors.mutedText, colors.text, colors.warningSoft, colors.warningText, t]);
+  }, [claimedCouponsQuery.isError, claimedCouponsQuery.isPending, colors.blue50, colors.blue800, colors.mutedText, colors.primary, colors.text, colors.warningSoft, colors.warningText, t]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -312,7 +321,12 @@ export default function CouponsScreen() {
       />
       {hasClaimSuccessState ? (
         <View style={styles.successStateContainer}>
-          <Image source={{ uri: CLAIM_SUCCESS_IMAGE }} style={styles.successStateImage} />
+          <View style={[styles.successIcon, { backgroundColor: colors.successSoft }]}> 
+            <Ionicons name="checkmark" size={44} color={colors.successText} />
+            <View style={[styles.successSparkle, { backgroundColor: colors.quickActionDealsSurface }]}> 
+              <Ionicons name="sparkles" size={18} color={colors.quickActionDealsForeground} />
+            </View>
+          </View>
           <Text color={colors.text} weight="extraBold" style={styles.successStateTitle}>
             {t('coupon_claimed_state_title')}
           </Text>
@@ -342,7 +356,10 @@ export default function CouponsScreen() {
                 <Text color={colors.mutedText} style={styles.description}>
                   {t('coupon_description')}
                 </Text>
+                <Text color={colors.text} weight="semiBold" style={styles.claimLabel}>{t('coupon_claim_label')}</Text>
                 <TextInput
+                  autoCapitalize="characters"
+                  autoCorrect={false}
                   value={code}
                   onChangeText={setCode}
                   placeholder={t('coupon_input_placeholder')}
@@ -350,16 +367,27 @@ export default function CouponsScreen() {
                   style={[
                     styles.input,
                     {
-                      backgroundColor: colors.surface,
+                      backgroundColor: colors.surfaceSunken,
                       borderColor: colors.border,
                       color: colors.text,
                     },
                   ]}
+                  returnKeyType="done"
+                  onSubmitEditing={() => {
+                    if (!isClaimDisabled) void handleClaim();
+                  }}
                 />
                 {claimedCouponsQuery.isError ? (
-                  <Text color={colors.dangerText} style={styles.errorText}>
-                    {claimedCouponsQuery.error.message || t('coupon_list_error_fallback')}
-                  </Text>
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => void claimedCouponsQuery.refetch()}
+                    style={[styles.errorBanner, { backgroundColor: colors.dangerSoft }]}
+                  >
+                    <Ionicons name="refresh-outline" size={18} color={colors.dangerText} />
+                    <Text color={colors.dangerText} weight="medium" style={styles.errorText}>
+                      {claimedCouponsQuery.error.message || t('coupon_list_error_fallback')}
+                    </Text>
+                  </Pressable>
                 ) : null}
               </View>
             )}
@@ -369,6 +397,7 @@ export default function CouponsScreen() {
               styles.bottomBar,
               {
                 backgroundColor: colors.background,
+                borderTopColor: colors.divider,
                 paddingBottom: Math.max(insets.bottom, 12),
               },
             ]}
@@ -391,6 +420,7 @@ export default function CouponsScreen() {
 
 const styles = StyleSheet.create({
   bottomBar: {
+    borderTopWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 12,
@@ -403,18 +433,19 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   couponCard: {
-    borderRadius: 12,
+    borderRadius: 16,
+    borderWidth: 1,
     flexDirection: 'row',
     marginHorizontal: 16,
-    minHeight: 186,
+    minHeight: 178,
     overflow: 'hidden',
   },
   couponContent: {
     flex: 1,
     gap: 6,
     justifyContent: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
   },
   couponFooter: {
     alignItems: 'center',
@@ -427,6 +458,7 @@ const styles = StyleSheet.create({
     lineHeight: typography.lineHeight.md,
   },
   couponTitle: {
+    flex: 1,
     fontSize: typography.size.md2,
     lineHeight: typography.lineHeight.md2,
   },
@@ -475,23 +507,26 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   headerContent: {
-    gap: 12,
+    gap: 10,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
   errorText: {
+    flex: 1,
     fontSize: typography.size.sm2,
     lineHeight: typography.lineHeight.md,
   },
+  errorBanner: { alignItems: 'center', borderRadius: 12, flexDirection: 'row', gap: 8, padding: 12 },
   input: {
-    borderRadius: 6,
+    borderRadius: 12,
     borderWidth: 1,
     fontSize: typography.size.md2,
     lineHeight: typography.lineHeight.md2,
-    minHeight: 48,
-    paddingHorizontal: 12,
+    minHeight: 54,
+    paddingHorizontal: 14,
     paddingVertical: 8,
   },
+  loading: { marginTop: 72 },
   separator: {
     borderStyle: 'dashed',
     borderWidth: 1,
@@ -500,8 +535,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 0,
   },
   submitButton: {
-    borderRadius: 6,
-    height: 44,
+    borderRadius: 12,
+    height: 52,
   },
   successStateBody: {
     fontSize: typography.size.sm2,
@@ -517,10 +552,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 44,
   },
-  successStateImage: {
-    height: 150,
-    width: 150,
-  },
+  successIcon: { alignItems: 'center', borderRadius: 40, height: 112, justifyContent: 'center', marginBottom: 8, width: 112 },
+  successSparkle: { alignItems: 'center', borderRadius: 18, height: 36, justifyContent: 'center', position: 'absolute', right: -4, top: -4, width: 36 },
   successStateTitle: {
     fontSize: typography.size.h5,
     lineHeight: 38,
@@ -538,8 +571,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   useButtonWrap: {
-    borderRadius: 24,
-    borderWidth: 1,
+    borderRadius: 10,
     marginTop: 2,
     overflow: 'hidden',
   },
@@ -553,17 +585,18 @@ const styles = StyleSheet.create({
     lineHeight: typography.lineHeight.sm,
   },
   valueAmount: {
-    fontSize: typography.size.xl2,
-    lineHeight: typography.lineHeight.xl2,
+    fontSize: typography.size.lg,
+    lineHeight: typography.lineHeight.lg,
   },
   valueBlock: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 70,
+    gap: 2,
+    width: 82,
   },
   valueOff: {
-    fontSize: typography.size.xl2,
-    lineHeight: typography.lineHeight.xl2,
+    fontSize: typography.size.sm,
+    lineHeight: typography.lineHeight.sm,
   },
   minOrderRow: {
     alignItems: 'center',
@@ -611,4 +644,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
   },
+  activeBadge: { alignItems: 'center', borderRadius: 8, flexDirection: 'row', gap: 5, paddingHorizontal: 7, paddingVertical: 4 },
+  activeDot: { borderRadius: 3, height: 6, width: 6 },
+  activeText: { fontSize: typography.size.xs, lineHeight: typography.lineHeight.sm },
+  claimLabel: { fontSize: typography.size.sm2, lineHeight: typography.lineHeight.md },
+  couponTopRow: { alignItems: 'center', flexDirection: 'row', gap: 8 },
 });

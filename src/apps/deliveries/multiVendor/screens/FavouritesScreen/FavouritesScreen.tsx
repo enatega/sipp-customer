@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../../../../general/theme/theme';
@@ -12,9 +12,11 @@ import { showToast } from '../../../../../general/components/AppToast';
 import { useFavouritesQuery } from '../../hooks/useFavouritesQuery';
 import { useToggleFavouriteMutation } from '../../hooks/useToggleFavouriteMutation';
 import type { DeliveryNearbyStore } from '../../../api/types';
+import PressableScale from '../../../../../general/components/PressableScale';
+import Skeleton from '../../../../../general/components/Skeleton';
 
 export default function FavouritesScreen() {
-  const { colors } = useTheme();
+  const { colors, elevation } = useTheme();
   const { t } = useTranslation('deliveries');
 
   const {
@@ -70,10 +72,7 @@ export default function FavouritesScreen() {
     [addToFavLabel, removeFromFavLabel, toggleFavourite, isToggling, toggleVariables],
   );
 
-  const keyExtractor = useCallback(
-    (item: DeliveryNearbyStore, index: number) => `${item.storeId}-${index}`,
-    [],
-  );
+  const keyExtractor = useCallback((item: DeliveryNearbyStore) => item.storeId, []);
 
   const handleEndReached = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -83,10 +82,12 @@ export default function FavouritesScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      <View style={[styles.screen, { backgroundColor: colors.background }]}> 
         <ScreenHeader title={t('favourites_title')} />
-        <View style={styles.centered}>
-          <ActivityIndicator size="large" color={colors.primary} />
+        <View style={styles.loadingContent}>
+          <Skeleton width="72%" height={18} borderRadius={8} />
+          <Skeleton width="100%" height={224} borderRadius={18} />
+          <Skeleton width="100%" height={224} borderRadius={18} />
         </View>
       </View>
     );
@@ -97,10 +98,24 @@ export default function FavouritesScreen() {
       <View style={[styles.screen, { backgroundColor: colors.background }]}>
         <ScreenHeader title={t('favourites_title')} />
         <View style={styles.centered}>
-          <Ionicons name="alert-circle-outline" size={48} color={colors.danger} />
+          <View style={[styles.stateIcon, { backgroundColor: colors.dangerSoft }]}> 
+            <Ionicons name="cloud-offline-outline" size={28} color={colors.danger} />
+          </View>
+          <Text variant="title" weight="bold" style={styles.centeredText}>
+            {t('favourites_error_title')}
+          </Text>
           <Text variant="body" color={colors.mutedText} style={styles.centeredText}>
             {t('favourites_error')}
           </Text>
+          <PressableScale
+            accessibilityRole="button"
+            onPress={() => void refetch()}
+            style={[styles.retryButton, { backgroundColor: colors.primary }]}
+          >
+            <Text weight="bold" color={colors.onPrimary}>
+              {t('favourites_retry')}
+            </Text>
+          </PressableScale>
         </View>
       </View>
     );
@@ -112,7 +127,24 @@ export default function FavouritesScreen() {
 
       {stores.length === 0 ? (
         <View style={styles.centered}>
-          <Ionicons name="heart-outline" size={48} color={colors.primary} />
+          <View
+            style={[
+              styles.emptyVisual,
+              { backgroundColor: colors.quickActionFavouritesSurface },
+            ]}
+          >
+            <View style={[styles.emptyOrbit, { borderColor: colors.quickActionFavouritesForeground }]} />
+            <View style={[styles.emptyHeart, elevation.subtle, { backgroundColor: colors.surface }]}> 
+              <Ionicons
+                name="heart-outline"
+                size={30}
+                color={colors.quickActionFavouritesForeground}
+              />
+            </View>
+            <View style={[styles.emptySpark, { backgroundColor: colors.quickActionDealsSurface }]}> 
+              <Ionicons name="sparkles" size={15} color={colors.quickActionDealsForeground} />
+            </View>
+          </View>
           <Text variant="title" weight="bold" style={styles.centeredText}>
             {t('favourites_empty_title')}
           </Text>
@@ -131,6 +163,18 @@ export default function FavouritesScreen() {
           onEndReached={handleEndReached}
           onEndReachedThreshold={0.4}
           ListFooterComponent={<FavouritesListFooter isVisible={isFetchingNextPage} />}
+          ListHeaderComponent={
+            <View style={styles.listIntro}>
+              <Text color={colors.mutedText} style={styles.listIntroText}>
+                {t('favourites_subtitle')}
+              </Text>
+              <View style={[styles.countPill, { backgroundColor: colors.quickActionFavouritesSurface }]}> 
+                <Text weight="bold" color={colors.quickActionFavouritesForeground} style={styles.countText}>
+                  {stores.length}
+                </Text>
+              </View>
+            </View>
+          }
           refreshControl={
             <RefreshControl
               refreshing={isRefetching}
@@ -150,14 +194,89 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 12,
     justifyContent: 'center',
-    padding: 24,
+    padding: 32,
   },
   centeredText: {
-    maxWidth: 240,
+    maxWidth: 280,
     textAlign: 'center',
+  },
+  countPill: {
+    alignItems: 'center',
+    borderRadius: 14,
+    height: 28,
+    justifyContent: 'center',
+    minWidth: 28,
+    paddingHorizontal: 9,
+  },
+  countText: { fontSize: 12, lineHeight: 16 },
+  emptyHeart: {
+    alignItems: 'center',
+    borderRadius: 28,
+    height: 56,
+    justifyContent: 'center',
+    width: 56,
+  },
+  emptyOrbit: {
+    borderRadius: 42,
+    borderStyle: 'dashed',
+    borderWidth: 1,
+    height: 84,
+    opacity: 0.35,
+    position: 'absolute',
+    width: 84,
+  },
+  emptySpark: {
+    alignItems: 'center',
+    borderRadius: 15,
+    height: 30,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 2,
+    top: 4,
+    width: 30,
+  },
+  emptyVisual: {
+    alignItems: 'center',
+    borderRadius: 52,
+    height: 104,
+    justifyContent: 'center',
+    marginBottom: 4,
+    width: 104,
   },
   list: {
     padding: 16,
+    paddingBottom: 40,
+  },
+  listIntro: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'space-between',
+    paddingBottom: 16,
+  },
+  listIntroText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  loadingContent: {
+    gap: 14,
+    padding: 16,
+  },
+  retryButton: {
+    borderRadius: 14,
+    marginTop: 4,
+    minHeight: 48,
+    justifyContent: 'center',
+    overflow: 'hidden',
+    paddingHorizontal: 22,
+  },
+  stateIcon: {
+    alignItems: 'center',
+    borderRadius: 24,
+    height: 48,
+    justifyContent: 'center',
+    width: 48,
   },
   screen: {
     flex: 1,

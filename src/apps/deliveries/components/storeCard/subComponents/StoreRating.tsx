@@ -9,6 +9,7 @@ interface StoreRatingProps {
   rating?: number;
   reviewCount?: number;
   cuisine?: string;
+  fallbackLabel?: string;
 }
 
 function decodeDisplayText(value: string) {
@@ -29,6 +30,7 @@ export default function StoreRating({
   rating,
   reviewCount,
   cuisine,
+  fallbackLabel,
 }: StoreRatingProps) {
   const { colors, spacing } = useTheme();
   const hasRating = typeof rating === "number" && Number.isFinite(rating) && rating > 0;
@@ -38,7 +40,10 @@ export default function StoreRating({
     reviewCount > 0;
   const hasCuisine = Boolean(cuisine?.trim());
   const resolvedCuisine = cuisine ? decodeDisplayText(cuisine) : undefined;
-  const shouldRender = hasRating || hasReviewCount || hasCuisine;
+  const shouldShowFallback =
+    !hasRating && !hasReviewCount && Boolean(fallbackLabel);
+  const shouldRender =
+    hasRating || hasReviewCount || hasCuisine || shouldShowFallback;
 
   if (!shouldRender) {
     return null;
@@ -60,25 +65,32 @@ export default function StoreRating({
         </Text>
       ) : null}
 
-      {hasRating || hasReviewCount ? (
+      {hasRating || hasReviewCount || shouldShowFallback ? (
         <View style={styles.row}>
-          {hasRating && (
+          {hasRating || shouldShowFallback ? (
             <View style={styles.ratingContainer}>
               <Icon
                 type="AntDesign"
                 name="star"
                 size={14}
-                color={colors.yellow500}
+                color={shouldShowFallback ? colors.warning : colors.yellow500}
               />
               <Text
                 variant="caption"
                 weight="semiBold"
-                style={[styles.rating, { color: colors.text }]}
+                style={[
+                  styles.rating,
+                  {
+                    color: shouldShowFallback
+                      ? colors.warningText
+                      : colors.text,
+                  },
+                ]}
               >
-                {rating.toFixed(1)}
+                {hasRating ? rating.toFixed(1) : fallbackLabel}
               </Text>
             </View>
-          )}
+          ) : null}
 
           {hasReviewCount && (
             <Text

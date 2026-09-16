@@ -113,7 +113,9 @@ export default function HomeTab() {
   }, [handleCloseAddressSheet, navigation, refreshCurrentLocation]);
 
   const handleSearchPress = useCallback(() => {
-    navigation.navigate('MultiVendorTabSearch');
+    navigation.navigate('MultiVendorTabSearch', {
+      autoFocusRequestId: Date.now(),
+    });
   }, [navigation]);
 
   const handleQuickActionPress = useCallback((actionId: HomeQuickActionId) => {
@@ -292,7 +294,10 @@ export default function HomeTab() {
           />
         )}
       >
-        <HomeEntrance index={1} style={[styles.sectionGroup, { gap: spacing.section.compact }]}>
+        <HomeEntrance
+          index={1}
+          style={[styles.sectionGroup, { gap: spacing.section.compact }]}
+        >
           <ShopTypeList />
           <MultiVendorSpecialOffers />
           <AllInOneQuickActions onActionPress={handleQuickActionPress} />

@@ -1,18 +1,22 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import React from "react";
-import { Image, Pressable, StyleSheet, View } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { Animated, Image, StyleSheet, View } from "react-native";
+import { useTranslation } from "react-i18next";
+import PressableScale from "../../../../general/components/PressableScale";
 import Text from "../../../../general/components/Text";
+import { useReducedMotion } from "../../../../general/hooks/useReducedMotion";
 import { useDeliveriesCurrencyCode } from "../../../../general/stores/useAppConfigStore";
 import { useTheme } from "../../../../general/theme/theme";
 import type { DeliveryOrderListItem } from "../../api/ordersServiceTypes";
+import { getOrderStatusPresentation } from "./orderPresentation";
 
 type Props = {
   order: DeliveryOrderListItem;
   onPress?: (order: DeliveryOrderListItem) => void;
   title?: string;
-  statusLabel?: string;
-  statusTone?: "warning" | "success" | "danger";
 };
+
+const PROGRESS_SEGMENTS = 4;
 
 function formatOrderDate(dateString: string) {
   const date = new Date(dateString);
@@ -36,200 +40,235 @@ function formatOrderPrice(amount: number, currencyCode: string) {
   }).format(amount);
 }
 
-function formatOrderStatus(status: string) {
-  if (!status) {
-    return "";
-  }
-
-  return status
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .replace(/[_-]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
-const OrderListCard = ({
-  order,
-  onPress,
-  title,
-  statusLabel,
-  statusTone = "warning",
-}: Props) => {
-  const { colors, typography } = useTheme();
+const OrderListCard = ({ order, onPress, title }: Props) => {
+  const { t } = useTranslation("deliveries");
+  const { colors, elevation, motion, shape, spacing } = useTheme();
+  const isReducedMotionEnabled = useReducedMotion();
   const currencyCode = useDeliveriesCurrencyCode();
   const imageUri = order.storeImage ?? order.storeLogo ?? undefined;
-  const resolvedStatusLabel = statusLabel ?? formatOrderStatus(order.orderStatus);
-  const badgeColors =
-    statusTone === "success"
-      ? {
-          backgroundColor: colors.successSoft,
-          textColor: colors.successText,
-        }
-      : statusTone === "danger"
-        ? {
-            backgroundColor: colors.dangerSoft,
-            textColor: colors.dangerText,
-          }
-        : {
-            backgroundColor: colors.warningSoft,
-            textColor: colors.warningText,
-          };
+  const status = getOrderStatusPresentation(order.orderStatus, t);
+  const statusOpacity = useRef(new Animated.Value(1)).current;
+  const statusTranslate = useRef(new Animated.Value(0)).current;
+  const toneColors = status.tone === "success"
+    ? { background: colors.successSoft, foreground: colors.successText }
+    : status.tone === "danger"
+      ? { background: colors.dangerSoft, foreground: colors.dangerText }
+      : status.tone === "warning"
+        ? { background: colors.warningSoft, foreground: colors.warningText }
+        : { background: colors.primarySoft, foreground: colors.primary };
+
+  useEffect(() => {
+    if (isReducedMotionEnabled) {
+      statusOpacity.setValue(1);
+      statusTranslate.setValue(0);
+      return;
+    }
+
+    statusOpacity.setValue(0);
+    statusTranslate.setValue(3);
+    Animated.parallel([
+      Animated.timing(statusOpacity, {
+        duration: motion.duration.quick,
+        toValue: 1,
+        useNativeDriver: true,
+      }),
+      Animated.timing(statusTranslate, {
+        duration: motion.duration.quick,
+        toValue: 0,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [
+    isReducedMotionEnabled,
+    motion.duration.quick,
+    order.orderStatus,
+    statusOpacity,
+    statusTranslate,
+  ]);
 
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole="button"
-      hitSlop={8}
+      accessibilityLabel={`${order.storeName}, ${status.label}`}
+      hitSlop={4}
       onPress={onPress ? () => onPress(order) : undefined}
-      style={styles.container}
+      style={[
+        styles.container,
+        elevation.subtle,
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+          borderRadius: shape.radius.hero,
+          padding: spacing.lg,
+        },
+      ]}
     >
-      <View style={styles.leftContent}>
+      <View style={styles.topRow}>
         {imageUri ? (
-          <Image
-            source={{ uri: imageUri }}
-            style={styles.image}
-          />
+          <Image source={{ uri: imageUri }} style={[styles.image, { borderRadius: shape.radius.surface }]} />
         ) : (
           <View
             style={[
               styles.imageFallback,
               {
-                backgroundColor: colors.backgroundTertiary,
+                backgroundColor: colors.primarySoft,
+                borderRadius: shape.radius.surface,
               },
             ]}
           >
-            <Text
-              weight="extraBold"
-              style={{
-                color: colors.mutedText,
-                fontSize: typography.size.sm2,
-                lineHeight: typography.lineHeight.md,
-              }}
-            >
+            <Text color={colors.primary} variant="cardTitle" weight="extraBold">
               {order.storeName.charAt(0).toUpperCase()}
             </Text>
           </View>
         )}
-        <View style={styles.info}>
-          <Text
-            weight="medium"
-            numberOfLines={1}
-            style={[
-              styles.name,
-              {
-                color: colors.text,
-                fontSize: typography.size.md2,
-                lineHeight: typography.lineHeight.md,
-              },
-            ]}
-          >
-            {title ?? order.storeName}
-          </Text>
-          <Text
-            weight="medium"
-            style={[
-              styles.time,
-              {
-                color: colors.mutedText,
-                fontSize: typography.size.xs2,
-                lineHeight: typography.lineHeight.sm,
-              },
-            ]}
-          >
-            {formatOrderDate(order.orderedAt)}
-          </Text>
-          <View
-            style={[
-              styles.badge,
-              {
-                backgroundColor: badgeColors.backgroundColor,
-              },
-            ]}
-          >
+
+        <View style={styles.primaryContent}>
+          <View style={styles.titleRow}>
             <Text
-              weight="medium"
-              style={{
-                color: badgeColors.textColor,
-                fontSize: typography.size.xs2,
-                lineHeight: typography.lineHeight.sm,
-              }}
+              color={colors.textStrong}
+              numberOfLines={2}
+              style={styles.name}
+              variant="cardTitle"
+              weight="bold"
             >
-              {resolvedStatusLabel}
+              {title ?? order.storeName}
+            </Text>
+            <Text
+              color={colors.textStrong}
+              numberOfLines={1}
+              style={styles.price}
+              weight="bold"
+            >
+              {formatOrderPrice(order.orderPrice, currencyCode)}
             </Text>
           </View>
+
+          <Text color={colors.textSubtle} variant="caption" weight="medium">
+            {formatOrderDate(order.orderedAt)}
+          </Text>
+
+          <Animated.View
+            style={[
+              styles.statusPill,
+              {
+                backgroundColor: toneColors.background,
+                borderRadius: shape.radius.pill,
+                opacity: statusOpacity,
+                transform: [{ translateY: statusTranslate }],
+              },
+            ]}
+          >
+            <MaterialCommunityIcons color={toneColors.foreground} name={status.icon} size={15} />
+            <Text
+              color={toneColors.foreground}
+              numberOfLines={1}
+              style={styles.statusLabel}
+              variant="caption"
+              weight="semiBold"
+            >
+              {status.label}
+            </Text>
+          </Animated.View>
         </View>
       </View>
 
-      <View style={styles.rightContent}>
-        <Text
-          weight="medium"
-          style={{
-            color: colors.text,
-            fontSize: typography.size.sm2,
-            lineHeight: typography.lineHeight.md,
-          }}
+      {status.progressStep ? (
+        <View
+          accessibilityLabel={status.label}
+          accessibilityRole="progressbar"
+          style={[styles.progressRow, { gap: spacing.xs }]}
         >
-          {formatOrderPrice(order.orderPrice, currencyCode)}
+          {Array.from({ length: PROGRESS_SEGMENTS }).map((_, index) => (
+            <View
+              key={index}
+              style={[
+                styles.progressSegment,
+                {
+                  backgroundColor: index < status.progressStep! ? colors.primary : colors.surfaceSunken,
+                  borderRadius: shape.radius.pill,
+                },
+              ]}
+            />
+          ))}
+        </View>
+      ) : null}
+
+      <View style={[styles.footer, { borderTopColor: colors.divider, marginTop: spacing.md, paddingTop: spacing.md }]}>
+        <Text color={colors.primary} variant="label" weight="semiBold">
+          {t("orders_view_details")}
         </Text>
-        <MaterialCommunityIcons
-          color={colors.iconColor}
-          name="chevron-right"
-          size={24}
-        />
+        <MaterialCommunityIcons color={colors.primary} name="arrow-right" size={20} />
       </View>
-    </Pressable>
+    </PressableScale>
   );
 };
 
 export default OrderListCard;
 
 const styles = StyleSheet.create({
-  badge: {
-    alignItems: "center",
-    alignSelf: "flex-start",
-    borderRadius: 6,
-    justifyContent: "center",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
   container: {
+    borderWidth: StyleSheet.hairlineWidth,
+    overflow: "hidden",
+  },
+  footer: {
     alignItems: "center",
+    borderTopWidth: StyleSheet.hairlineWidth,
     flexDirection: "row",
     justifyContent: "space-between",
   },
   image: {
-    borderRadius: 8,
-    height: 48,
-    width: 48,
+    height: 72,
+    width: 72,
   },
   imageFallback: {
     alignItems: "center",
-    borderRadius: 8,
-    height: 48,
+    height: 72,
     justifyContent: "center",
-    width: 48,
-  },
-  info: {
-    flex: 1,
-    gap: 4,
-    minWidth: 0,
-  },
-  leftContent: {
-    alignItems: "center",
-    flex: 1,
-    flexDirection: "row",
-    gap: 12,
+    width: 72,
   },
   name: {
-    letterSpacing: 0,
+    flex: 1,
+    minWidth: 0,
   },
-  rightContent: {
+  price: {
+    flexShrink: 0,
+    fontSize: 15,
+    lineHeight: 22,
+    marginLeft: 10,
+  },
+  primaryContent: {
+    flex: 1,
+    gap: 5,
+    minWidth: 0,
+  },
+  progressRow: {
+    flexDirection: "row",
+    marginTop: 14,
+  },
+  progressSegment: {
+    flex: 1,
+    height: 4,
+  },
+  statusLabel: {
+    flexShrink: 1,
+  },
+  statusPill: {
+    alignItems: "center",
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    gap: 5,
+    marginTop: 2,
+    maxWidth: "100%",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  titleRow: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+  },
+  topRow: {
     alignItems: "center",
     flexDirection: "row",
-    gap: 8,
-    marginLeft: 12,
-  },
-  time: {
-    letterSpacing: 0,
+    gap: 14,
   },
 });

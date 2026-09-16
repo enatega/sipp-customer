@@ -1,38 +1,43 @@
-import React, { useMemo, useRef, useState } from "react";
-import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import React, { useCallback, useMemo, useState } from "react";
+import { useNavigation, type NavigationProp } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
+import { useTranslation } from "react-i18next";
 import {
-  Animated,
-  Pressable,
   RefreshControl,
+  Share,
   StatusBar,
   StyleSheet,
   View,
   useWindowDimensions,
 } from "react-native";
+import Animated, {
+  Extrapolation,
+  interpolate,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDeliveriesCurrencyLabel } from "../../../../general/stores/useAppConfigStore";
+import { useWindowClass } from "../../../../general/hooks/useWindowClass";
 import { useTheme } from "../../../../general/theme/theme";
+import type { DeliveriesStackParamList } from "../../navigation/types";
 import type {
   ProductInfoCustomizationsResponse,
   ProductInfoResponse,
 } from "../../api/productInfoServiceTypes";
 import CartStoreConflictModal from "../cart/CartStoreConflictModal";
-import DeliveriesFloatingCartButton from "../navigation/DeliveriesFloatingCartButton";
 import Footer from "./Footer";
-import ImageHeader, {
-  getProductInfoHeaderMaxHeight,
-  getProductInfoHeaderMinHeight,
-} from "./ImageHeader";
+import ImageHeader, { getProductInfoHeaderMaxHeight } from "./ImageHeader";
 import ItemFlavour from "./ItemFlavour";
 import ItemInfo from "./ItemInfo";
 import ItemNutritions from "./ItemNutritions";
 import ItemSizes from "./ItemSizes";
 import ProductInfoCustomizationsLoadingSkeleton from "./ProductInfoCustomizationsLoadingSkeleton";
+import ProductAddedToCartModal from "./ProductAddedToCartModal";
+import ProductMediaActionButton from "./ProductMediaActionButton";
 import useProductSelectionState from "./useProductSelectionState";
 import useProductInfoCartFlow from "./useProductInfoCartFlow";
-
-const ENABLE_PRODUCT_INFO_DEAL_DEBUG = true;
 
 function toValidNumber(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) {
@@ -62,26 +67,64 @@ export default function MainContainer({
   isRefreshing = false,
   onRefresh,
 }: Props) {
-  const { colors } = useTheme();
+  const { colors, elevation, layout, shape, spacing } = useTheme();
+  const { t } = useTranslation("deliveries");
   const currencyLabel = useDeliveriesCurrencyLabel();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp<DeliveriesStackParamList>>();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
+  const { gutter } = useWindowClass();
   const [quantity, setQuantity] = useState(1);
-  const scrollY = useRef(new Animated.Value(0)).current;
+  const [isAddedToCartVisible, setIsAddedToCartVisible] = useState(false);
+  const [showSelectionErrors, setShowSelectionErrors] = useState(false);
+  const scrollY = useSharedValue(0);
   const variations = customizations?.variations ?? [];
   const addons = customizations?.addons ?? [];
   const maxHeaderHeight = getProductInfoHeaderMaxHeight(width);
-  const minHeaderHeight = getProductInfoHeaderMinHeight(width);
-  const headerCollapseDistance = maxHeaderHeight - minHeaderHeight;
-  const clampedScrollY = useMemo(
-    () => Animated.diffClamp(scrollY, 0, headerCollapseDistance),
-    [headerCollapseDistance, scrollY],
+  const headerTravel = Math.max(120, maxHeaderHeight * 0.55);
+  const detailsSurfaceWidth = Math.min(
+    width - gutter * 2,
+    layout.contentMaxWidth.readable,
   );
+  const handleViewCart = useCallback(() => {
+    setIsAddedToCartVisible(false);
+    navigation.navigate("Cart");
+  }, [navigation]);
+  const handleAddedToCart = useCallback(() => {
+    setIsAddedToCartVisible(true);
+  }, []);
+
+  const handleScroll = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
+
+  const imageAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        translateY: interpolate(
+          scrollY.value,
+          [0, headerTravel],
+          [0, -spacing.xxl],
+          Extrapolation.CLAMP,
+        ),
+      },
+      {
+        scale: interpolate(
+          scrollY.value,
+          [0, headerTravel],
+          [1, 1.06],
+          Extrapolation.CLAMP,
+        ),
+      },
+    ],
+  }));
 
   const {
     addonSections,
     cartSelectionInputs,
+    isSelectionComplete,
     selectedAddonsTotal,
     selectedVariation,
     selectedVariationKey,
@@ -98,6 +141,7 @@ export default function MainContainer({
       hasCustomizationContext: !isCustomizationsLoading && customizations !== undefined,
       product: productInfoData,
       quantity,
+      onAddedToCart: handleAddedToCart,
       selectedOptions: cartSelectionInputs,
     });
 
@@ -212,37 +256,6 @@ export default function MainContainer({
     };
   }, [productInfoData.deal, productInfoData.dealAmount, productInfoData.dealType, productInfoData.price]);
 
-  React.useEffect(() => {
-    if (!ENABLE_PRODUCT_INFO_DEAL_DEBUG) {
-      return;
-    }
-
-    console.log("[Deliveries][ProductInfo][DealDebug]", {
-      productId: productInfoData.productId,
-      rawDeal: productInfoData.deal,
-      dealType: productInfoData.dealType,
-      dealAmount: productInfoData.dealAmount,
-      price: productInfoData.price,
-      resolvedBasePrice: detailDealPricing.basePrice,
-      resolvedDealType: detailDealPricing.dealType,
-      resolvedDealAmount: detailDealPricing.dealAmount,
-      derivedFixedDiscountFromBase: detailDealPricing.derivedFixedDiscountFromBase,
-      resolvedOfferLabel: detailDealPricing.offerLabel,
-      showOriginal: detailDealPricing.showOriginal,
-    });
-  }, [
-    detailDealPricing.basePrice,
-    detailDealPricing.dealAmount,
-    detailDealPricing.dealType,
-    detailDealPricing.derivedFixedDiscountFromBase,
-    detailDealPricing.offerLabel,
-    detailDealPricing.showOriginal,
-    productInfoData.deal,
-    productInfoData.dealAmount,
-    productInfoData.dealType,
-    productInfoData.price,
-    productInfoData.productId,
-  ]);
   const effectiveBasePrice = useMemo(() => {
     if (variationOptions.length === 0) {
       return detailDealPricing.basePrice;
@@ -281,40 +294,84 @@ export default function MainContainer({
 
   const totalPrice = useMemo(
     () => configuredUnitPrice * quantity,
-    [
-      configuredUnitPrice,
-      quantity,
-    ],
+    [configuredUnitPrice, quantity],
   );
 
-  const headerHeight = clampedScrollY.interpolate({
-    inputRange: [0, headerCollapseDistance],
-    outputRange: [maxHeaderHeight, minHeaderHeight],
-    extrapolate: "clamp",
-  });
+  const formatPrice = useCallback(
+    (value: number) => `${currencyLabel} ${value.toFixed(2)}`,
+    [currencyLabel],
+  );
 
-  const imageTranslateY = clampedScrollY.interpolate({
-    inputRange: [0, headerCollapseDistance],
-    outputRange: [0, -18],
-    extrapolate: "clamp",
-  });
+  const ratingLabel = useMemo(() => {
+    if (
+      typeof productInfoData.averageRating !== "number" ||
+      !Number.isFinite(productInfoData.averageRating) ||
+      productInfoData.averageRating <= 0
+    ) {
+      return null;
+    }
 
-  const formatPrice = (value: number) => `${currencyLabel} ${value.toFixed(2)}`;
+    return productInfoData.reviewCount > 0
+      ? `${productInfoData.averageRating.toFixed(1)} (${productInfoData.reviewCount.toLocaleString()})`
+      : productInfoData.averageRating.toFixed(1);
+  }, [productInfoData.averageRating, productInfoData.reviewCount]);
+
+  const categoryLabel =
+    productInfoData.subcategory?.name ?? productInfoData.category?.name ?? null;
+
+  const handleSharePress = useCallback(() => {
+    const shareText = [
+      productInfoData.name,
+      formatPrice(configuredUnitPrice),
+      productInfoData.description,
+    ]
+      .map((value) => value?.trim())
+      .filter(Boolean)
+      .join("\n");
+
+    if (!shareText) {
+      return;
+    }
+
+    void Share.share({
+      message: shareText,
+      title: productInfoData.name,
+    }).catch(() => {
+      // The system share sheet can be cancelled without user-facing feedback.
+    });
+  }, [configuredUnitPrice, formatPrice, productInfoData.description, productInfoData.name]);
+
+  const handlePrimaryAction = useCallback(() => {
+    if (!isSelectionComplete) {
+      setShowSelectionErrors(true);
+    }
+
+    void handleAddToCart();
+  }, [handleAddToCart, isSelectionComplete]);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.canvas }]}>
       <StatusBar
         translucent
         backgroundColor="transparent"
         barStyle="light-content"
       />
+      <LinearGradient
+        colors={[colors.primarySoft, colors.canvas, colors.canvas]}
+        end={{ x: 0.82, y: 1 }}
+        locations={[0, 0.42, 1]}
+        pointerEvents="none"
+        start={{ x: 0.18, y: 0 }}
+        style={StyleSheet.absoluteFill}
+      />
       <Animated.ScrollView
-        bounces={false}
-        contentContainerStyle={styles.contentContainer}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: false },
-        )}
+        bounces
+        contentContainerStyle={[
+          styles.contentContainer,
+          { paddingBottom: insets.bottom + 124 },
+        ]}
+        contentInsetAdjustmentBehavior="never"
+        onScroll={handleScroll}
         refreshControl={
           <RefreshControl
             onRefresh={() => {
@@ -327,114 +384,138 @@ export default function MainContainer({
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View style={[styles.headerContainer, { height: headerHeight }]}>
+        <View style={[styles.headerContainer, { height: maxHeaderHeight }]}>
           <ImageHeader
+            accessibilityLabel={productInfoData.name}
             containerStyle={styles.headerFill}
-            imageStyle={{
-              transform: [{ translateY: imageTranslateY }],
-            }}
+            imageStyle={imageAnimatedStyle}
             imageUri={productInfoData.imageUrl}
-            showCloseButton={false}
           />
-        </Animated.View>
-        <ItemInfo
-          description={productInfoData.description}
-          name={productInfoData.name}
-          offerLabel={detailDealPricing.offerLabel}
-          priceLabel={formatPrice(configuredUnitPrice)}
-          originalPriceLabel={
-            shouldShowOriginalPrice
-              ? formatPrice(originalUnitPrice)
-              : null
-          }
-        />
+        </View>
 
-        {hasDetailSections ? (
-          <View
-            style={[styles.mainDivider, { backgroundColor: colors.border }]}
+        <View
+          style={[
+            styles.detailsSurface,
+            elevation.raised,
+            {
+              backgroundColor: colors.surface,
+              borderRadius: shape.radius.hero,
+              gap: spacing.none,
+              paddingHorizontal: spacing.lg,
+              width: detailsSurfaceWidth,
+            },
+          ]}
+        >
+          <ItemInfo
+            categoryLabel={categoryLabel}
+            description={productInfoData.description}
+            isAvailable={productInfoData.inStock}
+            name={productInfoData.name}
+            offerLabel={detailDealPricing.offerLabel}
+            priceLabel={formatPrice(configuredUnitPrice)}
+            originalPriceLabel={
+              shouldShowOriginalPrice
+                ? formatPrice(originalUnitPrice)
+                : null
+            }
+            ratingLabel={ratingLabel}
+            unavailableLabel={t("product_info_unavailable")}
           />
-        ) : null}
 
-        {hasNutritionSection ? (
-          <ItemNutritions
-            ingredients={productInfoData.ingredients ?? undefined}
-            nutrition={productInfoData.nutrition ?? []}
-            usage={productInfoData.usage ?? undefined}
-          />
-        ) : null}
+          {hasDetailSections ? (
+            <View style={[styles.divider, { backgroundColor: colors.divider }]} />
+          ) : null}
 
-        {isCustomizationsLoading && !customizations ? (
-          <ProductInfoCustomizationsLoadingSkeleton />
-        ) : null}
+          {isCustomizationsLoading && !customizations ? (
+            <ProductInfoCustomizationsLoadingSkeleton />
+          ) : null}
 
-        {hasSizes ? (
-          <ItemSizes
-            formatPrice={formatPrice}
-            onSelect={selectVariationOption}
-            helperText={variationHelperText}
-            selectedVariationKey={selectedVariationKey}
-            variations={variationOptions}
-          />
-        ) : null}
+          {hasSizes ? (
+            <ItemSizes
+              formatPrice={formatPrice}
+              onSelect={selectVariationOption}
+              helperText={variationHelperText}
+              selectedVariationKey={selectedVariationKey}
+              variations={variationOptions}
+            />
+          ) : null}
 
-        {hasFlavours ? (
-          <ItemFlavour
-            formatPrice={formatPrice}
-            onToggle={toggleAddonOption}
-            sections={addonSections}
-            selectedOptionIdsByGroup={selectedAddonOptionIdsByGroup}
-          />
-        ) : null}
+          {hasSizes && hasFlavours ? (
+            <View style={[styles.divider, { backgroundColor: colors.divider }]} />
+          ) : null}
 
-        {hasDetailSections ? (
-          <View
-            style={[styles.bottomDivider, { backgroundColor: colors.border }]}
-          />
-        ) : null}
+          {hasFlavours ? (
+            <ItemFlavour
+              formatPrice={formatPrice}
+              onToggle={toggleAddonOption}
+              sections={addonSections}
+              selectedOptionIdsByGroup={selectedAddonOptionIdsByGroup}
+              showValidationErrors={showSelectionErrors}
+            />
+          ) : null}
+
+          {hasNutritionSection && hasCustomizationSection ? (
+            <View style={[styles.divider, { backgroundColor: colors.divider }]} />
+          ) : null}
+
+          {hasNutritionSection ? (
+            <ItemNutritions
+              ingredients={productInfoData.ingredients ?? undefined}
+              amountPer={productInfoData.amountPer ?? undefined}
+              nutrition={productInfoData.nutrition ?? []}
+              usage={productInfoData.usage ?? undefined}
+            />
+          ) : null}
+        </View>
       </Animated.ScrollView>
 
-      <View style={[styles.closeButtonContainer, { top: insets.top + 8 }]}>
-        <Pressable
-          accessibilityLabel="Go back"
-          accessibilityRole="button"
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      <View
+        pointerEvents="box-none"
+        style={[
+          styles.mediaActions,
+          {
+            left: gutter,
+            right: gutter,
+            top: insets.top + spacing.sm,
+          },
+        ]}
+      >
+        <ProductMediaActionButton
+          accessibilityLabel={t("product_info_back")}
+          iconName="arrow-back"
           onPress={() => navigation.goBack()}
-          style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
-        >
-          <View
-            style={[
-              styles.closeButton,
-              {
-                backgroundColor: colors.backgroundTertiary,
-                shadowColor: colors.shadowColor,
-              },
-            ]}
-          >
-            <Ionicons name="close" size={24} color={colors.text} />
-          </View>
-        </Pressable>
+        />
+        <ProductMediaActionButton
+          accessibilityLabel={t("product_info_share")}
+          iconName="share-2"
+          iconType="Feather"
+          onPress={handleSharePress}
+        />
       </View>
 
       <Footer
         isDisabled={isAddDisabled}
+        isAvailable={productInfoData.inStock}
         isSubmitting={isSubmitting}
-        onAddToCart={() => {
-          void handleAddToCart();
-        }}
+        onAddToCart={handlePrimaryAction}
         onDecrement={() => setQuantity((current) => Math.max(1, current - 1))}
         onIncrement={() => setQuantity((current) => current + 1)}
         quantity={quantity}
         totalPriceLabel={formatPrice(totalPrice)}
       />
 
-      <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
-        <DeliveriesFloatingCartButton
-          style={[
-            styles.floatingCartButton,
-            { bottom: insets.bottom + 92 },
-          ]}
-        />
-      </View>
+      <ProductAddedToCartModal
+        continueLabel={t("cart_add_success_continue_shopping")}
+        goToCartLabel={t("cart_add_success_go_to_cart")}
+        message={t("cart_add_success_message", {
+          product: productInfoData.name,
+          quantity,
+        })}
+        onContinueShopping={() => setIsAddedToCartVisible(false)}
+        onGoToCart={handleViewCart}
+        title={t("cart_add_success_title")}
+        visible={isAddedToCartVisible}
+      />
 
       <CartStoreConflictModal
         isSubmitting={conflictResolution.isResolving}
@@ -450,35 +531,22 @@ export default function MainContainer({
 }
 
 const styles = StyleSheet.create({
-  bottomDivider: {
-    height: 1,
-    marginHorizontal: 16,
-    marginTop: 4,
-  },
   container: {
     flex: 1,
-  },
-  closeButton: {
-    alignItems: "center",
-    borderRadius: 20,
-    height: 40,
-    justifyContent: "center",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    width: 40,
-  },
-  closeButtonContainer: {
-    left: 16,
-    position: "absolute",
-    zIndex: 3,
   },
   contentContainer: {
     paddingBottom: 20,
   },
-  floatingCartButton: {
-    position: "absolute",
-    right: 16,
+  detailsSurface: {
+    alignSelf: "center",
+    marginTop: -28,
+    overflow: "visible",
+    paddingBottom: 8,
+    paddingTop: 24,
+    zIndex: 2,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
   },
   headerContainer: {
     overflow: "hidden",
@@ -486,10 +554,10 @@ const styles = StyleSheet.create({
   headerFill: {
     height: "100%",
   },
-  mainDivider: {
-    height: 1,
-    marginHorizontal: 16,
-    marginBottom: 4,
-    marginTop: 4,
+  mediaActions: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    position: "absolute",
+    zIndex: 20,
   },
 });

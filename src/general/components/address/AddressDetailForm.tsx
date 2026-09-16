@@ -410,12 +410,13 @@ export default AddressDetailForm;
 
 const styles = StyleSheet.create({
   addressInput: {
-    borderRadius: 8,
+    borderRadius: 14,
     borderWidth: 1,
     marginHorizontal: 16,
     maxHeight: 80,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    minHeight: 54,
+    paddingVertical: 12,
   },
   addressSection: {
     zIndex: 1,
@@ -427,15 +428,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   nameInput: {
-    borderRadius: 8,
+    borderRadius: 14,
     borderWidth: 1,
-    height: 44,
+    height: 52,
     marginHorizontal: 16,
     paddingHorizontal: 12,
   },
   suggestionsList: {
-    borderBottomLeftRadius: 8,
-    borderBottomRightRadius: 8,
+    borderBottomLeftRadius: 14,
+    borderBottomRightRadius: 14,
     borderTopWidth: 0,
     borderWidth: 1,
     marginHorizontal: 16,

@@ -1,53 +1,660 @@
 {
-  "generated_at": "2026-09-14T13:06:47.369851+00:00",
+  "generated_at": "2026-09-16T13:08:51.594725+00:00",
   "nodes": {
-    "src_apps_deliveries_components_cart_cartscreencontent": {
-      "code_fingerprint": "4a2759f859b213e6d9a909cb565b6d08f56966e2677b34bae1045d3a7a31f12e",
-      "label": "CartScreenContent.tsx",
-      "last": "2026-09-14T07:46:31.583212+00:00",
+    "metro_config_config": {
+      "code_fingerprint": "6148a6ea1045a96aa49f785dbdcd7a47f5c312f0907a6e15a12d95a42f8af66b",
+      "label": "config",
+      "last": "2026-09-15T06:34:13.414687+00:00",
       "provenance": [
         {
-          "date": "2026-09-14T07:46:31.583212+00:00",
+          "date": "2026-09-15T06:34:13.414687+00:00",
           "outcome": "useful",
-          "q": "yes do that, and start with the implementation plan"
+          "q": "Map the branding, splash, and delivery store-card files affected by commit 434482ac4b730a0245aedd4bd2c9939d1e43aa4f into the SIP customer app without app deletion changes."
         }
       ],
-      "score": 0.994874535,
-      "source_file": "src/apps/deliveries/components/cart/CartScreenContent.tsx",
+      "score": 0.97099217,
+      "source_file": "metro.config.js",
       "status": "tentative",
       "uses": 1
     },
-    "src_apps_deliveries_components_ordertracking_useordertrackingviewmodel_trackingcoordinates": {
-      "code_fingerprint": "ff955aead0df66c27a0df2bc45566ee190cc54c500bf31f08675791c4f35fe0c",
-      "label": "TrackingCoordinates",
-      "last": "2026-09-14T07:46:31.583212+00:00",
+    "src_apps_deliveries_api_orderservicetypes_checkoutpreviewdelivery": {
+      "code_fingerprint": "2d26fea1a5dc1e27685f85c696e6b4ab6980bfc403e9ce55029789e38bfe2afe",
+      "label": "CheckoutPreviewDelivery",
+      "last": "2026-09-15T11:38:17.797245+00:00",
       "provenance": [
+        {
+          "date": "2026-09-15T11:38:17.797245+00:00",
+          "outcome": "useful",
+          "q": "move to the next one"
+        }
+      ],
+      "score": 0.975741094,
+      "source_file": "src/apps/deliveries/api/orderServiceTypes.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_api_orderservicetypes_placeorderinput": {
+      "code_fingerprint": "2d26fea1a5dc1e27685f85c696e6b4ab6980bfc403e9ce55029789e38bfe2afe",
+      "label": "PlaceOrderInput",
+      "last": "2026-09-15T11:38:17.797245+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-15T11:38:17.797245+00:00",
+          "outcome": "useful",
+          "q": "move to the next one"
+        }
+      ],
+      "score": 0.975741094,
+      "source_file": "src/apps/deliveries/api/orderServiceTypes.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_cart_cartfeedback_getcartmutationsuccessfeedback": {
+      "code_fingerprint": "5f01e71ec37a35384432939bf6ffdf5fdc7fe7f539054a74b61444e0ac76effe",
+      "label": "getCartMutationSuccessFeedback()",
+      "last": "2026-09-15T12:29:06.834023+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-15T12:29:06.834023+00:00",
+          "outcome": "useful",
+          "q": "1- when adding to cart done from the product page, i see the toast of adding to cart success, but no way of going directly to cart, whatever you implement make sure it is visually appealing and perfectly following UI UX standards 2- see the address sheet on the checkout page if the checkout button exists, dificult to use the sheet properly so handle that as well."
+        }
+      ],
+      "score": 0.976537005,
+      "source_file": "src/apps/deliveries/cart/cartFeedback.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_chain_navigation_chainbottomtabnavigator_chainbottomtabnavigator": {
+      "code_fingerprint": "c7d1376ea3cea53d4124a755a760d47d081a7e9c0318c6a47a00d7dc35c43448",
+      "label": "ChainBottomTabNavigator()",
+      "last": "2026-09-15T06:14:33.500200+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-15T06:14:33.500200+00:00",
+          "outcome": "useful",
+          "q": "Where can the address selection sheet open in deliveries, and which hosts have a visible bottom tab bar?"
+        }
+      ],
+      "score": 0.97068584,
+      "source_file": "src/apps/deliveries/chain/navigation/ChainBottomTabNavigator.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_components_cart_cartscreencontent": {
+      "code_fingerprint": "e546ecc3281f807806b7a922028160b4df27c7e21a8471597db2ce031bfb7d8a",
+      "label": "CartScreenContent.tsx",
+      "last": "2026-09-15T10:56:46.410444+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-15T10:56:46.410444+00:00",
+          "outcome": "useful",
+          "q": "move to the next phase"
+        },
         {
           "date": "2026-09-14T07:46:31.583212+00:00",
           "outcome": "useful",
           "q": "yes do that, and start with the implementation plan"
         }
       ],
-      "score": 0.994874535,
+      "score": 1.925007271,
+      "source_file": "src/apps/deliveries/components/cart/CartScreenContent.tsx",
+      "status": "preferred",
+      "uses": 2
+    },
+    "src_apps_deliveries_components_checkout_checkoutpaymentmethodbottomsheet": {
+      "code_fingerprint": "999c6b98638909cb44331120ddc775a8cd4267a86967f11e7ccbcaab26ed32f3",
+      "label": "CheckoutPaymentMethodBottomSheet.tsx",
+      "last": "2026-09-15T11:38:17.797245+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-15T11:38:17.797245+00:00",
+          "outcome": "useful",
+          "q": "move to the next one"
+        }
+      ],
+      "score": 0.975741094,
+      "source_file": "src/apps/deliveries/components/checkout/CheckoutPaymentMethodBottomSheet.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_components_checkout_checkoutschedulescreen": {
+      "code_fingerprint": "5127b22625ab58ac9ae11f4c75b1a6942d1f6f09c91dc48c36b9de017578599f",
+      "label": "CheckoutScheduleScreen.tsx",
+      "last": "2026-09-15T11:38:17.797245+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-15T11:38:17.797245+00:00",
+          "outcome": "useful",
+          "q": "move to the next one"
+        }
+      ],
+      "score": 0.975741094,
+      "source_file": "src/apps/deliveries/components/checkout/CheckoutScheduleScreen.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_components_checkout_checkoutscreencontent": {
+      "code_fingerprint": "cf62cc6f04ad72005762968566a97f888bf75def1d5a8af158cab123381ec080",
+      "label": "CheckoutScreenContent.tsx",
+      "last": "2026-09-15T11:38:17.797245+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-15T11:38:17.797245+00:00",
+          "outcome": "useful",
+          "q": "move to the next one"
+        }
+      ],
+      "score": 0.975741094,
+      "source_file": "src/apps/deliveries/components/checkout/CheckoutScreenContent.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_components_checkout_checkoutsummaryfooter": {
+      "code_fingerprint": "484bd6f84d0cba47e778040f92fd63e64d89e18ee762d50a09970f8dfc9e530f",
+      "label": "CheckoutSummaryFooter.tsx",
+      "last": "2026-09-15T11:38:17.797245+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-15T11:38:17.797245+00:00",
+          "outcome": "useful",
+          "q": "move to the next one"
+        }
+      ],
+      "score": 0.975741094,
+      "source_file": "src/apps/deliveries/components/checkout/CheckoutSummaryFooter.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_components_checkout_checkouttipsection": {
+      "code_fingerprint": "85a464fba2169211ea25300d1e94da217c08f923f458b74a594f7f5ee078b780",
+      "label": "CheckoutTipSection.tsx",
+      "last": "2026-09-15T11:38:17.797245+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-15T11:38:17.797245+00:00",
+          "outcome": "useful",
+          "q": "move to the next one"
+        }
+      ],
+      "score": 0.975741094,
+      "source_file": "src/apps/deliveries/components/checkout/CheckoutTipSection.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_components_navigation_deliveriestabbar_deliveriestabbar": {
+      "code_fingerprint": "a3b9c76135dc921c2ee21589ec7d09202f32990577eb20e7101e385af407f646",
+      "label": "DeliveriesTabBar()",
+      "last": "2026-09-15T12:20:10.529182+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-15T12:20:10.529182+00:00",
+          "outcome": "useful",
+          "q": "also i dont like this what you have done for making the background circles white in the bottom bar, it looks so shit, find some other proper solution that also looks visually appealling as well"
+        },
+        {
+          "date": "2026-09-15T06:14:33.500200+00:00",
+          "outcome": "useful",
+          "q": "Where can the address selection sheet open in deliveries, and which hosts have a visible bottom tab bar?"
+        }
+      ],
+      "score": 1.947082803,
+      "source_file": "src/apps/deliveries/components/navigation/DeliveriesTabBar.tsx",
+      "status": "preferred",
+      "uses": 2
+    },
+    "src_apps_deliveries_components_orderdetails_orderdetailsactionssection": {
+      "code_fingerprint": "e76a3e827b230e037cde3df11e6f52626a787dd6468a5de3a898cfe897a8a298",
+      "label": "OrderDetailsActionsSection.tsx",
+      "last": "2026-09-16T06:54:06.687110+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T06:54:06.687110+00:00",
+          "outcome": "useful",
+          "q": "Fix the order details actions, tracking UI, slow and unstable tracking and restaurant maps, and remove the failing mobile banners request properly without a second iteration."
+        },
+        {
+          "date": "2026-09-16T05:08:47.510863+00:00",
+          "outcome": "useful",
+          "q": "ok move to the next phase now"
+        }
+      ],
+      "score": 1.986332037,
+      "source_file": "src/apps/deliveries/components/orderDetails/OrderDetailsActionsSection.tsx",
+      "status": "preferred",
+      "uses": 2
+    },
+    "src_apps_deliveries_components_orderdetails_orderdetailsherosection": {
+      "code_fingerprint": "5c0936eda09eda8cd2d862fb8f628a7cedf047b0040ea4c05b9769c0e8a38dd2",
+      "label": "OrderDetailsHeroSection.tsx",
+      "last": "2026-09-16T05:08:47.510863+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T05:08:47.510863+00:00",
+          "outcome": "useful",
+          "q": "ok move to the next phase now"
+        }
+      ],
+      "score": 0.992326863,
+      "source_file": "src/apps/deliveries/components/orderDetails/OrderDetailsHeroSection.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_components_orders_activeorderssection": {
+      "code_fingerprint": "0cbd45a80ce31af2a2a637b4407ea38049baafa44a2cbef2c978fc1e348cfed2",
+      "label": "ActiveOrdersSection.tsx",
+      "last": "2026-09-16T05:08:47.510863+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T05:08:47.510863+00:00",
+          "outcome": "useful",
+          "q": "ok move to the next phase now"
+        }
+      ],
+      "score": 0.992326863,
+      "source_file": "src/apps/deliveries/components/orders/ActiveOrdersSection.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_components_orders_orderhistorysection": {
+      "code_fingerprint": "a786b98acd74360e9882e2e0d297129c9d6bdfc47537679940f293fb61b33c79",
+      "label": "OrderHistorySection.tsx",
+      "last": "2026-09-16T05:08:47.510863+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T05:08:47.510863+00:00",
+          "outcome": "useful",
+          "q": "ok move to the next phase now"
+        }
+      ],
+      "score": 0.992326863,
+      "source_file": "src/apps/deliveries/components/orders/OrderHistorySection.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_components_orders_orderlistcard": {
+      "code_fingerprint": "b5aa671934d5b4b9b55be77627d628ddcd2521c93af6defd262f8fc66d5b8429",
+      "label": "OrderListCard.tsx",
+      "last": "2026-09-16T05:08:47.510863+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T05:08:47.510863+00:00",
+          "outcome": "useful",
+          "q": "ok move to the next phase now"
+        }
+      ],
+      "score": 0.992326863,
+      "source_file": "src/apps/deliveries/components/orders/OrderListCard.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_components_orders_orderslistsection": {
+      "code_fingerprint": "0b35017d5513048f398ff478a848e3f01dd22b4c2b446cb8f2380b5194d77d75",
+      "label": "OrdersListSection.tsx",
+      "last": "2026-09-16T05:08:47.510863+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T05:08:47.510863+00:00",
+          "outcome": "useful",
+          "q": "ok move to the next phase now"
+        }
+      ],
+      "score": 0.992326863,
+      "source_file": "src/apps/deliveries/components/orders/OrdersListSection.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_components_ordertracking_ordertrackingmodernetaframe": {
+      "code_fingerprint": "9d72c7bd26d399eeab58c23ab75d6652fba043635322a76d917a6d1b36323c2f",
+      "label": "OrderTrackingModernEtaFrame.tsx",
+      "last": "2026-09-16T06:54:06.687110+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T06:54:06.687110+00:00",
+          "outcome": "useful",
+          "q": "Fix the order details actions, tracking UI, slow and unstable tracking and restaurant maps, and remove the failing mobile banners request properly without a second iteration."
+        },
+        {
+          "date": "2026-09-16T06:05:37.861768+00:00",
+          "outcome": "useful",
+          "q": "move to the next phase"
+        }
+      ],
+      "score": 1.987237441,
+      "source_file": "src/apps/deliveries/components/orderTracking/OrderTrackingModernEtaFrame.tsx",
+      "status": "preferred",
+      "uses": 2
+    },
+    "src_apps_deliveries_components_ordertracking_ordertrackingmodernprogresscard": {
+      "code_fingerprint": "d296350f8d22f4429c47ef6de68c8a6d3d9fa505652d94b6ced92faefcf388fa",
+      "label": "OrderTrackingModernProgressCard.tsx",
+      "last": "2026-09-16T06:54:06.687110+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T06:54:06.687110+00:00",
+          "outcome": "useful",
+          "q": "Fix the order details actions, tracking UI, slow and unstable tracking and restaurant maps, and remove the failing mobile banners request properly without a second iteration."
+        }
+      ],
+      "score": 0.994005174,
+      "source_file": "src/apps/deliveries/components/orderTracking/OrderTrackingModernProgressCard.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_components_ordertracking_ordertrackingmodernview": {
+      "code_fingerprint": "452b395339172c48f69621df3f293df2d90bf6a4265ed7e9dd5d786cbbd6cbe4",
+      "label": "OrderTrackingModernView.tsx",
+      "last": "2026-09-16T06:54:06.687110+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T06:54:06.687110+00:00",
+          "outcome": "useful",
+          "q": "Fix the order details actions, tracking UI, slow and unstable tracking and restaurant maps, and remove the failing mobile banners request properly without a second iteration."
+        },
+        {
+          "date": "2026-09-16T06:05:37.861768+00:00",
+          "outcome": "useful",
+          "q": "move to the next phase"
+        }
+      ],
+      "score": 1.987237441,
+      "source_file": "src/apps/deliveries/components/orderTracking/OrderTrackingModernView.tsx",
+      "status": "preferred",
+      "uses": 2
+    },
+    "src_apps_deliveries_components_ordertracking_ordertrackingtimelinesection": {
+      "code_fingerprint": "55d257772289b1add542d09e94a9552419d02c9acd27da863ed0bfa05d0684a8",
+      "label": "OrderTrackingTimelineSection.tsx",
+      "last": "2026-09-16T06:05:37.861768+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T06:05:37.861768+00:00",
+          "outcome": "useful",
+          "q": "move to the next phase"
+        }
+      ],
+      "score": 0.993232266,
+      "source_file": "src/apps/deliveries/components/orderTracking/OrderTrackingTimelineSection.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_components_ordertracking_useordertrackingviewmodel": {
+      "code_fingerprint": "5d80d7f6e3b8ce288bd0db7c06b48d35e6510041c60355e1345b1f84f1c3eaef",
+      "label": "useOrderTrackingViewModel.tsx",
+      "last": "2026-09-16T08:05:44.499730+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T08:05:44.499730+00:00",
+          "outcome": "useful",
+          "q": "Fix iOS marker cutoff, Android missing markers, active blue marker state, tracking markers, and refine the tracking UI with a gradient ring and shorter status copy."
+        },
+        {
+          "date": "2026-09-16T06:54:06.687110+00:00",
+          "outcome": "useful",
+          "q": "Fix the order details actions, tracking UI, slow and unstable tracking and restaurant maps, and remove the failing mobile banners request properly without a second iteration."
+        },
+        {
+          "date": "2026-09-16T06:05:37.861768+00:00",
+          "outcome": "useful",
+          "q": "move to the next phase"
+        }
+      ],
+      "score": 2.982385694,
       "source_file": "src/apps/deliveries/components/orderTracking/useOrderTrackingViewModel.tsx",
+      "status": "preferred",
+      "uses": 3
+    },
+    "src_apps_deliveries_components_ordertracking_useordertrackingviewmodel_trackingcoordinates": {
+      "code_fingerprint": "5d80d7f6e3b8ce288bd0db7c06b48d35e6510041c60355e1345b1f84f1c3eaef",
+      "label": "TrackingCoordinates",
+      "last": "2026-09-16T08:45:08.924098+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T08:45:08.924098+00:00",
+          "outcome": "useful",
+          "q": "Refine order tracking UI to match the supplied reference, optically center the store marker, and dynamically fit the map to the route polyline."
+        },
+        {
+          "date": "2026-09-16T08:05:44.499730+00:00",
+          "outcome": "useful",
+          "q": "Fix iOS marker cutoff, Android missing markers, active blue marker state, tracking markers, and refine the tracking UI with a gradient ring and shorter status copy."
+        },
+        {
+          "date": "2026-09-16T06:05:37.861768+00:00",
+          "outcome": "useful",
+          "q": "move to the next phase"
+        },
+        {
+          "date": "2026-09-14T07:46:31.583212+00:00",
+          "outcome": "useful",
+          "q": "yes do that, and start with the implementation plan"
+        }
+      ],
+      "score": 3.934074234,
+      "source_file": "src/apps/deliveries/components/orderTracking/useOrderTrackingViewModel.tsx",
+      "status": "preferred",
+      "uses": 4
+    },
+    "src_apps_deliveries_components_productinfo_maincontainer": {
+      "code_fingerprint": "34d351beac5602554a6538719472865edcb656016ebb526bcd0fe91ac2653ecc",
+      "label": "productInfo/MainContainer.tsx",
+      "last": "2026-09-16T04:46:51.312971+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T04:46:51.312971+00:00",
+          "outcome": "useful",
+          "q": "Replace the current product add-to-cart toast with a premium centered animated confirmation popup that offers Go to cart."
+        }
+      ],
+      "score": 0.99197765,
+      "source_file": "src/apps/deliveries/components/productInfo/MainContainer.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_components_productinfo_useproductinfocartflow": {
+      "code_fingerprint": "3d871c4767c8a3a8c0aa24cdf02294c7c81ca79adea7178f2ee5e65d2a6cfd57",
+      "label": "useProductInfoCartFlow.ts",
+      "last": "2026-09-16T04:46:51.312971+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T04:46:51.312971+00:00",
+          "outcome": "useful",
+          "q": "Replace the current product add-to-cart toast with a premium centered animated confirmation popup that offers Go to cart."
+        }
+      ],
+      "score": 0.99197765,
+      "source_file": "src/apps/deliveries/components/productInfo/useProductInfoCartFlow.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_components_specialoffersbanner_specialoffersbanner": {
+      "code_fingerprint": "9f6864fcbcc44ffcfb99c03d77e4b5e873dbb15a13b7a184de903bf0c739f695",
+      "label": "specialOffersBanner/SpecialOffersBanner.tsx",
+      "last": "2026-09-16T08:34:24.598652+00:00",
+      "neg": 1,
+      "provenance": [
+        {
+          "date": "2026-09-16T08:34:24.598652+00:00",
+          "outcome": "corrected",
+          "q": "the banners are still not showing in the home tab"
+        },
+        {
+          "date": "2026-09-16T08:19:07.829109+00:00",
+          "outcome": "useful",
+          "q": "The mobile banners were removed to avoid a 404, but they must remain visible without the failing request."
+        }
+      ],
+      "score": -0.000244053,
+      "source_file": "src/apps/deliveries/components/specialOffersBanner/SpecialOffersBanner.tsx",
+      "status": "contested",
+      "uses": 1,
+      "verdict": "dead end"
+    },
+    "src_apps_deliveries_components_storecard_storecard": {
+      "code_fingerprint": "9a940a1c8986a18a1fb40e20d3e8994b1283a401a7ba602e195696944a1d36af",
+      "label": "StoreCard.tsx",
+      "last": "2026-09-15T06:34:13.414687+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-15T06:34:13.414687+00:00",
+          "outcome": "useful",
+          "q": "Map the branding, splash, and delivery store-card files affected by commit 434482ac4b730a0245aedd4bd2c9939d1e43aa4f into the SIP customer app without app deletion changes."
+        }
+      ],
+      "score": 0.97099217,
+      "source_file": "src/apps/deliveries/components/storeCard/StoreCard.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_components_storecard_subcomponents_storedeliveryinfo_storedeliveryinfo": {
+      "code_fingerprint": "615fd03a109a22ecd69dea4e220430242528d5daf1c4efdd7d65d3b46b810214",
+      "label": "StoreDeliveryInfo()",
+      "last": "2026-09-15T06:34:13.414687+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-15T06:34:13.414687+00:00",
+          "outcome": "useful",
+          "q": "Map the branding, splash, and delivery store-card files affected by commit 434482ac4b730a0245aedd4bd2c9939d1e43aa4f into the SIP customer app without app deletion changes."
+        }
+      ],
+      "score": 0.97099217,
+      "source_file": "src/apps/deliveries/components/storeCard/subComponents/StoreDeliveryInfo.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_components_wallet_wallettransactionitem": {
+      "code_fingerprint": "cb7375ac50f70febcda0076d6a4bc80905c8586f676c0c0251f899b964a32285",
+      "label": "WalletTransactionItem.tsx",
+      "last": "2026-09-16T11:13:20.987388+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T11:13:20.987388+00:00",
+          "outcome": "useful",
+          "q": "Continue the next unfinished premium UI revamp phase"
+        }
+      ],
+      "score": 0.998148348,
+      "source_file": "src/apps/deliveries/components/wallet/WalletTransactionItem.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_hooks_usecheckoutpreview": {
+      "code_fingerprint": "04e6a700eab1a08363e4c212442c96673df0afb26fd64fddf122b7496997f715",
+      "label": "useCheckoutPreview.ts",
+      "last": "2026-09-15T11:38:17.797245+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-15T11:38:17.797245+00:00",
+          "outcome": "useful",
+          "q": "move to the next one"
+        }
+      ],
+      "score": 0.975741094,
+      "source_file": "src/apps/deliveries/hooks/useCheckoutPreview.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_hooks_usedeliveryroutepath": {
+      "code_fingerprint": "1c3bf9f0171c28891594375285b0c4a9ec87fe1215f0e2c831efcc79ef207b0d",
+      "label": "useDeliveryRoutePath.ts",
+      "last": "2026-09-16T06:54:06.687110+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T06:54:06.687110+00:00",
+          "outcome": "useful",
+          "q": "Fix the order details actions, tracking UI, slow and unstable tracking and restaurant maps, and remove the failing mobile banners request properly without a second iteration."
+        },
+        {
+          "date": "2026-09-16T06:05:37.861768+00:00",
+          "outcome": "useful",
+          "q": "move to the next phase"
+        }
+      ],
+      "score": 1.987237441,
+      "source_file": "src/apps/deliveries/hooks/useDeliveryRoutePath.ts",
+      "status": "preferred",
+      "uses": 2
+    },
+    "src_apps_deliveries_hooks_usediscoveryqueries_usemobilebanners": {
+      "code_fingerprint": "6218b9465928538522cecca6a0b5f17a248c9ec63d4430a5f24d36103dff25df",
+      "label": "useMobileBanners()",
+      "last": "2026-09-16T08:19:07.829109+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T08:19:07.829109+00:00",
+          "outcome": "useful",
+          "q": "The mobile banners were removed to avoid a 404, but they must remain visible without the failing request."
+        }
+      ],
+      "score": 0.995362059,
+      "source_file": "src/apps/deliveries/hooks/useDiscoveryQueries.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_hooks_useorderstatussocketsync": {
+      "code_fingerprint": "1e94555b2a6582b5c176fe5f58d95c2f386fec2a01f663eb7dae784e7736a095",
+      "label": "useOrderStatusSocketSync.ts",
+      "last": "2026-09-16T06:05:37.861768+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T06:05:37.861768+00:00",
+          "outcome": "useful",
+          "q": "move to the next phase"
+        },
+        {
+          "date": "2026-09-16T05:08:47.510863+00:00",
+          "outcome": "useful",
+          "q": "ok move to the next phase now"
+        }
+      ],
+      "score": 1.985559129,
+      "source_file": "src/apps/deliveries/hooks/useOrderStatusSocketSync.ts",
+      "status": "preferred",
+      "uses": 2
+    },
+    "src_apps_deliveries_multivendor_navigation_multivendorbottomtabnavigator_multivendorbottomtabnavigator": {
+      "code_fingerprint": "923537f63876746e3f91874a8c743b05e15b5c2e15189d698b8d62c91ac17275",
+      "label": "MultiVendorBottomTabNavigator()",
+      "last": "2026-09-15T06:14:33.500200+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-15T06:14:33.500200+00:00",
+          "outcome": "useful",
+          "q": "Where can the address selection sheet open in deliveries, and which hosts have a visible bottom tab bar?"
+        }
+      ],
+      "score": 0.97068584,
+      "source_file": "src/apps/deliveries/multiVendor/navigation/MultiVendorBottomTabNavigator.tsx",
       "status": "tentative",
       "uses": 1
     },
     "src_apps_deliveries_multivendor_screens_hometab_hometab": {
-      "code_fingerprint": "efc1bcdcae9bf561c1e3a5da668c6af21eee6ec9d1208ff511fd92401fcdaf95",
+      "code_fingerprint": "d9da8fdca77240ab78687f83acf9aed604e12136be35536e70f38fd2f3474a16",
       "label": "HomeTab.tsx",
-      "last": "2026-09-14T07:46:31.583212+00:00",
+      "last": "2026-09-16T08:34:24.598652+00:00",
+      "neg": 1,
       "provenance": [
+        {
+          "date": "2026-09-16T08:34:24.598652+00:00",
+          "outcome": "corrected",
+          "q": "the banners are still not showing in the home tab"
+        },
+        {
+          "date": "2026-09-16T08:19:07.829109+00:00",
+          "outcome": "useful",
+          "q": "The mobile banners were removed to avoid a 404, but they must remain visible without the failing request."
+        },
         {
           "date": "2026-09-14T07:46:31.583212+00:00",
           "outcome": "useful",
           "q": "yes do that, and start with the implementation plan"
         }
       ],
-      "score": 0.994874535,
+      "score": 0.949671987,
       "source_file": "src/apps/deliveries/multiVendor/screens/HomeTab/HomeTab.tsx",
-      "status": "tentative",
-      "uses": 1
+      "status": "contested",
+      "uses": 2,
+      "verdict": "useful"
     },
     "src_apps_deliveries_multivendor_screens_storedetailsscreen_storedetailsscreen": {
       "code_fingerprint": "fe8f1ab4e03437f8b85c1ff2ce7ef693ce47467487978567e99995dd30977117",
@@ -60,13 +667,13 @@
           "q": "yes do that, and start with the implementation plan"
         }
       ],
-      "score": 0.994874535,
+      "score": 0.94991604,
       "source_file": "src/apps/deliveries/multiVendor/screens/StoreDetailsScreen/StoreDetailsScreen.tsx",
       "status": "tentative",
       "uses": 1
     },
     "src_apps_deliveries_navigation_deliveriesnavigator": {
-      "code_fingerprint": "c2d3bb87d793ce6f59bcbe0d99a4f64af53c77ba313390560be203f7f10007cd",
+      "code_fingerprint": "32753b84de94a19079fab6cb63c9993fa4845e76a3afd712360501b55f1c30a9",
       "label": "DeliveriesNavigator.tsx",
       "last": "2026-09-14T07:46:31.583212+00:00",
       "provenance": [
@@ -76,24 +683,66 @@
           "q": "yes do that, and start with the implementation plan"
         }
       ],
-      "score": 0.994874535,
+      "score": 0.94991604,
       "source_file": "src/apps/deliveries/navigation/DeliveriesNavigator.tsx",
       "status": "tentative",
       "uses": 1
     },
     "src_apps_deliveries_screens_checkoutscreen_checkoutscreen": {
-      "code_fingerprint": "8ba2946d5a189b6d0d54e84784a5267a7d4b1d8e82597856aaffe64d17fd61c8",
+      "code_fingerprint": "626de558e7fd30f8f1897675401ccaceafb31b061d7f977914cab49a93df9e65",
       "label": "CheckoutScreen.tsx",
-      "last": "2026-09-14T07:46:31.583212+00:00",
+      "last": "2026-09-15T12:29:06.834023+00:00",
       "provenance": [
+        {
+          "date": "2026-09-15T12:29:06.834023+00:00",
+          "outcome": "useful",
+          "q": "1- when adding to cart done from the product page, i see the toast of adding to cart success, but no way of going directly to cart, whatever you implement make sure it is visually appealing and perfectly following UI UX standards 2- see the address sheet on the checkout page if the checkout button exists, dificult to use the sheet properly so handle that as well."
+        },
+        {
+          "date": "2026-09-15T11:38:17.797245+00:00",
+          "outcome": "useful",
+          "q": "move to the next one"
+        },
         {
           "date": "2026-09-14T07:46:31.583212+00:00",
           "outcome": "useful",
           "q": "yes do that, and start with the implementation plan"
         }
       ],
-      "score": 0.994874535,
+      "score": 2.902194139,
       "source_file": "src/apps/deliveries/screens/CheckoutScreen/CheckoutScreen.tsx",
+      "status": "preferred",
+      "uses": 3
+    },
+    "src_apps_deliveries_screens_couponsscreen_couponsscreen": {
+      "code_fingerprint": "44bbc606c5959006c95a897d70ff63824b0ff342d5c34fb62b2923aa6271ddce",
+      "label": "CouponsScreen.tsx",
+      "last": "2026-09-16T11:13:20.987388+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T11:13:20.987388+00:00",
+          "outcome": "useful",
+          "q": "Continue the next unfinished premium UI revamp phase"
+        }
+      ],
+      "score": 0.998148348,
+      "source_file": "src/apps/deliveries/screens/CouponsScreen/CouponsScreen.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_screens_riderchatscreen_riderchatscreen": {
+      "code_fingerprint": "567cc0b4c06a46afdc3c43d7ab065ff5e6c2879080e4067015cb75ff2445efcd",
+      "label": "RiderChatScreen/RiderChatScreen.tsx",
+      "last": "2026-09-16T06:05:37.861768+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T06:05:37.861768+00:00",
+          "outcome": "useful",
+          "q": "move to the next phase"
+        }
+      ],
+      "score": 0.993232266,
+      "source_file": "src/apps/deliveries/screens/RiderChatScreen/RiderChatScreen.tsx",
       "status": "tentative",
       "uses": 1
     },
@@ -108,26 +757,434 @@
           "q": "yes do that, and start with the implementation plan"
         }
       ],
-      "score": 0.994874535,
+      "score": 0.94991604,
       "source_file": "src/apps/deliveries/screens/SupportChatScreen/SupportChatScreen.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_screens_wallet_walletscreen_walletscreen_walletscreen": {
+      "code_fingerprint": "7b53e5cdfff5925a7b63d929998d8078eb63a966da7c6e6ec632868e0955e9c6",
+      "label": "WalletScreen()",
+      "last": "2026-09-16T11:13:20.987388+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T11:13:20.987388+00:00",
+          "outcome": "useful",
+          "q": "Continue the next unfinished premium UI revamp phase"
+        }
+      ],
+      "score": 0.998148348,
+      "source_file": "src/apps/deliveries/screens/wallet/WalletScreen/WalletScreen.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_apps_deliveries_screens_wallet_wallettransactionsscreen_wallettransactionsscreen_wallettransactionsscreen": {
+      "code_fingerprint": "873b3334c521595418812a31e28074a9b835fe54e99eca774a92b673dbab8813",
+      "label": "WalletTransactionsScreen()",
+      "last": "2026-09-16T11:13:20.987388+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T11:13:20.987388+00:00",
+          "outcome": "useful",
+          "q": "Continue the next unfinished premium UI revamp phase"
+        }
+      ],
+      "score": 0.998148348,
+      "source_file": "src/apps/deliveries/screens/wallet/WalletTransactionsScreen/WalletTransactionsScreen.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_general_api_walletsavedcardsservice": {
+      "code_fingerprint": "69c79062184ec802ac9a033bac201c24179ded106dbcf0ecfd1ddced7b6f61f5",
+      "label": "walletSavedCardsService.ts",
+      "last": "2026-09-16T11:13:20.987388+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T11:13:20.987388+00:00",
+          "outcome": "useful",
+          "q": "Continue the next unfinished premium UI revamp phase"
+        }
+      ],
+      "score": 0.998148348,
+      "source_file": "src/general/api/walletSavedCardsService.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_general_components_address_addresschooseonmap": {
+      "code_fingerprint": "5b6365347029b5d561f8cd4434befaacdcdaa0e8c8f7b5193180e9ffce8c80dd",
+      "label": "AddressChooseOnMap.tsx",
+      "last": "2026-09-16T06:30:41.643610+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T06:30:41.643610+00:00",
+          "outcome": "useful",
+          "q": "move to the next phase"
+        }
+      ],
+      "score": 0.993631763,
+      "source_file": "src/general/components/address/AddressChooseOnMap.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_general_components_address_addressselectionbottomsheet": {
+      "code_fingerprint": "232ae94fdbadd975688277c6b25b8e1dcbfb14d500b40690809dd83d300216e8",
+      "label": "AddressSelectionBottomSheet.tsx",
+      "last": "2026-09-15T11:38:17.797245+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-15T11:38:17.797245+00:00",
+          "outcome": "useful",
+          "q": "move to the next one"
+        }
+      ],
+      "score": 0.975741094,
+      "source_file": "src/general/components/address/AddressSelectionBottomSheet.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_general_components_address_addressselectionbottomsheet_addressselectionbottomsheet": {
+      "code_fingerprint": "232ae94fdbadd975688277c6b25b8e1dcbfb14d500b40690809dd83d300216e8",
+      "label": "AddressSelectionBottomSheet()",
+      "last": "2026-09-15T12:29:06.834023+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-15T12:29:06.834023+00:00",
+          "outcome": "useful",
+          "q": "1- when adding to cart done from the product page, i see the toast of adding to cart success, but no way of going directly to cart, whatever you implement make sure it is visually appealing and perfectly following UI UX standards 2- see the address sheet on the checkout page if the checkout button exists, dificult to use the sheet properly so handle that as well."
+        },
+        {
+          "date": "2026-09-15T06:14:33.500200+00:00",
+          "outcome": "useful",
+          "q": "Where can the address selection sheet open in deliveries, and which hosts have a visible bottom tab bar?"
+        }
+      ],
+      "score": 1.947222846,
+      "source_file": "src/general/components/address/AddressSelectionBottomSheet.tsx",
+      "status": "preferred",
+      "uses": 2
+    },
+    "src_general_components_apptoast_toastpayload": {
+      "code_fingerprint": "dc5bd5840f88b60df1ee2d46c9a8a92d4722022e8274e7473f62cc7d3e5a8257",
+      "label": "ToastPayload",
+      "last": "2026-09-16T04:46:51.312971+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T04:46:51.312971+00:00",
+          "outcome": "useful",
+          "q": "Replace the current product add-to-cart toast with a premium centered animated confirmation popup that offers Go to cart."
+        },
+        {
+          "date": "2026-09-15T12:29:06.834023+00:00",
+          "outcome": "useful",
+          "q": "1- when adding to cart done from the product page, i see the toast of adding to cart success, but no way of going directly to cart, whatever you implement make sure it is visually appealing and perfectly following UI UX standards 2- see the address sheet on the checkout page if the checkout button exists, dificult to use the sheet properly so handle that as well."
+        }
+      ],
+      "score": 1.968514655,
+      "source_file": "src/general/components/AppToast.tsx",
+      "status": "preferred",
+      "uses": 2
+    },
+    "src_general_components_filterablepaginatedlist_genericfilterablepaginatedlistscreen_genericfilterablepaginatedlistscreen": {
+      "code_fingerprint": "849094f24d61d26ae5fe93ba71f000fe770f3f246bb61edc0eeba08b68ec16c2",
+      "label": "GenericFilterablePaginatedListScreen()",
+      "last": "2026-09-15T12:32:26.871814+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-15T12:32:26.871814+00:00",
+          "outcome": "useful",
+          "q": "fix this translation key as well"
+        }
+      ],
+      "score": 0.976589245,
+      "source_file": "src/general/components/filterablePaginatedList/GenericFilterablePaginatedListScreen.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_general_components_image_image": {
+      "code_fingerprint": "b18b58a7c82653942a37f4393cf3f81c8b78b39b60172e999f393f0b87613ac3",
+      "label": "Image()",
+      "last": "2026-09-15T06:34:13.414687+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-15T06:34:13.414687+00:00",
+          "outcome": "useful",
+          "q": "Map the branding, splash, and delivery store-card files affected by commit 434482ac4b730a0245aedd4bd2c9939d1e43aa4f into the SIP customer app without app deletion changes."
+        }
+      ],
+      "score": 0.97099217,
+      "source_file": "src/general/components/Image.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_general_components_map": {
+      "code_fingerprint": "1da42410354afd21183e39f0ca2a32f20b3f92db2ae6e4086e3326b9c8da712f",
+      "label": "Map.tsx",
+      "last": "2026-09-16T06:54:06.687110+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T06:54:06.687110+00:00",
+          "outcome": "useful",
+          "q": "Fix the order details actions, tracking UI, slow and unstable tracking and restaurant maps, and remove the failing mobile banners request properly without a second iteration."
+        },
+        {
+          "date": "2026-09-16T06:05:37.861768+00:00",
+          "outcome": "useful",
+          "q": "move to the next phase"
+        }
+      ],
+      "score": 1.987237441,
+      "source_file": "src/general/components/Map.tsx",
+      "status": "preferred",
+      "uses": 2
+    },
+    "src_general_components_map_map": {
+      "code_fingerprint": "1da42410354afd21183e39f0ca2a32f20b3f92db2ae6e4086e3326b9c8da712f",
+      "label": "Map",
+      "last": "2026-09-16T08:29:02.870000+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T08:29:02.870000+00:00",
+          "outcome": "useful",
+          "q": "Fix the iOS AIRGoogleMap insertReactSubview index-beyond-bounds crash when rapidly selecting multiple store markers; keep selection smooth and update only the active marker."
+        },
+        {
+          "date": "2026-09-16T08:05:44.499730+00:00",
+          "outcome": "useful",
+          "q": "Fix iOS marker cutoff, Android missing markers, active blue marker state, tracking markers, and refine the tracking UI with a gradient ring and shorter status copy."
+        }
+      ],
+      "score": 1.990668711,
+      "source_file": "src/general/components/Map.tsx",
+      "status": "preferred",
+      "uses": 2
+    },
+    "src_general_components_map_mappolyline": {
+      "code_fingerprint": "1da42410354afd21183e39f0ca2a32f20b3f92db2ae6e4086e3326b9c8da712f",
+      "label": "MapPolyline",
+      "last": "2026-09-16T06:05:37.861768+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T06:05:37.861768+00:00",
+          "outcome": "useful",
+          "q": "move to the next phase"
+        }
+      ],
+      "score": 0.993232266,
+      "source_file": "src/general/components/Map.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_general_components_profile_myprofileaddresscard": {
+      "code_fingerprint": "dabf52fe14645028f548e56fa385b5488ad9ee236fad6d0f8cede59c281173a0",
+      "label": "MyProfileAddressCard.tsx",
+      "last": "2026-09-16T06:30:41.643610+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T06:30:41.643610+00:00",
+          "outcome": "useful",
+          "q": "move to the next phase"
+        }
+      ],
+      "score": 0.993631763,
+      "source_file": "src/general/components/profile/MyProfileAddressCard.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_general_components_profile_savedaddresseslist": {
+      "code_fingerprint": "e10393c6b731d3a6eaef755ec8b35a4ca481d7109e64d9d4124dca2a663a8778",
+      "label": "SavedAddressesList.tsx",
+      "last": "2026-09-16T06:30:41.643610+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T06:30:41.643610+00:00",
+          "outcome": "useful",
+          "q": "move to the next phase"
+        }
+      ],
+      "score": 0.993631763,
+      "source_file": "src/general/components/profile/SavedAddressesList.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_general_components_search_searchmaincontainer_searchmaincontainer": {
+      "code_fingerprint": "c8c8bcf15c42f67ad60e274e75fdffb8d69a91dfdaf9285ae1f7a364ec2810f7",
+      "label": "SearchMainContainer()",
+      "last": "2026-09-15T06:14:33.500200+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-15T06:14:33.500200+00:00",
+          "outcome": "useful",
+          "q": "Where can the address selection sheet open in deliveries, and which hosts have a visible bottom tab bar?"
+        }
+      ],
+      "score": 0.97068584,
+      "source_file": "src/general/components/search/SearchMainContainer.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_general_localization_localizationprovider": {
+      "code_fingerprint": "d4be52795bc3ccaacb0b054268595689b7044f85d78ef354411e7273e5e341c8",
+      "label": "LocalizationProvider.tsx",
+      "last": "2026-09-15T12:32:26.871814+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-15T12:32:26.871814+00:00",
+          "outcome": "useful",
+          "q": "fix this translation key as well"
+        },
+        {
+          "date": "2026-09-15T06:34:13.414687+00:00",
+          "outcome": "useful",
+          "q": "Map the branding, splash, and delivery store-card files affected by commit 434482ac4b730a0245aedd4bd2c9939d1e43aa4f into the SIP customer app without app deletion changes."
+        }
+      ],
+      "score": 1.947581415,
+      "source_file": "src/general/localization/LocalizationProvider.tsx",
+      "status": "preferred",
+      "uses": 2
+    },
+    "src_general_localization_translations": {
+      "code_fingerprint": "a6f5092b7ffc30362101b209b2e4de833d21b6e8b5f8c9b3acaece3890e73397",
+      "label": "translations.ts",
+      "last": "2026-09-15T12:32:26.871814+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-15T12:32:26.871814+00:00",
+          "outcome": "useful",
+          "q": "fix this translation key as well"
+        }
+      ],
+      "score": 0.976589245,
+      "source_file": "src/general/localization/translations.ts",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_general_screens_address_addressdetailscreen": {
+      "code_fingerprint": "e062be5caa496155e9787135a9e7217080d8e76ef7adc2bb69333f1319c8ac19",
+      "label": "AddressDetailScreen.tsx",
+      "last": "2026-09-16T06:30:41.643610+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T06:30:41.643610+00:00",
+          "outcome": "useful",
+          "q": "move to the next phase"
+        }
+      ],
+      "score": 0.993631763,
+      "source_file": "src/general/screens/address/AddressDetailScreen.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_general_screens_address_addresssearchscreen": {
+      "code_fingerprint": "d49a26801ee1a66523b1e01f041118a9814d1719b8c63509624e55e7cd8127a8",
+      "label": "AddressSearchScreen.tsx",
+      "last": "2026-09-16T06:30:41.643610+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T06:30:41.643610+00:00",
+          "outcome": "useful",
+          "q": "move to the next phase"
+        }
+      ],
+      "score": 0.993631763,
+      "source_file": "src/general/screens/address/AddressSearchScreen.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_general_screens_profile_myprofilescreen": {
+      "code_fingerprint": "44da4464e1403614b32c5a360b301bc9d3b98e371d67e9a9f4cbd64319c68629",
+      "label": "MyProfileScreen.tsx",
+      "last": "2026-09-16T06:30:41.643610+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T06:30:41.643610+00:00",
+          "outcome": "useful",
+          "q": "move to the next phase"
+        }
+      ],
+      "score": 0.993631763,
+      "source_file": "src/general/screens/profile/MyProfileScreen.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_general_screens_profile_profiletabscreen": {
+      "code_fingerprint": "91c1c7ff5251cf26fc057aa5f2d29ef4f6930eee38a096acb6d29b3990cd2d41",
+      "label": "ProfileTabScreen.tsx",
+      "last": "2026-09-16T06:30:41.643610+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T06:30:41.643610+00:00",
+          "outcome": "useful",
+          "q": "move to the next phase"
+        }
+      ],
+      "score": 0.993631763,
+      "source_file": "src/general/screens/profile/ProfileTabScreen.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
+    "src_general_screens_seeallscreen_components_seeallmapview": {
+      "code_fingerprint": "b9ef5bed849b8196343cc6fc93e12f579ab4c7c5d5fcd24b0f4c779d86772d8a",
+      "label": "SeeAllMapView.tsx",
+      "last": "2026-09-16T08:29:02.870000+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-16T08:29:02.870000+00:00",
+          "outcome": "useful",
+          "q": "Fix the iOS AIRGoogleMap insertReactSubview index-beyond-bounds crash when rapidly selecting multiple store markers; keep selection smooth and update only the active marker."
+        },
+        {
+          "date": "2026-09-16T08:05:44.499730+00:00",
+          "outcome": "useful",
+          "q": "Fix iOS marker cutoff, Android missing markers, active blue marker state, tracking markers, and refine the tracking UI with a gradient ring and shorter status copy."
+        },
+        {
+          "date": "2026-09-16T06:54:06.687110+00:00",
+          "outcome": "useful",
+          "q": "Fix the order details actions, tracking UI, slow and unstable tracking and restaurant maps, and remove the failing mobile banners request properly without a second iteration."
+        }
+      ],
+      "score": 2.984673886,
+      "source_file": "src/general/screens/SeeAllScreen/components/SeeAllMapView.tsx",
+      "status": "preferred",
+      "uses": 3
+    },
+    "src_general_theme_colors": {
+      "code_fingerprint": "78f22e1b0b01b809ecc55cb53dc2231da283cc0372d95ffe34110d36b46b76dc",
+      "label": "colors.ts",
+      "last": "2026-09-15T12:20:10.529182+00:00",
+      "provenance": [
+        {
+          "date": "2026-09-15T12:20:10.529182+00:00",
+          "outcome": "useful",
+          "q": "also i dont like this what you have done for making the background circles white in the bottom bar, it looks so shit, find some other proper solution that also looks visually appealling as well"
+        }
+      ],
+      "score": 0.976396963,
+      "source_file": "src/general/theme/colors.ts",
       "status": "tentative",
       "uses": 1
     },
     "src_general_theme_theme_theme": {
       "code_fingerprint": "b1de343820c023eb053357b5d08599ed5759ad58c7ae10f24901661239feecc1",
       "label": "Theme",
-      "last": "2026-09-14T07:46:31.583212+00:00",
+      "last": "2026-09-15T12:20:10.529182+00:00",
       "provenance": [
+        {
+          "date": "2026-09-15T12:20:10.529182+00:00",
+          "outcome": "useful",
+          "q": "also i dont like this what you have done for making the background circles white in the bottom bar, it looks so shit, find some other proper solution that also looks visually appealling as well"
+        },
         {
           "date": "2026-09-14T07:46:31.583212+00:00",
           "outcome": "useful",
           "q": "yes do that, and start with the implementation plan"
         }
       ],
-      "score": 0.994874535,
+      "score": 1.926313003,
       "source_file": "src/general/theme/theme.ts",
-      "status": "tentative",
-      "uses": 1
+      "status": "preferred",
+      "uses": 2
     }
   },
   "version": 1

@@ -4,20 +4,24 @@ import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import SupportChatFooter from '../../../../general/components/support/SupportChatFooter';
 import SupportFaqListItem from '../../../../general/components/support/SupportFaqListItem';
+import SupportHeader from '../../../../general/components/support/SupportHeader';
 import Text from '../../../../general/components/Text';
 import { useTheme } from '../../../../general/theme/theme';
-import ScreenHeader from '../../../../general/components/ScreenHeader';
 import { SupportFaqNavigationProp } from '../../navigation/supportNavigationTypes';
 import { supportFaqArticles } from '../../utils/supportFaqArticles';
 
 export default function SupportFaqScreen() {
-  const { colors, typography } = useTheme();
+  const { colors, shape, spacing, typography } = useTheme();
   const { t } = useTranslation('deliveries');
   const navigation = useNavigation<SupportFaqNavigationProp>();
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <ScreenHeader title="" />
+      <SupportHeader
+        backAccessibilityLabel={t('support_back_action')}
+        rightAccessibilityLabel={t('support_header_action')}
+        title={t('support_faq_header_title')}
+      />
 
       <ScrollView
         style={styles.scroll}
@@ -31,8 +35,24 @@ export default function SupportFaqScreen() {
         >
           {t('support_faq_title')}
         </Text>
+        <Text
+          color={colors.textSubtle}
+          style={[styles.subtitle, { fontSize: typography.size.sm2, lineHeight: typography.lineHeight.md }]}
+        >
+          {t('support_faq_subtitle')}
+        </Text>
 
-        <View style={styles.list}>
+        <View
+          style={[
+            styles.list,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              borderRadius: shape.radius.hero,
+              paddingHorizontal: spacing.lg,
+            },
+          ]}
+        >
           {supportFaqArticles.map((item) => (
             <SupportFaqListItem
               key={item.id}
@@ -53,11 +73,12 @@ export default function SupportFaqScreen() {
 
 const styles = StyleSheet.create({
   content: {
-    flex: 1,
+    flexGrow: 1,
     paddingHorizontal: 16,
     paddingTop: 10,
   },
   list: {
+    borderWidth: StyleSheet.hairlineWidth,
     paddingBottom: 16,
   },
   screen: {
@@ -67,7 +88,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    marginBottom: 18,
+    marginBottom: 8,
     maxWidth: 340,
+  },
+  subtitle: {
+    marginBottom: 20,
+    maxWidth: 420,
   },
 });

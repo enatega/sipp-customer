@@ -1,9 +1,6 @@
 import type { CartItem, CartSelectedOption } from '../../api/cartServiceTypes';
 import { getDeliveriesCurrencyLabel } from '../../../../general/stores/useAppConfigStore';
 
-export const CART_MINIMUM_SPEND = 10;
-export const CART_SMALL_ORDER_FEE = 2;
-
 export function formatCartPrice(value?: number | null) {
   const currencyLabel = getDeliveriesCurrencyLabel();
 

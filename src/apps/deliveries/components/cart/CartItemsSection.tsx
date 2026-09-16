@@ -1,7 +1,8 @@
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import PressableScale from '../../../../general/components/PressableScale';
 import Text from '../../../../general/components/Text';
 import { useTheme } from '../../../../general/theme/theme';
 import type { CartItem } from '../../api/cartServiceTypes';
@@ -24,25 +25,44 @@ export default function CartItemsSection({
   onSetItemQuantity,
   onRemoveItem,
 }: Props) {
-  const { colors, typography } = useTheme();
+  const { colors, elevation, layout, shape, spacing } = useTheme();
   const { t } = useTranslation('deliveries');
 
   return (
-    <View style={styles.container}>
-      <Text
-        weight="extraBold"
-        style={{
-          color: colors.text,
-          fontSize: typography.size.h5,
-          lineHeight: typography.lineHeight.h5,
-        }}
-      >
-        {t('cart_items_title')}
-      </Text>
+    <View style={[styles.container, { gap: spacing.md }]}>
+      <View style={styles.headingRow}>
+        <Text accessibilityRole="header" variant="sectionTitle" weight="bold">
+          {t('cart_items_title')}
+        </Text>
+        <View
+          style={[
+            styles.itemCount,
+            {
+              backgroundColor: colors.primarySoft,
+              borderRadius: shape.radius.pill,
+            },
+          ]}
+        >
+          <Text color={colors.primary} variant="caption" weight="bold">
+            {items.length}
+          </Text>
+        </View>
+      </View>
 
-      <View>
-        {items.map((item) => (
+      <View
+        style={[
+          styles.surface,
+          elevation.subtle,
+          {
+            backgroundColor: colors.surface,
+            borderRadius: shape.radius.surface,
+            paddingHorizontal: spacing.lg,
+          },
+        ]}
+      >
+        {items.map((item, index) => (
           <CartItemRow
+            isLast={index === items.length - 1}
             key={item.id}
             isUpdating={isUpdatingItemId === item.id}
             item={item}
@@ -51,39 +71,73 @@ export default function CartItemsSection({
             onRemove={() => onRemoveItem(item.id)}
           />
         ))}
-      </View>
 
-      <Pressable
-        accessibilityRole="button"
-        onPress={onAddMorePress}
-        style={styles.addMoreButton}
-      >
-        <Ionicons color={colors.text} name="add" size={18} />
-        <Text
-          weight="medium"
-          style={{
-            color: colors.text,
-            fontSize: typography.size.md2,
-            lineHeight: typography.lineHeight.md,
-          }}
+        <PressableScale
+          accessibilityRole="button"
+          onPress={onAddMorePress}
+          style={[
+            styles.addMoreButton,
+            {
+              borderTopColor: colors.divider,
+              borderTopWidth: StyleSheet.hairlineWidth,
+              gap: spacing.md,
+              minHeight: layout.touchTarget.comfortable,
+              paddingVertical: spacing.sm,
+            },
+          ]}
         >
-          {t('cart_add_more')}
-        </Text>
-      </Pressable>
+          <View
+            style={[
+              styles.addIcon,
+              {
+                backgroundColor: colors.primarySoft,
+                borderRadius: shape.radius.pill,
+              },
+            ]}
+          >
+            <Ionicons color={colors.primary} name="add" size={19} />
+          </View>
+          <Text style={styles.addLabel} variant="label" weight="semiBold">
+            {t('cart_add_more')}
+          </Text>
+          <Ionicons color={colors.textSubtle} name="chevron-forward" size={18} />
+        </PressableScale>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  addIcon: {
+    alignItems: 'center',
+    height: 34,
+    justifyContent: 'center',
+    width: 34,
+  },
+  addLabel: {
+    flex: 1,
+  },
   addMoreButton: {
     alignItems: 'center',
-    alignSelf: 'flex-start',
     flexDirection: 'row',
-    gap: 10,
-    paddingTop: 8,
+    overflow: 'hidden',
   },
   container: {
-    gap: 14,
-    paddingHorizontal: 16,
+    width: '100%',
+  },
+  headingRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  itemCount: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 26,
+    minWidth: 26,
+    paddingHorizontal: 8,
+  },
+  surface: {
+    width: '100%',
   },
 });

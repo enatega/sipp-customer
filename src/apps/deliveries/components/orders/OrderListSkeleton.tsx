@@ -1,10 +1,13 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import Skeleton from "../../../../general/components/Skeleton";
+import { useTheme } from "../../../../general/theme/theme";
 
 const SKELETON_ROWS = 4;
 
 const OrderListSkeleton = () => {
+  const { colors, shape, spacing } = useTheme();
+
   return (
     <View style={styles.container}>
       <Skeleton
@@ -16,12 +19,20 @@ const OrderListSkeleton = () => {
         {Array.from({ length: SKELETON_ROWS }).map((_, index) => (
           <View
             key={index}
-            style={styles.row}
+            style={[
+              styles.row,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+                borderRadius: shape.radius.hero,
+                padding: spacing.lg,
+              },
+            ]}
           >
             <Skeleton
-              width={48}
-              height={48}
-              borderRadius={8}
+              width={72}
+              height={72}
+              borderRadius={shape.radius.surface}
             />
             <View style={styles.info}>
               <Skeleton
@@ -35,9 +46,9 @@ const OrderListSkeleton = () => {
                 borderRadius={6}
               />
               <Skeleton
-                width={76}
-                height={22}
-                borderRadius={6}
+                width={124}
+                height={26}
+                borderRadius={shape.radius.pill}
               />
             </View>
             <View style={styles.trailing}>
@@ -46,11 +57,9 @@ const OrderListSkeleton = () => {
                 height={18}
                 borderRadius={6}
               />
-              <Skeleton
-                width={24}
-                height={24}
-                borderRadius={12}
-              />
+            </View>
+            <View style={styles.fullWidth}>
+              <Skeleton width="100%" height={4} borderRadius={shape.radius.pill} />
             </View>
           </View>
         ))}
@@ -65,7 +74,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     gap: 12,
-    // paddingHorizontal: 16,
     paddingTop: 12,
   },
   info: {
@@ -77,8 +85,13 @@ const styles = StyleSheet.create({
   },
   row: {
     alignItems: "center",
+    borderWidth: StyleSheet.hairlineWidth,
     flexDirection: "row",
+    flexWrap: "wrap",
     gap: 12,
+  },
+  fullWidth: {
+    width: "100%",
   },
   trailing: {
     alignItems: "center",

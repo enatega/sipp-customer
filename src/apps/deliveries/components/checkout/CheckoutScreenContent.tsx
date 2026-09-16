@@ -1,7 +1,10 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import ListStateView from '../../../../general/components/filterablePaginatedList/ListStateView';
+import Surface from '../../../../general/components/Surface';
+import Text from '../../../../general/components/Text';
+import { useWindowClass } from '../../../../general/hooks/useWindowClass';
 import { useTheme } from '../../../../general/theme/theme';
 import type {
   CheckoutOrderType,
@@ -10,8 +13,10 @@ import type {
 import CheckoutDeliveryTimeSection from './CheckoutDeliveryTimeSection';
 import CheckoutHeader from './CheckoutHeader';
 import CheckoutInfoRow from './CheckoutInfoRow';
+import CheckoutMerchantSummary from './CheckoutMerchantSummary';
 import CheckoutModeTabs from './CheckoutModeTabs';
 import CheckoutPaymentSection from './CheckoutPaymentSection';
+import CheckoutSummaryDetails from './CheckoutSummaryDetails';
 import CheckoutSummaryFooter from './CheckoutSummaryFooter';
 import CheckoutTipSection from './CheckoutTipSection';
 import { getCheckoutMessagePreview } from './checkoutMessageUtils';
@@ -107,9 +112,14 @@ export default function CheckoutScreenContent({
   totalLabel,
 }: Props) {
   const { t } = useTranslation('deliveries');
-  const { colors } = useTheme();
+  const { colors, layout, shape, spacing } = useTheme();
+  const { gutter } = useWindowClass();
   const isDeliveryOrder = orderType === 'delivery';
-  const canPlaceOrder = Boolean(preview) && !hasAddressRequirement && !isPreviewPending && !isPaymentBlocked && !isPlacingOrder;
+  const canPlaceOrder = Boolean(preview)
+    && !hasAddressRequirement
+    && !isPreviewPending
+    && !isPaymentBlocked
+    && !isPlacingOrder;
   const addressTitle = orderType === 'pickup'
     ? preview?.store.name ?? t('checkout_pickup_title')
     : selectedAddressLabel ?? preview?.fulfillment.delivery?.label ?? t('checkout_address_title');
@@ -126,127 +136,198 @@ export default function CheckoutScreenContent({
     courierMessage,
     t('checkout_message_courier_subtitle'),
   );
-  const scheduledLabel = scheduledAt
-    ? formatCheckoutScheduledAt(scheduledAt)
-    : null;
+  const scheduledLabel = scheduledAt ? formatCheckoutScheduledAt(scheduledAt) : null;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.canvas }]}>
       <CheckoutHeader onBackPress={onBackPress} />
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            gap: spacing.section.default,
+            paddingBottom: 132,
+            paddingHorizontal: gutter,
+          },
+        ]}
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <CheckoutModeTabs
-          activeMode={orderType}
-          isDeliveryEnabled={true}
-          isPickupEnabled={isPickupEnabled}
-          onModeChange={onOrderTypeChange}
-        />
+        <View
+          style={[
+            styles.content,
+            {
+              gap: spacing.section.default,
+              maxWidth: layout.contentMaxWidth.readable,
+            },
+          ]}
+        >
+          <CheckoutMerchantSummary preview={preview} />
 
-        <CheckoutInfoRow
-          title={addressTitle}
-          subtitle={addressSubtitle}
-          iconName="location-outline"
-          onPress={orderType === 'delivery' ? onAddressPress : undefined}
-        />
+          <View style={[styles.section, { gap: spacing.md }]}>
+            <Text accessibilityRole="header" variant="sectionTitle" weight="bold">
+              {t('checkout_fulfillment_title')}
+            </Text>
+            <CheckoutModeTabs
+              activeMode={orderType}
+              isDeliveryEnabled
+              isPickupEnabled={isPickupEnabled}
+              onModeChange={onOrderTypeChange}
+            />
+          </View>
 
-        {isDeliveryOrder && canShowLeaveAtDoor ? (
-          <CheckoutInfoRow
-            title={t('checkout_leave_at_door_title')}
-            iconName="home-outline"
-            rightAccessory={(
-              <Switch
-                onValueChange={onLeaveAtDoorChange}
-                thumbColor={colors.white}
-                trackColor={{ false: colors.border, true: colors.blue800 }}
-                value={leaveAtDoor}
+          <View style={[styles.section, { gap: spacing.md }]}>
+            <Text accessibilityRole="header" variant="sectionTitle" weight="bold">
+              {t(isDeliveryOrder ? 'checkout_delivery_details_title' : 'checkout_pickup_details_title')}
+            </Text>
+            <Surface outlined style={[styles.groupSurface, { padding: spacing.xs }]}>
+              <CheckoutInfoRow
+                title={addressTitle}
+                subtitle={addressSubtitle}
+                iconName={isDeliveryOrder ? 'location-outline' : 'storefront-outline'}
+                onPress={isDeliveryOrder ? onAddressPress : undefined}
+                showDivider={isDeliveryOrder && canShowLeaveAtDoor}
               />
-            )}
+
+              {isDeliveryOrder && canShowLeaveAtDoor ? (
+                <CheckoutInfoRow
+                  title={t('checkout_leave_at_door_title')}
+                  subtitle={t('checkout_leave_at_door_subtitle')}
+                  iconName="home-outline"
+                  rightAccessory={(
+                    <Switch
+                      accessibilityLabel={t('checkout_leave_at_door_title')}
+                      onValueChange={onLeaveAtDoorChange}
+                      thumbColor={colors.white}
+                      trackColor={{ false: colors.border, true: colors.primary }}
+                      value={leaveAtDoor}
+                    />
+                  )}
+                />
+              ) : null}
+            </Surface>
+          </View>
+
+          <CheckoutDeliveryTimeSection
+            isScheduleEnabled={preview?.schedule.scheduleAllowed ?? false}
+            onSchedulePress={onSchedulePress}
+            orderType={orderType}
+            scheduledLabel={scheduledLabel}
+            selectedMode={deliveryTimeMode}
+            onSelectMode={onDeliveryTimeModeChange}
           />
-        ) : null}
 
-        <CheckoutInfoRow
-          title={t('checkout_message_restaurant_title')}
-          subtitle={restaurantMessageSubtitle}
-          iconName="chatbox-ellipses-outline"
-          onPress={onRestaurantMessagePress}
-        />
+          <View style={[styles.section, { gap: spacing.md }]}>
+            <Text accessibilityRole="header" variant="sectionTitle" weight="bold">
+              {t('checkout_notes_title')}
+            </Text>
+            <Surface outlined style={[styles.groupSurface, { padding: spacing.xs }]}>
+              <CheckoutInfoRow
+                title={t('checkout_message_restaurant_title')}
+                subtitle={restaurantMessageSubtitle}
+                iconName="restaurant-outline"
+                onPress={onRestaurantMessagePress}
+                showDivider={isDeliveryOrder}
+              />
 
-        {isDeliveryOrder ? (
-          <CheckoutInfoRow
-            title={t('checkout_message_courier_title')}
-            subtitle={courierMessageSubtitle}
-            iconName="chatbox-ellipses-outline"
-            onPress={onCourierMessagePress}
+              {isDeliveryOrder ? (
+                <CheckoutInfoRow
+                  title={t('checkout_message_courier_title')}
+                  subtitle={courierMessageSubtitle}
+                  iconName="bicycle-outline"
+                  onPress={onCourierMessagePress}
+                />
+              ) : null}
+            </Surface>
+          </View>
+
+          <CheckoutPaymentSection
+            errorMessage={paymentErrorMessage}
+            isPromoApplied={isPromoApplied}
+            onPaymentPress={onPaymentPress}
+            onPromoPress={onPromoPress}
+            onPromoRemove={onPromoRemove}
+            paymentIconName={paymentIconName}
+            paymentSubtitle={paymentSubtitle}
+            paymentTitle={paymentTitle}
+            promoCode={promoCode}
+            promoTitle={promoTitle}
+            promoSubtitle={promoSubtitle}
           />
-        ) : null}
 
-        <CheckoutDeliveryTimeSection
-          isScheduleEnabled={preview?.schedule.scheduleAllowed ?? false}
-          onSchedulePress={onSchedulePress}
-          orderType={orderType}
-          scheduledLabel={scheduledLabel}
-          selectedMode={deliveryTimeMode}
-          onSelectMode={onDeliveryTimeModeChange}
-        />
+          {isDeliveryOrder ? (
+            <CheckoutTipSection
+              onCustomTipPress={onCustomTipPress}
+              selectedTip={selectedTip}
+              onSelectTip={onTipChange}
+            />
+          ) : null}
 
-        <CheckoutPaymentSection
-          errorMessage={paymentErrorMessage}
-          isPromoApplied={isPromoApplied}
-          onPaymentPress={onPaymentPress}
-          onPromoPress={onPromoPress}
-          onPromoRemove={onPromoRemove}
-          paymentIconName={paymentIconName}
-          paymentSubtitle={paymentSubtitle}
-          paymentTitle={paymentTitle}
-          promoCode={promoCode}
-          promoTitle={promoTitle}
-          promoSubtitle={promoSubtitle}
-        />
+          {isPreviewPending ? (
+            <View
+              style={[
+                styles.updatingRow,
+                {
+                  backgroundColor: colors.primarySoft,
+                  borderRadius: shape.radius.control,
+                  gap: spacing.sm,
+                  padding: spacing.md,
+                },
+              ]}
+            >
+              <ActivityIndicator color={colors.primary} size="small" />
+              <Text color={colors.textSubtle} variant="caption" weight="medium">
+                {t('checkout_preview_updating')}
+              </Text>
+            </View>
+          ) : null}
 
-        {isDeliveryOrder ? (
-          <CheckoutTipSection
-            onCustomTipPress={onCustomTipPress}
-            selectedTip={selectedTip}
-            onSelectTip={onTipChange}
-          />
-        ) : null}
+          {isPreviewEnabled && isPreviewError && !isPaymentBlocked ? (
+            <ListStateView
+              variant="error"
+              title={t(
+                isStoreClosedError
+                  ? 'checkout_store_closed_title'
+                  : 'checkout_preview_error_title',
+              )}
+              description={t(
+                isStoreClosedError
+                  ? 'checkout_store_closed_message'
+                  : 'checkout_preview_error_message',
+              )}
+              actionLabel={t('generic_list_retry')}
+              onActionPress={onRetryPreview}
+              containerStyle={styles.stateBlock}
+            />
+          ) : null}
 
-        {isPreviewEnabled && isPreviewPending ? (
-          <ListStateView
-            variant="loading"
-            containerStyle={styles.stateBlock}
-          />
-        ) : null}
-
-        {isPreviewEnabled && isPreviewError && !isPaymentBlocked ? (
-          <ListStateView
-            variant="error"
-            title={t(
-              isStoreClosedError
-                ? 'checkout_store_closed_title'
-                : 'checkout_preview_error_title',
-            )}
-            description={t(
-              isStoreClosedError
-                ? 'checkout_store_closed_message'
-                : 'checkout_preview_error_message',
-            )}
-            actionLabel={t('generic_list_retry')}
-            onActionPress={onRetryPreview}
-            containerStyle={styles.stateBlock}
-          />
-        ) : null}
+          {preview ? (
+            <View style={[styles.section, { gap: spacing.md }]}>
+              <View style={styles.summaryHeading}>
+                <Text accessibilityRole="header" variant="sectionTitle" weight="bold">
+                  {t('checkout_summary_title')}
+                </Text>
+                <Text color={colors.textSubtle} variant="caption">
+                  {t('checkout_summary_hint')}
+                </Text>
+              </View>
+              <Surface outlined style={{ padding: spacing.lg }}>
+                <CheckoutSummaryDetails
+                  orderType={orderType}
+                  pricing={preview.pricing}
+                  totalLabel={totalLabel}
+                />
+              </Surface>
+            </View>
+          ) : null}
+        </View>
       </ScrollView>
 
       <CheckoutSummaryFooter
         isDisabled={!canPlaceOrder}
         isLoading={isPlacingOrder}
         onPlaceOrderPress={onPlaceOrderPress}
-        orderType={orderType}
-        pricing={preview?.pricing ?? null}
         totalLabel={totalLabel}
       />
     </View>
@@ -257,11 +338,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scrollContent: {
-    gap: 4,
-    paddingBottom: 24,
+  content: {
+    marginHorizontal: 'auto',
+    width: '100%',
   },
+  groupSurface: {
+    overflow: 'hidden',
+  },
+  scrollContent: {
+    paddingTop: 10,
+  },
+  section: {},
   stateBlock: {
     minHeight: 180,
+  },
+  summaryHeading: {
+    alignItems: 'baseline',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  updatingRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
   },
 });

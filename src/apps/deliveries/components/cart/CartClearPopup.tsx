@@ -27,7 +27,7 @@ export default function CartClearPopup({
       description={t('cart_clear_popup_message')}
       dismissOnOverlayPress={!isSubmitting}
       illustration={
-        <View style={[styles.illustration, { backgroundColor: colors.gray100 }]}>
+        <View style={[styles.illustration, { backgroundColor: colors.dangerSoft }]}>
           <Ionicons color={colors.danger} name="trash-outline" size={28} />
         </View>
       }

@@ -1,284 +1,350 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import {
-  Animated,
-  PanResponder,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-  useWindowDimensions,
-} from "react-native";
+import { ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
+import type MapView from "react-native-maps";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 
 import Map from "../../../../general/components/Map";
+import PlatformGlassSurface from "../../../../general/components/PlatformGlassSurface";
+import PressableScale from "../../../../general/components/PressableScale";
 import ScreenHeader from "../../../../general/components/ScreenHeader";
+import SwipeableBottomSheet from "../../../../general/components/SwipeableBottomSheet";
+import Text from "../../../../general/components/Text";
 import { useTheme } from "../../../../general/theme/theme";
-import ExtendableOrderSummary from "../orderSummary/ExtendableOrderSummary";
 import OrderTrackingErrorState from "./OrderTrackingErrorState";
 import OrderTrackingLoadingSkeleton from "./OrderTrackingLoadingSkeleton";
 import OrderTrackingModernEtaFrame from "./OrderTrackingModernEtaFrame";
 import OrderTrackingModernProgressCard from "./OrderTrackingModernProgressCard";
 import OrderTrackingModernSections from "./OrderTrackingModernSections";
 import type { OrderTrackingViewModel } from "./useOrderTrackingViewModel";
-import { formatTrackingEta } from "../../utils/orderTracking/orderTrackingUtils";
+import { formatEstimatedArrivalWindow } from "../../utils/orderTracking/orderTrackingUtils";
 
-type Props = {
-  viewModel: OrderTrackingViewModel;
-};
+type Props = { viewModel: OrderTrackingViewModel };
 
 export default function OrderTrackingModernView({ viewModel }: Props) {
   const { t } = useTranslation("deliveries");
-  const { colors } = useTheme();
+  const { colors, shape } = useTheme();
+  const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
   const { order, orderDetailsQuery } = viewModel;
   const [isOrderItemsExpanded, setIsOrderItemsExpanded] = useState(false);
-  const [isSheetExpanded, setIsSheetExpanded] = useState(true);
-
-  const COLLAPSED_VISIBLE_HEIGHT = 148;
-  const SHEET_TOP_PADDING = 38;
-  const SUMMARY_RESERVED_HEIGHT = 118;
-  const MIN_MAP_HEIGHT = 244;
-  const MAX_MAP_HEIGHT = useWindowDimensions().height - SHEET_TOP_PADDING - SUMMARY_RESERVED_HEIGHT - 80; // 80 is an estimated height for the order summary when it's expanded
-
-  const sheetTranslateY = useRef(new Animated.Value(0)).current;
-  const dragStartY = useRef(0);
-
-  const collapsedTranslateY = useMemo(() => {
-    const estimatedSheetExpandedHeight = windowHeight - MIN_MAP_HEIGHT - SUMMARY_RESERVED_HEIGHT;
-    return Math.max(140, estimatedSheetExpandedHeight - COLLAPSED_VISIBLE_HEIGHT);
-  }, [windowHeight]);
-
-  const mapHeight = sheetTranslateY.interpolate({
-    inputRange: [0, collapsedTranslateY],
-    outputRange: [MIN_MAP_HEIGHT, MAX_MAP_HEIGHT],
-    extrapolate: "clamp",
-  });
-
-  const snapSheet = (expand: boolean) => {
-    setIsSheetExpanded(expand);
-    Animated.spring(sheetTranslateY, {
-      damping: 20,
-      mass: 0.9,
-      overshootClamping: true,
-      stiffness: 260,
-      toValue: expand ? 0 : collapsedTranslateY,
-      useNativeDriver: false,
-    }).start();
-  };
-
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onMoveShouldSetPanResponder: (_, gesture) =>
-          Math.abs(gesture.dy) > 6 && Math.abs(gesture.dy) > Math.abs(gesture.dx),
-        onPanResponderGrant: () => {
-          sheetTranslateY.stopAnimation((value) => {
-            dragStartY.current = value;
-          });
-        },
-        onPanResponderMove: (_, gesture) => {
-          const next = Math.min(
-            collapsedTranslateY,
-            Math.max(0, dragStartY.current + gesture.dy),
-          );
-          sheetTranslateY.setValue(next);
-        },
-        onPanResponderRelease: (_, gesture) => {
-          const dragDistance = gesture.dy;
-          const velocity = gesture.vy;
-          if (dragDistance > 40 || velocity > 0.7) {
-            snapSheet(false);
-            return;
-          }
-          if (dragDistance < -40 || velocity < -0.7) {
-            snapSheet(true);
-            return;
-          }
-          sheetTranslateY.stopAnimation((value) => {
-            snapSheet(value < collapsedTranslateY / 2);
-          });
-        },
-      }),
-    [collapsedTranslateY, sheetTranslateY],
+  const [isMapReady, setIsMapReady] = useState(false);
+  const [sheetState, setSheetState] = useState<"collapsed" | "default" | "expanded">("expanded");
+  const mapRef = useRef<MapView>(null);
+  const sheetExpandedHeight = Math.min(
+    windowHeight - insets.top - 92,
+    Math.max(500, windowHeight * 0.7),
+  );
+  const sheetCollapsedHeight = Math.min(204, sheetExpandedHeight);
+  const visibleSheetHeight = sheetState === "expanded"
+    ? sheetExpandedHeight
+    : sheetCollapsedHeight;
+  const mapFitCoordinatesRef = useRef(viewModel.mapFitCoordinates);
+  mapFitCoordinatesRef.current = viewModel.mapFitCoordinates;
+  const fitCoordinatesSignature = useMemo(
+    () => viewModel.mapFitCoordinates
+      .map(({ latitude, longitude }) => `${latitude.toFixed(6)}:${longitude.toFixed(6)}`)
+      .join("|"),
+    [viewModel.mapFitCoordinates],
   );
 
-  const activeOrCompletedTimelineItem = order?.timeline?.find(
-    (item) => item.active || item.completed,
-  );
-  const progressTimeLabel = activeOrCompletedTimelineItem?.completedAt
-    ? new Date(activeOrCompletedTimelineItem.completedAt).toLocaleTimeString([], {
-        hour: "numeric",
-        minute: "2-digit",
-      })
-    : "--";
+  const fitRouteToMap = useCallback((animated = true) => {
+    const map = mapRef.current;
+    const coordinates = mapFitCoordinatesRef.current;
+    if (!map || coordinates.length === 0) return;
+
+    if (coordinates.length === 1) {
+      map.animateToRegion({
+        ...coordinates[0],
+        latitudeDelta: 0.004,
+        longitudeDelta: 0.004,
+      }, animated ? 260 : 0);
+      return;
+    }
+
+    const minimumVisibleMapHeight = 150;
+    const maximumBottomPadding = Math.max(
+      100,
+      windowHeight - insets.top - minimumVisibleMapHeight,
+    );
+    map.fitToCoordinates(coordinates, {
+      animated,
+      edgePadding: {
+        top: insets.top + 82,
+        right: 46,
+        bottom: Math.min(visibleSheetHeight + 24, maximumBottomPadding),
+        left: 46,
+      },
+    });
+  }, [insets.top, visibleSheetHeight, windowHeight]);
+
+  useEffect(() => {
+    if (!isMapReady || !fitCoordinatesSignature) return;
+    const frame = requestAnimationFrame(() => fitRouteToMap(true));
+    return () => cancelAnimationFrame(frame);
+  }, [fitCoordinatesSignature, fitRouteToMap, isMapReady]);
+
+  const progressTimeLabel = useMemo(() => {
+    const item = order?.timeline?.find((entry) => entry.active || entry.completed);
+    if (!item?.completedAt) return "—";
+    return new Date(item.completedAt).toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  }, [order?.timeline]);
+
+  if (orderDetailsQuery.isLoading) {
+    return (
+      <View style={[styles.screen, { backgroundColor: colors.background }]}> 
+        <OrderTrackingLoadingSkeleton />
+      </View>
+    );
+  }
+
+  if (orderDetailsQuery.isError || !order) {
+    return (
+      <View style={[styles.screen, { backgroundColor: colors.background }]}> 
+        <ScreenHeader title={t("order_tracking_title")} variant="close" />
+        <OrderTrackingErrorState
+          isRetrying={orderDetailsQuery.isFetching}
+          onRetry={() => void orderDetailsQuery.refetch()}
+        />
+      </View>
+    );
+  }
+
+  const dynamicEtaMinutes = viewModel.eta?.estimatedMinutes;
+  const safeDynamicEtaMinutes = typeof dynamicEtaMinutes === "number"
+    && Number.isFinite(dynamicEtaMinutes)
+    && dynamicEtaMinutes > 0
+      ? Math.ceil(dynamicEtaMinutes)
+      : null;
+  const hasLiveEta = safeDynamicEtaMinutes !== null;
+  const arrivalWindow = formatEstimatedArrivalWindow(viewModel.eta);
+  const etaLabel = viewModel.isDelivered
+    ? t("order_tracking_delivered_title")
+    : hasLiveEta
+      ? `${safeDynamicEtaMinutes} min`
+      : t("order_tracking_eta_pending");
+  const arrivalWindowLabel = arrivalWindow
+    ? t("order_tracking_estimated_arrival", { time: arrivalWindow })
+    : null;
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}> 
-      <ScreenHeader
-        rightSlot={
-          <Pressable
-            accessibilityLabel={t("order_tracking_help")}
-            accessibilityRole="button"
-            hitSlop={8}
-            onPress={viewModel.helpPress}
-            style={({ pressed }) => [{ opacity: pressed ? 0.8 : 1 }]}
-          >
-            <Ionicons color={colors.text} name="help-circle-outline" size={24} />
-          </Pressable>
-        }
-        title={t("order_tracking_title")}
-        variant="close"
-      />
-
-      {orderDetailsQuery.isLoading ? (
-        <OrderTrackingLoadingSkeleton />
-      ) : orderDetailsQuery.isError || !order ? (
-        <OrderTrackingErrorState
-          isRetrying={orderDetailsQuery.isFetching}
-          onRetry={() => {
-            void orderDetailsQuery.refetch();
-          }}
-        />
-      ) : (
-        <View style={styles.screen}>
-          <View style={styles.body}>
-            {viewModel.mapRegion ? (
-              <Animated.View style={[styles.mapHero, { height: mapHeight }]}>
-                <Map
-                  loadingEnabled
-                  markers={viewModel.mapMarkers}
-                  polylines={viewModel.mapPolylines}
-                  region={viewModel.mapRegion}
-                  rotateEnabled={false}
-                  scrollEnabled
-                  style={styles.map}
-                  useGoogleProvider
-                  zoomEnabled
-                  zoomTapEnabled
-                />
-              </Animated.View>
-            ) : null}
-
-            <Animated.View
-              {...panResponder.panHandlers}
-              style={[styles.etaWrap, { transform: [{ translateY: sheetTranslateY }] }]}
-            >
-              <OrderTrackingModernEtaFrame
-                etaLabel={
-                  viewModel.isDelivered
-                    ? t("order_tracking_delivered_title")
-                    : formatTrackingEta(
-                        order.store.estimatedDeliveryTime,
-                        order.scheduledAt,
-                      )
-                }
-                status={order.status}
-                showDeliveredTitle={viewModel.isDelivered}
-              />
-            </Animated.View>
-
-            <Animated.View
-              style={[
-                styles.bottomSheet,
-                {
-                  backgroundColor: colors.surface,
-                  paddingTop: SHEET_TOP_PADDING,
-                  transform: [{ translateY: sheetTranslateY }],
-                },
-              ]}
-            >
-              <View
-                {...panResponder.panHandlers}
-                style={styles.dragHandleZone}
-              >
-                <View
-                  style={[
-                    styles.dragHandle,
-                    { backgroundColor: isSheetExpanded ? colors.border : colors.primary },
-                  ]}
-                />
-              </View>
-              <ScrollView
-                contentContainerStyle={styles.content}
-                contentInsetAdjustmentBehavior="automatic"
-                showsVerticalScrollIndicator={false}
-              >
-                <OrderTrackingModernProgressCard
-                  progressTimeLabel={progressTimeLabel}
-                  status={order.status}
-                />
-                <OrderTrackingModernSections
-                  isOrderItemsExpanded={isOrderItemsExpanded}
-                  onToggleItems={() => setIsOrderItemsExpanded((prev) => !prev)}
-                  order={order}
-                  t={t}
-                  viewModel={viewModel}
-                />
-              </ScrollView>
-            </Animated.View>
+      <View style={[styles.mapStage, { backgroundColor: colors.surfaceSunken }]}> 
+        {viewModel.mapRegion ? (
+          <Map
+            ref={mapRef}
+            initialRegion={viewModel.mapRegion}
+            loadingEnabled
+            markers={viewModel.mapMarkers}
+            moveOnMarkerPress={false}
+            onMapReady={() => setIsMapReady(true)}
+            pitchEnabled={false}
+            polylines={viewModel.mapPolylines}
+            rotateEnabled={false}
+            scrollEnabled
+            showsBuildings={false}
+            showsCompass={false}
+            showsIndoorLevelPicker={false}
+            showsPointsOfInterest={false}
+            style={styles.map}
+            toolbarEnabled={false}
+            useGoogleProvider
+            zoomEnabled
+            zoomTapEnabled
+          />
+        ) : (
+          <View style={styles.mapUnavailable}>
+            <View style={[styles.mapUnavailableIcon, { backgroundColor: colors.surfaceElevated }]}> 
+              <Ionicons color={colors.primary} name="map-outline" size={28} />
+            </View>
+            <Text color={colors.text} style={styles.mapUnavailableTitle} weight="bold">
+              {t("order_tracking_location_unavailable")}
+            </Text>
+            <Text color={colors.mutedText} style={styles.mapUnavailableCopy}>
+              {t("order_tracking_location_unavailable_description")}
+            </Text>
           </View>
+        )}
 
-          <ExtendableOrderSummary
-            deliveryDetails={order.deliveryDetails}
-            layout="footer"
-            orderCode={order.orderCode}
-            orderId={order.orderId}
-            summary={order.summary}
-            title={t("order_tracking_summary")}
+        <View pointerEvents="box-none" style={[styles.topControls, { paddingTop: insets.top + 12 }]}> 
+          <GlassMapButton
+            accessibilityLabel={t("order_tracking_close")}
+            icon="close"
+            onPress={viewModel.onClose}
+          />
+          <GlassMapButton
+            accessibilityLabel={t("order_tracking_help")}
+            icon="help-circle-outline"
+            onPress={viewModel.helpPress}
           />
         </View>
-      )}
+
+        {viewModel.mapRegion ? (
+          <View pointerEvents="box-none" style={[styles.recenterWrap, { bottom: visibleSheetHeight + 16 }]}> 
+            <GlassMapButton
+              accessibilityLabel={t("order_tracking_recenter_map")}
+              icon="locate-outline"
+              onPress={() => fitRouteToMap(true)}
+              size="small"
+            />
+          </View>
+        ) : null}
+
+        {viewModel.mapRegion && viewModel.routeState !== "routed" ? (
+          <View
+            style={[
+              styles.routeNotice,
+              {
+                backgroundColor: colors.surfaceElevated,
+                borderColor: colors.border,
+                top: insets.top + 82,
+              },
+            ]}
+          >
+            <Ionicons
+              color={viewModel.routeState === "fallback" || viewModel.routeState === "unavailable" ? colors.warning : colors.primary}
+              name={viewModel.routeState === "loading" ? "navigate-outline" : "alert-circle-outline"}
+              size={17}
+            />
+            <View style={styles.routeNoticeCopy}>
+              <Text color={colors.text} numberOfLines={1} style={styles.routeNoticeTitle} weight="semiBold">
+                {t(
+                  viewModel.routeState === "fallback"
+                    ? "order_tracking_route_unavailable"
+                    : viewModel.routeState === "unavailable"
+                      ? "order_tracking_route_pending"
+                      : "order_tracking_route_loading",
+                )}
+              </Text>
+              {viewModel.routeState === "fallback" || viewModel.routeState === "unavailable" ? (
+                <Text color={colors.textSubtle} numberOfLines={1} style={styles.routeNoticeSubtitle}>
+                  {t(
+                    viewModel.routeState === "fallback"
+                      ? "order_tracking_route_unavailable_description"
+                      : "order_tracking_route_pending_description",
+                  )}
+                </Text>
+              ) : null}
+            </View>
+          </View>
+        ) : null}
+      </View>
+
+      <SwipeableBottomSheet
+        collapsedHeight={sheetCollapsedHeight}
+        expandedHeight={sheetExpandedHeight}
+        handle={
+          <View style={styles.sheetHandleContent}>
+            <View style={[styles.grabber, { backgroundColor: colors.border }]} />
+            <OrderTrackingModernEtaFrame
+              arrivalWindowLabel={arrivalWindowLabel}
+              etaLabel={etaLabel}
+              hasLiveEta={hasLiveEta}
+              showDeliveredTitle={viewModel.isDelivered}
+              status={order.status}
+              statusMessage={order.statusMessage}
+              statusTitle={order.statusTitle}
+            />
+          </View>
+        }
+        handleContainerStyle={styles.sheetHandleContainer}
+        handleGestureInset={8}
+        initialState="expanded"
+        onStateChange={setSheetState}
+        style={[
+          styles.sheet,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+            borderTopLeftRadius: shape.radius.sheet,
+            borderTopRightRadius: shape.radius.sheet,
+            shadowColor: colors.shadowColor,
+          },
+        ]}
+      >
+        <ScrollView
+          contentContainerStyle={[styles.sheetContent, { paddingBottom: Math.max(insets.bottom, 20) + 24 }]}
+          keyboardShouldPersistTaps="handled"
+          nestedScrollEnabled
+          showsVerticalScrollIndicator={false}
+          style={styles.sheetScroll}
+        >
+          <OrderTrackingModernProgressCard
+            progressTimeLabel={progressTimeLabel}
+            status={order.status}
+          />
+          <OrderTrackingModernSections
+            isOrderItemsExpanded={isOrderItemsExpanded}
+            onToggleItems={() => setIsOrderItemsExpanded((previous) => !previous)}
+            order={order}
+            viewModel={viewModel}
+          />
+        </ScrollView>
+      </SwipeableBottomSheet>
     </View>
   );
 }
 
+type GlassMapButtonProps = {
+  accessibilityLabel: string;
+  icon: React.ComponentProps<typeof Ionicons>["name"];
+  onPress: () => void;
+  size?: "default" | "small";
+};
+
+function GlassMapButton({ accessibilityLabel, icon, onPress, size = "default" }: GlassMapButtonProps) {
+  const { colors } = useTheme();
+  const dimension = size === "small" ? 46 : 52;
+
+  return (
+    <PressableScale
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
+      hitSlop={8}
+      onPress={onPress}
+      style={{ borderRadius: dimension / 2 }}
+    >
+      <PlatformGlassSurface
+        effectStyle="clear"
+        style={[
+          styles.glassButton,
+          {
+            borderColor: colors.glassBorder,
+            borderRadius: dimension / 2,
+            height: dimension,
+            width: dimension,
+          },
+        ]}
+      >
+        <Ionicons color={colors.text} name={icon} size={size === "small" ? 21 : 24} />
+      </PlatformGlassSurface>
+    </PressableScale>
+  );
+}
+
 const styles = StyleSheet.create({
-  body: {
-    flex: 1,
-    overflow: "hidden",
-  },
-  bottomSheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    bottom: 0,
-    left: 0,
-    overflow: "hidden",
-    position: "absolute",
-    right: 0,
-    top: 188,
-  },
-  content: {
-    paddingBottom: 120,
-    paddingHorizontal: 0,
-  },
-  dragHandle: {
-    borderRadius: 3,
-    height: 5,
-    width: 46,
-  },
-  dragHandleZone: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingBottom: 8,
-    paddingTop: 4,
-  },
-  etaWrap: {
-    alignItems: "center",
-    marginTop: 114,
-    overflow: "visible",
-    position: "absolute",
-    width: "100%",
-    zIndex: 2,
-    
-  },
-  map: {
-    borderRadius: 0,
-  },
-  mapHero: {
-    overflow: "hidden",
-  },
-  screen: {
-    flex: 1,
-  },
+  glassButton: { alignItems: "center", borderWidth: StyleSheet.hairlineWidth, justifyContent: "center", overflow: "hidden" },
+  grabber: { alignSelf: "center", borderRadius: 999, height: 5, marginBottom: 12, width: 42 },
+  map: { ...StyleSheet.absoluteFillObject },
+  mapStage: { ...StyleSheet.absoluteFillObject },
+  mapUnavailable: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center", paddingBottom: 190, paddingHorizontal: 40 },
+  mapUnavailableCopy: { fontSize: 13, lineHeight: 19, marginTop: 4, maxWidth: 280, textAlign: "center" },
+  mapUnavailableIcon: { alignItems: "center", borderRadius: 24, height: 56, justifyContent: "center", marginBottom: 12, width: 56 },
+  mapUnavailableTitle: { fontSize: 18, lineHeight: 24 },
+  recenterWrap: { position: "absolute", right: 16, zIndex: 4 },
+  routeNotice: { alignItems: "center", alignSelf: "center", borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, flexDirection: "row", gap: 9, maxWidth: "78%", paddingHorizontal: 12, paddingVertical: 9, position: "absolute", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.08, shadowRadius: 8, zIndex: 3 },
+  routeNoticeCopy: { flexShrink: 1 },
+  routeNoticeSubtitle: { fontSize: 10, lineHeight: 14, marginTop: 1 },
+  routeNoticeTitle: { fontSize: 12, lineHeight: 16 },
+  screen: { flex: 1 },
+  sheet: { borderTopWidth: StyleSheet.hairlineWidth, elevation: 12, overflow: "hidden", shadowOffset: { width: 0, height: -8 }, shadowOpacity: 0.12, shadowRadius: 22, zIndex: 5 },
+  sheetContent: { paddingHorizontal: 20 },
+  sheetHandleContainer: { alignSelf: "stretch" },
+  sheetHandleContent: { paddingHorizontal: 20, paddingTop: 10 },
+  sheetScroll: { flex: 1 },
+  topControls: { flexDirection: "row", justifyContent: "space-between", left: 16, position: "absolute", right: 16, zIndex: 4 },
 });

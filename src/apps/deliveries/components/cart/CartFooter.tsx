@@ -1,8 +1,12 @@
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import Button from '../../../../general/components/Button';
+import PlatformGlassSurface from '../../../../general/components/PlatformGlassSurface';
 import Text from '../../../../general/components/Text';
+import { useWindowClass } from '../../../../general/hooks/useWindowClass';
 import { useTheme } from '../../../../general/theme/theme';
 
 type Props = {
@@ -18,103 +22,131 @@ export default function CartFooter({
   itemCount,
   onCheckoutPress,
 }: Props) {
-  const { colors, typography } = useTheme();
+  const { colors, elevation, layout, shape, spacing } = useTheme();
   const { t } = useTranslation('deliveries');
   const insets = useSafeAreaInsets();
+  const { gutter } = useWindowClass();
 
   return (
     <View
+      pointerEvents="box-none"
       style={[
-        styles.container,
+        styles.positioner,
         {
-          backgroundColor: colors.background,
-          borderTopColor: colors.border,
-          paddingBottom: insets.bottom + 12,
+          bottom: Math.max(insets.bottom, spacing.md),
+          paddingHorizontal: gutter,
+          zIndex: layout.layer.floating,
         },
       ]}
     >
-      <Pressable
-        accessibilityRole="button"
-        disabled={disabled}
-        onPress={onCheckoutPress}
-        style={({ pressed }) => [
-          styles.button,
-          {
-            backgroundColor: disabled ? colors.backgroundTertiary : colors.primary,
-            opacity: disabled ? 1 : pressed ? 0.88 : 1,
-          },
-        ]}
-      >
-        <View style={styles.buttonContent}>
-          <View
-            style={[
-              styles.countBadge,
-              { backgroundColor: disabled ? colors.surfaceSoft : colors.onPrimary },
-            ]}
-          >
-            <Text
-              weight="semiBold"
-              style={{
-                color: disabled ? colors.mutedText : colors.primary,
-                fontSize: typography.size.xs2,
-                lineHeight: typography.lineHeight.sm,
-              }}
+      <View style={[styles.shadowWrap, elevation.floating, { borderRadius: shape.radius.sheet, maxWidth: layout.contentMaxWidth.readable }]}>
+        <PlatformGlassSurface
+          effectStyle="regular"
+          style={[
+            styles.glass,
+            {
+              borderRadius: shape.radius.sheet,
+              gap: spacing.md,
+              padding: spacing.sm,
+            },
+          ]}
+        >
+          <View style={[styles.summary, { gap: spacing.sm, paddingLeft: spacing.sm }]}>
+            <View
+              style={[
+                styles.bagIcon,
+                {
+                  backgroundColor: colors.primarySoft,
+                  borderRadius: shape.radius.pill,
+                },
+              ]}
             >
-              {itemCount}
-            </Text>
+              <MaterialCommunityIcons color={colors.primary} name="shopping-outline" size={22} />
+              <View
+                style={[
+                  styles.countBadge,
+                  {
+                    backgroundColor: colors.primary,
+                    borderColor: colors.surface,
+                    borderRadius: shape.radius.pill,
+                  },
+                ]}
+              >
+                <Text color={colors.onPrimary} variant="badge" weight="bold">
+                  {itemCount}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.amountCopy}>
+              <Text color={colors.textSubtle} numberOfLines={1} variant="caption">
+                {t('checkout_summary_total')}
+              </Text>
+              <Text numberOfLines={1} variant="numeric" weight="bold">
+                {amountLabel}
+              </Text>
+            </View>
           </View>
 
-          <Text
-            weight="semiBold"
-            style={{
-              color: disabled ? colors.mutedText : colors.onPrimary,
-              flex: 1,
-              fontSize: typography.size.md2,
-              lineHeight: typography.lineHeight.md,
-            }}
-          >
-            {t('cart_checkout')}
-          </Text>
-
-          <Text
-            weight="semiBold"
-            style={{
-              color: disabled ? colors.mutedText : colors.onPrimary,
-              fontSize: typography.size.md2,
-              lineHeight: typography.lineHeight.md,
-            }}
-          >
-            {amountLabel}
-          </Text>
-        </View>
-      </Pressable>
+          <View style={styles.actionWrap}>
+            <Button
+              disabled={disabled}
+              fullWidth
+              label={t('cart_checkout_short')}
+              onPress={onCheckoutPress}
+              size="large"
+            />
+          </View>
+        </PlatformGlassSurface>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  button: {
-    borderRadius: 10,
-    minHeight: 48,
-    paddingHorizontal: 14,
+  actionWrap: {
+    flex: 1.25,
   },
-  buttonContent: {
-    alignItems: 'center',
+  amountCopy: {
     flex: 1,
-    flexDirection: 'row',
-    gap: 10,
-    justifyContent: 'space-between',
+    minWidth: 0,
   },
-  container: {
-    borderTopWidth: 1,
-    paddingHorizontal: 16,
-    paddingTop: 10,
+  bagIcon: {
+    alignItems: 'center',
+    height: 48,
+    justifyContent: 'center',
+    position: 'relative',
+    width: 48,
   },
   countBadge: {
     alignItems: 'center',
-    borderRadius: 999,
-    height: 20,
+    borderWidth: 2,
+    height: 22,
     justifyContent: 'center',
-    width: 20,
+    minWidth: 22,
+    paddingHorizontal: 4,
+    position: 'absolute',
+    right: -4,
+    top: -5,
+  },
+  glass: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    overflow: 'hidden',
+    width: '100%',
+  },
+  positioner: {
+    alignItems: 'center',
+    left: 0,
+    position: 'absolute',
+    right: 0,
+  },
+  shadowWrap: {
+    width: '100%',
+  },
+  summary: {
+    alignItems: 'center',
+    flex: 1,
+    flexDirection: 'row',
+    minWidth: 0,
   },
 });

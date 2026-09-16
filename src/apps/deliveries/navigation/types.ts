@@ -18,6 +18,15 @@ export type SeeAllListingType =
 
 export type DealsSeeAllSource = "multi-vendor" | "single-vendor" | "chain-vendor";
 
+export type OrderConfirmationSnapshot = {
+  itemCount?: number;
+  orderType?: "delivery" | "pickup";
+  scheduledAt?: string | null;
+  storeImage?: string | null;
+  storeName?: string;
+  totalAmount?: number;
+};
+
 type DeliveriesAccountNavigationParamList = ProfileNavigationParamList & {
   Coupons: undefined;
   Notifications: undefined;
@@ -57,6 +66,10 @@ export type DeliveriesStackParamList = DeliveriesAccountNavigationParamList & {
   };
   OrderTrackingScreen: {
     orderId: string;
+  };
+  OrderConfirmation: {
+    orderId: string;
+    snapshot?: OrderConfirmationSnapshot;
   };
   RiderChat: RiderChatScreenParams['RiderChat'];
   ProductInfo: {

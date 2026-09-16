@@ -1,6 +1,7 @@
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import PressableScale from '../../../../general/components/PressableScale';
 import Text from '../../../../general/components/Text';
 import { useTheme } from '../../../../general/theme/theme';
 
@@ -11,6 +12,7 @@ type Props = {
   iconName: React.ComponentProps<typeof Ionicons>['name'];
   onPress?: () => void;
   rightAccessory?: React.ReactNode;
+  showDivider?: boolean;
 };
 
 export default function CheckoutInfoRow({
@@ -20,41 +22,47 @@ export default function CheckoutInfoRow({
   iconName,
   onPress,
   rightAccessory,
+  showDivider = false,
 }: Props) {
-  const { colors, typography } = useTheme();
+  const { colors, layout, shape, spacing } = useTheme();
+  const containerStyle = [
+    styles.container,
+    {
+      borderBottomColor: colors.divider,
+      borderBottomWidth: showDivider ? StyleSheet.hairlineWidth : 0,
+      borderRadius: shape.radius.control,
+      gap: spacing.md,
+      minHeight: layout.touchTarget.comfortable,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+    },
+  ];
+  const content = (
+    <>
+      <View
+        style={[
+          styles.iconWrap,
+          {
+            backgroundColor: colors.primarySoft,
+            borderRadius: shape.radius.control,
+          },
+        ]}
+      >
+        <Ionicons color={colors.primary} name={iconName} size={20} />
+      </View>
 
-  return (
-    <Pressable
-      accessibilityRole={onPress ? 'button' : undefined}
-      disabled={!onPress}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.container,
-        { opacity: onPress && pressed ? 0.8 : 1 },
-      ]}
-    >
-      <Ionicons color={colors.text} name={iconName} size={22} style={styles.icon} />
-
-      <View style={styles.textWrap}>
-        <Text
-          weight="medium"
-          style={{
-            color: colors.text,
-            fontSize: typography.size.md2,
-            lineHeight: typography.lineHeight.md,
-          }}
-        >
+      <View style={[styles.textWrap, { gap: spacing.xs }]}>
+        <Text numberOfLines={1} variant="label" weight="semiBold">
           {title}
         </Text>
 
         {subtitle ? (
-          <View style={styles.subtitleRow}>
+          <View style={[styles.subtitleRow, { gap: spacing.sm }]}>
             <Text
-              style={{
-                color: colors.mutedText,
-                fontSize: typography.size.xs2,
-                lineHeight: typography.lineHeight.sm,
-              }}
+              color={colors.textSubtle}
+              numberOfLines={2}
+              style={styles.subtitle}
+              variant="caption"
             >
               {subtitle}
             </Text>
@@ -63,10 +71,24 @@ export default function CheckoutInfoRow({
         ) : null}
       </View>
 
-      {rightAccessory ?? (
+      {rightAccessory ?? (onPress ? (
         <Ionicons color={colors.iconMuted} name="chevron-forward" size={20} />
-      )}
-    </Pressable>
+      ) : null)}
+    </>
+  );
+
+  if (!onPress) {
+    return <View style={containerStyle}>{content}</View>;
+  }
+
+  return (
+    <PressableScale
+      accessibilityRole="button"
+      onPress={onPress}
+      style={containerStyle}
+    >
+      {content}
+    </PressableScale>
   );
 }
 
@@ -74,12 +96,12 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
   },
-  icon: {
-    width: 24,
+  iconWrap: {
+    alignItems: 'center',
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
   },
   textWrap: {
     flex: 1,
@@ -88,6 +110,8 @@ const styles = StyleSheet.create({
   subtitleRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 6,
+  },
+  subtitle: {
+    flexShrink: 1,
   },
 });

@@ -66,18 +66,21 @@ export default function SupportHeader({
       </Text>
 
       <View style={[styles.side, styles.rightSide]}>
-        <Pressable
-          accessibilityLabel={rightAccessibilityLabel}
-          accessibilityRole="button"
-          onPress={onRightPress}
-          style={[styles.iconButton, { backgroundColor: colors.backgroundTertiary }]}
-        >
-          <Ionicons
-            color={colors.text}
-            name={rightIconName}
-            size={22}
-          />
-        </Pressable>
+        {onRightPress ? (
+          <Pressable
+            accessibilityLabel={rightAccessibilityLabel}
+            accessibilityRole="button"
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            onPress={onRightPress}
+            style={[styles.iconButton, { backgroundColor: colors.backgroundTertiary }]}
+          >
+            <Ionicons
+              color={colors.text}
+              name={rightIconName}
+              size={22}
+            />
+          </Pressable>
+        ) : null}
       </View>
     </View>
   );
@@ -92,10 +95,10 @@ const styles = StyleSheet.create({
   },
   iconButton: {
     alignItems: 'center',
-    borderRadius: 20,
-    height: 40,
+    borderRadius: 24,
+    height: 48,
     justifyContent: 'center',
-    width: 40,
+    width: 48,
   },
   rightSide: {
     alignItems: 'flex-end',

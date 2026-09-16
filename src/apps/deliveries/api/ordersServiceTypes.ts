@@ -137,6 +137,20 @@ export interface DeliveryOrderLogItem {
   message: string | null;
 }
 
+export interface DeliveryOrderEta {
+  phase: "pre_pickup" | "post_pickup" | "arrived" | "unavailable";
+  estimatedMinutes: number | null;
+  remainingSeconds: number | null;
+  distanceKm: number | null;
+  riderLocation: {
+    latitude: number | null;
+    longitude: number | null;
+    updatedAt: string | null;
+  } | null;
+  source: string;
+  calculatedAt: string;
+}
+
 export interface OrderDetailsResponse {
   orderId: string;
   orderCode?: string | null;
@@ -148,6 +162,7 @@ export interface OrderDetailsResponse {
   paymentStatus: string;
   orderedAt: string;
   scheduledAt: string | null;
+  eta?: DeliveryOrderEta | null;
   restaurantNote?: string | null;
   courierNote?: string | null;
   store: DeliveryOrderStore;
