@@ -4,17 +4,42 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import AddressChooseOnMap from '../../components/address/AddressChooseOnMap';
 import type { MapAddressResult } from '../../components/address/AddressChooseOnMap';
-import type { AddressFlowParamList } from '../../navigation/addressFlowTypes';
+import type {
+  AddressFlowHostParamList,
+  AddressFlowParamList,
+} from '../../navigation/addressFlowTypes';
+import { authSession } from '../../auth/authSession';
+import useAddress from '../../hooks/useAddress';
+import {
+  createDeliveryAddress,
+  GUEST_SELECTED_LOCATION_ADDRESS_ID,
+} from '../../utils/address';
+import { navigateAfterAddressSelection } from '../../navigation/addressFlowNavigation';
 
 export default function AddressChooseOnMapScreen() {
-  const nav = useNavigation<NativeStackNavigationProp<AddressFlowParamList>>();
+  const nav = useNavigation<NativeStackNavigationProp<AddressFlowHostParamList>>();
   const route = useRoute();
   const { t } = useTranslation('general');
   const params =
     (route.params as AddressFlowParamList['AddressChooseOnMap']) ?? {};
+  const { setSelectedAddress } = useAddress();
 
   const handleConfirm = useCallback(
-    (result: MapAddressResult) => {
+    async (result: MapAddressResult) => {
+      const accessToken = await authSession.getAccessToken();
+      if (!accessToken) {
+        setSelectedAddress(
+          createDeliveryAddress({
+            id: GUEST_SELECTED_LOCATION_ADDRESS_ID,
+            address: result.description,
+            latitude: result.latitude,
+            longitude: result.longitude,
+          }),
+        );
+        navigateAfterAddressSelection(nav, params.origin);
+        return;
+      }
+
       nav.navigate('AddressDetail', {
         address: result.description,
         latitude: result.latitude,
@@ -30,7 +55,7 @@ export default function AddressChooseOnMapScreen() {
           : { appPrefix: params.appPrefix, origin: params.origin }),
       });
     },
-    [nav, params],
+    [nav, params, setSelectedAddress],
   );
 
   return (

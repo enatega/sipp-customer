@@ -14,22 +14,23 @@ import type {
   AddressDetailFormHandle,
   AddressDetailFormSubmitData,
 } from '../../components/address/AddressDetailForm';
-import type { AddressFlowParamList } from '../../navigation/addressFlowTypes';
+import type {
+  AddressFlowHostParamList,
+  AddressFlowParamList,
+} from '../../navigation/addressFlowTypes';
 import type { AddressType } from '../../api/addressService';
-import { createDeliveryAddressFromSavedAddress } from '../../utils/address';
+import {
+  createDeliveryAddress,
+  createDeliveryAddressFromSavedAddress,
+  GUEST_SELECTED_LOCATION_ADDRESS_ID,
+} from '../../utils/address';
 import useAddress from '../../hooks/useAddress';
 import type {
   AddressAdditionalFields,
   SavedAddress,
 } from '../../api/addressService';
-
-type AddressFlowHostParamList = AddressFlowParamList & {
-  Checkout: undefined;
-  Chain: { screen: 'ChainTabs' } | undefined;
-  MultiVendor: { screen: 'MultiVendorTabs' } | undefined;
-  MyProfile: undefined;
-  SingleVendor: { screen: 'SingleVendorTabs' } | undefined;
-};
+import { navigateAfterAddressSelection } from '../../navigation/addressFlowNavigation';
+import { useAuthSessionQuery } from '../../hooks/useAuthQueries';
 
 function areAdditionalFieldsEqual(
   first: AddressAdditionalFields | undefined,
@@ -98,12 +99,44 @@ export default function AddressDetailScreen() {
   const { t } = useTranslation('general');
   const insets = useSafeAreaInsets();
   const formRef = useRef<AddressDetailFormHandle>(null);
+  const hasCompletedGuestSelection = useRef(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [keyboardOffset, setKeyboardOffset] = useState(0);
   const params = route.params;
   const { setSelectedAddress } = useAddress();
+  const sessionQuery = useAuthSessionQuery();
   const isEditing = Boolean(params.editAddressId);
+
+  useEffect(() => {
+    if (
+      sessionQuery.isPending ||
+      sessionQuery.data?.token ||
+      hasCompletedGuestSelection.current
+    ) {
+      return;
+    }
+
+    hasCompletedGuestSelection.current = true;
+    setSelectedAddress(
+      createDeliveryAddress({
+        id: GUEST_SELECTED_LOCATION_ADDRESS_ID,
+        address: params.address,
+        latitude: Number(params.latitude),
+        longitude: Number(params.longitude),
+      }),
+    );
+    navigateAfterAddressSelection(nav, params.origin);
+  }, [
+    nav,
+    params.address,
+    params.latitude,
+    params.longitude,
+    params.origin,
+    sessionQuery.data?.token,
+    sessionQuery.isPending,
+    setSelectedAddress,
+  ]);
 
   useEffect(() => {
     const show = Keyboard.addListener('keyboardDidShow', (event) => {
@@ -172,27 +205,7 @@ export default function AddressDetailScreen() {
           }
         }
 
-        if (params.origin === 'multi-vendor-home') {
-          nav.navigate('MultiVendor', { screen: 'MultiVendorTabs' });
-          return;
-        }
-
-        if (params.origin === 'single-vendor-home') {
-          nav.navigate('SingleVendor', { screen: 'SingleVendorTabs' });
-          return;
-        }
-
-        if (params.origin === 'chain-home') {
-          nav.navigate('Chain', { screen: 'ChainTabs' });
-          return;
-        }
-
-        if (params.origin === 'checkout') {
-          nav.navigate('Checkout');
-          return;
-        }
-
-        nav.navigate('MyProfile');
+        navigateAfterAddressSelection(nav, params.origin);
       } catch {
         showToast.error(t('address_save_error'));
       }
@@ -215,6 +228,10 @@ export default function AddressDetailScreen() {
 
   const screenTitle = isEditing ? t('address_edit_title') : t('address_add_title');
   const buttonLabel = isEditing ? t('address_update') : t('address_save');
+
+  if (sessionQuery.isPending || !sessionQuery.data?.token) {
+    return null;
+  }
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>

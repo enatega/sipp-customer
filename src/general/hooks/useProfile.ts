@@ -8,6 +8,7 @@ import {
   ProfileUser,
   WalletResponse,
 } from '../api/profileService';
+import { useAuthSessionQuery } from './useAuthQueries';
 
 type ProfileState = {
   user: ProfileUser | null;
@@ -18,6 +19,8 @@ type ProfileState = {
 };
 
 export default function useProfile(appPrefix: ProfileAppPrefix) {
+  const sessionQuery = useAuthSessionQuery();
+  const isAuthenticated = Boolean(sessionQuery.data?.token);
   const [state, setState] = useState<ProfileState>({
     user: null,
     addresses: [],
@@ -30,6 +33,17 @@ export default function useProfile(appPrefix: ProfileAppPrefix) {
   const hasFetchedOnce = useRef(false);
 
   const fetchData = useCallback(async (showLoading = true) => {
+    if (!isAuthenticated) {
+      setState({
+        user: null,
+        addresses: [],
+        wallet: null,
+        isLoading: sessionQuery.isPending,
+        error: null,
+      });
+      return;
+    }
+
     if (showLoading) {
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
     }
@@ -50,7 +64,7 @@ export default function useProfile(appPrefix: ProfileAppPrefix) {
         err instanceof Error ? err.message : 'Failed to load profile';
       setState((prev) => ({ ...prev, isLoading: false, error: message }));
     }
-  }, [appPrefix]);
+  }, [appPrefix, isAuthenticated, sessionQuery.isPending]);
 
   useFocusEffect(
     useCallback(() => {

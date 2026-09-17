@@ -14,6 +14,7 @@ import { useCartActionEligibility } from '../../hooks/useCartActionEligibility';
 import { useCartMutationFeedback } from '../../hooks/useCartMutationFeedback';
 import { useAddCartItemMutation } from '../../hooks/useCartMutations';
 import { useCartStoreConflictResolution } from '../../hooks/useCartStoreConflictResolution';
+import { requireDeliveriesAuthentication } from '../../navigation/deliveriesAuthGate';
 
 type Props = {
   customizations?: ProductInfoCustomizationsResponse;
@@ -71,6 +72,15 @@ export default function useProductInfoCartFlow({
   ]);
 
   const handleAddToCart = useCallback(async () => {
+    const isAuthenticated = await requireDeliveriesAuthentication({
+      screen: 'ProductInfo',
+      params: { productId: product.productId },
+    });
+
+    if (!isAuthenticated) {
+      return;
+    }
+
     const shouldShowBlockedFeedback =
       isAddDisabled || decision.kind === 'open_product_info';
 
@@ -104,6 +114,7 @@ export default function useProductInfoCartFlow({
     decision.kind,
     isAddDisabled,
     product.name,
+    product.productId,
     productActionTarget.storeName,
     showMutationError,
     storeConflictResolution,

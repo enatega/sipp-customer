@@ -24,7 +24,7 @@ export type MapAddressResult = {
 type Props = {
   initialCoordinate?: LatLng | null;
   onBackPress: () => void;
-  onConfirm: (result: MapAddressResult) => void;
+  onConfirm: (result: MapAddressResult) => Promise<void> | void;
   confirmLabel: string;
   locatingLabel: string;
   fallbackLabel: string;
@@ -191,7 +191,7 @@ function AddressChooseOnMap({
   const handleConfirm = useCallback(async () => {
     if (!resolved || isConfirming) return;
     setIsConfirming(true);
-    try { onConfirm(resolved); } finally { setIsConfirming(false); }
+    try { await onConfirm(resolved); } finally { setIsConfirming(false); }
   }, [isConfirming, onConfirm, resolved]);
 
   const chipTitle = isResolving ? locatingLabel : (resolved?.mainText || fallbackLabel);

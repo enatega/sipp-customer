@@ -33,6 +33,7 @@ import HomeLocationPermissionPopup, {
 } from '../../../screens/home/HomeLocationPermissionPopup';
 import IconButton from '../IconButton';
 import { useWindowClass } from '../../hooks/useWindowClass';
+import { useAuthSessionQuery } from '../../hooks/useAuthQueries';
 
 type Props = {
   addresses: ProfileAddress[];
@@ -66,8 +67,11 @@ export default function AddressSelectionBottomSheet({
   const { colors, elevation, layout, motion, shape, spacing } = useTheme();
   const { t } = useTranslation('general');
   const { height, isCompact, width } = useWindowClass();
+  const sessionQuery = useAuthSessionQuery();
   const insets = useSafeAreaInsets();
   const isSelectionPending = Boolean(selectingAddressId);
+  const canSaveAddresses =
+    sessionQuery.isPending || Boolean(sessionQuery.data?.token);
   const [isRequestingLocation, setIsRequestingLocation] = useState(false);
   const [isLocationPopupVisible, setIsLocationPopupVisible] = useState(false);
   const [locationPopupMode, setLocationPopupMode] =
@@ -319,7 +323,11 @@ export default function AddressSelectionBottomSheet({
             })}
 
             <Pressable
-              accessibilityLabel={t('address_selector_add_new')}
+              accessibilityLabel={t(
+                canSaveAddresses
+                  ? 'address_selector_add_new'
+                  : 'address_selector_search_address',
+              )}
               accessibilityRole="button"
               accessibilityState={{ disabled: isSelectionPending }}
               disabled={isSelectionPending}
@@ -334,15 +342,32 @@ export default function AddressSelectionBottomSheet({
                 },
               ]}
             >
-              <View style={[styles.actionIcon, { backgroundColor: colors.surfaceSunken, borderRadius: shape.radius.pill }]}>
-                <Icon color={colors.primary} name="add" size={20} type="Ionicons" />
+              <View
+                style={[
+                  styles.actionIcon,
+                  {
+                    backgroundColor: colors.surfaceSunken,
+                    borderRadius: shape.radius.pill,
+                  },
+                ]}
+              >
+                <Icon
+                  color={colors.primary}
+                  name={canSaveAddresses ? 'add' : 'search-outline'}
+                  size={20}
+                  type="Ionicons"
+                />
               </View>
               <Text
                 color={colors.text}
                 variant="body"
                 weight="semiBold"
               >
-                {t('address_selector_add_new')}
+                {t(
+                  canSaveAddresses
+                    ? 'address_selector_add_new'
+                    : 'address_selector_search_address',
+                )}
               </Text>
             </Pressable>
           </View>

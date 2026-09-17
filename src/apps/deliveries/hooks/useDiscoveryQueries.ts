@@ -34,6 +34,7 @@ import type {
   DeliveryShopTypeProductsParams,
   DeliveryVendorStoresParams,
 } from '../api/types';
+import { useAuthSessionQuery } from '../../../general/hooks/useAuthQueries';
 
 type UseShopTypesOptions = Omit<
   UseQueryOptions<DeliveryShopType[], ApiError>,
@@ -776,7 +777,11 @@ export function useOrderAgain(
   params: UseOrderAgainParams = {},
   options?: UseOrderAgainOptions,
 ) {
+  const sessionQuery = useAuthSessionQuery();
+  const { enabled = true, ...queryOptions } = options ?? {};
+
   return useQuery<DeliveryOrderAgainItem[], ApiError>({
+    ...queryOptions,
     queryKey: deliveryKeys.orderAgain({
       limit: params.limit,
       search: params.search,
@@ -786,7 +791,7 @@ export function useOrderAgain(
       subcategory_id: params.subcategory_id,
     }),
     queryFn: () => discoveryService.getOrderAgain(params),
-    ...options,
+    enabled: Boolean(sessionQuery.data?.token) && enabled,
   });
 }
 export function useStoreRecommendedProducts(

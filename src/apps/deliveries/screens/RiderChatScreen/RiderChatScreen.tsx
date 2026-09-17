@@ -141,6 +141,7 @@ export default function RiderChatScreen() {
   const receiverId = route.params.receiverId;
 
   const [draftMessage, setDraftMessage] = useState('');
+  const [activeChatBoxId, setActiveChatBoxId] = useState<string | null>(initialChatBoxId ?? null);
   const [messages, setMessages] = useState<RiderChatMessage[]>([]);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
@@ -157,8 +158,8 @@ export default function RiderChatScreen() {
   );
 
   const resolvedChatBoxId = useMemo(() => {
-    if (initialChatBoxId) {
-      return initialChatBoxId;
+    if (activeChatBoxId) {
+      return activeChatBoxId;
     }
 
     return (
@@ -183,7 +184,7 @@ export default function RiderChatScreen() {
       ) ??
       null
     );
-  }, [chatBoxes, initialChatBoxId, receiverId, senderId]);
+  }, [activeChatBoxId, chatBoxes, receiverId, senderId]);
 
   const chatMessagesQuery = useDeliveryChatMessages(resolvedChatBoxId ?? undefined);
 
@@ -303,6 +304,9 @@ export default function RiderChatScreen() {
       },
       {
         onSuccess: (response) => {
+          if (response.chatBoxId) {
+            setActiveChatBoxId(response.chatBoxId);
+          }
           setMessages((current) => [
             ...current,
             {
@@ -315,6 +319,8 @@ export default function RiderChatScreen() {
 
           if (response.chatBoxId || resolvedChatBoxId) {
             void chatBoxesQuery.refetch();
+          }
+          if (resolvedChatBoxId) {
             void chatMessagesQuery.refetch();
           }
 

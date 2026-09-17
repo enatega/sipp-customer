@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import {
   useNavigation,
@@ -20,6 +20,7 @@ import ProfileMenuSection from '../../components/profile/ProfileMenuSection';
 import ProfileSkeleton from '../../components/profile/ProfileSkeleton';
 import WalletCard from '../../components/profile/WalletCard';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import AppPopup from '../../components/AppPopup';
 
 const ICON_SIZE = 20;
 
@@ -55,9 +56,15 @@ export default function ProfileTabScreen({
   const navigation =
     useNavigation<NavigationProp<ProfileTabNavigationParamList>>();
   const logoutMutation = useAppLogout();
+  const [isLogoutConfirmationVisible, setIsLogoutConfirmationVisible] = useState(false);
 
   const handleLogout = useCallback(async () => {
-    await logoutMutation.mutateAsync();
+    try {
+      await logoutMutation.mutateAsync();
+      setIsLogoutConfirmationVisible(false);
+    } catch {
+      // The mutation retains its error state; keep the dialog open for retry.
+    }
   }, [logoutMutation]);
 
   if (isLoading) {
@@ -77,6 +84,7 @@ export default function ProfileTabScreen({
   const iconColor = colors.text;
 
   return (
+    <View style={styles.screen}>
     <ScrollView
       style={[styles.scroll, { backgroundColor: colors.background }]}
       contentContainerStyle={[
@@ -172,12 +180,37 @@ export default function ProfileTabScreen({
           iconSurfaceColor={colors.dangerSoft}
           label={t('profile_menu_logout')}
           tone="danger"
-          onPress={() => {
-            void handleLogout();
-          }}
+          onPress={() => setIsLogoutConfirmationVisible(true)}
         />
       </ProfileMenuSection>
     </ScrollView>
+    <AppPopup
+      visible={isLogoutConfirmationVisible}
+      title={t('profile_logout_confirm_title')}
+      description={
+        logoutMutation.isError
+          ? t('profile_logout_confirm_error')
+          : t('profile_logout_confirm_description')
+      }
+      onRequestClose={() => {
+        if (!logoutMutation.isPending) {
+          setIsLogoutConfirmationVisible(false);
+        }
+      }}
+      primaryAction={{
+        label: t('profile_logout_confirm_action'),
+        onPress: () => void handleLogout(),
+        variant: 'danger',
+        isLoading: logoutMutation.isPending,
+      }}
+      secondaryAction={{
+        label: t('profile_logout_confirm_cancel'),
+        onPress: () => setIsLogoutConfirmationVisible(false),
+        variant: 'secondary',
+        disabled: logoutMutation.isPending,
+      }}
+    />
+    </View>
   );
 }
 
@@ -186,6 +219,9 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   scroll: {
+    flex: 1,
+  },
+  screen: {
     flex: 1,
   },
 });

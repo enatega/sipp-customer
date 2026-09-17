@@ -13,6 +13,7 @@ import DeliveriesSectionEmptyState from '../../../components/home/DeliveriesSect
 import type { GenericListFilters } from '../../../components/filters/types';
 import { useTheme } from '../../../../../general/theme/theme';
 import { useWindowClass } from '../../../../../general/hooks/useWindowClass';
+import { useAuthSessionQuery } from '../../../../../general/hooks/useAuthQueries';
 
 type NavigationProp = BottomTabNavigationProp<MultiVendorBottomTabParamList>;
 
@@ -28,6 +29,8 @@ export default function OrderAgain(props: Props) {
   const { t } = useTranslation('deliveries');
   const { spacing } = useTheme();
   const { gutter } = useWindowClass();
+  const sessionQuery = useAuthSessionQuery();
+  const isAuthenticated = Boolean(sessionQuery.data?.token);
   const resolvedCategoryIds =
     selectedCategoryId ? [selectedCategoryId] : (filters?.category_ids ?? []);
   const resolvedCategoryId = resolvedCategoryIds[0] ?? undefined;
@@ -51,7 +54,7 @@ export default function OrderAgain(props: Props) {
       shop_type_id: activeShopTypeId,
     },
     {
-      enabled: !shouldSkipBecauseEmptyShopType,
+      enabled: isAuthenticated && !shouldSkipBecauseEmptyShopType,
     },
   );
   const isEmpty = !isOrderAgainPending && orderAgainData.length === 0;
@@ -64,6 +67,11 @@ export default function OrderAgain(props: Props) {
   const handleDiscoverPress = () => {
     navigation.navigate('MultiVendorTabSearch');
   };
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
     <View
       style={[styles.section, { gap: spacing.md, paddingHorizontal: gutter }]}

@@ -24,6 +24,7 @@ import { mapSupportTicketToListItem } from '../../utils/supportTicketMappers';
 
 type SupportContactFormRouteProp = RouteProp<SupportNavigationParamList, 'SupportContactForm'>;
 const BUSINESS_JOINING_ISSUE = 'joining_as_a_business';
+const MAX_SUPPORT_ATTACHMENT_BYTES = 5 * 1024 * 1024;
 const FALLBACK_CATEGORY_KEYS = [
   'business_support',
   'joining_as_a_business',
@@ -89,11 +90,15 @@ function extractCreatedTicketId(response: {
   detail?: {
     id?: string;
   };
+  ticket?: {
+    id?: string;
+  };
 }) {
   const createdTicketId = response.data?.id
     ?? response.data?._id
     ?? response.data?.ticketId
-    ?? response.detail?.id;
+    ?? response.detail?.id
+    ?? response.ticket?.id;
 
   return createdTicketId?.trim();
 }
@@ -120,6 +125,8 @@ export default function SupportContactFormScreen() {
   const [teamSize, setTeamSize] = useState<string>();
   const [attachmentUris, setAttachmentUris] = useState<string[]>([]);
   const [attachmentFileNames, setAttachmentFileNames] = useState<string[]>([]);
+  const [attachmentMimeTypes, setAttachmentMimeTypes] = useState<string[]>([]);
+  const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
   const createSupportTicketMutation = useCreateSupportTicketMutation({
     onSuccess: async (response) => {
       showToast.success(
@@ -296,6 +303,7 @@ export default function SupportContactFormScreen() {
     && normalizedIssueValue
     && fullName.trim()
     && normalizeTextValue(countryRegion)
+    && mobileNumber.trim()
     && normalizeTextValue(businessName)
     && normalizeTextValue(businessType)
     && normalizeTextValue(teamSize)
@@ -304,7 +312,29 @@ export default function SupportContactFormScreen() {
   );
   const isFormValid = isBusinessJoiningFlow ? isBusinessFormValid : isStandardFormValid;
 
-  const handleSubmit = () => {
+  const uploadAttachments = async () => {
+    if (attachmentUris.length === 0) {
+      return [];
+    }
+
+    setIsUploadingAttachments(true);
+    try {
+      return await Promise.all(
+        attachmentUris.map(async (uri, index) => {
+          const response = await supportTicketService.uploadAttachment({
+            uri,
+            fileName: attachmentFileNames[index] ?? `attachment-${index + 1}.jpg`,
+            mimeType: attachmentMimeTypes[index] ?? 'image/jpeg',
+          });
+          return response.url;
+        }),
+      );
+    } finally {
+      setIsUploadingAttachments(false);
+    }
+  };
+
+  const handleSubmit = async () => {
     const trimmedEmail = email.trim();
     const trimmedDescription = description.trim();
     const trimmedIssueValue = normalizedIssueValue;
@@ -321,6 +351,7 @@ export default function SupportContactFormScreen() {
         || !trimmedIssueValue
         || !trimmedFullName
         || !normalizedCountryRegion
+        || !trimmedMobileNumber
         || !trimmedBusinessName
         || !normalizedBusinessType
         || !normalizedTeamSize
@@ -336,12 +367,12 @@ export default function SupportContactFormScreen() {
         email: trimmedEmail,
         fullName: trimmedFullName,
         countryRegion: normalizedCountryRegion,
-        mobileNumber: trimmedMobileNumber || undefined,
+        mobileNumber: trimmedMobileNumber,
         businessName: trimmedBusinessName,
         businessType: normalizedBusinessType,
         teamSize: normalizedTeamSize,
         description: trimmedDescription,
-        attachmentUrls: attachmentUris,
+        attachmentUrls: [] as string[],
         priority: 'low' as const,
       };
 
@@ -353,18 +384,24 @@ export default function SupportContactFormScreen() {
       return;
     }
 
-    const payload = {
-      category: trimmedIssueValue,
-      reason: reasonValue,
-      email: trimmedEmail,
-      fullName: sessionQuery.data?.user?.name?.trim() || undefined,
-      mobileNumber: sessionQuery.data?.user?.phone?.trim() || undefined,
-      description: trimmedDescription,
-      attachmentUrls: attachmentUris,
-      priority: 'low' as const,
-    };
-
-    createSupportTicketMutation.mutate(payload);
+    try {
+      const attachmentUrls = await uploadAttachments();
+      createSupportTicketMutation.mutate({
+        category: trimmedIssueValue,
+        reason: reasonValue,
+        email: trimmedEmail,
+        fullName: sessionQuery.data?.user?.name?.trim() || undefined,
+        mobileNumber: sessionQuery.data?.user?.phone?.trim() || undefined,
+        description: trimmedDescription,
+        attachmentUrls,
+        priority: 'low' as const,
+      });
+    } catch {
+      showToast.error(
+        t('support_form_submit_error_title'),
+        t('support_form_attachment_upload_error'),
+      );
+    }
   };
 
   const handlePickAttachment = async () => {
@@ -390,6 +427,14 @@ export default function SupportContactFormScreen() {
       return;
     }
 
+    if (result.assets.some((asset) => (asset.fileSize ?? 0) > MAX_SUPPORT_ATTACHMENT_BYTES)) {
+      showToast.error(
+        t('support_chat_attachment_invalid_title'),
+        t('support_chat_attachment_too_large_message'),
+      );
+      return;
+    }
+
     const nextUris = result.assets
       .map((asset) => asset.uri)
       .filter(Boolean);
@@ -404,6 +449,9 @@ export default function SupportContactFormScreen() {
 
     setAttachmentUris(nextUris);
     setAttachmentFileNames(nextFileNames);
+    setAttachmentMimeTypes(
+      result.assets.map((asset) => asset.mimeType ?? 'image/jpeg'),
+    );
 
     showToast.success(
       t('support_chat_attachment_selected_title'),
@@ -611,9 +659,11 @@ export default function SupportContactFormScreen() {
       >
         <Button
           label={t('support_form_send_email')}
-          onPress={handleSubmit}
-          disabled={!isFormValid || createSupportTicketMutation.isPending}
-          isLoading={createSupportTicketMutation.isPending}
+          onPress={() => {
+            void handleSubmit();
+          }}
+          disabled={!isFormValid || createSupportTicketMutation.isPending || isUploadingAttachments}
+          isLoading={createSupportTicketMutation.isPending || isUploadingAttachments}
           variant={isFormValid ? 'primary' : 'secondary'}
           style={styles.footerButton}
         />

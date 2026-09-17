@@ -11,6 +11,7 @@ import SearchScreen from '../screens/SearchScreen/SearchScreen';
 import SingleVendorProfileTabScreen from '../../screens/ProfileTab/SingleVendorProfileTabScreen';
 import OrdersScreen from '../../screens/OrdersScreen/OrdersScreen';
 import type { SingleVendorBottomTabParamList } from './types';
+import AuthenticatedDeliveriesScreen from '../../components/navigation/AuthenticatedDeliveriesScreen';
 
 const Tab = createBottomTabNavigator<SingleVendorBottomTabParamList>();
 
@@ -71,7 +72,6 @@ export default function SinglevendorBottomTabNavigator() {
         }}
       />
       <Tab.Screen
-        component={OrdersScreen}
         name="SingleVendorTabOrders"
         options={{
           tabBarIcon: ({ color, size }: TabIconProps) => (
@@ -84,7 +84,9 @@ export default function SinglevendorBottomTabNavigator() {
           tabBarLabel: t('single_vendor_tab_orders'),
           title: t('single_vendor_tab_orders'),
         }}
-      />
+      >
+        {() => <AuthenticatedDeliveriesScreen component={OrdersScreen} />}
+      </Tab.Screen>
       <Tab.Screen
         component={SingleVendorProfileTabScreen}
         name="SingleVendorTabProfile"

@@ -11,6 +11,7 @@ import { useAddCartItemMutation } from "./useCartMutations";
 import { useCartStoreConflictResolution } from "./useCartStoreConflictResolution";
 import { buildOrderAgainCartInputs } from "../utils/orderDetails/orderAgainUtils";
 import { useTranslation } from "react-i18next";
+import { requireDeliveriesAuthentication } from '../navigation/deliveriesAuthGate';
 
 function getApiErrorMessage(error: unknown) {
   const apiError = error as ApiError | undefined;
@@ -34,6 +35,15 @@ export function useOrderAgainAction(order?: OrderDetailsResponse | null) {
 
   const handleOrderAgain = useCallback(async () => {
     if (isSubmitting || !order) {
+      return;
+    }
+
+    const isAuthenticated = await requireDeliveriesAuthentication({
+      screen: 'OrderDetailsScreen',
+      params: { orderId: order.orderId },
+    });
+
+    if (!isAuthenticated) {
       return;
     }
 

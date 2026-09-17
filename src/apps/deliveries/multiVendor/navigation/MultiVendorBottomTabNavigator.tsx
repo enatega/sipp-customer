@@ -10,6 +10,7 @@ import DeliveriesTabBar, {
 } from '../../components/navigation/DeliveriesTabBar';
 import MultiVendorProfileTabScreen from '../../screens/ProfileTab/MultiVendorProfileTabScreen';
 import OrdersScreen from '../../screens/OrdersScreen/OrdersScreen';
+import AuthenticatedDeliveriesScreen from '../../components/navigation/AuthenticatedDeliveriesScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -63,14 +64,15 @@ function MultiVendorBottomTabNavigator() {
         }}
       />
       <Tab.Screen
-        component={OrdersScreen}
         name="MultiVendorTabOrders"
         options={{
           tabBarIcon: renderIcon('receipt-text-outline'),
           tabBarLabel: t('multi_vendor_tab_orders'),
           title: t('multi_vendor_tab_orders'),
         }}
-      />
+      >
+        {() => <AuthenticatedDeliveriesScreen component={OrdersScreen} />}
+      </Tab.Screen>
       <Tab.Screen
         component={MultiVendorProfileTabScreen}
         name="MultiVendorTabProfile"

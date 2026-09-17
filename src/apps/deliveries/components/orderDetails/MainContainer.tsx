@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Alert, ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import ScreenHeader from "../../../../general/components/ScreenHeader";
@@ -30,6 +30,7 @@ import OrderDetailsSection from "./OrderDetailsSection";
 import CartStoreConflictModal from "../cart/CartStoreConflictModal";
 import { useWindowClass } from "../../../../general/hooks/useWindowClass";
 import OrderDetailsTimelineSection from "./OrderDetailsTimelineSection";
+import AppPopup from '../../../../general/components/AppPopup';
 
 type Props = {
   navigation: NativeStackNavigationProp<
@@ -55,6 +56,7 @@ export default function MainContainer({ navigation, orderId }: Props) {
   const orderAgainAction = useOrderAgainAction(orderDetailsQuery.data);
   const cancelOrder = useCancelOrder();
   const [isIncreaseTipVisible, setIsIncreaseTipVisible] = useState(false);
+  const [isCancelOrderVisible, setIsCancelOrderVisible] = useState(false);
   const [tipAmount, setTipAmount] = useState("5.00");
   const order = orderDetailsQuery.data;
   const normalizedOrderCode = useMemo(() => {
@@ -266,30 +268,7 @@ export default function MainContainer({ navigation, orderId }: Props) {
           hasSubmittedRating={hasSubmittedRating}
           isOrderAgainLoading={orderAgainAction.isSubmitting}
           isCancelOrderLoading={cancelOrder.isPending}
-          onCancelOrder={shouldShowCancelOrder ? () => {
-            Alert.alert(
-              t('order_cancel_title'),
-              t('order_cancel_message'),
-              [
-                { text: t('order_cancel_keep'), style: 'cancel' },
-                {
-                  text: t('order_cancel_confirm'),
-                  style: 'destructive',
-                  onPress: () => {
-                    void cancelOrder
-                      .mutateAsync(orderId)
-                      .then(() => orderDetailsQuery.refetch())
-                      .catch((error) => {
-                        showToast.error(
-                          t('order_cancel_failed'),
-                          error instanceof Error ? error.message : t('order_cancel_failed'),
-                        );
-                      });
-                  },
-                },
-              ],
-            );
-          } : undefined}
+          onCancelOrder={shouldShowCancelOrder ? () => setIsCancelOrderVisible(true) : undefined}
           onIncreaseTip={shouldShowIncreaseTip ? () => setIsIncreaseTipVisible(true) : undefined}
           onOrderAgain={() => {
             void orderAgainAction.handleOrderAgain();
@@ -320,6 +299,42 @@ export default function MainContainer({ navigation, orderId }: Props) {
         }}
         prompt={orderAgainAction.conflictResolution.prompt}
         visible={orderAgainAction.conflictResolution.isVisible}
+      />
+
+      <AppPopup
+        visible={isCancelOrderVisible}
+        title={t('order_cancel_title')}
+        description={t('order_cancel_message')}
+        onRequestClose={() => {
+          if (!cancelOrder.isPending) {
+            setIsCancelOrderVisible(false);
+          }
+        }}
+        primaryAction={{
+          label: t('order_cancel_confirm'),
+          variant: 'danger',
+          isLoading: cancelOrder.isPending,
+          onPress: () => {
+            void cancelOrder
+              .mutateAsync(orderId)
+              .then(() => {
+                setIsCancelOrderVisible(false);
+                return orderDetailsQuery.refetch();
+              })
+              .catch((error) => {
+                showToast.error(
+                  t('order_cancel_failed'),
+                  error instanceof Error ? error.message : t('order_cancel_failed'),
+                );
+              });
+          },
+        }}
+        secondaryAction={{
+          label: t('order_cancel_keep'),
+          variant: 'secondary',
+          disabled: cancelOrder.isPending,
+          onPress: () => setIsCancelOrderVisible(false),
+        }}
       />
     </View>
   );

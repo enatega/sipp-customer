@@ -1,7 +1,7 @@
 import apiClient from '../../../general/api/apiClient';
 
 const SUPPORT_TICKETS_BASE = '/api/v1/deliveries/support-tickets';
-const SUPPORT_TICKET_FORM_CONFIG_PATH = `${SUPPORT_TICKETS_BASE}/config`;
+const SUPPORT_TICKET_FORM_CONFIG_PATH = `${SUPPORT_TICKETS_BASE}/options`;
 const SUPPORT_MY_TICKETS_PATH = `${SUPPORT_TICKETS_BASE}/my-tickets`;
 
 export type SupportTicketCategoryConfig = {
@@ -13,6 +13,7 @@ export type SupportTicketFormConfigResponse = {
   categories: SupportTicketCategoryConfig[];
   businessTypes: string[];
   teamSizes: string[];
+  requiredByCategory: Record<string, string[]>;
 };
 
 export type CreateSupportTicketPayload = {
@@ -39,6 +40,16 @@ export type CreateSupportTicketResponse = {
     _id?: string;
     ticketId?: string;
   };
+  chatBoxId?: string;
+  ticket?: {
+    id?: string;
+  };
+};
+
+export type SupportAttachmentInput = {
+  uri: string;
+  fileName: string;
+  mimeType: string;
 };
 
 export type SupportTicketListDate = {
@@ -76,4 +87,18 @@ export const supportTicketService = {
     apiClient.get<SupportMyTicketsResponse>(SUPPORT_MY_TICKETS_PATH),
   createTicket: (payload: CreateSupportTicketPayload) =>
     apiClient.post<CreateSupportTicketResponse>(SUPPORT_TICKETS_BASE, payload),
+  uploadAttachment: (attachment: SupportAttachmentInput) => {
+    const form = new FormData();
+    form.append('file', {
+      uri: attachment.uri,
+      name: attachment.fileName,
+      type: attachment.mimeType,
+    } as unknown as Blob);
+
+    return apiClient.post<{ url: string }>(
+      `${SUPPORT_TICKETS_BASE}/attachments`,
+      form,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
+    );
+  },
 };

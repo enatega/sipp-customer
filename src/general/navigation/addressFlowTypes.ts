@@ -33,3 +33,11 @@ export type AddressFlowParamList = {
   AddressChooseOnMap: AddressFlowParams;
   AddressDetail: AddressDetailParams;
 };
+
+export type AddressFlowHostParamList = AddressFlowParamList & {
+  Checkout: undefined;
+  Chain: { screen: 'ChainTabs' } | undefined;
+  MultiVendor: { screen: 'MultiVendorTabs' } | undefined;
+  MyProfile: undefined;
+  SingleVendor: { screen: 'SingleVendorTabs' } | undefined;
+};

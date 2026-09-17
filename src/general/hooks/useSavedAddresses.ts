@@ -4,6 +4,7 @@ import { addressService } from "../api/addressService";
 import type { SavedAddress } from "../api/addressService";
 import useSyncSelectedSavedAddress from "./useSyncSelectedSavedAddress";
 import { ProfileAppPrefix } from "../api/profileService";
+import { useAuthSessionQuery } from "./useAuthQueries";
 
 type SavedAddressesState = {
   addresses: SavedAddress[];
@@ -12,6 +13,8 @@ type SavedAddressesState = {
 };
 
 export default function useSavedAddresses(appPrefix: ProfileAppPrefix) {
+  const sessionQuery = useAuthSessionQuery();
+  const isAuthenticated = Boolean(sessionQuery.data?.token);
   const [state, setState] = useState<SavedAddressesState>({
     addresses: [],
     isLoading: true,
@@ -21,6 +24,15 @@ export default function useSavedAddresses(appPrefix: ProfileAppPrefix) {
   const hasFetchedOnce = useRef(false);
 
   const fetchAddresses = useCallback(async (showLoading = true) => {
+    if (!isAuthenticated) {
+      setState({
+        addresses: [],
+        isLoading: sessionQuery.isPending,
+        error: null,
+      });
+      return;
+    }
+
     if (showLoading) {
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
     }
@@ -43,7 +55,7 @@ export default function useSavedAddresses(appPrefix: ProfileAppPrefix) {
         error: message,
       }));
     }
-  }, []);
+  }, [appPrefix, isAuthenticated, sessionQuery.isPending]);
 
   useFocusEffect(
     useCallback(() => {

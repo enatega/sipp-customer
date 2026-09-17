@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -16,6 +16,7 @@ import StoreDetailTabs from './StoreDetailTabs';
 type Props = {
   activeCategoryId: string | null;
   categories: DeliveryStoreDetailsFilterItem[];
+  onLayout?: (event: LayoutChangeEvent) => void;
   onSelect: (categoryId: string | null) => void;
   revealOffset: number;
   scrollY: SharedValue<number>;
@@ -25,6 +26,7 @@ type Props = {
 export default function StoreDetailStickyCategories({
   activeCategoryId,
   categories,
+  onLayout,
   onSelect,
   revealOffset,
   scrollY,
@@ -78,6 +80,7 @@ export default function StoreDetailStickyCategories({
     <Animated.View
       accessibilityElementsHidden={!isInteractive}
       importantForAccessibility={isInteractive ? 'auto' : 'no-hide-descendants'}
+      onLayout={onLayout}
       pointerEvents={isInteractive ? 'auto' : 'none'}
       style={[
         styles.container,

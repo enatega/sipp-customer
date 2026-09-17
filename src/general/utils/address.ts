@@ -1,6 +1,7 @@
 import type { DeliveryAddress, SavedAddress } from '../api/addressService';
 
 const CURRENT_LOCATION_ADDRESS_ID = 'current-location';
+export const GUEST_SELECTED_LOCATION_ADDRESS_ID = 'guest-selected-location';
 
 type DeliveryAddressInput = {
   id?: string;
@@ -84,7 +85,11 @@ export function resolveSavedAddressId(
     | null
     | undefined,
 ) {
-  if (selectedAddressId && selectedAddressId !== CURRENT_LOCATION_ADDRESS_ID) {
+  if (
+    selectedAddressId &&
+    selectedAddressId !== CURRENT_LOCATION_ADDRESS_ID &&
+    selectedAddressId !== GUEST_SELECTED_LOCATION_ADDRESS_ID
+  ) {
     return selectedAddressId;
   }
 

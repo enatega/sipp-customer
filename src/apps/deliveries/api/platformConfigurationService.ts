@@ -23,11 +23,15 @@ export const platformConfigurationService = {
   getPlatformConfiguration: () =>
     apiClient.get<DeliveriesPlatformConfigurationResponse>(
       DELIVERIES_PLATFORM_CONFIGURATION_PATH,
+      undefined,
+      { skipAuth: true, skipSessionExpiryHandling: true },
     ),
 
   getCurrencies: async (): Promise<AppCurrency[]> => {
     const response = await apiClient.get<AppCurrency[] | AppCurrency>(
       DELIVERIES_CURRENCY_PATH,
+      undefined,
+      { skipAuth: true, skipSessionExpiryHandling: true },
     );
 
     if (Array.isArray(response)) {

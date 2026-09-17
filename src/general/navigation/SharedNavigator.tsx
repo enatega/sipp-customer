@@ -1,20 +1,13 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback } from "react";
 import { useFocusEffect } from "@react-navigation/native";
-import {
-  createNativeStackNavigator,
-  type NativeStackNavigationProp,
-} from "@react-navigation/native-stack";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import HomeScreen from "../../screens/HomeScreen";
 import AuthNavigator from "./AuthNavigator";
-import { authSession } from "../auth/authSession";
 import type { MiniAppId } from "../utils/constants";
 import type {
   SharedStackParamList,
 } from "./navigationTypes";
-import {
-  setActiveAppRoute,
-  setPendingAppRoute,
-} from "./pendingAppRedirect";
+import { setActiveAppRoute } from "./pendingAppRedirect";
 import { resetToSharedRoute } from "./rootNavigation";
 import { useAppTheme } from "../theme/ThemeProvider";
 import type { ThemedMiniAppId } from "../theme/colors";
@@ -44,19 +37,9 @@ function AppThemeScope({ appId, children }: AppThemeScopeProps) {
 }
 
 export default function SharedNavigator() {
-  const [initialRouteName, setInitialRouteName] = useState<
-    keyof SharedStackParamList | null
-  >(null);
-
-  useEffect(() => {
-    // Always land users on the shared Home screen on app start.
-    setInitialRouteName("Home");
-  }, []);
-
   const handleSelectMiniApp = useCallback(
     async (
       id: MiniAppId,
-      navigation: NativeStackNavigationProp<SharedStackParamList, "Home">,
       params?: SharedStackParamList[SharedAppRouteName],
     ) => {
       const routeName = APP_ROUTE_BY_ID[id];
@@ -64,33 +47,21 @@ export default function SharedNavigator() {
         return;
       }
 
-      const token = await authSession.getAccessToken();
-
-      if (token) {
-        await setActiveAppRoute(routeName);
-        resetToSharedRoute(routeName, params);
-        return;
-      }
-
-      await setPendingAppRoute(routeName, params);
-      navigation.navigate("Auth");
+      await setActiveAppRoute(routeName);
+      resetToSharedRoute(routeName, params);
     },
     [],
   );
 
-  if (!initialRouteName) {
-    return null;
-  }
-
   return (
-    <Stack.Navigator initialRouteName={initialRouteName}>
+    <Stack.Navigator initialRouteName="Deliveries">
       <Stack.Screen name="Home" options={{ headerShown: false }}>
         {(props) => (
           <AppThemeScope appId="general">
             <HomeScreen
               {...props}
               onSelectMiniApp={(id, params) => {
-                void handleSelectMiniApp(id, props.navigation, params);
+                void handleSelectMiniApp(id, params);
               }}
             />
           </AppThemeScope>

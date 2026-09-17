@@ -76,18 +76,6 @@ function sanitizeHeaders(headers: unknown): Record<string, unknown> | undefined 
   );
 }
 
-function hasMissingAuthHeaderSignal(responseData?: ApiErrorResponseData): boolean {
-  const messageText = toLowerCaseMessage(responseData?.message);
-  const errorText = toLowerCaseMessage(responseData?.error);
-  const codeText = toLowerCaseMessage(responseData?.code);
-  const combinedAuthText = `${messageText} ${errorText} ${codeText}`.trim();
-
-  return (
-    combinedAuthText.includes('auth header is missing') ||
-    combinedAuthText.includes('authorization header is missing')
-  );
-}
-
 function isLikelyAuthExpiry(status: number, responseData?: ApiErrorResponseData): boolean {
   const messageText = toLowerCaseMessage(responseData?.message);
   const errorText = toLowerCaseMessage(responseData?.error);
@@ -332,11 +320,10 @@ httpClient.interceptors.response.use(
       (error.config?.headers as Record<string, unknown> | undefined)?.Authorization,
     );
     const storedToken = await tokenManager.getToken();
-    const hasMissingAuthHeaderError = hasMissingAuthHeaderSignal(responseData);
     const shouldHandleSessionExpiry =
       !skipSessionExpiryHandling &&
       isLikelyAuthExpiry(status, responseData) &&
-      (hasAuthHeader || Boolean(storedToken) || hasMissingAuthHeaderError);
+      (hasAuthHeader || Boolean(storedToken));
 
     if (shouldHandleSessionExpiry && !isHandlingSessionExpiry) {
       isHandlingSessionExpiry = true;

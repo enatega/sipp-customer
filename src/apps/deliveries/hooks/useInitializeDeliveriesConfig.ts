@@ -129,11 +129,13 @@ export function useInitializeDeliveriesConfig() {
     queryFn: async () => {
       const [platformConfigurationResponse, currencies] = await Promise.all([
         platformConfigurationService.getPlatformConfiguration(),
-        platformConfigurationService.getCurrencies(),
+        platformConfigurationService.getCurrencies().catch(() => []),
       ]);
 
       const activeCurrency =
-        currencies.find((currency) => currency.isActive) ?? currencies[0] ?? null;
+        currencies.find((currency) => currency.isActive) ??
+        currencies[0] ??
+        deliveries.currency;
 
       return {
         platformConfiguration: toPlatformConfiguration(platformConfigurationResponse),

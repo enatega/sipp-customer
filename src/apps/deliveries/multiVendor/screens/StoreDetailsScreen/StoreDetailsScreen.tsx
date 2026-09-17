@@ -1,14 +1,21 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  FlatList,
   Platform,
   RefreshControl,
   Share,
   StyleSheet,
   View,
   type LayoutChangeEvent,
+  type ViewProps,
+  type ViewToken,
 } from 'react-native';
-import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
+import Animated, {
+  runOnJS,
+  useAnimatedScrollHandler,
+  useSharedValue,
+} from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -41,6 +48,7 @@ import ProductCard from '../../../components/productCard/ProductCard';
 import { useToggleFavouriteMutation } from '../../hooks/useToggleFavouriteMutation';
 import type { MultiVendorStackParamList } from '../../navigation/types';
 import type { DeliveryProductActionTarget } from '../../../cart/productActionTypes';
+import { requireDeliveriesAuthentication } from '../../../navigation/deliveriesAuthGate';
 // import { data } from './storedetaiolsData';
 
 type StoreDetailsParamList = {
@@ -52,14 +60,41 @@ type StoreDetailsParamList = {
 const SEARCH_DEBOUNCE_MS = 450;
 const MIN_SEARCH_QUERY_LENGTH = 2;
 const STORE_DETAIL_PRODUCT_SKELETON_COUNT = 4;
+const STORE_DETAIL_CATEGORY_HEADING_ESTIMATED_HEIGHT = 66;
+const CATEGORY_ACTIVATION_EPSILON = 1;
 
 type StoreDetailScreenListItem =
   | { id: 'store-detail-menu'; type: 'menu' }
   | { id: 'store-detail-section'; type: 'section' }
-  | { id: string; type: 'product'; product: DeliveryStoreDetailsProduct; isLast: boolean }
+  | { id: string; type: 'category'; categoryId: string | null; title: string }
+  | { id: string; type: 'subcategory'; categoryId: string; subcategoryId: string; title: string }
+  | {
+      id: string;
+      type: 'product';
+      product: DeliveryStoreDetailsProduct;
+      categoryId: string | null;
+      subcategoryId: string | null;
+      isLast: boolean;
+    }
   | { id: string; type: 'skeleton'; isLast: boolean }
   | { id: 'store-detail-error'; type: 'error' }
   | { id: 'store-detail-empty'; type: 'empty' };
+
+type StoreDetailCategoryAnchor = {
+  categoryId: string | null;
+  key: string;
+  threshold: number;
+};
+
+type StoreDetailCellRendererProps = {
+  cellKey: string;
+  children: React.ReactNode;
+  index: number;
+  item: StoreDetailScreenListItem;
+  onFocusCapture?: ViewProps['onFocusCapture'];
+  onLayout?: ViewProps['onLayout'];
+  style?: ViewProps['style'];
+};
 
 const STORE_DETAIL_BASE_LIST_DATA: StoreDetailScreenListItem[] = [
   { id: 'store-detail-menu', type: 'menu' },
@@ -133,17 +168,18 @@ export default function StoreDetailsScreen() {
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string | null>(null);
   const [listHeaderHeight, setListHeaderHeight] = useState<number | null>(null);
   const [categoryRowOffset, setCategoryRowOffset] = useState<number | null>(null);
+  const [stickyCategoriesHeight, setStickyCategoriesHeight] = useState<number | null>(null);
+  const listRef = React.useRef<FlatList<StoreDetailScreenListItem>>(null);
+  const categoryLayoutsRef = React.useRef(new Map<string, { height: number; y: number }>());
+  const selectedCategoryIdRef = React.useRef<string | null>(null);
   const selectedStore = route.params?.store;
   const storeId = selectedStore?.storeId ?? '';
   const [optimisticFav, setOptimisticFav] = useState<boolean | null>(null);
   const scrollY = useSharedValue(0);
+  const categoryAnchors = useSharedValue<StoreDetailCategoryAnchor[]>([]);
+  const activeCategoryAnchorKey = useSharedValue('');
+  const programmaticCategoryTargetKey = useSharedValue('');
   const navigationHeaderHeight = insets.top + 60;
-
-  const handleScroll = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      scrollY.value = event.contentOffset.y;
-    },
-  });
 
   const handleListHeaderLayout = useCallback((event: LayoutChangeEvent) => {
     setListHeaderHeight(event.nativeEvent.layout.height);
@@ -151,6 +187,10 @@ export default function StoreDetailsScreen() {
 
   const handleCategoriesLayout = useCallback((event: LayoutChangeEvent) => {
     setCategoryRowOffset(event.nativeEvent.layout.y);
+  }, []);
+
+  const handleStickyCategoriesLayout = useCallback((event: LayoutChangeEvent) => {
+    setStickyCategoriesHeight(event.nativeEvent.layout.height);
   }, []);
 
   const { mutate: toggleFavourite, isPending: isTogglingFavourite } = useToggleFavouriteMutation({
@@ -186,7 +226,14 @@ export default function StoreDetailsScreen() {
     refetch: refetchStore,
   } = useStoreView(storeId, { enabled: Boolean(storeId) });
 
-  const handleFavouritePress = useCallback(() => {
+  const handleFavouritePress = useCallback(async () => {
+    if (!await requireDeliveriesAuthentication({
+      screen: 'StoreDetails',
+      params: { store: selectedStore },
+    })) {
+      return;
+    }
+
     setOptimisticFav((prev) => {
       const current = prev ?? storeData?.isFavorited ?? selectedStore?.isFavorite ?? false;
       return !current;
@@ -206,9 +253,8 @@ export default function StoreDetailsScreen() {
   } = useStoreProducts(
     storeId,
     {
+      limit: 40,
       search: effectiveSearchValue || undefined,
-      selectedCategoryId: selectedCategoryId ?? undefined,
-      selectedSubcategoryId: selectedSubcategoryId ?? undefined,
     },
     {
       enabled: Boolean(storeId),
@@ -223,7 +269,18 @@ export default function StoreDetailsScreen() {
     setSelectedSubcategoryId(null);
     setListHeaderHeight(null);
     setCategoryRowOffset(null);
-  }, [storeId]);
+    setStickyCategoriesHeight(null);
+    selectedCategoryIdRef.current = null;
+    categoryLayoutsRef.current.clear();
+    categoryAnchors.value = [];
+    activeCategoryAnchorKey.value = '';
+    programmaticCategoryTargetKey.value = '';
+  }, [
+    activeCategoryAnchorKey,
+    categoryAnchors,
+    programmaticCategoryTargetKey,
+    storeId,
+  ]);
 
   const store = storeData;
   const categories = store?.categories ?? [];
@@ -254,25 +311,8 @@ export default function StoreDetailsScreen() {
   }, [activeCategory, subcategories]);
   const activeSubcategoryId = selectedSubcategoryId;
 
-  useEffect(() => {
-    if (visibleSubcategories.length === 0) {
-      if (selectedSubcategoryId !== null) {
-        setSelectedSubcategoryId(null);
-      }
-
-      return;
-    }
-
-    const hasSelectedVisibleSubcategory = visibleSubcategories.some(
-      (subcategory) => subcategory.id === selectedSubcategoryId,
-    );
-
-    if (!hasSelectedVisibleSubcategory) {
-      setSelectedSubcategoryId(visibleSubcategories[0].id);
-    }
-  }, [selectedSubcategoryId, visibleSubcategories]);
-
-  const handleCategorySelect = useCallback((categoryId: string | null) => {
+  const updateSelectedCategory = useCallback((categoryId: string | null) => {
+    selectedCategoryIdRef.current = categoryId;
     setSelectedCategoryId(categoryId);
 
     if (!categoryId) {
@@ -293,7 +333,7 @@ export default function StoreDetailsScreen() {
     setSelectedSubcategoryId(nextVisibleSubcategories[0]?.id ?? null);
   }, [categories, subcategories]);
 
-  const handleSubcategorySelect = useCallback((subcategoryId: string) => {
+  const updateSelectedSubcategory = useCallback((subcategoryId: string) => {
     setSelectedSubcategoryId(subcategoryId);
   }, []);
 
@@ -438,16 +478,271 @@ export default function StoreDetailsScreen() {
       return [...STORE_DETAIL_BASE_LIST_DATA, { id: 'store-detail-empty', type: 'empty' }];
     }
 
-    return [
-      ...STORE_DETAIL_BASE_LIST_DATA,
-      ...products.map((product, index) => ({
-        id: `store-detail-product-${product.id}`,
-        isLast: index === products.length - 1,
-        product,
-        type: 'product' as const,
-      })),
-    ];
-  }, [products, shouldShowProductEmpty, shouldShowProductError, shouldShowProductSkeletons]);
+    const categoryRows: StoreDetailScreenListItem[] = [];
+    const appendProductRows = (
+      categoryProducts: DeliveryStoreDetailsProduct[],
+      categoryId: string | null,
+    ) => {
+      const categorySubcategories = categoryId
+        ? subcategories.filter((subcategory) => {
+            const category = categories.find((item) => item.id === categoryId);
+            return !category?.subcategoryIds?.length
+              || category.subcategoryIds.includes(subcategory.id);
+          })
+        : [];
+      const appendedProductIds = new Set<string>();
+
+      categorySubcategories.forEach((subcategory) => {
+        const subsectionProducts = categoryProducts.filter((product) =>
+          (product.subcategoryId ?? product.subcategory?.id) === subcategory.id,
+        );
+
+        if (subsectionProducts.length === 0) {
+          return;
+        }
+
+        categoryRows.push({
+          id: `store-detail-subcategory-${subcategory.id}`,
+          type: 'subcategory',
+          categoryId: categoryId ?? '',
+          subcategoryId: subcategory.id,
+          title: subcategory.name,
+        });
+        subsectionProducts.forEach((product) => {
+          appendedProductIds.add(product.id);
+          categoryRows.push({
+            id: `store-detail-product-${product.id}`,
+            type: 'product',
+            product,
+            categoryId,
+            subcategoryId: subcategory.id,
+            isLast: false,
+          });
+        });
+      });
+
+      categoryProducts
+        .filter((product) => !appendedProductIds.has(product.id))
+        .forEach((product) => {
+          categoryRows.push({
+            id: `store-detail-product-${product.id}`,
+            type: 'product',
+            product,
+            categoryId,
+            subcategoryId: product.subcategoryId ?? product.subcategory?.id ?? null,
+            isLast: false,
+          });
+        });
+    };
+
+    categories.forEach((category) => {
+      const categoryProducts = products.filter((product) =>
+        (product.categoryId ?? product.category?.id) === category.id,
+      );
+
+      if (categoryProducts.length === 0) {
+        return;
+      }
+
+      categoryRows.push({
+        id: `store-detail-category-${category.id}`,
+        type: 'category',
+        categoryId: category.id,
+        title: category.name,
+      });
+      appendProductRows(categoryProducts, category.id);
+    });
+
+    const categorizedProductIds = new Set(
+      categoryRows
+        .filter((item): item is Extract<StoreDetailScreenListItem, { type: 'product' }> => item.type === 'product')
+        .map((item) => item.product.id),
+    );
+    const uncategorizedProducts = products.filter((product) => !categorizedProductIds.has(product.id));
+
+    if (uncategorizedProducts.length > 0 || categories.length === 0) {
+      categoryRows.push({
+        id: 'store-detail-category-all',
+        type: 'category',
+        categoryId: null,
+        title: t('store_details_all_offered_items'),
+      });
+      appendProductRows(uncategorizedProducts, null);
+    }
+
+    for (let index = categoryRows.length - 1; index >= 0; index -= 1) {
+      const item = categoryRows[index];
+      if (item.type === 'product') {
+        item.isLast = true;
+        break;
+      }
+    }
+
+    return [...STORE_DETAIL_BASE_LIST_DATA, ...categoryRows];
+  }, [
+    categories,
+    products,
+    shouldShowProductEmpty,
+    shouldShowProductError,
+    shouldShowProductSkeletons,
+    subcategories,
+    t,
+  ]);
+  const categoryActivationInset = navigationHeaderHeight + (stickyCategoriesHeight ?? 52);
+  const syncCategoryAnchors = useCallback(() => {
+    categoryAnchors.value = screenListData.flatMap((item) => {
+      if (item.type !== 'category') {
+        return [];
+      }
+
+      const layout = categoryLayoutsRef.current.get(item.id);
+
+      return layout
+        ? [{
+            categoryId: item.categoryId,
+            key: item.id,
+            threshold: layout.y + layout.height,
+          }]
+        : [];
+    });
+  }, [categoryAnchors, screenListData]);
+  const handleCategoryCellLayout = useCallback((
+    item: StoreDetailScreenListItem,
+    event: LayoutChangeEvent,
+  ) => {
+    if (item.type !== 'category') {
+      return;
+    }
+
+    const { height, y } = event.nativeEvent.layout;
+    categoryLayoutsRef.current.set(item.id, { height, y });
+    syncCategoryAnchors();
+  }, [syncCategoryAnchors]);
+  const renderCell = useCallback(({
+    children,
+    item,
+    onFocusCapture,
+    onLayout,
+    style,
+  }: StoreDetailCellRendererProps) => (
+    <View
+      onFocusCapture={onFocusCapture}
+      onLayout={(event) => {
+        onLayout?.(event);
+        handleCategoryCellLayout(item, event);
+      }}
+      style={style}
+    >
+      {children}
+    </View>
+  ), [handleCategoryCellLayout]);
+  useEffect(() => {
+    syncCategoryAnchors();
+  }, [syncCategoryAnchors]);
+  const setActiveCategoryFromScroll = useCallback((categoryId: string | null) => {
+    if (selectedCategoryIdRef.current !== categoryId) {
+      updateSelectedCategory(categoryId);
+    }
+  }, [updateSelectedCategory]);
+  const handleScroll = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      const nextScrollY = event.contentOffset.y;
+      scrollY.value = nextScrollY;
+
+      if (programmaticCategoryTargetKey.value) {
+        return;
+      }
+
+      let nextAnchorKey = '';
+      let nextCategoryId: string | null = null;
+      const activationBoundary = nextScrollY + categoryActivationInset;
+
+      for (const anchor of categoryAnchors.value) {
+        if (anchor.threshold > activationBoundary) {
+          break;
+        }
+
+        nextAnchorKey = anchor.key;
+        nextCategoryId = anchor.categoryId;
+      }
+
+      if (nextAnchorKey !== activeCategoryAnchorKey.value) {
+        activeCategoryAnchorKey.value = nextAnchorKey;
+        runOnJS(setActiveCategoryFromScroll)(nextCategoryId);
+      }
+    },
+  });
+  const scrollToMenuItem = useCallback((index: number) => {
+    const item = screenListData[index];
+    const categoryHeight = item?.type === 'category'
+      ? categoryLayoutsRef.current.get(item.id)?.height
+        ?? STORE_DETAIL_CATEGORY_HEADING_ESTIMATED_HEIGHT
+      : 0;
+
+    listRef.current?.scrollToIndex({
+      animated: true,
+      index,
+      viewOffset: item?.type === 'category'
+        ? Math.max(
+            0,
+            categoryActivationInset - categoryHeight - CATEGORY_ACTIVATION_EPSILON,
+          )
+        : categoryActivationInset,
+      viewPosition: 0,
+    });
+  }, [categoryActivationInset, screenListData]);
+  const handleCategorySelect = useCallback((categoryId: string | null) => {
+    updateSelectedCategory(categoryId);
+    const targetIndex = categoryId === null
+      ? screenListData.findIndex((item) => item.type === 'category')
+      : screenListData.findIndex(
+          (item) => item.type === 'category' && item.categoryId === categoryId,
+        );
+    if (targetIndex >= 0) {
+      const targetItem = screenListData[targetIndex];
+      if (targetItem?.type === 'category') {
+        programmaticCategoryTargetKey.value = targetItem.id;
+        activeCategoryAnchorKey.value = targetItem.id;
+      }
+      scrollToMenuItem(targetIndex);
+    }
+  }, [
+    activeCategoryAnchorKey,
+    programmaticCategoryTargetKey,
+    screenListData,
+    scrollToMenuItem,
+    updateSelectedCategory,
+  ]);
+  const handleSubcategorySelect = useCallback((subcategoryId: string) => {
+    updateSelectedSubcategory(subcategoryId);
+    const targetIndex = screenListData.findIndex(
+      (item) => item.type === 'subcategory' && item.subcategoryId === subcategoryId,
+    );
+    if (targetIndex >= 0) {
+      scrollToMenuItem(targetIndex);
+    }
+  }, [screenListData, scrollToMenuItem, updateSelectedSubcategory]);
+  const handleViewableItemsChanged = React.useRef(({
+    viewableItems,
+  }: {
+    viewableItems: ViewToken<StoreDetailScreenListItem>[];
+  }) => {
+    const visibleMenuItem = viewableItems.find((token) =>
+      token.isViewable
+      && ['category', 'subcategory', 'product'].includes(token.item.type),
+    )?.item;
+
+    if (
+      !visibleMenuItem
+      || visibleMenuItem.type === 'category'
+      || !('subcategoryId' in visibleMenuItem)
+      || visibleMenuItem.categoryId !== selectedCategoryIdRef.current
+    ) {
+      return;
+    }
+
+    setSelectedSubcategoryId(visibleMenuItem.subcategoryId);
+  }).current;
   const storeMenuProductAction = useMemo(
     () => ({ onOpenProduct: handleStoreProductOpen }),
     [handleStoreProductOpen],
@@ -527,6 +822,8 @@ export default function StoreDetailsScreen() {
         style={[StyleSheet.absoluteFill, styles.atmosphere]}
       />
       <Animated.FlatList
+        ref={listRef}
+        CellRendererComponent={renderCell}
         ListFooterComponent={
           isFetchingNextPage ? (
             <View style={styles.footerLoader}>
@@ -547,9 +844,20 @@ export default function StoreDetailsScreen() {
         initialNumToRender={Platform.OS === 'android' ? 5 : 7}
         keyExtractor={(item) => item.id}
         maxToRenderPerBatch={Platform.OS === 'android' ? 5 : 7}
+        maintainVisibleContentPosition={{ minIndexForVisible: 2 }}
         onEndReached={handleLoadMoreProducts}
         onEndReachedThreshold={0.4}
+        onMomentumScrollEnd={() => {
+          programmaticCategoryTargetKey.value = '';
+        }}
+        onScrollToIndexFailed={({ index }) => {
+          requestAnimationFrame(() => scrollToMenuItem(index));
+        }}
         onScroll={handleScroll}
+        onScrollBeginDrag={() => {
+          programmaticCategoryTargetKey.value = '';
+        }}
+        onViewableItemsChanged={handleViewableItemsChanged}
         removeClippedSubviews={Platform.OS === 'android'}
         refreshControl={(
           <RefreshControl
@@ -626,6 +934,22 @@ export default function StoreDetailsScreen() {
             );
           }
 
+          if (item.type === 'category') {
+            return (
+              <View style={[styles.categoryHeading, { paddingHorizontal: gutter }]}>
+                <Text variant="sectionTitle" weight="bold">{item.title}</Text>
+              </View>
+            );
+          }
+
+          if (item.type === 'subcategory') {
+            return (
+              <View style={[styles.subcategoryHeading, { paddingHorizontal: gutter }]}>
+                <Text variant="subtitle" weight="semiBold">{item.title}</Text>
+              </View>
+            );
+          }
+
           return (
             <View
               style={{
@@ -652,6 +976,7 @@ export default function StoreDetailsScreen() {
       <StoreDetailStickyCategories
         activeCategoryId={activeCategoryId}
         categories={categories}
+        onLayout={handleStickyCategoriesLayout}
         onSelect={handleCategorySelect}
         revealOffset={stickyCategoriesRevealOffset}
         scrollY={scrollY}
@@ -705,6 +1030,10 @@ const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
   },
+  categoryHeading: {
+    paddingBottom: 12,
+    paddingTop: 24,
+  },
   centeredState: {
     alignItems: 'center',
     flex: 1,
@@ -725,5 +1054,9 @@ const styles = StyleSheet.create({
     minHeight: 180,
     paddingBottom: 24,
     paddingTop: 4,
+  },
+  subcategoryHeading: {
+    paddingBottom: 10,
+    paddingTop: 8,
   },
 });

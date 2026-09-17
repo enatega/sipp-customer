@@ -11,6 +11,7 @@ import OrdersScreen from '../../screens/OrdersScreen/OrdersScreen';
 import HomeScreen from '../screens/HomeScreen';
 import SearchScreen from '../screens/SearchScreen';
 import type { ChainBottomTabParamList } from './types';
+import AuthenticatedDeliveriesScreen from '../../components/navigation/AuthenticatedDeliveriesScreen';
 
 const Tab = createBottomTabNavigator<ChainBottomTabParamList>();
 
@@ -69,14 +70,15 @@ export default function ChainBottomTabNavigator() {
         }}
       />
       <Tab.Screen
-        component={OrdersScreen}
         name="ChainTabOrders"
         options={{
           tabBarIcon: renderIcon('receipt-text-outline'),
           tabBarLabel: t('chain_tab_orders'),
           title: t('chain_tab_orders'),
         }}
-      />
+      >
+        {() => <AuthenticatedDeliveriesScreen component={OrdersScreen} />}
+      </Tab.Screen>
       <Tab.Screen
         component={ChainProfileTabScreen}
         name="ChainTabProfile"

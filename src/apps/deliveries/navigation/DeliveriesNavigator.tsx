@@ -61,6 +61,8 @@ import {
 } from "../../../general/stores/useAppConfigStore";
 import { isDeliveriesDemoModeEnabled } from "./deliveryDemoMode";
 import StoreDetailsScreen from "../multiVendor/screens/StoreDetailsScreen/StoreDetailsScreen";
+import HomeLocationPermissionPopup from '../../../screens/home/HomeLocationPermissionPopup';
+import { useLocationPermissionPrompt } from '../../../general/hooks/useLocationPermissionPrompt';
 
 const Stack = createNativeStackNavigator<DeliveriesStackParamList>();
 
@@ -85,6 +87,7 @@ function DeliveriesModeSelectorScreen() {
 }
 
 export default function DeliveriesNavigator() {
+  const locationPrompt = useLocationPermissionPrompt();
   const isDemoModeEnabled = isDeliveriesDemoModeEnabled();
   const deliveryMode = useDeliveriesDeliveryMode();
   const configQuery = useInitializeDeliveriesConfig();
@@ -102,6 +105,7 @@ export default function DeliveriesNavigator() {
   }
 
   return (
+    <>
     <Stack.Navigator initialRouteName={initialRouteName}>
       <Stack.Screen
         name="DeliveriesModeSelector"
@@ -335,5 +339,14 @@ export default function DeliveriesNavigator() {
         options={sharedScreenOptions}
       />
     </Stack.Navigator>
+    <HomeLocationPermissionPopup
+      visible={locationPrompt.isVisible}
+      mode={locationPrompt.mode}
+      isLoading={locationPrompt.isRequesting}
+      onRequestLocation={locationPrompt.requestPermission}
+      onOpenSettings={locationPrompt.openSettings}
+      onDismiss={locationPrompt.dismiss}
+    />
+    </>
   );
 }

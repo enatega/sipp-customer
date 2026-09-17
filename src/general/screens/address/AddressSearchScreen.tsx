@@ -12,21 +12,34 @@ import AddressSearchInput from '../../components/address/AddressSearchInput';
 import AddressSuggestionItem from '../../components/address/AddressSuggestionItem';
 import AddressSuggestionSkeleton from '../../components/address/AddressSuggestionSkeleton';
 import useAddressPredictions from '../../hooks/useAddressPredictions';
-import type { AddressFlowParamList } from '../../navigation/addressFlowTypes';
+import type {
+  AddressFlowHostParamList,
+  AddressFlowParamList,
+} from '../../navigation/addressFlowTypes';
 import {
   getRecentAddressSearches,
   saveRecentAddressSearch,
 } from '../../utils/recentAddressSearches';
 import type { RecentAddressSearch } from '../../api/addressService';
 import useCurrentLocation from '../../hooks/useCurrentLocation';
+import useAddress from '../../hooks/useAddress';
+import { authSession } from '../../auth/authSession';
+import { useAuthSessionQuery } from '../../hooks/useAuthQueries';
+import {
+  createDeliveryAddress,
+  GUEST_SELECTED_LOCATION_ADDRESS_ID,
+} from '../../utils/address';
+import { navigateAfterAddressSelection } from '../../navigation/addressFlowNavigation';
 
 export default function AddressSearchScreen() {
-  const nav = useNavigation<NativeStackNavigationProp<AddressFlowParamList>>();
+  const nav = useNavigation<NativeStackNavigationProp<AddressFlowHostParamList>>();
   const route = useRoute();
   const { colors } = useTheme();
   const { t } = useTranslation('general');
   const params = (route.params as AddressFlowParamList['AddressSearch']) ?? {};
   const { currentCoordinates, refreshCurrentLocation } = useCurrentLocation();
+  const { setSelectedAddress } = useAddress();
+  const sessionQuery = useAuthSessionQuery();
 
   const [query, setQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState<RecentAddressSearch[]>([]);
@@ -59,6 +72,21 @@ export default function AddressSearchScreen() {
       }
     : { appPrefix: params.appPrefix, origin: params.origin };
 
+  const selectGuestLocation = useCallback(
+    (address: string, latitude: number, longitude: number) => {
+      setSelectedAddress(
+        createDeliveryAddress({
+          id: GUEST_SELECTED_LOCATION_ADDRESS_ID,
+          address,
+          latitude,
+          longitude,
+        }),
+      );
+      navigateAfterAddressSelection(nav, params.origin);
+    },
+    [nav, params.origin, setSelectedAddress],
+  );
+
   const handleSelectPrediction = useCallback(
     async (placeId: string, description: string) => {
       try {
@@ -78,6 +106,12 @@ export default function AddressSearchScreen() {
           longitude: lng,
         });
 
+        const accessToken = await authSession.getAccessToken();
+        if (!accessToken) {
+          selectGuestLocation(description, lat, lng);
+          return;
+        }
+
         nav.navigate('AddressDetail', {
           address: description,
           latitude: lat,
@@ -88,11 +122,17 @@ export default function AddressSearchScreen() {
         // Keep the user on the screen so they can retry.
       }
     },
-    [editParams, nav],
+    [editParams, nav, selectGuestLocation],
   );
 
   const handleSelectRecent = useCallback(
-    (item: RecentAddressSearch) => {
+    async (item: RecentAddressSearch) => {
+      const accessToken = await authSession.getAccessToken();
+      if (!accessToken) {
+        selectGuestLocation(item.description, item.latitude, item.longitude);
+        return;
+      }
+
       nav.navigate('AddressDetail', {
         address: item.description,
         latitude: item.latitude,
@@ -100,7 +140,7 @@ export default function AddressSearchScreen() {
         ...editParams,
       });
     },
-    [editParams, nav],
+    [editParams, nav, selectGuestLocation],
   );
 
   const handleChooseOnMap = useCallback(async () => {
@@ -123,7 +163,9 @@ export default function AddressSearchScreen() {
     !predictionsQuery.isPending;
   const screenTitle = params.editAddressId
     ? t('address_edit_title')
-    : t('address_add_title');
+    : !sessionQuery.isPending && !sessionQuery.data?.token
+      ? t('address_choose_title')
+      : t('address_add_title');
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
@@ -163,7 +205,9 @@ export default function AddressSearchScreen() {
             renderItem={({ item }) => (
               <AddressSuggestionItem
                 description={item.description}
-                onPress={() => handleSelectRecent(item)}
+                onPress={() => {
+                  void handleSelectRecent(item);
+                }}
                 isRecent
               />
             )}

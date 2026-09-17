@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
+  useFocusEffect,
   useNavigation,
   type NavigationProp,
 } from '@react-navigation/native';
 import ProfileTabScreen from '../../../../general/screens/profile/ProfileTabScreen';
 import useProfile from '../../../../general/hooks/useProfile';
 import type { DeliveriesStackParamList } from '../../navigation/types';
+import { useAuthSessionQuery } from '../../../../general/hooks/useAuthQueries';
+import { requireDeliveriesAuthentication } from '../../navigation/deliveriesAuthGate';
 
 type Props = {
   favoritesEnabled?: boolean;
@@ -13,6 +16,34 @@ type Props = {
 };
 
 export default function DeliveriesProfileTabScreen({
+  favoritesEnabled = false,
+  onOpenFavourites,
+}: Props) {
+  const sessionQuery = useAuthSessionQuery();
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!sessionQuery.isPending && !sessionQuery.data?.token) {
+        void requireDeliveriesAuthentication();
+      }
+
+      return undefined;
+    }, [sessionQuery.data?.token, sessionQuery.isPending]),
+  );
+
+  if (!sessionQuery.data?.token) {
+    return null;
+  }
+
+  return (
+    <AuthenticatedDeliveriesProfileTabScreen
+      favoritesEnabled={favoritesEnabled}
+      onOpenFavourites={onOpenFavourites}
+    />
+  );
+}
+
+function AuthenticatedDeliveriesProfileTabScreen({
   favoritesEnabled = false,
   onOpenFavourites,
 }: Props) {
