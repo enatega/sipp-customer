@@ -54,7 +54,6 @@ export default function ItemSizes({
             key={`${item.groupId}:${item.optionId}`}
             label={item.label}
             onPress={() => onSelect(item.groupId, item.optionId)}
-            presentation="tile"
             priceLabel={item.price === 0 ? t("free") : formatPrice(item.price ?? 0)}
           />
         ))}
@@ -67,8 +66,5 @@ const styles = StyleSheet.create({
   container: {
     paddingVertical: 20,
   },
-  options: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
+  options: {},
 });

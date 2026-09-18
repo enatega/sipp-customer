@@ -13,6 +13,21 @@ function normalizeMessage(message?: string | null) {
   return message?.trim().toLowerCase() ?? '';
 }
 
+/**
+ * The backend rejects cart writes with a 400 "Store is currently closed"
+ * once it validates a store's live availability/operating hours. This is a
+ * distinct, expected state (not a generic failure), so callers should offer
+ * a dedicated modal instead of routing it through the generic error toast.
+ */
+export function isStoreClosedError(error: unknown): boolean {
+  const message =
+    error instanceof Error && error.message.trim().length > 0
+      ? error.message
+      : '';
+
+  return normalizeMessage(message).includes('store is currently closed');
+}
+
 export function getCartActionBlockedFeedback(
   t: TFunction<'deliveries'>,
   kind: CartActionDecisionKind,

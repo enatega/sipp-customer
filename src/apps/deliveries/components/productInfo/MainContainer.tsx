@@ -27,6 +27,7 @@ import type {
   ProductInfoResponse,
 } from "../../api/productInfoServiceTypes";
 import CartStoreConflictModal from "../cart/CartStoreConflictModal";
+import StoreClosedCartModal from "../cart/StoreClosedCartModal";
 import Footer from "./Footer";
 import ImageHeader, { getProductInfoHeaderMaxHeight } from "./ImageHeader";
 import ItemFlavour from "./ItemFlavour";
@@ -135,7 +136,15 @@ export default function MainContainer({
     variationHelperText,
     variationOptions,
   } = useProductSelectionState({ addons, variations });
-  const { conflictResolution, handleAddToCart, isAddDisabled, isSubmitting } =
+  const {
+    closeStoreClosedModal,
+    conflictResolution,
+    handleAddToCart,
+    isAddDisabled,
+    isStoreClosedModalVisible,
+    isSubmitting,
+    storeName: cartFlowStoreName,
+  } =
     useProductInfoCartFlow({
       customizations,
       hasCustomizationContext: !isCustomizationsLoading && customizations !== undefined,
@@ -525,6 +534,12 @@ export default function MainContainer({
         }}
         prompt={conflictResolution.prompt}
         visible={conflictResolution.isVisible}
+      />
+
+      <StoreClosedCartModal
+        onClose={closeStoreClosedModal}
+        storeName={cartFlowStoreName}
+        visible={isStoreClosedModalVisible}
       />
     </View>
   );

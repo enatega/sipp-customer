@@ -768,6 +768,8 @@ const fr = {
   cart_add_success_continue_shopping: 'Continuer mes achats',
   cart_add_error_title: "Impossible d'ajouter l'article",
   cart_add_error_message: 'Veuillez reessayer dans un instant.',
+  cart_store_closed_title: '{{storeName}} est ferme',
+  cart_store_closed_description: "Ce magasin n'accepte pas de commandes pour le moment. Veuillez revenir plus tard.",
   cart_update_success_title: 'Panier mis a jour',
   cart_update_success_message: 'La quantite de votre panier a ete mise a jour.',
   cart_update_error_title: 'Impossible de mettre a jour le panier',

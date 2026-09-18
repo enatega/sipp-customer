@@ -11,6 +11,7 @@ type Props = {
   actionLabel?: string;
   onActionPress?: () => void;
   containerStyle?: StyleProp<ViewStyle>;
+  icon?: keyof typeof Ionicons.glyphMap;
   variant: 'loading' | 'empty' | 'error';
 };
 
@@ -20,6 +21,7 @@ export default function ListStateView({
   actionLabel,
   onActionPress,
   containerStyle,
+  icon,
   variant,
 }: Props) {
   const { colors, shape, spacing } = useTheme();
@@ -39,7 +41,7 @@ export default function ListStateView({
           ]}
         >
           <Ionicons
-            name={variant === 'error' ? 'alert-circle-outline' : 'search-outline'}
+            name={icon ?? (variant === 'error' ? 'alert-circle-outline' : 'search-outline')}
             size={34}
             color={variant === 'error' ? colors.danger : colors.primary}
           />

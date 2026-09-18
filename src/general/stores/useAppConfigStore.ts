@@ -155,11 +155,11 @@ export const useAppConfigStore = create<AppConfigState>((set) => ({
 }));
 
 function resolveCurrencyDisplayValue(currency: AppCurrency | null) {
-  return currency?.symbol?.trim() || currency?.code || 'QAR';
+  return currency?.symbol?.trim() || currency?.code || '₡';
 }
 
 function resolveCurrencyCodeValue(currency: AppCurrency | null) {
-  return currency?.code || 'QAR';
+  return currency?.code || 'CRC';
 }
 
 export function useDeliveriesOrderTrackingVariant() {

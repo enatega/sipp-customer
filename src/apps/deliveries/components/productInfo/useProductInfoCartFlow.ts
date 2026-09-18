@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { showToast } from '../../../../general/components/AppToast';
 import type { CartSelectionInput } from '../../api/cartServiceTypes';
@@ -8,6 +8,7 @@ import type {
 } from '../../api/productInfoServiceTypes';
 import {
   getCartActionBlockedFeedback,
+  isStoreClosedError,
 } from '../../cart/cartFeedback';
 import { mapProductInfoToProductActionTarget } from '../../cart/productActionMappers';
 import { useCartActionEligibility } from '../../hooks/useCartActionEligibility';
@@ -37,6 +38,7 @@ export default function useProductInfoCartFlow({
   const { showMutationError } = useCartMutationFeedback();
   const addCartItemMutation = useAddCartItemMutation();
   const storeConflictResolution = useCartStoreConflictResolution();
+  const [isStoreClosedModalVisible, setIsStoreClosedModalVisible] = useState(false);
   const productActionTarget = useMemo(
     () => mapProductInfoToProductActionTarget(product),
     [product],
@@ -108,6 +110,11 @@ export default function useProductInfoCartFlow({
     try {
       await submitAddToCart();
     } catch (error) {
+      if (isStoreClosedError(error)) {
+        setIsStoreClosedModalVisible(true);
+        return;
+      }
+
       showMutationError('add', error);
     }
   }, [
@@ -122,10 +129,17 @@ export default function useProductInfoCartFlow({
     t,
   ]);
 
+  const closeStoreClosedModal = useCallback(() => {
+    setIsStoreClosedModalVisible(false);
+  }, []);
+
   return {
+    closeStoreClosedModal,
     conflictResolution: storeConflictResolution,
     handleAddToCart,
     isAddDisabled,
+    isStoreClosedModalVisible,
     isSubmitting,
+    storeName: productActionTarget.storeName,
   };
 }

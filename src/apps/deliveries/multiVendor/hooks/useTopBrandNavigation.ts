@@ -26,6 +26,22 @@ function isBrandStoreNameMatch(
   );
 }
 
+function buildStoreFromBrand(brand: DeliveryTopBrand): DeliveryNearbyStore | undefined {
+  if (!brand.storeId) {
+    return undefined;
+  }
+
+  return {
+    storeId: brand.storeId,
+    vendorId: brand.vendorId ?? '',
+    name: brand.name,
+    logo: brand.logo ?? null,
+    deal: brand.deal ?? null,
+    dealType: brand.dealType ?? null,
+    dealAmount: brand.dealAmount ?? null,
+  };
+}
+
 function isStoreClosed(store: DeliveryNearbyStore) {
   return (
     store.isAvailable === false
@@ -39,6 +55,14 @@ export default function useTopBrandNavigation() {
 
   const resolveStoreFromBrand = useCallback(
     (brand: DeliveryTopBrand): DeliveryNearbyStore | undefined => {
+      if (brand.storeId) {
+        const nearbyMatch = nearbyStores.find(
+          (store) => store.storeId === brand.storeId,
+        );
+
+        return nearbyMatch ?? buildStoreFromBrand(brand);
+      }
+
       const normalizedBrandName = normalizeValue(brand.name);
 
       if (!normalizedBrandName) {

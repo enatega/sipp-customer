@@ -997,6 +997,8 @@ const en = {
   cart_add_success_continue_shopping: 'Continue shopping',
   cart_add_error_title: 'Could not add item',
   cart_add_error_message: 'Please try again in a moment.',
+  cart_store_closed_title: '{{storeName}} is closed',
+  cart_store_closed_description: 'This store isn\'t accepting orders right now. Please check back once it reopens.',
   cart_update_success_title: 'Cart updated',
   cart_update_success_message: 'Your cart quantity has been updated.',
   cart_update_error_title: 'Could not update cart',

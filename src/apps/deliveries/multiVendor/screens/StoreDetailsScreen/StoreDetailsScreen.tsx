@@ -12,7 +12,6 @@ import {
   type ViewToken,
 } from 'react-native';
 import Animated, {
-  runOnJS,
   useAnimatedScrollHandler,
   useSharedValue,
 } from 'react-native-reanimated';
@@ -79,12 +78,6 @@ type StoreDetailScreenListItem =
   | { id: string; type: 'skeleton'; isLast: boolean }
   | { id: 'store-detail-error'; type: 'error' }
   | { id: 'store-detail-empty'; type: 'empty' };
-
-type StoreDetailCategoryAnchor = {
-  categoryId: string | null;
-  key: string;
-  threshold: number;
-};
 
 type StoreDetailCellRendererProps = {
   cellKey: string;
@@ -176,8 +169,6 @@ export default function StoreDetailsScreen() {
   const storeId = selectedStore?.storeId ?? '';
   const [optimisticFav, setOptimisticFav] = useState<boolean | null>(null);
   const scrollY = useSharedValue(0);
-  const categoryAnchors = useSharedValue<StoreDetailCategoryAnchor[]>([]);
-  const activeCategoryAnchorKey = useSharedValue('');
   const programmaticCategoryTargetKey = useSharedValue('');
   const navigationHeaderHeight = insets.top + 60;
 
@@ -272,12 +263,8 @@ export default function StoreDetailsScreen() {
     setStickyCategoriesHeight(null);
     selectedCategoryIdRef.current = null;
     categoryLayoutsRef.current.clear();
-    categoryAnchors.value = [];
-    activeCategoryAnchorKey.value = '';
     programmaticCategoryTargetKey.value = '';
   }, [
-    activeCategoryAnchorKey,
-    categoryAnchors,
     programmaticCategoryTargetKey,
     storeId,
   ]);
@@ -288,6 +275,19 @@ export default function StoreDetailsScreen() {
   const products = useMemo(
     () => productsData?.pages.flatMap((page) => page.items) ?? [],
     [productsData],
+  );
+  // Products load a page at a time and aren't guaranteed to cover every
+  // category yet, so only show pills/sections for categories that actually
+  // have a loaded product — a category with none simply hasn't scrolled
+  // into view yet rather than being genuinely empty (categories the store
+  // returns are already guaranteed to have at least one active product).
+  const visibleCategories = useMemo(
+    () => categories.filter((category) =>
+      products.some((product) =>
+        (product.categoryId ?? product.category?.id) === category.id,
+      ),
+    ),
+    [categories, products],
   );
   const activeCategoryId = selectedCategoryId;
   const activeCategory = useMemo(
@@ -535,14 +535,10 @@ export default function StoreDetailsScreen() {
         });
     };
 
-    categories.forEach((category) => {
+    visibleCategories.forEach((category) => {
       const categoryProducts = products.filter((product) =>
         (product.categoryId ?? product.category?.id) === category.id,
       );
-
-      if (categoryProducts.length === 0) {
-        return;
-      }
 
       categoryRows.push({
         id: `store-detail-category-${category.id}`,
@@ -550,6 +546,7 @@ export default function StoreDetailsScreen() {
         categoryId: category.id,
         title: category.name,
       });
+
       appendProductRows(categoryProducts, category.id);
     });
 
@@ -587,25 +584,9 @@ export default function StoreDetailsScreen() {
     shouldShowProductSkeletons,
     subcategories,
     t,
+    visibleCategories,
   ]);
   const categoryActivationInset = navigationHeaderHeight + (stickyCategoriesHeight ?? 52);
-  const syncCategoryAnchors = useCallback(() => {
-    categoryAnchors.value = screenListData.flatMap((item) => {
-      if (item.type !== 'category') {
-        return [];
-      }
-
-      const layout = categoryLayoutsRef.current.get(item.id);
-
-      return layout
-        ? [{
-            categoryId: item.categoryId,
-            key: item.id,
-            threshold: layout.y + layout.height,
-          }]
-        : [];
-    });
-  }, [categoryAnchors, screenListData]);
   const handleCategoryCellLayout = useCallback((
     item: StoreDetailScreenListItem,
     event: LayoutChangeEvent,
@@ -616,8 +597,7 @@ export default function StoreDetailsScreen() {
 
     const { height, y } = event.nativeEvent.layout;
     categoryLayoutsRef.current.set(item.id, { height, y });
-    syncCategoryAnchors();
-  }, [syncCategoryAnchors]);
+  }, []);
   const renderCell = useCallback(({
     children,
     item,
@@ -636,9 +616,6 @@ export default function StoreDetailsScreen() {
       {children}
     </View>
   ), [handleCategoryCellLayout]);
-  useEffect(() => {
-    syncCategoryAnchors();
-  }, [syncCategoryAnchors]);
   const setActiveCategoryFromScroll = useCallback((categoryId: string | null) => {
     if (selectedCategoryIdRef.current !== categoryId) {
       updateSelectedCategory(categoryId);
@@ -646,30 +623,7 @@ export default function StoreDetailsScreen() {
   }, [updateSelectedCategory]);
   const handleScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
-      const nextScrollY = event.contentOffset.y;
-      scrollY.value = nextScrollY;
-
-      if (programmaticCategoryTargetKey.value) {
-        return;
-      }
-
-      let nextAnchorKey = '';
-      let nextCategoryId: string | null = null;
-      const activationBoundary = nextScrollY + categoryActivationInset;
-
-      for (const anchor of categoryAnchors.value) {
-        if (anchor.threshold > activationBoundary) {
-          break;
-        }
-
-        nextAnchorKey = anchor.key;
-        nextCategoryId = anchor.categoryId;
-      }
-
-      if (nextAnchorKey !== activeCategoryAnchorKey.value) {
-        activeCategoryAnchorKey.value = nextAnchorKey;
-        runOnJS(setActiveCategoryFromScroll)(nextCategoryId);
-      }
+      scrollY.value = event.contentOffset.y;
     },
   });
   const scrollToMenuItem = useCallback((index: number) => {
@@ -702,12 +656,10 @@ export default function StoreDetailsScreen() {
       const targetItem = screenListData[targetIndex];
       if (targetItem?.type === 'category') {
         programmaticCategoryTargetKey.value = targetItem.id;
-        activeCategoryAnchorKey.value = targetItem.id;
       }
       scrollToMenuItem(targetIndex);
     }
   }, [
-    activeCategoryAnchorKey,
     programmaticCategoryTargetKey,
     screenListData,
     scrollToMenuItem,
@@ -722,31 +674,159 @@ export default function StoreDetailsScreen() {
       scrollToMenuItem(targetIndex);
     }
   }, [screenListData, scrollToMenuItem, updateSelectedSubcategory]);
+  // A 1%-visible / 0ms-debounce config re-fires this callback (and its
+  // resulting setState + full-screen re-render) on nearly every scroll
+  // frame as rows cross the viewport edge — a major source of the jank
+  // reported on Android. A higher threshold plus a short debounce still
+  // feels responsive for category highlighting while cutting that down to
+  // roughly once per settled scroll position.
+  const viewabilityConfig = React.useRef({
+    itemVisiblePercentThreshold: 25,
+    minimumViewTime: 100,
+  }).current;
   const handleViewableItemsChanged = React.useRef(({
     viewableItems,
   }: {
     viewableItems: ViewToken<StoreDetailScreenListItem>[];
   }) => {
+    // Suppressed while a tapped pill is still animating the list to its
+    // target, so the tap's own selection isn't overridden mid-scroll.
+    if (programmaticCategoryTargetKey.value) {
+      return;
+    }
+
     const visibleMenuItem = viewableItems.find((token) =>
       token.isViewable
       && ['category', 'subcategory', 'product'].includes(token.item.type),
     )?.item;
 
-    if (
-      !visibleMenuItem
-      || visibleMenuItem.type === 'category'
-      || !('subcategoryId' in visibleMenuItem)
-      || visibleMenuItem.categoryId !== selectedCategoryIdRef.current
-    ) {
+    if (!visibleMenuItem || !('categoryId' in visibleMenuItem)) {
       return;
     }
 
-    setSelectedSubcategoryId(visibleMenuItem.subcategoryId);
+    setActiveCategoryFromScroll(visibleMenuItem.categoryId);
+
+    if (
+      visibleMenuItem.type !== 'category'
+      && 'subcategoryId' in visibleMenuItem
+      && visibleMenuItem.subcategoryId
+      && visibleMenuItem.categoryId === selectedCategoryIdRef.current
+    ) {
+      setSelectedSubcategoryId(visibleMenuItem.subcategoryId);
+    }
   }).current;
   const storeMenuProductAction = useMemo(
     () => ({ onOpenProduct: handleStoreProductOpen }),
     [handleStoreProductOpen],
   );
+  const productRowStyles = useMemo(() => ({
+    last: { paddingBottom: spacing.xxl, paddingHorizontal: gutter, paddingTop: spacing.xs },
+    regular: { paddingBottom: spacing.md, paddingHorizontal: gutter, paddingTop: spacing.xs },
+  }), [gutter, spacing]);
+  const renderListItem = useCallback(({ item }: { item: StoreDetailScreenListItem }) => {
+    if (item.type === 'menu') {
+      return (
+        <StoreDetailMenuNavigation
+          activeCategoryId={activeCategoryId}
+          categories={visibleCategories}
+          onCategorySelect={handleCategorySelect}
+          onCategoriesLayout={handleCategoriesLayout}
+          onSearchChange={setSearchValue}
+          searchValue={searchValue}
+        />
+      );
+    }
+
+    if (item.type === 'section') {
+      return (
+        <StoreDetailSectionNavigation
+          activeSubcategoryId={activeSubcategoryId}
+          onSubcategorySelect={handleSubcategorySelect}
+          sectionTitle={sectionTitle}
+          subcategories={visibleSubcategories}
+        />
+      );
+    }
+
+    if (item.type === 'error') {
+      return (
+        <View style={[styles.stateCell, { paddingHorizontal: gutter }]}>
+          <ListStateView
+            actionLabel={t('generic_list_retry')}
+            description={productsError?.message ?? t('store_details_load_error')}
+            onActionPress={() => {
+              void refetchProducts();
+            }}
+            title={t('generic_list_error_title')}
+            variant="error"
+          />
+        </View>
+      );
+    }
+
+    if (item.type === 'empty') {
+      return (
+        <View style={[styles.stateCell, { paddingHorizontal: gutter }]}>
+          <ListStateView
+            description={t('store_details_no_items')}
+            variant="empty"
+          />
+        </View>
+      );
+    }
+
+    if (item.type === 'skeleton') {
+      return (
+        <View style={item.isLast ? productRowStyles.last : productRowStyles.regular}>
+          <StoreDetailMenuCardSkeleton />
+        </View>
+      );
+    }
+
+    if (item.type === 'category') {
+      return (
+        <View style={[styles.categoryHeading, { paddingHorizontal: gutter }]}>
+          <Text variant="sectionTitle" weight="bold">{item.title}</Text>
+        </View>
+      );
+    }
+
+    if (item.type === 'subcategory') {
+      return (
+        <View style={[styles.subcategoryHeading, { paddingHorizontal: gutter }]}>
+          <Text variant="subtitle" weight="semiBold">{item.title}</Text>
+        </View>
+      );
+    }
+
+    return (
+      <View style={item.isLast ? productRowStyles.last : productRowStyles.regular}>
+        <ProductCard
+          product={item.product}
+          productAction={storeMenuProductAction}
+          storeId={storeId}
+          variant="storeMenu"
+        />
+      </View>
+    );
+  }, [
+    activeCategoryId,
+    activeSubcategoryId,
+    gutter,
+    handleCategoriesLayout,
+    handleCategorySelect,
+    handleSubcategorySelect,
+    productRowStyles,
+    productsError,
+    refetchProducts,
+    sectionTitle,
+    searchValue,
+    storeId,
+    storeMenuProductAction,
+    t,
+    visibleCategories,
+    visibleSubcategories,
+  ]);
   const stickyCategoriesRevealOffset = listHeaderHeight != null && categoryRowOffset != null
     ? Math.max(0, listHeaderHeight + categoryRowOffset - navigationHeaderHeight)
     : Number.POSITIVE_INFINITY;
@@ -858,6 +938,7 @@ export default function StoreDetailsScreen() {
           programmaticCategoryTargetKey.value = '';
         }}
         onViewableItemsChanged={handleViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
         removeClippedSubviews={Platform.OS === 'android'}
         refreshControl={(
           <RefreshControl
@@ -868,105 +949,7 @@ export default function StoreDetailsScreen() {
             tintColor={colors.primary}
           />
         )}
-        renderItem={({ item }) => {
-          if (item.type === 'menu') {
-            return (
-              <StoreDetailMenuNavigation
-                activeCategoryId={activeCategoryId}
-                categories={categories}
-                onCategorySelect={handleCategorySelect}
-                onCategoriesLayout={handleCategoriesLayout}
-                onSearchChange={setSearchValue}
-                searchValue={searchValue}
-              />
-            );
-          }
-
-          if (item.type === 'section') {
-            return (
-              <StoreDetailSectionNavigation
-                activeSubcategoryId={activeSubcategoryId}
-                onSubcategorySelect={handleSubcategorySelect}
-                sectionTitle={sectionTitle}
-                subcategories={visibleSubcategories}
-              />
-            );
-          }
-
-          if (item.type === 'error') {
-            return (
-              <View style={[styles.stateCell, { paddingHorizontal: gutter }]}>
-                <ListStateView
-                  actionLabel={t('generic_list_retry')}
-                  description={productsError?.message ?? t('store_details_load_error')}
-                  onActionPress={() => {
-                    void refetchProducts();
-                  }}
-                  title={t('generic_list_error_title')}
-                  variant="error"
-                />
-              </View>
-            );
-          }
-
-          if (item.type === 'empty') {
-            return (
-              <View style={[styles.stateCell, { paddingHorizontal: gutter }]}>
-                <ListStateView
-                  description={t('store_details_no_items')}
-                  variant="empty"
-                />
-              </View>
-            );
-          }
-
-          if (item.type === 'skeleton') {
-            return (
-              <View
-                style={{
-                  paddingBottom: item.isLast ? spacing.xxl : spacing.md,
-                  paddingHorizontal: gutter,
-                  paddingTop: spacing.xs,
-                }}
-              >
-                <StoreDetailMenuCardSkeleton />
-              </View>
-            );
-          }
-
-          if (item.type === 'category') {
-            return (
-              <View style={[styles.categoryHeading, { paddingHorizontal: gutter }]}>
-                <Text variant="sectionTitle" weight="bold">{item.title}</Text>
-              </View>
-            );
-          }
-
-          if (item.type === 'subcategory') {
-            return (
-              <View style={[styles.subcategoryHeading, { paddingHorizontal: gutter }]}>
-                <Text variant="subtitle" weight="semiBold">{item.title}</Text>
-              </View>
-            );
-          }
-
-          return (
-            <View
-              style={{
-                paddingBottom: item.isLast ? spacing.xxl : spacing.md,
-                paddingHorizontal: gutter,
-                paddingTop: spacing.xs,
-              }}
-            >
-              <ProductCard
-                product={item.product}
-                productAction={storeMenuProductAction}
-                storeId={storeId}
-                variant="storeMenu"
-              />
-            </View>
-          );
-        }}
+        renderItem={renderListItem}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
         style={styles.list}
@@ -975,7 +958,7 @@ export default function StoreDetailsScreen() {
       />
       <StoreDetailStickyCategories
         activeCategoryId={activeCategoryId}
-        categories={categories}
+        categories={visibleCategories}
         onLayout={handleStickyCategoriesLayout}
         onSelect={handleCategorySelect}
         revealOffset={stickyCategoriesRevealOffset}

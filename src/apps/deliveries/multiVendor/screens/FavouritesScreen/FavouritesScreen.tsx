@@ -1,23 +1,36 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme } from '../../../../../general/theme/theme';
 import ScreenHeader from '../../../../../general/components/ScreenHeader';
 import Text from '../../../../../general/components/Text';
 import FavouriteHeartButton from '../../components/favourites/FavouriteHeartButton';
 import FavouritesListFooter from '../../components/favourites/FavouritesListFooter';
 import StoreCard from '../../../components/storeCard/StoreCard';
+import ClosedStoreMenuPopup from '../../../components/storeCard/ClosedStoreMenuPopup';
 import { showToast } from '../../../../../general/components/AppToast';
 import { useFavouritesQuery } from '../../hooks/useFavouritesQuery';
 import { useToggleFavouriteMutation } from '../../hooks/useToggleFavouriteMutation';
 import type { DeliveryNearbyStore } from '../../../api/types';
+import type { MultiVendorStackParamList } from '../../navigation/types';
+import { pushStoreDetails } from '../../../navigation/storeDetailsNavigation';
 import PressableScale from '../../../../../general/components/PressableScale';
 import Skeleton from '../../../../../general/components/Skeleton';
+
+type NavProp = NativeStackNavigationProp<MultiVendorStackParamList>;
+
+function isStoreClosed(store: DeliveryNearbyStore) {
+  return store.isAvailable === false || ('isClosed' in store && store.isClosed === true);
+}
 
 export default function FavouritesScreen() {
   const { colors, elevation } = useTheme();
   const { t } = useTranslation('deliveries');
+  const navigation = useNavigation<NavProp>();
+  const [selectedClosedStore, setSelectedClosedStore] = useState<DeliveryNearbyStore | null>(null);
 
   const {
     data,
@@ -51,11 +64,26 @@ export default function FavouritesScreen() {
   const addToFavLabel = t('favourites_add');
   const removeFromFavLabel = t('favourites_remove');
 
+  const handleClosedStorePress = useCallback((store: DeliveryNearbyStore) => {
+    setSelectedClosedStore(store);
+  }, []);
+
+  const handleCloseClosedStorePopup = useCallback(() => {
+    setSelectedClosedStore(null);
+  }, []);
+
+  const handleSeeMenu = useCallback((store: DeliveryNearbyStore) => {
+    pushStoreDetails(navigation, store);
+    setSelectedClosedStore(null);
+  }, [navigation]);
+
   const renderItem = useCallback(
     ({ item }: { item: DeliveryNearbyStore }) => (
       <StoreCard
         layout="fullWidth"
         store={item}
+        showClosedOverlay={isStoreClosed(item)}
+        onClosedPress={isStoreClosed(item) ? () => handleClosedStorePress(item) : undefined}
         actionSlot={
           <FavouriteHeartButton
             isFavourite={item.isFavorite ?? false}
@@ -69,7 +97,7 @@ export default function FavouritesScreen() {
         }
       />
     ),
-    [addToFavLabel, removeFromFavLabel, toggleFavourite, isToggling, toggleVariables],
+    [addToFavLabel, removeFromFavLabel, toggleFavourite, isToggling, toggleVariables, handleClosedStorePress],
   );
 
   const keyExtractor = useCallback((item: DeliveryNearbyStore) => item.storeId, []);
@@ -184,6 +212,12 @@ export default function FavouritesScreen() {
           }
         />
       )}
+
+      <ClosedStoreMenuPopup
+        onClose={handleCloseClosedStorePopup}
+        onSeeMenu={handleSeeMenu}
+        store={selectedClosedStore}
+      />
     </View>
   );
 }

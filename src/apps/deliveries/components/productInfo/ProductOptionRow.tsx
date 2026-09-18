@@ -13,7 +13,6 @@ type Props = {
   isDisabled?: boolean;
   onPress: () => void;
   controlType?: 'radio' | 'checkbox';
-  presentation?: 'row' | 'tile';
   style?: StyleProp<ViewStyle>;
 };
 
@@ -25,11 +24,9 @@ export default function ProductOptionRow({
   isDisabled = false,
   onPress,
   controlType = 'radio',
-  presentation = 'row',
   style,
 }: Props) {
-  const { colors, layout, shape, spacing } = useTheme();
-  const isTile = presentation === 'tile';
+  const { colors, elevation, layout, shape, spacing } = useTheme();
 
   const selectionControl = (
     <View
@@ -63,20 +60,21 @@ export default function ProductOptionRow({
       onPress={onPress}
       style={[
         styles.container,
-        isTile ? styles.tile : styles.row,
         {
           backgroundColor: isSelected ? colors.primarySoft : colors.surface,
           borderColor: isSelected ? colors.primary : colors.divider,
-          borderRadius: shape.radius.control,
-          gap: spacing.sm,
-          minHeight: isTile ? 68 : layout.touchTarget.comfortable,
+          borderRadius: shape.radius.surface,
+          borderWidth: isSelected ? shape.borderWidth.selected : StyleSheet.hairlineWidth,
+          gap: spacing.md,
+          minHeight: layout.touchTarget.comfortable,
           paddingHorizontal: spacing.md,
-          paddingVertical: spacing.sm,
+          paddingVertical: spacing.sm + 2,
+          ...(isSelected ? elevation.subtle : null),
         },
         style,
       ]}
     >
-      {isTile ? selectionControl : null}
+      {selectionControl}
 
       <View style={styles.copy}>
         <Text numberOfLines={2} variant="label" weight={isSelected ? 'bold' : 'semiBold'}>
@@ -87,17 +85,28 @@ export default function ProductOptionRow({
             {description}
           </Text>
         ) : null}
+      </View>
+
+      <View
+        style={[
+          styles.priceBadge,
+          {
+            backgroundColor: isSelected ? colors.primary : colors.surfaceSunken,
+            borderRadius: shape.radius.pill,
+            paddingHorizontal: spacing.sm + 2,
+            paddingVertical: spacing.xxs + 1,
+          },
+        ]}
+      >
         <Text
-          color={isSelected ? colors.primary : colors.textSubtle}
+          color={isSelected ? colors.onPrimary : colors.textSubtle}
           numberOfLines={1}
           variant="caption"
-          weight="semiBold"
+          weight="bold"
         >
           {priceLabel}
         </Text>
       </View>
-
-      {!isTile ? selectionControl : null}
     </PressableScale>
   );
 }
@@ -115,13 +124,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
+    width: '100%',
   },
   copy: {
     flex: 1,
     minWidth: 0,
   },
-  row: {
-    width: '100%',
+  priceBadge: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   radioOuter: {
     alignItems: 'center',
@@ -135,11 +146,5 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     height: 10,
     width: 10,
-  },
-  tile: {
-    alignItems: 'flex-start',
-    flexBasis: '48%',
-    flexGrow: 1,
-    maxWidth: '100%',
   },
 });
