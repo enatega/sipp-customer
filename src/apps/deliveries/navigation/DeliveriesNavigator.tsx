@@ -18,6 +18,9 @@ import NotificationSettingsScreen from "../screens/NotificationSettingsScreen/No
 import PrivacyPolicyScreen from "../screens/PrivacyPolicyScreen/PrivacyPolicyScreen";
 import TermsOfServiceScreen from "../screens/TermsOfServiceScreen/TermsOfServiceScreen";
 import TermsOfUseScreen from "../screens/TermsOfUseScreen/TermsOfUseScreen";
+import AboutUsScreen from "../screens/AboutUsScreen/AboutUsScreen";
+import HowItWorksScreen from "../screens/HowItWorksScreen/HowItWorksScreen";
+import ContactUsScreen from "../screens/ContactUsScreen/ContactUsScreen";
 import ChangePasswordScreen from "../screens/ChangePasswordScreen/ChangePasswordScreen";
 import DeleteAccountScreen from "../screens/DeleteAccountScreen/DeleteAccountScreen";
 import ColorModeScreen from "../../../general/screens/settings/ColorModeScreen";
@@ -175,6 +178,21 @@ export default function DeliveriesNavigator() {
       <Stack.Screen
         name="TermsOfUse"
         component={TermsOfUseScreen}
+        options={sharedScreenOptions}
+      />
+      <Stack.Screen
+        name="AboutUs"
+        component={AboutUsScreen}
+        options={sharedScreenOptions}
+      />
+      <Stack.Screen
+        name="HowItWorks"
+        component={HowItWorksScreen}
+        options={sharedScreenOptions}
+      />
+      <Stack.Screen
+        name="ContactUs"
+        component={ContactUsScreen}
         options={sharedScreenOptions}
       />
       <Stack.Screen

@@ -2,9 +2,7 @@ import * as AppleAuthentication from "expo-apple-authentication";
 import React from "react";
 import { ActivityIndicator, Platform, StyleSheet, View } from "react-native";
 import { useAppleLogin } from "../../hooks/useAuthMutations";
-import { getPendingAppRoute } from "../../navigation/pendingAppRedirect";
 import { showToast } from "../AppToast";
-import { useNavigation } from "@react-navigation/native";
 import { useTheme } from "../../theme/theme";
 import { getExpoPushTokenForAuth } from "../../services/notifications/expoPushTokenService";
 import type { ApiError } from "../../api/apiClient";
@@ -30,7 +28,6 @@ function formatAppleName(
 }
 
 const AppleLogin = () => {
-  const navigation = useNavigation();
   const { colors } = useTheme();
   const [isAvailable, setIsAvailable] = React.useState(false);
 
@@ -85,13 +82,8 @@ const AppleLogin = () => {
   };
 
   const appleLoginMutation = useAppleLogin({
-    onSuccess: async () => {
+    onSuccess: () => {
       showToast.success("Success!", "Logged in successfully.");
-      const pendingRoute = await getPendingAppRoute();
-
-      if (!pendingRoute) {
-        navigation.navigate("Main" as never);
-      }
     },
     onError: (error) => {
       showToast.error("Error!", resolveAppleLoginErrorMessage(error));

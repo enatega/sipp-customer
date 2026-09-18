@@ -1,8 +1,24 @@
-import type { NavigatorScreenParams } from '@react-navigation/native';
+import type {
+  NavigationProp,
+  NavigatorScreenParams,
+  ParamListBase,
+} from '@react-navigation/native';
 import { authSession } from '../../../general/auth/authSession';
 import { setPendingAppRoute } from '../../../general/navigation/pendingAppRedirect';
 import { pushToAuth } from '../../../general/navigation/rootNavigation';
 import type { DeliveriesStackParamList } from './types';
+
+export function returnToDeliveriesHomeTab(
+  navigation: NavigationProp<ParamListBase>,
+) {
+  const homeRoute = navigation
+    .getState()
+    .routeNames.find((routeName) => routeName.endsWith('TabHome'));
+
+  if (homeRoute) {
+    navigation.navigate(homeRoute);
+  }
+}
 
 export async function requireDeliveriesAuthentication(
   params?: NavigatorScreenParams<DeliveriesStackParamList>,

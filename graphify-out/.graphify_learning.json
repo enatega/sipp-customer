@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-16T13:08:51.594725+00:00",
+  "generated_at": "2026-09-18T12:36:17.832022+00:00",
   "nodes": {
     "metro_config_config": {
       "code_fingerprint": "6148a6ea1045a96aa49f785dbdcd7a47f5c312f0907a6e15a12d95a42f8af66b",
@@ -12,7 +12,7 @@
           "q": "Map the branding, splash, and delivery store-card files affected by commit 434482ac4b730a0245aedd4bd2c9939d1e43aa4f into the SIP customer app without app deletion changes."
         }
       ],
-      "score": 0.97099217,
+      "score": 0.927628253,
       "source_file": "metro.config.js",
       "status": "tentative",
       "uses": 1
@@ -28,7 +28,7 @@
           "q": "move to the next one"
         }
       ],
-      "score": 0.975741094,
+      "score": 0.932165093,
       "source_file": "src/apps/deliveries/api/orderServiceTypes.ts",
       "status": "tentative",
       "uses": 1
@@ -44,13 +44,13 @@
           "q": "move to the next one"
         }
       ],
-      "score": 0.975741094,
+      "score": 0.932165093,
       "source_file": "src/apps/deliveries/api/orderServiceTypes.ts",
       "status": "tentative",
       "uses": 1
     },
     "src_apps_deliveries_cart_cartfeedback_getcartmutationsuccessfeedback": {
-      "code_fingerprint": "5f01e71ec37a35384432939bf6ffdf5fdc7fe7f539054a74b61444e0ac76effe",
+      "code_fingerprint": "a46d7bf4a6b29252bae96a2f76eea2935377417d5724bba5524951709681be58",
       "label": "getCartMutationSuccessFeedback()",
       "last": "2026-09-15T12:29:06.834023+00:00",
       "provenance": [
@@ -60,13 +60,13 @@
           "q": "1- when adding to cart done from the product page, i see the toast of adding to cart success, but no way of going directly to cart, whatever you implement make sure it is visually appealing and perfectly following UI UX standards 2- see the address sheet on the checkout page if the checkout button exists, dificult to use the sheet properly so handle that as well."
         }
       ],
-      "score": 0.976537005,
+      "score": 0.93292546,
       "source_file": "src/apps/deliveries/cart/cartFeedback.ts",
       "status": "tentative",
       "uses": 1
     },
     "src_apps_deliveries_chain_navigation_chainbottomtabnavigator_chainbottomtabnavigator": {
-      "code_fingerprint": "c7d1376ea3cea53d4124a755a760d47d081a7e9c0318c6a47a00d7dc35c43448",
+      "code_fingerprint": "cdf024386ff93ef91d9f7367a8272b4d997540c9473fa197af8595656d971689",
       "label": "ChainBottomTabNavigator()",
       "last": "2026-09-15T06:14:33.500200+00:00",
       "provenance": [
@@ -76,7 +76,7 @@
           "q": "Where can the address selection sheet open in deliveries, and which hosts have a visible bottom tab bar?"
         }
       ],
-      "score": 0.97068584,
+      "score": 0.927335604,
       "source_file": "src/apps/deliveries/chain/navigation/ChainBottomTabNavigator.tsx",
       "status": "tentative",
       "uses": 1
@@ -97,13 +97,13 @@
           "q": "yes do that, and start with the implementation plan"
         }
       ],
-      "score": 1.925007271,
+      "score": 1.839037623,
       "source_file": "src/apps/deliveries/components/cart/CartScreenContent.tsx",
       "status": "preferred",
       "uses": 2
     },
     "src_apps_deliveries_components_checkout_checkoutpaymentmethodbottomsheet": {
-      "code_fingerprint": "999c6b98638909cb44331120ddc775a8cd4267a86967f11e7ccbcaab26ed32f3",
+      "code_fingerprint": "9fd9b4c8059ef49472cde64573051f3f8f5d16c72d81447b2b7f784aa6a67d97",
       "label": "CheckoutPaymentMethodBottomSheet.tsx",
       "last": "2026-09-15T11:38:17.797245+00:00",
       "provenance": [
@@ -113,7 +113,7 @@
           "q": "move to the next one"
         }
       ],
-      "score": 0.975741094,
+      "score": 0.932165093,
       "source_file": "src/apps/deliveries/components/checkout/CheckoutPaymentMethodBottomSheet.tsx",
       "status": "tentative",
       "uses": 1
@@ -129,7 +129,7 @@
           "q": "move to the next one"
         }
       ],
-      "score": 0.975741094,
+      "score": 0.932165093,
       "source_file": "src/apps/deliveries/components/checkout/CheckoutScheduleScreen.tsx",
       "status": "tentative",
       "uses": 1
@@ -145,7 +145,7 @@
           "q": "move to the next one"
         }
       ],
-      "score": 0.975741094,
+      "score": 0.932165093,
       "source_file": "src/apps/deliveries/components/checkout/CheckoutScreenContent.tsx",
       "status": "tentative",
       "uses": 1
@@ -161,7 +161,7 @@
           "q": "move to the next one"
         }
       ],
-      "score": 0.975741094,
+      "score": 0.932165093,
       "source_file": "src/apps/deliveries/components/checkout/CheckoutSummaryFooter.tsx",
       "status": "tentative",
       "uses": 1
@@ -177,7 +177,7 @@
           "q": "move to the next one"
         }
       ],
-      "score": 0.975741094,
+      "score": 0.932165093,
       "source_file": "src/apps/deliveries/components/checkout/CheckoutTipSection.tsx",
       "status": "tentative",
       "uses": 1
@@ -198,7 +198,7 @@
           "q": "Where can the address selection sheet open in deliveries, and which hosts have a visible bottom tab bar?"
         }
       ],
-      "score": 1.947082803,
+      "score": 1.860127276,
       "source_file": "src/apps/deliveries/components/navigation/DeliveriesTabBar.tsx",
       "status": "preferred",
       "uses": 2
@@ -219,7 +219,7 @@
           "q": "ok move to the next phase now"
         }
       ],
-      "score": 1.986332037,
+      "score": 1.897623663,
       "source_file": "src/apps/deliveries/components/orderDetails/OrderDetailsActionsSection.tsx",
       "status": "preferred",
       "uses": 2
@@ -235,7 +235,7 @@
           "q": "ok move to the next phase now"
         }
       ],
-      "score": 0.992326863,
+      "score": 0.948010152,
       "source_file": "src/apps/deliveries/components/orderDetails/OrderDetailsHeroSection.tsx",
       "status": "tentative",
       "uses": 1
@@ -251,7 +251,7 @@
           "q": "ok move to the next phase now"
         }
       ],
-      "score": 0.992326863,
+      "score": 0.948010152,
       "source_file": "src/apps/deliveries/components/orders/ActiveOrdersSection.tsx",
       "status": "tentative",
       "uses": 1
@@ -267,7 +267,7 @@
           "q": "ok move to the next phase now"
         }
       ],
-      "score": 0.992326863,
+      "score": 0.948010152,
       "source_file": "src/apps/deliveries/components/orders/OrderHistorySection.tsx",
       "status": "tentative",
       "uses": 1
@@ -283,7 +283,7 @@
           "q": "ok move to the next phase now"
         }
       ],
-      "score": 0.992326863,
+      "score": 0.948010152,
       "source_file": "src/apps/deliveries/components/orders/OrderListCard.tsx",
       "status": "tentative",
       "uses": 1
@@ -299,7 +299,7 @@
           "q": "ok move to the next phase now"
         }
       ],
-      "score": 0.992326863,
+      "score": 0.948010152,
       "source_file": "src/apps/deliveries/components/orders/OrdersListSection.tsx",
       "status": "tentative",
       "uses": 1
@@ -320,7 +320,7 @@
           "q": "move to the next phase"
         }
       ],
-      "score": 1.987237441,
+      "score": 1.898488632,
       "source_file": "src/apps/deliveries/components/orderTracking/OrderTrackingModernEtaFrame.tsx",
       "status": "preferred",
       "uses": 2
@@ -336,7 +336,7 @@
           "q": "Fix the order details actions, tracking UI, slow and unstable tracking and restaurant maps, and remove the failing mobile banners request properly without a second iteration."
         }
       ],
-      "score": 0.994005174,
+      "score": 0.949613511,
       "source_file": "src/apps/deliveries/components/orderTracking/OrderTrackingModernProgressCard.tsx",
       "status": "tentative",
       "uses": 1
@@ -357,7 +357,7 @@
           "q": "move to the next phase"
         }
       ],
-      "score": 1.987237441,
+      "score": 1.898488632,
       "source_file": "src/apps/deliveries/components/orderTracking/OrderTrackingModernView.tsx",
       "status": "preferred",
       "uses": 2
@@ -373,7 +373,7 @@
           "q": "move to the next phase"
         }
       ],
-      "score": 0.993232266,
+      "score": 0.948875121,
       "source_file": "src/apps/deliveries/components/orderTracking/OrderTrackingTimelineSection.tsx",
       "status": "tentative",
       "uses": 1
@@ -399,7 +399,7 @@
           "q": "move to the next phase"
         }
       ],
-      "score": 2.982385694,
+      "score": 2.849194172,
       "source_file": "src/apps/deliveries/components/orderTracking/useOrderTrackingViewModel.tsx",
       "status": "preferred",
       "uses": 3
@@ -430,13 +430,13 @@
           "q": "yes do that, and start with the implementation plan"
         }
       ],
-      "score": 3.934074234,
+      "score": 3.758380884,
       "source_file": "src/apps/deliveries/components/orderTracking/useOrderTrackingViewModel.tsx",
       "status": "preferred",
       "uses": 4
     },
     "src_apps_deliveries_components_productinfo_maincontainer": {
-      "code_fingerprint": "34d351beac5602554a6538719472865edcb656016ebb526bcd0fe91ac2653ecc",
+      "code_fingerprint": "7e51bfde09285d0566fb5f62b27d164a4fb46d180eb5aaa216230bfd3b32bfc4",
       "label": "productInfo/MainContainer.tsx",
       "last": "2026-09-16T04:46:51.312971+00:00",
       "provenance": [
@@ -446,13 +446,13 @@
           "q": "Replace the current product add-to-cart toast with a premium centered animated confirmation popup that offers Go to cart."
         }
       ],
-      "score": 0.99197765,
+      "score": 0.947676535,
       "source_file": "src/apps/deliveries/components/productInfo/MainContainer.tsx",
       "status": "tentative",
       "uses": 1
     },
     "src_apps_deliveries_components_productinfo_useproductinfocartflow": {
-      "code_fingerprint": "3d871c4767c8a3a8c0aa24cdf02294c7c81ca79adea7178f2ee5e65d2a6cfd57",
+      "code_fingerprint": "f3d86f0f5eaf31df2a935ac0f8547d144e82a9c11c3018934cc43952a018c5bd",
       "label": "useProductInfoCartFlow.ts",
       "last": "2026-09-16T04:46:51.312971+00:00",
       "provenance": [
@@ -462,7 +462,7 @@
           "q": "Replace the current product add-to-cart toast with a premium centered animated confirmation popup that offers Go to cart."
         }
       ],
-      "score": 0.99197765,
+      "score": 0.947676535,
       "source_file": "src/apps/deliveries/components/productInfo/useProductInfoCartFlow.ts",
       "status": "tentative",
       "uses": 1
@@ -484,7 +484,7 @@
           "q": "The mobile banners were removed to avoid a 404, but they must remain visible without the failing request."
         }
       ],
-      "score": -0.000244053,
+      "score": -0.000233154,
       "source_file": "src/apps/deliveries/components/specialOffersBanner/SpecialOffersBanner.tsx",
       "status": "contested",
       "uses": 1,
@@ -501,7 +501,7 @@
           "q": "Map the branding, splash, and delivery store-card files affected by commit 434482ac4b730a0245aedd4bd2c9939d1e43aa4f into the SIP customer app without app deletion changes."
         }
       ],
-      "score": 0.97099217,
+      "score": 0.927628253,
       "source_file": "src/apps/deliveries/components/storeCard/StoreCard.tsx",
       "status": "tentative",
       "uses": 1
@@ -517,7 +517,7 @@
           "q": "Map the branding, splash, and delivery store-card files affected by commit 434482ac4b730a0245aedd4bd2c9939d1e43aa4f into the SIP customer app without app deletion changes."
         }
       ],
-      "score": 0.97099217,
+      "score": 0.927628253,
       "source_file": "src/apps/deliveries/components/storeCard/subComponents/StoreDeliveryInfo.tsx",
       "status": "tentative",
       "uses": 1
@@ -533,7 +533,7 @@
           "q": "Continue the next unfinished premium UI revamp phase"
         }
       ],
-      "score": 0.998148348,
+      "score": 0.953571653,
       "source_file": "src/apps/deliveries/components/wallet/WalletTransactionItem.tsx",
       "status": "tentative",
       "uses": 1
@@ -549,7 +549,7 @@
           "q": "move to the next one"
         }
       ],
-      "score": 0.975741094,
+      "score": 0.932165093,
       "source_file": "src/apps/deliveries/hooks/useCheckoutPreview.ts",
       "status": "tentative",
       "uses": 1
@@ -570,13 +570,13 @@
           "q": "move to the next phase"
         }
       ],
-      "score": 1.987237441,
+      "score": 1.898488632,
       "source_file": "src/apps/deliveries/hooks/useDeliveryRoutePath.ts",
       "status": "preferred",
       "uses": 2
     },
     "src_apps_deliveries_hooks_usediscoveryqueries_usemobilebanners": {
-      "code_fingerprint": "6218b9465928538522cecca6a0b5f17a248c9ec63d4430a5f24d36103dff25df",
+      "code_fingerprint": "0557b7e243d577630b52cf25bc653d652d953c5476d8eacd2a50d334efd8ba21",
       "label": "useMobileBanners()",
       "last": "2026-09-16T08:19:07.829109+00:00",
       "provenance": [
@@ -586,7 +586,7 @@
           "q": "The mobile banners were removed to avoid a 404, but they must remain visible without the failing request."
         }
       ],
-      "score": 0.995362059,
+      "score": 0.950909798,
       "source_file": "src/apps/deliveries/hooks/useDiscoveryQueries.ts",
       "status": "tentative",
       "uses": 1
@@ -607,13 +607,13 @@
           "q": "ok move to the next phase now"
         }
       ],
-      "score": 1.985559129,
+      "score": 1.896885272,
       "source_file": "src/apps/deliveries/hooks/useOrderStatusSocketSync.ts",
       "status": "preferred",
       "uses": 2
     },
     "src_apps_deliveries_multivendor_navigation_multivendorbottomtabnavigator_multivendorbottomtabnavigator": {
-      "code_fingerprint": "923537f63876746e3f91874a8c743b05e15b5c2e15189d698b8d62c91ac17275",
+      "code_fingerprint": "824fafe1439e0e55ed1bd761fe5e4ebdbf8df55a3c50e7bc92da92ef633cdb11",
       "label": "MultiVendorBottomTabNavigator()",
       "last": "2026-09-15T06:14:33.500200+00:00",
       "provenance": [
@@ -623,7 +623,7 @@
           "q": "Where can the address selection sheet open in deliveries, and which hosts have a visible bottom tab bar?"
         }
       ],
-      "score": 0.97068584,
+      "score": 0.927335604,
       "source_file": "src/apps/deliveries/multiVendor/navigation/MultiVendorBottomTabNavigator.tsx",
       "status": "tentative",
       "uses": 1
@@ -650,14 +650,14 @@
           "q": "yes do that, and start with the implementation plan"
         }
       ],
-      "score": 0.949671987,
+      "score": 0.907260216,
       "source_file": "src/apps/deliveries/multiVendor/screens/HomeTab/HomeTab.tsx",
       "status": "contested",
       "uses": 2,
       "verdict": "useful"
     },
     "src_apps_deliveries_multivendor_screens_storedetailsscreen_storedetailsscreen": {
-      "code_fingerprint": "fe8f1ab4e03437f8b85c1ff2ce7ef693ce47467487978567e99995dd30977117",
+      "code_fingerprint": "d0f9ab3a883f99cca9180e4fa2f59686fa6c3c586468212f76572e480dc8acd0",
       "label": "StoreDetailsScreen.tsx",
       "last": "2026-09-14T07:46:31.583212+00:00",
       "provenance": [
@@ -667,13 +667,13 @@
           "q": "yes do that, and start with the implementation plan"
         }
       ],
-      "score": 0.94991604,
+      "score": 0.90749337,
       "source_file": "src/apps/deliveries/multiVendor/screens/StoreDetailsScreen/StoreDetailsScreen.tsx",
       "status": "tentative",
       "uses": 1
     },
     "src_apps_deliveries_navigation_deliveriesnavigator": {
-      "code_fingerprint": "32753b84de94a19079fab6cb63c9993fa4845e76a3afd712360501b55f1c30a9",
+      "code_fingerprint": "9dc0a820cae6eff8dbf1f4ef01241845733ac6046f3cd2638ff3cd1255b6244a",
       "label": "DeliveriesNavigator.tsx",
       "last": "2026-09-14T07:46:31.583212+00:00",
       "provenance": [
@@ -683,13 +683,13 @@
           "q": "yes do that, and start with the implementation plan"
         }
       ],
-      "score": 0.94991604,
+      "score": 0.90749337,
       "source_file": "src/apps/deliveries/navigation/DeliveriesNavigator.tsx",
       "status": "tentative",
       "uses": 1
     },
     "src_apps_deliveries_screens_checkoutscreen_checkoutscreen": {
-      "code_fingerprint": "626de558e7fd30f8f1897675401ccaceafb31b061d7f977914cab49a93df9e65",
+      "code_fingerprint": "bbcbcbbd1ca6b49ff6ef9ff8aad9dc06066025d72483c13f138d4990dbc850a0",
       "label": "CheckoutScreen.tsx",
       "last": "2026-09-15T12:29:06.834023+00:00",
       "provenance": [
@@ -709,7 +709,7 @@
           "q": "yes do that, and start with the implementation plan"
         }
       ],
-      "score": 2.902194139,
+      "score": 2.772583923,
       "source_file": "src/apps/deliveries/screens/CheckoutScreen/CheckoutScreen.tsx",
       "status": "preferred",
       "uses": 3
@@ -725,13 +725,13 @@
           "q": "Continue the next unfinished premium UI revamp phase"
         }
       ],
-      "score": 0.998148348,
+      "score": 0.953571653,
       "source_file": "src/apps/deliveries/screens/CouponsScreen/CouponsScreen.tsx",
       "status": "tentative",
       "uses": 1
     },
     "src_apps_deliveries_screens_riderchatscreen_riderchatscreen": {
-      "code_fingerprint": "567cc0b4c06a46afdc3c43d7ab065ff5e6c2879080e4067015cb75ff2445efcd",
+      "code_fingerprint": "24a040970036f12f580fac59646a39c62c6c7774399765a5450368f7347863bf",
       "label": "RiderChatScreen/RiderChatScreen.tsx",
       "last": "2026-09-16T06:05:37.861768+00:00",
       "provenance": [
@@ -741,13 +741,13 @@
           "q": "move to the next phase"
         }
       ],
-      "score": 0.993232266,
+      "score": 0.948875121,
       "source_file": "src/apps/deliveries/screens/RiderChatScreen/RiderChatScreen.tsx",
       "status": "tentative",
       "uses": 1
     },
     "src_apps_deliveries_screens_supportchatscreen_supportchatscreen": {
-      "code_fingerprint": "284a358331e5a5d74d9c42066752c08f0bba04616a62e3f79aab0889f8979f52",
+      "code_fingerprint": "976198e1c0abd00a946ec93e0ab798fc9a4d800d2b49f56cdfddf73301ed5e61",
       "label": "SupportChatScreen.tsx",
       "last": "2026-09-14T07:46:31.583212+00:00",
       "provenance": [
@@ -757,7 +757,7 @@
           "q": "yes do that, and start with the implementation plan"
         }
       ],
-      "score": 0.94991604,
+      "score": 0.90749337,
       "source_file": "src/apps/deliveries/screens/SupportChatScreen/SupportChatScreen.tsx",
       "status": "tentative",
       "uses": 1
@@ -773,7 +773,7 @@
           "q": "Continue the next unfinished premium UI revamp phase"
         }
       ],
-      "score": 0.998148348,
+      "score": 0.953571653,
       "source_file": "src/apps/deliveries/screens/wallet/WalletScreen/WalletScreen.tsx",
       "status": "tentative",
       "uses": 1
@@ -789,7 +789,7 @@
           "q": "Continue the next unfinished premium UI revamp phase"
         }
       ],
-      "score": 0.998148348,
+      "score": 0.953571653,
       "source_file": "src/apps/deliveries/screens/wallet/WalletTransactionsScreen/WalletTransactionsScreen.tsx",
       "status": "tentative",
       "uses": 1
@@ -805,13 +805,13 @@
           "q": "Continue the next unfinished premium UI revamp phase"
         }
       ],
-      "score": 0.998148348,
+      "score": 0.953571653,
       "source_file": "src/general/api/walletSavedCardsService.ts",
       "status": "tentative",
       "uses": 1
     },
     "src_general_components_address_addresschooseonmap": {
-      "code_fingerprint": "5b6365347029b5d561f8cd4434befaacdcdaa0e8c8f7b5193180e9ffce8c80dd",
+      "code_fingerprint": "5d549ca0593d25f5d08d0a68340a4a1fa55fc2359441c19ba711e5373b3bd7f2",
       "label": "AddressChooseOnMap.tsx",
       "last": "2026-09-16T06:30:41.643610+00:00",
       "provenance": [
@@ -821,13 +821,13 @@
           "q": "move to the next phase"
         }
       ],
-      "score": 0.993631763,
+      "score": 0.949256776,
       "source_file": "src/general/components/address/AddressChooseOnMap.tsx",
       "status": "tentative",
       "uses": 1
     },
     "src_general_components_address_addressselectionbottomsheet": {
-      "code_fingerprint": "232ae94fdbadd975688277c6b25b8e1dcbfb14d500b40690809dd83d300216e8",
+      "code_fingerprint": "2532f0c4b277f999ecee69546ff79dc6fc74ab40d1db9393cfa73871b5b6c202",
       "label": "AddressSelectionBottomSheet.tsx",
       "last": "2026-09-15T11:38:17.797245+00:00",
       "provenance": [
@@ -837,13 +837,13 @@
           "q": "move to the next one"
         }
       ],
-      "score": 0.975741094,
+      "score": 0.932165093,
       "source_file": "src/general/components/address/AddressSelectionBottomSheet.tsx",
       "status": "tentative",
       "uses": 1
     },
     "src_general_components_address_addressselectionbottomsheet_addressselectionbottomsheet": {
-      "code_fingerprint": "232ae94fdbadd975688277c6b25b8e1dcbfb14d500b40690809dd83d300216e8",
+      "code_fingerprint": "2532f0c4b277f999ecee69546ff79dc6fc74ab40d1db9393cfa73871b5b6c202",
       "label": "AddressSelectionBottomSheet()",
       "last": "2026-09-15T12:29:06.834023+00:00",
       "provenance": [
@@ -858,7 +858,7 @@
           "q": "Where can the address selection sheet open in deliveries, and which hosts have a visible bottom tab bar?"
         }
       ],
-      "score": 1.947222846,
+      "score": 1.860261064,
       "source_file": "src/general/components/address/AddressSelectionBottomSheet.tsx",
       "status": "preferred",
       "uses": 2
@@ -879,7 +879,7 @@
           "q": "1- when adding to cart done from the product page, i see the toast of adding to cart success, but no way of going directly to cart, whatever you implement make sure it is visually appealing and perfectly following UI UX standards 2- see the address sheet on the checkout page if the checkout button exists, dificult to use the sheet properly so handle that as well."
         }
       ],
-      "score": 1.968514655,
+      "score": 1.880601994,
       "source_file": "src/general/components/AppToast.tsx",
       "status": "preferred",
       "uses": 2
@@ -895,7 +895,7 @@
           "q": "fix this translation key as well"
         }
       ],
-      "score": 0.976589245,
+      "score": 0.932975367,
       "source_file": "src/general/components/filterablePaginatedList/GenericFilterablePaginatedListScreen.tsx",
       "status": "tentative",
       "uses": 1
@@ -911,7 +911,7 @@
           "q": "Map the branding, splash, and delivery store-card files affected by commit 434482ac4b730a0245aedd4bd2c9939d1e43aa4f into the SIP customer app without app deletion changes."
         }
       ],
-      "score": 0.97099217,
+      "score": 0.927628253,
       "source_file": "src/general/components/Image.tsx",
       "status": "tentative",
       "uses": 1
@@ -932,7 +932,7 @@
           "q": "move to the next phase"
         }
       ],
-      "score": 1.987237441,
+      "score": 1.898488632,
       "source_file": "src/general/components/Map.tsx",
       "status": "preferred",
       "uses": 2
@@ -953,7 +953,7 @@
           "q": "Fix iOS marker cutoff, Android missing markers, active blue marker state, tracking markers, and refine the tracking UI with a gradient ring and shorter status copy."
         }
       ],
-      "score": 1.990668711,
+      "score": 1.901766664,
       "source_file": "src/general/components/Map.tsx",
       "status": "preferred",
       "uses": 2
@@ -969,7 +969,7 @@
           "q": "move to the next phase"
         }
       ],
-      "score": 0.993232266,
+      "score": 0.948875121,
       "source_file": "src/general/components/Map.tsx",
       "status": "tentative",
       "uses": 1
@@ -985,7 +985,7 @@
           "q": "move to the next phase"
         }
       ],
-      "score": 0.993631763,
+      "score": 0.949256776,
       "source_file": "src/general/components/profile/MyProfileAddressCard.tsx",
       "status": "tentative",
       "uses": 1
@@ -1001,7 +1001,7 @@
           "q": "move to the next phase"
         }
       ],
-      "score": 0.993631763,
+      "score": 0.949256776,
       "source_file": "src/general/components/profile/SavedAddressesList.tsx",
       "status": "tentative",
       "uses": 1
@@ -1017,7 +1017,7 @@
           "q": "Where can the address selection sheet open in deliveries, and which hosts have a visible bottom tab bar?"
         }
       ],
-      "score": 0.97068584,
+      "score": 0.927335604,
       "source_file": "src/general/components/search/SearchMainContainer.tsx",
       "status": "tentative",
       "uses": 1
@@ -1038,7 +1038,7 @@
           "q": "Map the branding, splash, and delivery store-card files affected by commit 434482ac4b730a0245aedd4bd2c9939d1e43aa4f into the SIP customer app without app deletion changes."
         }
       ],
-      "score": 1.947581415,
+      "score": 1.860603619,
       "source_file": "src/general/localization/LocalizationProvider.tsx",
       "status": "preferred",
       "uses": 2
@@ -1054,13 +1054,13 @@
           "q": "fix this translation key as well"
         }
       ],
-      "score": 0.976589245,
+      "score": 0.932975367,
       "source_file": "src/general/localization/translations.ts",
       "status": "tentative",
       "uses": 1
     },
     "src_general_screens_address_addressdetailscreen": {
-      "code_fingerprint": "e062be5caa496155e9787135a9e7217080d8e76ef7adc2bb69333f1319c8ac19",
+      "code_fingerprint": "d003dd7afe66992070254b23416251f205d299f7354e371353a0bc861cf293a2",
       "label": "AddressDetailScreen.tsx",
       "last": "2026-09-16T06:30:41.643610+00:00",
       "provenance": [
@@ -1070,13 +1070,13 @@
           "q": "move to the next phase"
         }
       ],
-      "score": 0.993631763,
+      "score": 0.949256776,
       "source_file": "src/general/screens/address/AddressDetailScreen.tsx",
       "status": "tentative",
       "uses": 1
     },
     "src_general_screens_address_addresssearchscreen": {
-      "code_fingerprint": "d49a26801ee1a66523b1e01f041118a9814d1719b8c63509624e55e7cd8127a8",
+      "code_fingerprint": "8d9408dc4f4730f4ef5383fb64aa54c6d3ad25ba704d7c2aef5c02bcc192b75b",
       "label": "AddressSearchScreen.tsx",
       "last": "2026-09-16T06:30:41.643610+00:00",
       "provenance": [
@@ -1086,7 +1086,7 @@
           "q": "move to the next phase"
         }
       ],
-      "score": 0.993631763,
+      "score": 0.949256776,
       "source_file": "src/general/screens/address/AddressSearchScreen.tsx",
       "status": "tentative",
       "uses": 1
@@ -1102,13 +1102,13 @@
           "q": "move to the next phase"
         }
       ],
-      "score": 0.993631763,
+      "score": 0.949256776,
       "source_file": "src/general/screens/profile/MyProfileScreen.tsx",
       "status": "tentative",
       "uses": 1
     },
     "src_general_screens_profile_profiletabscreen": {
-      "code_fingerprint": "91c1c7ff5251cf26fc057aa5f2d29ef4f6930eee38a096acb6d29b3990cd2d41",
+      "code_fingerprint": "1c8f38f10bfd689e2cb132018d4ed66c474c61b68428970a4fb5794f8e4cbb71",
       "label": "ProfileTabScreen.tsx",
       "last": "2026-09-16T06:30:41.643610+00:00",
       "provenance": [
@@ -1118,7 +1118,7 @@
           "q": "move to the next phase"
         }
       ],
-      "score": 0.993631763,
+      "score": 0.949256776,
       "source_file": "src/general/screens/profile/ProfileTabScreen.tsx",
       "status": "tentative",
       "uses": 1
@@ -1144,7 +1144,7 @@
           "q": "Fix the order details actions, tracking UI, slow and unstable tracking and restaurant maps, and remove the failing mobile banners request properly without a second iteration."
         }
       ],
-      "score": 2.984673886,
+      "score": 2.851380175,
       "source_file": "src/general/screens/SeeAllScreen/components/SeeAllMapView.tsx",
       "status": "preferred",
       "uses": 3
@@ -1160,7 +1160,7 @@
           "q": "also i dont like this what you have done for making the background circles white in the bottom bar, it looks so shit, find some other proper solution that also looks visually appealling as well"
         }
       ],
-      "score": 0.976396963,
+      "score": 0.932791671,
       "source_file": "src/general/theme/colors.ts",
       "status": "tentative",
       "uses": 1
@@ -1181,7 +1181,7 @@
           "q": "yes do that, and start with the implementation plan"
         }
       ],
-      "score": 1.926313003,
+      "score": 1.840285042,
       "source_file": "src/general/theme/theme.ts",
       "status": "preferred",
       "uses": 2

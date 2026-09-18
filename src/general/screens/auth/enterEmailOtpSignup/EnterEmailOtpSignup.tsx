@@ -8,8 +8,6 @@ import {
   useSignupVerifyOtp,
   useSignupSendOtp,
 } from "../../../hooks/useAuthMutations";
-import { getPendingAppRoute } from "../../../navigation/pendingAppRedirect";
-import { resetToSharedHome } from "../../../navigation/rootNavigation";
 import { useTooManyRequestsModal } from "../../../hooks/useTooManyRequestsModal";
 import AppPopup from "../../../components/AppPopup";
 import { showToast } from "../../../components/AppToast";
@@ -47,14 +45,8 @@ const EnterEmailOtpSignup = () => {
   }, []);
 
   const verifyOtpMutation = useSignupVerifyOtp({
-    onSuccess: async () => {
+    onSuccess: () => {
       showToast.success("Success!", "Account created successfully.");
-      const pendingRoute = await getPendingAppRoute();
-
-      if (!pendingRoute) {
-        resetToSharedHome();
-      }
-
       setOtpType("sms");
     },
     onError: (error) => {

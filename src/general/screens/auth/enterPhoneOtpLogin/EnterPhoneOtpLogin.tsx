@@ -6,8 +6,6 @@ import {
   useLoginSendOtp,
   useLoginVerifyOtp,
 } from "../../../hooks/useAuthMutations";
-import { getPendingAppRoute } from "../../../navigation/pendingAppRedirect";
-import { resetToSharedHome } from "../../../navigation/rootNavigation";
 import { useTooManyRequestsModal } from "../../../hooks/useTooManyRequestsModal";
 import AppPopup from "../../../components/AppPopup";
 import { showToast } from "../../../components/AppToast";
@@ -46,15 +44,9 @@ const EnterPhoneOtpLogin = () => {
   }, []);
 
   const verifyOtpMutation = useLoginVerifyOtp({
-    onSuccess: async () => {
+    onSuccess: () => {
       showToast.success("Success!", "Login successful.");
-      const pendingRoute = await getPendingAppRoute();
-
-      if (!pendingRoute) {
-        resetToSharedHome();
-      }
-
-      setOtpType("sms")
+      setOtpType("sms");
     },
     onError: (error) => {
       sethasError(true);

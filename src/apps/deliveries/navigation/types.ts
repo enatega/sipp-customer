@@ -35,6 +35,9 @@ type DeliveriesAccountNavigationParamList = ProfileNavigationParamList & {
   PrivacyPolicy: undefined;
   TermsOfService: undefined;
   TermsOfUse: undefined;
+  AboutUs: undefined;
+  HowItWorks: undefined;
+  ContactUs: undefined;
   ChangePassword: undefined;
   DeleteAccount: undefined;
   ColorMode: undefined;

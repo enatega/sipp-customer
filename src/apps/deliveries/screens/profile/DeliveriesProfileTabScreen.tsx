@@ -3,12 +3,16 @@ import {
   useFocusEffect,
   useNavigation,
   type NavigationProp,
+  type ParamListBase,
 } from '@react-navigation/native';
 import ProfileTabScreen from '../../../../general/screens/profile/ProfileTabScreen';
 import useProfile from '../../../../general/hooks/useProfile';
 import type { DeliveriesStackParamList } from '../../navigation/types';
 import { useAuthSessionQuery } from '../../../../general/hooks/useAuthQueries';
-import { requireDeliveriesAuthentication } from '../../navigation/deliveriesAuthGate';
+import {
+  requireDeliveriesAuthentication,
+  returnToDeliveriesHomeTab,
+} from '../../navigation/deliveriesAuthGate';
 
 type Props = {
   favoritesEnabled?: boolean;
@@ -20,15 +24,17 @@ export default function DeliveriesProfileTabScreen({
   onOpenFavourites,
 }: Props) {
   const sessionQuery = useAuthSessionQuery();
+  const tabNavigation = useNavigation<NavigationProp<ParamListBase>>();
 
   useFocusEffect(
     useCallback(() => {
       if (!sessionQuery.isPending && !sessionQuery.data?.token) {
+        returnToDeliveriesHomeTab(tabNavigation);
         void requireDeliveriesAuthentication();
       }
 
       return undefined;
-    }, [sessionQuery.data?.token, sessionQuery.isPending]),
+    }, [sessionQuery.data?.token, sessionQuery.isPending, tabNavigation]),
   );
 
   if (!sessionQuery.data?.token) {

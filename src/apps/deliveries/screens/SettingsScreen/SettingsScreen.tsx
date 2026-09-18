@@ -63,6 +63,24 @@ export default function DeliveriesSettingsScreen() {
         label: t('settings_terms_of_use'),
         onPress: () => navigation.navigate('TermsOfUse'),
       },
+      {
+        key: 'about-us',
+        icon: <Ionicons name="information-circle-outline" size={ICON_SIZE} color={iconColor} />,
+        label: t('settings_about_us'),
+        onPress: () => navigation.navigate('AboutUs'),
+      },
+      {
+        key: 'how-it-works',
+        icon: <Ionicons name="help-buoy-outline" size={ICON_SIZE} color={iconColor} />,
+        label: t('settings_how_it_works'),
+        onPress: () => navigation.navigate('HowItWorks'),
+      },
+      {
+        key: 'contact-us',
+        icon: <Ionicons name="mail-outline" size={ICON_SIZE} color={iconColor} />,
+        label: t('settings_contact_us'),
+        onPress: () => navigation.navigate('ContactUs'),
+      },
     ],
   ];
 

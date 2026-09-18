@@ -133,6 +133,7 @@ const fr = {
   address_edit_title: "Modifier l'adresse",
   address_search_placeholder: 'Rechercher une adresse',
   address_choose_on_map: 'Choisir sur la carte',
+  address_popular_places: 'Lieux populaires',
   address_recent_searches: 'Recherches récentes',
   address_no_results: 'Aucun résultat trouvé',
   address_confirm_location: "Confirmer l'emplacement",
@@ -277,6 +278,9 @@ const fr = {
   settings_privacy_policy: 'Politique de confidentialité',
   settings_terms_of_service: "Conditions d'utilisation",
   settings_terms_of_use: "Conditions d'usage",
+  settings_about_us: 'À propos de nous',
+  settings_how_it_works: 'Comment ça marche',
+  settings_contact_us: 'Nous contacter',
   settings_delete_account: 'Supprimer le compte',
   settings_app_version: "Version de l'application 1.0.0",
   // Notification settings screen
@@ -313,30 +317,67 @@ const fr = {
   privacy_section_contact_body: 'Si vous avez des questions sur ces conditions, n\'hésitez pas à nous contacter :',
   privacy_contact_email: 'E-mail : contact@fooddelivery.com',
   privacy_contact_address: 'Adresse : Doha, Qatar',
-  // Terms of Service screen
-  tos_title: "Conditions d'utilisation",
-  tos_last_updated: 'dernière mise à jour il y a 2 mois',
-  tos_intro:
-    "Ces conditions d'utilisation définissent votre accès et votre utilisation de l'application de livraison de nourriture.",
-  tos_section_usage_title: 'Utilisation du service',
-  tos_section_usage_body:
-    "L'application de livraison de nourriture fournit une plateforme fiable pour commander et gérer vos livraisons de repas.",
-  tos_section_orders_title: 'Gestion des commandes',
-  tos_section_orders_body:
-    "L'application vous permet de suivre facilement vos commandes, de modifier les détails ou de les annuler dans le délai imparti.",
-  tos_section_payment_title: 'Sécurité des paiements',
-  tos_section_payment_body:
-    "Les paiements via l'application sont traités de manière sécurisée avec une technologie de chiffrement.",
-  tos_section_delivery_title: 'Politiques de livraison',
-  tos_section_delivery_body:
-    'Les utilisateurs sont encouragés à fournir des adresses de livraison précises pour faciliter un service rapide et efficace.',
-  tos_section_support_title: 'Service client',
-  tos_section_support_body:
-    "L'application fournit un système d'assistance robuste pour répondre à toutes les questions ou problèmes.",
-  tos_section_contact_title: 'Nous contacter',
-  tos_section_contact_body: 'Si vous avez des questions sur ces conditions, n\'hésitez pas à nous contacter :',
-  tos_contact_email: 'E-mail : contact@fooddelivery.com',
-  tos_contact_address: 'Adresse : Doha, Qatar',
+  // Terms and Conditions screen — mirrors sipp-web's /terms page verbatim.
+  // Kept in English only: per the source document's own "Controlling
+  // Language" clause, Spanish/English govern regardless of UI locale
+  // (sipp-web's own French/German build keeps this page in English too).
+  tos_title: 'Terms and Conditions',
+  tos_subtitle:
+    'Costa Rica — Applicable to Users, Restaurant Partners and Delivery Partners.',
+  tos_last_updated: 'Last updated: July 14, 2026',
+  tos_preamble_title: 'Preamble and Parties',
+  tos_preamble_paragraphs: [
+    'These Terms and Conditions (the "Terms") govern access to and use of the SIPP Delivery mobile application and website (the "Application" or the "Platform") by any person who registers for or interacts with it in any of the following capacities: (a) a customer requesting Delivery Services ("User"); (b) a commercial establishment listed on the Application ("Restaurant Partner"); or (c) a person providing Delivery Services through the Application ("Delivery Partner"). Collectively, "You."',
+    'The Platform is locally operated by SIPP Delivery S.A., a corporation (sociedad anónima) organized under the laws of the Republic of Costa Rica, cédula jurídica 3-101-954829 ("SIPP CR," "SIPP," "we"), acting as local operating agent and under license from SIPP Delivery LLC, a limited liability company organized under the laws of the State of Delaware, United States of America, EIN 36-5182139, with registered agent office at 8 The Green, Suite B, Dover, Delaware 19901 ("SIPP US"), the global owner of the "SIPP Delivery" brand, the Application, the software, the databases and other intellectual property associated with the Platform.',
+    'These Terms are entered into solely between You and SIPP CR. SIPP US is not a party to these Terms and assumes no obligation to You hereunder; however, SIPP US may directly enforce Sections 18 (Intellectual Property), 22 (Confidentiality) and 23 (Limitation of Liability) as a third-party beneficiary.',
+  ],
+  tos_definitions_title: '1. Definitions',
+  tos_definitions: [
+    { term: 'Application or Platform', description: 'the SIPP Delivery mobile application and website and related systems and support.' },
+    { term: 'User', description: 'a person who requests Delivery Services through the Application as an end consumer.' },
+    { term: 'Restaurant Partner', description: 'an establishment listed on the Application offering products for purchase by Users.' },
+    { term: 'Delivery Partner', description: 'a person who, as an independent contractor, provides Delivery Services through the Application.' },
+    { term: 'Delivery Services', description: 'the collection, transport and delivery of goods requested by Users through the Application.' },
+    { term: 'Restaurant Partner Agreement', description: 'the bilateral agreement executed between a Restaurant Partner and SIPP CR governing the specific commercial terms of that relationship.' },
+    { term: 'Delivery Partner Agreement', description: 'the bilateral agreement executed between a Delivery Partner and SIPP CR governing the specific terms of that independent-contractor relationship.' },
+    { term: 'Content', description: 'text, images, ratings, comments and other material You post or upload to the Application.' },
+    { term: 'Account', description: 'the registration profile You create to access the Application.' },
+  ],
+  tos_sections: [
+    { heading: '2. Acceptance of the Terms', paragraphs: ['By creating an Account, or by downloading, accessing or using the Application in any capacity, You represent that You have read, understood and accepted these Terms and that You have legal capacity to contract under Costa Rican law. If You act on behalf of a legal entity (for example, a Restaurant Partner), You represent that You have sufficient authority to bind it. If You do not accept these Terms, You must refrain from using the Application.'] },
+    { heading: '3. Description of the Platform and Roles', paragraphs: ['SIPP CR operates a digital marketplace connecting Users, Restaurant Partners and Delivery Partners. SIPP CR does not prepare or sell food, is not a carrier, and is not the employer of Delivery Partners. SIPP CR acts as a technology intermediary and, in the cases described in these Terms, as a limited collection and payment agent on behalf of Restaurant Partners and Delivery Partners.'] },
+    { heading: '4. Eligibility and Registration', paragraphs: ['To use the Application, You must: (a) be at least eighteen (18) years old; (b) provide truthful, complete and up-to-date information upon registration; (c) maintain only one active Account per person, unless expressly authorized by SIPP; and (d) comply with the additional eligibility requirements applicable to Your role, described below. SIPP CR may perform reasonable identity and documentation verifications.'] },
+    { heading: '5. Account', paragraphs: ['You are responsible for maintaining the confidentiality of your access credentials and for all activity under Your Account. You must notify SIPP immediately of any unauthorized use. SIPP will not be liable for losses arising from unauthorized use of Your Account where such use results from Your negligence in safeguarding your credentials.'] },
+    { heading: 'Part A — Terms Applicable to Users (Customers)', paragraphs: [] },
+    { heading: '6. Order Formation', paragraphs: ['An order placed by a User through the Application constitutes an offer to purchase directed to the relevant Restaurant Partner. The sales contract for the products is formed directly between the User and the Restaurant Partner upon the latter\'s acceptance of the order. SIPP CR is not a party to that sales contract and does not warrant the availability, quality, safety or conformity of products offered by Restaurant Partners.'] },
+    { heading: '7. Prices, Delivery Fees and Payments', paragraphs: ['Product prices are set by each Restaurant Partner. The applicable delivery fee is displayed on the Application before order confirmation. All amounts are expressed in Costa Rican colones (₡), unless another currency is expressly indicated. All payments are processed exclusively by electronic means through the Application; cash payments are not accepted. You designate SIPP CR as a limited collection agent, solely to receive on your behalf, and remit to the relevant Restaurant Partners and Delivery Partners, the amounts due to them.'] },
+    { heading: '8. Cancellations, Refunds and Disputes', paragraphs: ["You may cancel an order free of charge before the Restaurant Partner accepts it. Once accepted, cancellation may be subject to a charge reflecting costs already incurred. For incorrect, damaged, incomplete or undelivered orders, You may submit a claim through the Application's support channel within a reasonable period; SIPP CR will evaluate the claim in good faith and, where warranted, process the corresponding full or partial refund, without prejudice to the direct liability that may lie with the responsible Restaurant Partner or Delivery Partner."] },
+    { heading: '9. Delivery and Risk', paragraphs: ['Delivery is performed by independent Delivery Partners who are not employees of SIPP CR or SIPP US. Risk of loss or damage to products transfers to the User upon delivery, or upon completion of a contactless delivery instruction ("leave at door") specified by the User. You must provide an accurate, accessible and safe delivery address.'] },
+    { heading: '10. Ratings and User-Generated Content', paragraphs: ['You may rate and comment on Delivery Services and products received. SIPP CR may moderate, hide or remove Content that is defamatory, false, discriminatory, or that infringes third-party rights. You grant SIPP CR a non-exclusive, worldwide, royalty-free license to use such Content within the Platform for purposes of operating, improving and promoting the service.'] },
+    { heading: '11. Consumer Protection', paragraphs: ['Nothing in these Terms limits the non-waivable rights that Law No. 7472, Law for the Promotion of Competition and Effective Consumer Protection, and its Regulations, grant You as a consumer. In the event of a conflict between a provision of these Terms and such regulations, the consumer protection regulations shall prevail.'] },
+    { heading: 'Part B — Terms Applicable to Restaurant Partners', paragraphs: [] },
+    { heading: '12. Contractual Relationship and Precedence', paragraphs: ["A commercial establishment's access to the Platform as a Restaurant Partner requires execution of a separate Restaurant Partner Agreement with SIPP CR, which governs the applicable commission, settlement schedule and other commercial terms specific to that relationship. In the event of a conflict between the executed Restaurant Partner Agreement and these Terms regarding individually negotiated commercial terms (including, without limitation, commission, the duration of founding-partner terms, and the form and frequency of payment), the Restaurant Partner Agreement shall prevail. These Terms govern, on a complementary and general basis, all matters relating to use of the Application, conduct on the Platform, intellectual property, data protection and the other general provisions applicable to all Platform users."] },
+    { heading: '13. Menu Content and Conduct', paragraphs: ['The Restaurant Partner is responsible for the accuracy of prices, product availability, allergen disclosure, and compliance with applicable health regulations. SIPP CR may suspend listings that violate the law, contain false information, or harm the reputation or operation of the Platform, upon notice where circumstances permit.'] },
+    { heading: '14. Payments to Restaurant Partners', paragraphs: ['Commission, applicable deductions and the settlement schedule are governed by the executed Restaurant Partner Agreement. SIPP CR acts as a limited collection agent with respect to amounts paid by Users that are due to the Restaurant Partner.'] },
+    { heading: 'Part C — Terms Applicable to Delivery Partners', paragraphs: [] },
+    { heading: '15. Contractual Relationship and Precedence', paragraphs: ['Access to the Application as a Delivery Partner requires execution of a separate Delivery Partner Agreement, which confirms the independent-contractor relationship between the Delivery Partner and SIPP CR (no subordination, no exclusivity, no employment benefits) and governs the Delivery Fee, the Subscription Cost, and the settlement schedule. In the event of a conflict between the executed Delivery Partner Agreement and these Terms regarding such economic terms or the nature of the relationship, the Delivery Partner Agreement shall prevail.'] },
+    { heading: '16. Delivery Partner Conduct', paragraphs: ['The Delivery Partner must perform Delivery Services in a professional and diligent manner, comply with applicable traffic regulations, refrain from soliciting or accepting cash payments, and use the Application solely for the purposes authorized under the Delivery Partner Agreement.'] },
+    { heading: '17. Payments to Delivery Partners', paragraphs: ['The Delivery Fee, tips, the Subscription Cost and the settlement schedule are governed by the executed Delivery Partner Agreement.'] },
+    { heading: 'General Provisions (Applicable to All Roles)', paragraphs: [] },
+    { heading: '18. Intellectual Property', paragraphs: ['The Application, the software, the databases, the design, the "SIPP Delivery" trademarks, and all Platform content (excluding Content generated by You) are the exclusive property of SIPP US or its licensors, and are protected by Costa Rican and international intellectual property law. Nothing in these Terms transfers any ownership right in such assets to any User, Restaurant Partner or Delivery Partner.'] },
+    { heading: '19. Limited License to Use', paragraphs: ['Subject to Your compliance with these Terms, SIPP CR grants You a limited, non-exclusive, non-transferable, non-sublicensable and revocable license to use the Application in accordance with Your role. You may not copy, modify, reverse engineer, sublicense, resell, use automated means to access the Application ("scraping"), or use it to develop a competing product or service.'] },
+    { heading: '20. Prohibited Conduct', paragraphs: ['The following are prohibited: (a) fraud or rating manipulation; (b) creating or using unauthorized multiple accounts; (c) posting illegal or defamatory content, or content that infringes third-party rights; (d) harassing other Platform users; and (e) breaching, overloading or interfering with the security or operation of the Application.'] },
+    { heading: '21. Personal Data Protection', paragraphs: ["SIPP CR processes the personal data of Users, Restaurant Partners and Delivery Partners in accordance with Law No. 8968, Law on the Protection of Individuals with regard to the Processing of their Personal Data, and SIPP's Privacy Policy available on the Application. You consent to the collection, use and, where applicable, disclosure of Your personal data (including Your location while using the Application) to operate the Platform, facilitate Delivery Services, ensure security, and comply with legal obligations. You may exercise Your rights of access, rectification, cancellation and objection under that Policy."] },
+    { heading: '22. Confidentiality', paragraphs: ['Non-public information that SIPP CR shares with Restaurant Partners or Delivery Partners through support channels, administrative dashboards or other means (for example, operational or commercial Platform data) must be kept confidential and used solely for the purposes of the relationship with SIPP CR.'] },
+    { heading: '23. Limitation of Liability', paragraphs: ["Without prejudice to Section 11, and to the maximum extent permitted by applicable law: neither SIPP CR nor SIPP US shall be liable for indirect, incidental, special, punitive or consequential damages, or for loss of profits, revenue, business or data. SIPP CR does not warrant uninterrupted or error-free availability of the Application. SIPP CR's aggregate liability to a Restaurant Partner or Delivery Partner shall be governed by the limit set forth in the applicable bilateral Agreement; to a User, it shall not exceed the amount of service fees paid by that User through the Application in the three (3) months preceding the event giving rise to the claim, except where consumer protection law provides otherwise."] },
+    { heading: '24. Indemnification', paragraphs: ["Each User, Restaurant Partner and Delivery Partner shall indemnify, defend and hold harmless SIPP CR and SIPP US, and their respective officers, directors, employees and agents, from any claim, liability, damage, loss or expense (including reasonable attorneys' fees) arising from: (a) their breach of these Terms or of the applicable bilateral Agreement; (b) their negligent or willful acts or omissions; or (c) any third-party claim arising from their interaction with the Platform."] },
+    { heading: '25. Account Suspension and Termination', paragraphs: ['SIPP CR may suspend or deactivate access to the Application for any Account that breaches these Terms, engages in fraud or unsafe conduct, or poses a risk to the Platform or third parties, with notice where circumstances permit. The foregoing is without prejudice to the specific suspension and termination rights and procedures set out in the applicable Restaurant Partner Agreement or Delivery Partner Agreement, which shall prevail as to those Partners.'] },
+    { heading: '26. Modifications to these Terms', paragraphs: ['SIPP CR may modify these general Terms from time to time, with reasonable notice through the Application or by email. Continued use of the Application after a modification takes effect constitutes acceptance of it.', 'No modification to these general Terms may, by itself, alter the specific, individually negotiated commercial terms of an existing Restaurant Partner Agreement or Delivery Partner Agreement (including, without limitation, commissions or fees fixed for a set period). Such Agreements may only be modified in accordance with their own terms.'] },
+    { heading: '27. Force Majeure', paragraphs: ['Neither party shall be liable for any failure or delay resulting from causes beyond its reasonable control, including natural disasters, government actions, labor disputes, or telecommunications or internet infrastructure failures.'] },
+    { heading: '28. Governing Law and Dispute Resolution', paragraphs: ['These Terms are governed by the laws of the Republic of Costa Rica.', 'Disputes between SIPP CR and a Restaurant Partner or a Delivery Partner: shall first be addressed in good faith through the Application\'s support channel and, if unresolved, submitted to binding arbitration before the Arbitration and Conciliation Center of the Costa Rican Chamber of Commerce (CICA), seated in San José, as set out in the applicable bilateral Agreement.', 'Disputes with Users (consumers): shall first be addressed in good faith through the Application\'s support channel. If unresolved, the User may bring the matter before the National Consumer Commission or the ordinary courts of the Republic of Costa Rica.'] },
+    { heading: '29. General Provisions', paragraphs: ["Assignment: You may not assign or transfer these Terms without SIPP CR's prior written consent; SIPP CR may freely assign or transfer them, including in connection with a merger, acquisition or sale of assets.", 'Severability: if any provision is found illegal, void or unenforceable, it shall be severed without affecting the validity of the remainder.', 'Electronic acceptance: these Terms may be accepted by electronic means, including by clicking "I Accept" in the Application, with the same legal validity as a handwritten signature, in accordance with Costa Rican legislation on digital signatures and electronic documents.', 'Entire agreement: these Terms, together with the Privacy Policy and, where applicable, the Restaurant Partner Agreement or Delivery Partner Agreement in effect, constitute the entire understanding between You and SIPP CR regarding their subject matter.', 'Notices: SIPP CR may notify You through the Application or the email address registered to Your Account.'] },
+    { heading: '30. Controlling Language', paragraphs: ['These Terms have been drafted in Spanish and in English. In the event of any discrepancy or conflict between the two versions, the Spanish version shall prevail, as it is the version directed to the Costa Rican market and the one required under Costa Rican consumer protection legislation.'] },
+  ],
   // Terms of Use screen
   tou_title: "Conditions d'usage",
   tou_last_updated: 'mise à jour il y a 2 mois',
@@ -474,6 +515,98 @@ const fr = {
   search_input_placeholder: "Rechercher n'importe quoi",
   Recommended_restaurants: 'Restaurants recommandés',
   home_drive_banners_title: 'Offres Drive',
+  // About Us screen
+  about_title: "Nous construisons l'infrastructure de livraison de la côte du Costa Rica.",
+  about_subtitle: 'Tant d\'options. Zéro effort.',
+  about_origin_title: 'Pourquoi nous avons commencé',
+  about_origin_paragraphs: [
+    "SIPP est une plateforme de livraison locale créée pour une raison simple : rendre la commande de repas, d'épicerie et de produits essentiels facile — là où la livraison traditionnelle n'a jamais vraiment fonctionné.",
+    "Nous avons commencé à Santa Teresa, au Costa Rica, où touristes, habitants, villas et restaurants font tous face au même problème : d'excellents plats, d'excellents lieux — mais des systèmes de livraison fragmentés, peu fiables et dépassés.",
+    'SIPP change cela.',
+    "Nous connectons restaurants, fournisseurs d'épicerie et commerces locaux au sein d'une seule plateforme intelligente qui permet aux clients de commander tout ce dont ils ont besoin au même endroit — des repas et snacks aux boissons, à l'épicerie et aux produits du quotidien — avec une livraison rapide, organisée et traçable.",
+  ],
+  about_different_title: 'Ce qui rend SIPP différent',
+  about_different_intro:
+    "SIPP n'est pas qu'une simple application de livraison de repas. C'est une plateforme de commerce local et de logistique conçue spécifiquement pour les régions côtières et à forte affluence touristique.",
+  about_different_focus_label: 'Nous nous concentrons sur',
+  about_different_items: [
+    'Un large choix de restaurants et de partenaires locaux',
+    "La livraison d'épicerie et de produits essentiels en plus des plats préparés",
+    'Un service fiable, même tard le soir',
+    'Une commande claire et facile à utiliser',
+    'Des paiements par carte sécurisés',
+    'Une logistique locale rapide et coordonnée',
+    'Un fort accompagnement des restaurants et partenaires',
+  ],
+  about_different_outro:
+    "Plutôt que d'imposer des modèles de livraison mondiaux à de petits marchés, nous avons conçu SIPP autour du fonctionnement réel de ces villes — saisonnalité, pics touristiques, fournisseurs locaux et logistique de courte distance.",
+  about_different_result:
+    "Le résultat est une plateforme qui profite à tous : les clients gagnent en commodité et en choix, les restaurants obtiennent plus de commandes et de visibilité, et les communautés locales bénéficient d'une infrastructure de livraison moderne.",
+  about_local_title: 'Ancrés localement. Conçus pour grandir.',
+  about_local_paragraphs: [
+    'SIPP a été fondée et opère au Costa Rica. Notre équipe travaille chaque jour sur le terrain avec les restaurants, les livreurs, les supermarchés et les villas.',
+    "Cette présence locale nous permet de maîtriser la qualité, les délais de livraison, l'intégration des partenaires et l'expérience client — tout en améliorant continuellement la plateforme.",
+    "Dans le même temps, SIPP est conçue pour évoluer. Notre technologie, notre modèle logistique et notre structure de partenariat sont pensés pour s'étendre aux régions côtières, aux pôles touristiques et aux marchés de livraison émergents.",
+  ],
+  about_mission_title: 'Notre mission',
+  about_mission_statement:
+    'Devenir la principale plateforme de livraison et de commerce local sur le littoral du Costa Rica — et un acteur régional durable dans les marchés à forte affluence touristique.',
+  about_mission_paragraphs: [
+    "Nous construisons bien plus qu'une application.",
+    'Nous construisons le système qui fait tourner le quotidien : repas, épicerie, restaurants et commerces locaux — tous réunis au même endroit.',
+  ],
+  about_tagline_label: 'SIPP en une phrase',
+  about_tagline_value: 'Tant d\'options. Zéro effort.',
+  // How It Works screen
+  how_it_works_title: 'Comment ça marche ?',
+  how_it_works_subtitle:
+    "SIPP est une plateforme de livraison en ligne qui apporte les meilleures adresses de votre ville directement à votre porte. Nous connectons les clients aux commerces locaux – restaurants, cafés, bars, épiceries – et gérons la livraison grâce à notre équipe logistique pour vous apporter ce dont vous avez besoin, quand vous en avez besoin.",
+  how_it_works_steps_title: 'Voici comment SIPP fonctionne en quatre étapes simples',
+  how_it_works_steps: [
+    {
+      title: '1. Parcourir & Commander',
+      description:
+        "Rendez-vous sur notre plateforme depuis n'importe quel appareil (téléphone, tablette ou ordinateur) et voyez ce qui vous tente. Parcourez par catégorie ou recherchez un restaurant, une boutique, un plat ou un produit précis. Connectez-vous, ajoutez des articles à votre panier et passez commande en quelques clics. Vous pouvez payer en toute sécurité par carte bancaire – simple, rapide et sans espèces.",
+    },
+    {
+      title: '2. Confirmation & Préparation',
+      description:
+        "Dès que vous commandez, nous transmettons automatiquement la demande au restaurant ou commerce choisi. Il donnera son accord et commencera à préparer vos articles avec soin. Qu'il s'agisse d'un plat chaud en cuisine ou de courses en cours d'emballage, nous veillons à ce que tout avance rapidement. C'est à ce moment que le statut de votre commande passera de En attente, à Acceptée puis à En préparation.",
+    },
+    {
+      title: '3. En cours de livraison',
+      description:
+        'Dès que votre commande est prête, l\'un de nos livreurs SIPP entre en action. Il récupère votre commande et se dirige directement vers votre adresse. Vous pouvez suivre votre livraison en temps réel sur notre plateforme. N\'hésitez pas à célébrer un peu : vos articles sont en route !',
+    },
+    {
+      title: '4. Livré & Bon appétit',
+      description:
+        "Ding-dong ! Votre livraison est arrivée. Notre livreur vous remettra votre commande à la porte. Il ne vous reste plus qu'à en profiter.",
+    },
+  ],
+  how_it_works_delivery_area_title: 'Où livrons-nous ?',
+  how_it_works_delivery_area_body:
+    "Actuellement, SIPP opère à Santa Teresa, au Costa Rica, et dans les environs – de Manzanillo à Santiago, Playa Hermosa, Playa Carmen et Mal País. Nous sommes un service local, nous connaissons donc ces routes comme notre poche (oui, ce raccourci derrière le surf shop ? On le connaît). Bonne nouvelle : nous nous étendons bientôt ! SIPP arrivera prochainement à Nosara, restez à l'écoute.",
+  how_it_works_closing_body:
+    "En résumé, SIPP fonctionne comme les grandes applications de livraison – avec un supplément d'esprit Pura Vida. Nous sommes fiers d'être rapides, fiables et un peu géniaux (on peut bien le dire nous-mêmes). Faim ? Soif ? Plus de dentifrice ? Quoi qu'il vous faille – SIPP it.",
+  // Contact Us screen
+  contact_title: '📬 Nous contacter',
+  contact_tagline: 'Des questions ? Une envie ? Une idée ?',
+  contact_body:
+    "Nous sommes à votre écoute — et sur la route pour vous. Que vous soyez un client affamé, un concierge curieux ou un restaurant prêt à nous rejoindre, nous serions ravis de vous entendre.",
+  contact_whatsapp_title: '📱 WhatsApp ou appelez-nous',
+  contact_whatsapp_subtitle: 'Le moyen le plus rapide de nous joindre — comme notre livraison.',
+  contact_phone_display: '📞 +506 7044 5484 — Appuyez pour discuter ou appeler !',
+  contact_email_title: '📩 Envoyez-nous un e-mail',
+  contact_email_subtitle: 'Vous préférez tout écrire ?',
+  contact_email_address: 'support@sippdelivery.com',
+  contact_support_title: "🎫 Besoin d'aide avec une commande ?",
+  contact_support_subtitle:
+    'Un souci ou une question sur votre compte ou une commande ? Ouvrez un ticket et notre équipe s\'en occupera.',
+  contact_support_cta: 'Créer un ticket',
+  contact_address: 'Santa Teresa, Provincia de Puntarenas, Puntarenas, Costa Rica',
+  contact_social_title: 'Suivez-nous',
+  contact_error_generic: "Nous n'avons pas pu terminer cette action. Veuillez réessayer.",
 };
 
 export default fr;

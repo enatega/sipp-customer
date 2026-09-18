@@ -12,6 +12,14 @@ export async function redirectToPendingAppIfNeeded() {
 
   const pendingRoute = await getPendingAppRoute();
 
+  if (!pendingRoute) {
+    // SIP Customer is deliveries-only. A standalone login (including social
+    // login) must always leave the Auth stack instead of relying on a route
+    // that may not exist in the nested auth navigator.
+    await setActiveAppRoute('Deliveries');
+    return resetToSharedRoute('Deliveries');
+  }
+
   // The auth gate pushes the Auth screen on top of whatever the user was
   // doing (see pushToAuth), so the original screen is usually still on the
   // stack underneath it. Popping back there preserves history (Home > Store
@@ -26,10 +34,6 @@ export async function redirectToPendingAppIfNeeded() {
     }
 
     return true;
-  }
-
-  if (!pendingRoute) {
-    return false;
   }
 
   // Fallback for when there's nothing to pop back to (e.g. the app was
@@ -69,26 +73,6 @@ export function resetToSharedRoute(
         params: {
           screen: routeName,
           params,
-        },
-      },
-    ],
-  });
-
-  return true;
-}
-
-export function resetToSharedHome() {
-  if (!navigationRef.isReady()) {
-    return false;
-  }
-
-  navigationRef.resetRoot({
-    index: 0,
-    routes: [
-      {
-        name: 'Main',
-        params: {
-          screen: 'Home',
         },
       },
     ],

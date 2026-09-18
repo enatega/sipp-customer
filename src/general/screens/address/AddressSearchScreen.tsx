@@ -11,6 +11,8 @@ import { addressService } from '../../api/addressService';
 import AddressSearchInput from '../../components/address/AddressSearchInput';
 import AddressSuggestionItem from '../../components/address/AddressSuggestionItem';
 import AddressSuggestionSkeleton from '../../components/address/AddressSuggestionSkeleton';
+import PopularAddressChips from '../../components/address/PopularAddressChips';
+import type { PopularAddress } from '../../data/popularAddresses';
 import useAddressPredictions from '../../hooks/useAddressPredictions';
 import type {
   AddressFlowHostParamList,
@@ -143,6 +145,24 @@ export default function AddressSearchScreen() {
     [editParams, nav, selectGuestLocation],
   );
 
+  const handleSelectPopularPlace = useCallback(
+    async (place: PopularAddress) => {
+      const accessToken = await authSession.getAccessToken();
+      if (!accessToken) {
+        selectGuestLocation(place.address, place.latitude, place.longitude);
+        return;
+      }
+
+      nav.navigate('AddressDetail', {
+        address: place.address,
+        latitude: place.latitude,
+        longitude: place.longitude,
+        ...editParams,
+      });
+    },
+    [editParams, nav, selectGuestLocation],
+  );
+
   const handleChooseOnMap = useCallback(async () => {
     const freshCoordinates = await refreshCurrentLocation();
     const resolvedCoordinates = freshCoordinates ?? currentCoordinates;
@@ -178,6 +198,7 @@ export default function AddressSearchScreen() {
         onChooseOnMap={handleChooseOnMap}
         isLoading={isShowingSkeleton}
       />
+      <PopularAddressChips onSelect={(place) => void handleSelectPopularPlace(place)} />
 
       {isShowingSkeleton ? (
         <View style={styles.listWrap}>
