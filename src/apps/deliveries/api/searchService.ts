@@ -10,6 +10,7 @@ import type {
   SearchRecommendationsResponse,
   SearchStoresParams,
   SearchStoresResponse,
+  SearchEventPayload,
 } from "./searchServiceTypes";
 
 const SEARCH_BASE = "/api/v1/apps/deliveries/search";
@@ -47,15 +48,24 @@ export const searchService = {
 
   searchProducts: (
     params: SearchProductsParams,
+    signal?: AbortSignal,
   ): Promise<SearchProductsResponse> =>
     apiClient.get<SearchProductsResponse>(
       `${SEARCH_BASE}/products`,
       params as Record<string, unknown>,
+      { signal },
     ),
 
-  searchStores: (params: SearchStoresParams): Promise<SearchStoresResponse> =>
+  searchStores: (
+    params: SearchStoresParams,
+    signal?: AbortSignal,
+  ): Promise<SearchStoresResponse> =>
     apiClient.get<SearchStoresResponse>(
       `${SEARCH_BASE}/stores`,
       params as Record<string, unknown>,
+      { signal },
     ),
+
+  trackEvent: (payload: SearchEventPayload): Promise<{ accepted: boolean }> =>
+    apiClient.post<{ accepted: boolean }>(`${SEARCH_BASE}/events`, payload),
 };

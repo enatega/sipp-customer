@@ -19,6 +19,8 @@ export default function SearchResults({
   isFetchingMoreStores,
   onLoadMoreProducts,
   onLoadMoreStores,
+  onProductPress,
+  onStorePress,
 }: SearchResultsProps) {
   const { motion, spacing } = useTheme();
   const isReducedMotionEnabled = useReducedMotion();
@@ -55,6 +57,7 @@ export default function SearchResults({
             products={products}
             onLoadMore={onLoadMoreProducts}
             isLoadingMore={isFetchingMoreProducts}
+            onProductPress={onProductPress}
           />
         </View>
       ) : null}
@@ -65,6 +68,7 @@ export default function SearchResults({
             stores={stores}
             onLoadMore={onLoadMoreStores}
             isLoadingMore={isFetchingMoreStores}
+            onStorePress={onStorePress}
           />
         </View>
       ) : null}

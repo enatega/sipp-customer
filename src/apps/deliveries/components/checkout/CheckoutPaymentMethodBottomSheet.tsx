@@ -18,7 +18,6 @@ import {
 
 type Props = {
   isCardEnabled: boolean;
-  isCashEnabled: boolean;
   isWalletEnabled: boolean;
   walletBalance: number;
   currencyLabel: string;
@@ -100,7 +99,6 @@ function PaymentOption({
 
 export default function CheckoutPaymentMethodBottomSheet({
   isCardEnabled,
-  isCashEnabled,
   isWalletEnabled,
   walletBalance,
   currencyLabel,
@@ -122,7 +120,7 @@ export default function CheckoutPaymentMethodBottomSheet({
   const hasSavedCards = savedCards.length > 0;
   const visibleCardCount = draftMethod === 'stripe' ? savedCards.length + 1 : 0;
   const estimatedContentHeight = 116
-    + (3 * 84)
+    + (2 * 84)
     + (visibleCardCount > 0 ? Math.min(visibleCardCount, 4) * 58 + spacing.md : 0)
     + 88
     + Math.max(insets.bottom, spacing.lg);
@@ -130,8 +128,7 @@ export default function CheckoutPaymentMethodBottomSheet({
   const horizontalInset = width > layout.contentMaxWidth.readable
     ? (width - layout.contentMaxWidth.readable) / 2
     : 0;
-  const isConfirmDisabled = (draftMethod === 'cod' && !isCashEnabled)
-    || (draftMethod === 'stripe' && (!isCardEnabled || !selectedCardId))
+  const isConfirmDisabled = (draftMethod === 'stripe' && (!isCardEnabled || !selectedCardId))
     || (draftMethod === 'wallet' && !isWalletEnabled);
 
   React.useEffect(() => {
@@ -206,14 +203,6 @@ export default function CheckoutPaymentMethodBottomSheet({
           contentContainerStyle={[styles.content, { gap: spacing.md, padding: spacing.lg }]}
           showsVerticalScrollIndicator={false}
         >
-          <PaymentOption
-            description={getCheckoutPaymentMethodSubtitle('cod', t)}
-            disabled={!isCashEnabled}
-            icon="cash-outline"
-            isSelected={draftMethod === 'cod'}
-            label={getCheckoutPaymentMethodTitle('cod', t)}
-            onPress={() => setDraftMethod('cod')}
-          />
           <PaymentOption
             description={isCardEnabled
               ? hasSavedCards

@@ -181,6 +181,7 @@ export interface DeliveryNearbyStore {
     baseFee?: number | null;
     distanceKm?: number | null;
     isAvailable?: boolean;
+    isClosed?: boolean;
     deal?: string | null;
     dealType?: string | null;
     dealAmount?: number | null;
@@ -257,6 +258,7 @@ export interface DeliveryStoreDetailsStore {
     description?: string | null;
     storeTimings?: DeliveryStoreTimings | null;
     isAvailable?: boolean;
+    isClosed?: boolean;
     isFavorited?: boolean;
     isFavorite?: boolean;
     contact?: DeliveryStoreContact | null;

@@ -58,14 +58,14 @@ export function useProductSearch(
       params?.latitude,
       params?.longitude,
     ),
-    queryFn: ({ pageParam }) =>
+    queryFn: ({ pageParam, signal }) =>
       searchService.searchProducts({
         keyword,
         offset: pageParam,
         limit: SEARCH_LIMIT,
         latitude: params?.latitude,
         longitude: params?.longitude,
-      }),
+      }, signal),
     initialPageParam: 0,
     getNextPageParam: (lastPage) =>
       lastPage.isEnd ? undefined : (lastPage.nextOffset ?? undefined),
@@ -91,14 +91,14 @@ export function useStoreSearch(
       params?.latitude,
       params?.longitude,
     ),
-    queryFn: ({ pageParam }) =>
+    queryFn: ({ pageParam, signal }) =>
       searchService.searchStores({
         keyword,
         offset: pageParam,
         limit: SEARCH_LIMIT,
         latitude: params?.latitude,
         longitude: params?.longitude,
-      }),
+      }, signal),
     initialPageParam: 0,
     getNextPageParam: (lastPage) =>
       lastPage.isEnd ? undefined : (lastPage.nextOffset ?? undefined),

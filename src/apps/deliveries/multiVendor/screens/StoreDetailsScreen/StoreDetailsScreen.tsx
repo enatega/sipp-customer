@@ -125,26 +125,17 @@ function getTodayStoreHours(
 
 function isStoreOrderAvailable(store?: {
   isAvailable?: boolean;
-  storeTimings?: DeliveryStoreTimings | null;
+  isClosed?: boolean;
 } | null) {
   if (!store) {
     return true;
   }
 
-  if (store.isAvailable === false) {
-    return false;
-  }
-
-  const dayKey = new Intl.DateTimeFormat('en-US', { weekday: 'long' })
-    .format(new Date())
-    .toLowerCase();
-  const daySchedule = store.storeTimings?.[dayKey];
-
-  if (!daySchedule) {
-    return true;
-  }
-
-  return daySchedule.is_active && daySchedule.slots.length > 0;
+  // The backend is the single source of truth for whether a store is
+  // currently open (it accounts for the store's own timezone and
+  // operating-hours schedule) — the same `isClosed` flag used by the
+  // home listing, search results, and cart validation.
+  return !(store.isAvailable === false || store.isClosed === true);
 }
 
 export default function StoreDetailsScreen() {

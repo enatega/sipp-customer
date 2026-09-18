@@ -198,7 +198,7 @@ export default function CheckoutScreen() {
   const [leaveAtDoor, setLeaveAtDoor] = React.useState(false);
   const [deliveryTimeMode, setDeliveryTimeMode] = React.useState<CheckoutDeliveryTimeMode>('standard');
   const [scheduledAt, setScheduledAt] = React.useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = React.useState<CheckoutPaymentMethod>('cod');
+  const [paymentMethod, setPaymentMethod] = React.useState<CheckoutPaymentMethod>('wallet');
   const [messages, setMessages] = React.useState<CheckoutMessages>({
     restaurant: '',
     courier: '',
@@ -969,7 +969,6 @@ export default function CheckoutScreen() {
 
       <CheckoutPaymentMethodBottomSheet
         isCardEnabled={adjustedPreview?.store.stripeAllowed ?? false}
-        isCashEnabled={adjustedPreview?.store.codAllowed ?? true}
         isWalletEnabled={isWalletEnabled}
         walletBalance={walletBalance}
         currencyLabel={currencyLabel}

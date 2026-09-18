@@ -24,6 +24,7 @@ export type StoreCardScrollerProps = {
   onSeeAllPress?: () => void;
   onLoadMore?: () => void;
   isLoadingMore?: boolean;
+  onStorePress?: (store: SearchStoreItem) => void;
 };
 
 export type SearchResultsProps = {
@@ -37,6 +38,8 @@ export type SearchResultsProps = {
   isFetchingMoreStores?: boolean;
   onLoadMoreProducts?: () => void;
   onLoadMoreStores?: () => void;
+  onProductPress?: (product: SearchProductItem) => void;
+  onStorePress?: (store: SearchStoreItem) => void;
 };
 
 export type SearchMainContainerProps = {

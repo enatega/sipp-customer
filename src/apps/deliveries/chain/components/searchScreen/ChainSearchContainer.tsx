@@ -18,6 +18,8 @@ export default function ChainSearchContainer() {
         isFetchingMoreStores={searchFlow?.isFetchingMoreStores}
         onLoadMoreProducts={searchFlow?.handleLoadMoreProducts}
         onLoadMoreStores={searchFlow?.handleLoadMoreStores}
+        onProductPress={searchFlow?.handleProductPress}
+        onStorePress={searchFlow?.handleStorePress}
       />
     </SearchMainContainer>
   );

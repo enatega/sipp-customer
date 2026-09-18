@@ -24,6 +24,7 @@ export default function StoreCardScroller({
   onSeeAllPress,
   onLoadMore,
   isLoadingMore,
+  onStorePress,
 }: StoreCardScrollerProps) {
   const { colors, spacing } = useTheme();
   const { t } = useTranslation('deliveries');
@@ -61,6 +62,7 @@ export default function StoreCardScroller({
               store={item}
               showClosedOverlay={isClosed}
               onClosedPress={isClosed ? () => handleClosedStorePress(item) : undefined}
+              onPress={!isClosed && onStorePress ? () => onStorePress(item) : undefined}
             />
           );
         }}

@@ -30,6 +30,10 @@ import useSelectSavedAddress from "../../../../general/hooks/useSelectSavedAddre
 import { type DeliverySearchFlowOptions } from "./types";
 import useDeliveriesTabSheetOffset from "../useDeliveriesTabSheetOffset";
 import type { DeliverySearchRouteParams } from "../../navigation/sharedTypes";
+import { searchService } from "../../api/searchService";
+import type { SearchProductItem, SearchStoreItem } from "../../api/searchServiceTypes";
+import { pushStoreDetails } from "../../navigation/storeDetailsNavigation";
+import type { DeliveryNearbyStore } from "../../api/types";
 
 type DeliveriesNavigationProp =
   NativeStackNavigationProp<DeliveriesStackParamList>;
@@ -160,9 +164,21 @@ export default function useDeliverySearchFlow(
 
   const recommendations = recommendationsData ?? [];
   const recentSearches = recentSearchesData?.items ?? [];
-  const products = productsData?.pages.flatMap((page) => page.items) ?? [];
+  const products = productsData?.pages.flatMap((page) =>
+    page.items.map((item, index) => ({
+      ...item,
+      searchQueryId: page.searchMeta?.queryId,
+      searchPosition: page.offset + index + 1,
+    })),
+  ) ?? [];
   const stores = shouldSearchStores
-    ? (storesData?.pages.flatMap((page) => page.items) ?? [])
+    ? (storesData?.pages.flatMap((page) =>
+        page.items.map((item, index) => ({
+          ...item,
+          searchQueryId: page.searchMeta?.queryId,
+          searchPosition: page.offset + index + 1,
+        })),
+      ) ?? [])
     : [];
   const {
     deletingRecentSearchId,
@@ -245,6 +261,40 @@ export default function useDeliverySearchFlow(
     shouldSearchStores,
   ]);
 
+  const handleProductPress = useCallback(
+    (product: SearchProductItem) => {
+      if (product.searchQueryId) {
+        void searchService.trackEvent({
+          eventType: "click",
+          resourceType: "product",
+          eventName: "Product Opened",
+          queryId: product.searchQueryId,
+          objectId: product.productId,
+          position: product.searchPosition,
+        }).catch(() => undefined);
+      }
+      navigation.navigate("ProductInfo", { productId: product.productId });
+    },
+    [navigation],
+  );
+
+  const handleStorePress = useCallback(
+    (store: SearchStoreItem) => {
+      if (store.searchQueryId) {
+        void searchService.trackEvent({
+          eventType: "click",
+          resourceType: "store",
+          eventName: "Store Opened",
+          queryId: store.searchQueryId,
+          objectId: store.storeId,
+          position: store.searchPosition,
+        }).catch(() => undefined);
+      }
+      pushStoreDetails(navigation, store as DeliveryNearbyStore);
+    },
+    [navigation],
+  );
+
   const handleSelectAddress = useCallback(
     async (address: ProfileAddress) => {
       try {
@@ -314,6 +364,8 @@ export default function useDeliverySearchFlow(
     handleRecentSearchPress,
     handleLoadMoreProducts,
     handleLoadMoreStores,
+    handleProductPress,
+    handleStorePress,
     onDeleteRecentSearch: handleDeleteRecentSearch,
     onClearRecentSearches: handleClearRecentSearches,
     addressSheet: {

@@ -449,6 +449,7 @@ export type ApiRequestOptions = {
   skipAuth?: boolean;
   suppressTransientSuccessStreamWarning?: boolean;
   headers?: Record<string, string>;
+  signal?: AbortSignal;
 };
 
 async function request<T>(
@@ -458,6 +459,7 @@ async function request<T>(
   try {
     const requestConfig: ExtendedAxiosRequestConfig = {
       ...config,
+      signal: options.signal ?? config.signal,
       skipSessionExpiryHandling: options.skipSessionExpiryHandling,
       suppressTransientSuccessStreamWarning: options.suppressTransientSuccessStreamWarning,
       headers: options.skipAuth

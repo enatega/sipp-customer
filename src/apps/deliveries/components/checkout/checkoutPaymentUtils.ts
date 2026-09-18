@@ -45,17 +45,9 @@ export function isCheckoutPaymentMethodAvailable(
 export function getPreferredCheckoutPaymentMethod(
   store?: CheckoutPreviewStore | null,
 ): CheckoutPaymentMethod {
-  if (!store) {
-    return 'cod';
-  }
-
-  if (store.codAllowed) {
-    return 'cod';
-  }
-
-  if (store.stripeAllowed) {
+  if (!store || store.stripeAllowed) {
     return 'stripe';
   }
 
-  return 'cod';
+  return 'wallet';
 }

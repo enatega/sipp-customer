@@ -10,6 +10,11 @@ export type SearchRecommendation = {
 
 export type SearchRecommendationsResponse = SearchRecommendation[];
 
+export type SearchMeta = {
+  provider: "algolia" | "database";
+  queryId?: string;
+};
+
 // ---------------------------------------------------------------------------
 // Recent Searches
 // ---------------------------------------------------------------------------
@@ -59,6 +64,8 @@ export type SearchProductItem = {
   deal: string | null;
   dealType: string | null;
   dealAmount: number | null;
+  searchQueryId?: string;
+  searchPosition?: number;
 };
 
 export type SearchProductsResponse = {
@@ -68,6 +75,7 @@ export type SearchProductsResponse = {
   total: number;
   isEnd: boolean;
   nextOffset: number | null;
+  searchMeta?: SearchMeta;
 };
 
 export type SearchProductsParams = {
@@ -102,6 +110,8 @@ export type SearchStoreItem = {
   dealType: string | null;
   dealAmount: number | null;
   isFavorite: boolean;
+  searchQueryId?: string;
+  searchPosition?: number;
 };
 
 export type SearchStoresResponse = {
@@ -111,6 +121,7 @@ export type SearchStoresResponse = {
   total: number;
   isEnd: boolean;
   nextOffset: number | null;
+  searchMeta?: SearchMeta;
 };
 
 export type SearchStoresParams = {
@@ -123,4 +134,13 @@ export type SearchStoresParams = {
   priceId?: string;
   addressId?: string;
   sortId?: string;
+};
+
+export type SearchEventPayload = {
+  eventType: "click" | "conversion";
+  resourceType: "product" | "store";
+  queryId: string;
+  objectId: string;
+  position?: number;
+  eventName: "Product Opened" | "Store Opened" | "Product Ordered";
 };
