@@ -1,114 +1,64 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useNavigation } from '@react-navigation/native';
+
 import ScreenHeader from '../../../../general/components/ScreenHeader';
-import Text from '../../../../general/components/Text';
+import PlatformGlassSurface from '../../../../general/components/PlatformGlassSurface';
 import { useTheme } from '../../../../general/theme/theme';
+import WalletBalanceCard from './WalletBalanceCard';
 
 type Props = {
   balanceLabel: string;
   balance: number;
   currency: string;
-  loyaltyAmount?: number;
-  loyaltyAmountLabel?: string;
-  loyaltyPoints?: number;
-  loyaltyPointsLabel?: string;
-  loyaltyRateLabel?: string;
+  isLoading?: boolean;
+  isError?: boolean;
+  onViewDetails: () => void;
+  onOpenSettings: () => void;
 };
 
-export default function WalletBalanceHeader({
-  balanceLabel,
-  balance,
-  currency,
-  loyaltyAmount,
-  loyaltyAmountLabel,
-  loyaltyPoints,
-  loyaltyPointsLabel,
-  loyaltyRateLabel,
-}: Props) {
+export default function WalletBalanceHeader({ balanceLabel, balance, currency, isLoading = false, isError = false, onViewDetails, onOpenSettings }: Props) {
   const { colors } = useTheme();
   const { t } = useTranslation('deliveries');
+  const { t: tGeneral } = useTranslation('general');
+  const navigation = useNavigation();
 
   return (
-    <LinearGradient
-      colors={[colors.bannerGradientStart, colors.bannerGradientEnd]}
-      start={{ x: 1, y: 0.5 }}
-      end={{ x: 0, y: 0.5 }}
-      style={styles.gradient}
-    >
-      <ScreenHeader foregroundColor={colors.white} title={t('wallet_title')} style={styles.header} showBack />
-      <View style={styles.balanceSection}>
-        <View style={[styles.walletGlyph, { backgroundColor: colors.glassHighlight }]}> 
-          <Ionicons name="wallet-outline" size={22} color={colors.white} />
-        </View>
-        <View style={styles.balanceCopy}>
-          <Text weight="medium" color={colors.white} style={styles.label}>{balanceLabel}</Text>
-          <Text weight="extraBold" color={colors.white} style={styles.amount}>
-            {`${currency} ${balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-          </Text>
-        </View>
-        {loyaltyPointsLabel ? (
-          <View style={[styles.loyaltyPanel, { backgroundColor: colors.glassHighlight }]}> 
-            <View style={styles.loyaltyMetric}>
-              <Text color={colors.white} weight="bold" style={styles.loyaltyValue}>{(loyaltyPoints ?? 0).toLocaleString()}</Text>
-              <Text color={colors.white} style={styles.loyaltyLabel}>{loyaltyPointsLabel}</Text>
-            </View>
-            <View style={[styles.loyaltyDivider, { backgroundColor: colors.glassBorder }]} />
-            <View style={styles.loyaltyMetric}>
-              <Text color={colors.white} weight="bold" style={styles.loyaltyValue}>{`${currency} ${(loyaltyAmount ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`}</Text>
-              <Text color={colors.white} style={styles.loyaltyLabel}>{loyaltyAmountLabel}</Text>
-            </View>
-            <Text color={colors.white} style={styles.rateLabel}>{loyaltyRateLabel}</Text>
-          </View>
-        ) : null}
-      </View>
-    </LinearGradient>
+    <View>
+      <ScreenHeader
+        title={t('wallet_title')}
+        style={{ backgroundColor: colors.walletBackground, paddingBottom: 4 }}
+        leftSlot={
+          <Pressable accessibilityRole="button" accessibilityLabel={tGeneral('navigation_back')} onPress={() => navigation.goBack()} style={styles.headerControl}>
+            <PlatformGlassSurface style={styles.headerGlass}>
+              <Ionicons name="arrow-back" size={21} color={colors.text} />
+            </PlatformGlassSurface>
+          </Pressable>
+        }
+        rightSlot={
+          <Pressable accessibilityRole="button" accessibilityLabel={t('settings_title')} onPress={onOpenSettings} style={styles.headerControl}>
+            <PlatformGlassSurface style={styles.headerGlass}>
+              <Ionicons name="settings-outline" size={20} color={colors.text} />
+            </PlatformGlassSurface>
+          </Pressable>
+        }
+      />
+      <WalletBalanceCard
+        balance={balance}
+        balanceLabel={balanceLabel}
+        currency={currency}
+        actionLabel={t('wallet_view_details')}
+        onAction={onViewDetails}
+        isLoading={isLoading}
+        isError={isError}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  gradient: {
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
-    overflow: 'hidden',
-    paddingBottom: 24,
-  },
-  header: {
-    backgroundColor: 'transparent',
-  },
-  balanceSection: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    paddingHorizontal: 16,
-  },
-  balanceCopy: { flex: 1, gap: 2 },
-  label: {
-    fontSize: 14,
-    lineHeight: 22,
-  },
-  amount: {
-    fontSize: 30,
-    fontVariant: ['tabular-nums'],
-    lineHeight: 36,
-    letterSpacing: -0.36,
-  },
-  loyaltyDivider: { height: 36, width: StyleSheet.hairlineWidth },
-  loyaltyLabel: { fontSize: 11, lineHeight: 15, opacity: 0.82 },
-  loyaltyMetric: { flex: 1, gap: 2 },
-  loyaltyPanel: {
-    alignItems: 'center',
-    borderRadius: 16,
-    flexBasis: '100%',
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
-    padding: 14,
-  },
-  loyaltyValue: { fontSize: 16, fontVariant: ['tabular-nums'], lineHeight: 20 },
-  rateLabel: { bottom: 4, fontSize: 10, opacity: 0.72, position: 'absolute', right: 12 },
-  walletGlyph: { alignItems: 'center', borderRadius: 16, height: 52, justifyContent: 'center', width: 52 },
+  headerControl: { alignItems: 'center', height: 44, justifyContent: 'center', width: 44 },
+  headerGlass: { alignItems: 'center', borderRadius: 20, height: 40, justifyContent: 'center', overflow: 'hidden', width: 40 },
 });

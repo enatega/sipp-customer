@@ -11,6 +11,7 @@ import DeliveriesTabBar, {
 import MultiVendorProfileTabScreen from '../../screens/ProfileTab/MultiVendorProfileTabScreen';
 import OrdersScreen from '../../screens/OrdersScreen/OrdersScreen';
 import AuthenticatedDeliveriesScreen from '../../components/navigation/AuthenticatedDeliveriesScreen';
+import { createAuthGatedTabPressListener } from '../../navigation/deliveriesAuthGate';
 
 const Tab = createBottomTabNavigator();
 
@@ -70,6 +71,7 @@ function MultiVendorBottomTabNavigator() {
           tabBarLabel: t('multi_vendor_tab_orders'),
           title: t('multi_vendor_tab_orders'),
         }}
+        listeners={createAuthGatedTabPressListener}
       >
         {() => <AuthenticatedDeliveriesScreen component={OrdersScreen} />}
       </Tab.Screen>
@@ -81,6 +83,7 @@ function MultiVendorBottomTabNavigator() {
           tabBarLabel: t('multi_vendor_tab_profile'),
           title: t('multi_vendor_tab_profile'),
         }}
+        listeners={createAuthGatedTabPressListener}
       />
     </Tab.Navigator>
   );

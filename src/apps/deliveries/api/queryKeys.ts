@@ -127,6 +127,11 @@ export const deliveryKeys = {
         [...deliveryKeys.discovery(), 'recommended-stores'] as const,
     publicShopTypes: (filters?: { limit?: number }) =>
         [...deliveryKeys.discovery(), 'public-shop-types', filters] as const,
+    storeMenu: (storeId: string) => [...deliveryKeys.discovery(), 'store-menu', storeId] as const,
+    storeMenuWindow: (storeId: string, sectionId: string, generation: number, instanceId: string) =>
+        [...deliveryKeys.discovery(), 'store-menu-window', storeId, instanceId, sectionId, generation] as const,
+    storeMenuSearch: (storeId: string, search: string) =>
+        [...deliveryKeys.discovery(), 'store-menu-search', storeId, search] as const,
     storeView: (storeId: string) =>
         [
             ...deliveryKeys.discovery(),

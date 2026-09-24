@@ -1,17 +1,23 @@
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import React from 'react';
+import type { ComponentType } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import PressableScale from '../../../../../general/components/PressableScale';
 import Text from '../../../../../general/components/Text';
 import { useWindowClass } from '../../../../../general/hooks/useWindowClass';
 import { useTheme } from '../../../../../general/theme/theme';
+import QuickActionDealsIcon from './quickActionIcons/QuickActionDealsIcon';
+import QuickActionHeartIcon from './quickActionIcons/QuickActionHeartIcon';
+import QuickActionReorderIcon from './quickActionIcons/QuickActionReorderIcon';
+import QuickActionStoreIcon from './quickActionIcons/QuickActionStoreIcon';
+import type { QuickActionIconProps } from './quickActionIcons/types';
 
 export type HomeQuickActionId = 'browse' | 'deals' | 'orders' | 'favourites';
 
 type QuickAction = {
   id: HomeQuickActionId;
-  icon: keyof typeof MaterialCommunityIcons.glyphMap;
+  Icon: ComponentType<QuickActionIconProps>;
   labelKey: string;
   foreground:
     | 'quickActionBrowseForeground'
@@ -25,31 +31,34 @@ type QuickAction = {
     | 'quickActionFavouritesSurface';
 };
 
+const ICON_SIZE = 52;
+const PEDESTAL_SIZE = 68;
+
 const ACTIONS: QuickAction[] = [
   {
     id: 'browse',
-    icon: 'storefront-outline',
+    Icon: QuickActionStoreIcon,
     labelKey: 'multi_vendor_home_quick_browse',
     foreground: 'quickActionBrowseForeground',
     surface: 'quickActionBrowseSurface',
   },
   {
     id: 'deals',
-    icon: 'tag-outline',
+    Icon: QuickActionDealsIcon,
     labelKey: 'multi_vendor_home_quick_deals',
     foreground: 'quickActionDealsForeground',
     surface: 'quickActionDealsSurface',
   },
   {
     id: 'orders',
-    icon: 'history',
+    Icon: QuickActionReorderIcon,
     labelKey: 'multi_vendor_home_quick_orders',
     foreground: 'quickActionOrdersForeground',
     surface: 'quickActionOrdersSurface',
   },
   {
     id: 'favourites',
-    icon: 'heart-outline',
+    Icon: QuickActionHeartIcon,
     labelKey: 'multi_vendor_home_quick_favourites',
     foreground: 'quickActionFavouritesForeground',
     surface: 'quickActionFavouritesSurface',
@@ -62,7 +71,7 @@ type Props = {
 
 export default function AllInOneQuickActions({ onActionPress }: Props) {
   const { t } = useTranslation('deliveries');
-  const { colors, layout, shape, spacing } = useTheme();
+  const { colors, elevation, layout, shape, spacing } = useTheme();
   const { gutter } = useWindowClass();
 
   return (
@@ -77,7 +86,7 @@ export default function AllInOneQuickActions({ onActionPress }: Props) {
         },
       ]}
     >
-      {ACTIONS.map((action) => (
+      {ACTIONS.map(({ Icon, ...action }) => (
         <PressableScale
           accessibilityLabel={t(action.labelKey)}
           accessibilityRole="button"
@@ -86,40 +95,45 @@ export default function AllInOneQuickActions({ onActionPress }: Props) {
           pressedScale={0.96}
           style={[
             styles.action,
-            {
-              backgroundColor: colors[action.surface],
-              borderColor: colors.divider,
-              borderRadius: shape.radius.surface,
-              gap: spacing.sm,
-              paddingHorizontal: spacing.xs,
-              paddingVertical: spacing.md,
-            },
+            elevation.subtle,
+            { backgroundColor: colors.surface, borderRadius: shape.radius.surface },
           ]}
         >
-          <View
+          <LinearGradient
+            colors={[colors[action.surface], colors.surface]}
+            end={{ x: 0.5, y: 1 }}
+            start={{ x: 0.5, y: 0 }}
             style={[
-              styles.iconSurface,
+              styles.gradient,
               {
-                backgroundColor: colors.surfaceElevated,
-                borderRadius: shape.radius.control,
+                borderColor: colors.divider,
+                borderRadius: shape.radius.surface,
+                gap: spacing.xs,
+                paddingBottom: spacing.md,
+                paddingHorizontal: spacing.xs,
+                paddingTop: spacing.sm,
               },
             ]}
           >
-            <MaterialCommunityIcons
+            <View style={styles.iconStage}>
+              <View
+                style={[
+                  styles.pedestal,
+                  { backgroundColor: colors.surfaceElevated },
+                ]}
+              />
+              <Icon size={ICON_SIZE} />
+            </View>
+            <Text
               color={colors[action.foreground]}
-              name={action.icon}
-              size={24}
-            />
-          </View>
-          <Text
-            color={colors[action.foreground]}
-            numberOfLines={2}
-            style={styles.label}
-            variant="caption"
-            weight="bold"
-          >
-            {t(action.labelKey)}
-          </Text>
+              numberOfLines={2}
+              style={styles.label}
+              variant="caption"
+              weight="bold"
+            >
+              {t(action.labelKey)}
+            </Text>
+          </LinearGradient>
         </PressableScale>
       ))}
     </View>
@@ -128,22 +142,31 @@ export default function AllInOneQuickActions({ onActionPress }: Props) {
 
 const styles = StyleSheet.create({
   action: {
+    flex: 1,
+    minWidth: 0,
+  },
+  gradient: {
     alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
     flex: 1,
-    justifyContent: 'center',
-    minHeight: 104,
-    minWidth: 0,
-  },
-  iconSurface: {
-    alignItems: 'center',
-    height: 48,
-    justifyContent: 'center',
-    width: 48,
+    justifyContent: 'flex-start',
+    minHeight: 116,
+    overflow: 'hidden',
   },
   label: {
     minHeight: 32,
     textAlign: 'center',
+  },
+  iconStage: {
+    alignItems: 'center',
+    height: PEDESTAL_SIZE,
+    justifyContent: 'center',
+    width: PEDESTAL_SIZE,
+  },
+  pedestal: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: PEDESTAL_SIZE / 2,
+    opacity: 0.85,
   },
   row: {
     alignSelf: 'center',

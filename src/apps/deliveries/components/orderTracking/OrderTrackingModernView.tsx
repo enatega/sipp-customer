@@ -310,6 +310,7 @@ function GlassMapButton({ accessibilityLabel, icon, onPress, size = "default" }:
     >
       <PlatformGlassSurface
         effectStyle="clear"
+        scrimColor={colors.glassControlScrim}
         style={[
           styles.glassButton,
           {
@@ -320,7 +321,7 @@ function GlassMapButton({ accessibilityLabel, icon, onPress, size = "default" }:
           },
         ]}
       >
-        <Ionicons color={colors.text} name={icon} size={size === "small" ? 21 : 24} />
+        <Ionicons color={colors.glassControlForeground} name={icon} size={size === "small" ? 21 : 24} />
       </PlatformGlassSurface>
     </PressableScale>
   );

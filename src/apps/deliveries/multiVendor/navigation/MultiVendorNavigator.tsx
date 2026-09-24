@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import MultiVendorBottomTabNavigator from './MultiVendorBottomTabNavigator';
 import FavouritesScreen from '../screens/FavouritesScreen/FavouritesScreen';
+import StoreMenuSearchScreen from '../screens/StoreMenuSearchScreen';
 import StoreDetailsScreen from '../screens/StoreDetailsScreen/StoreDetailsScreen';
 import type { MultiVendorStackParamList } from './types';
 import DeliveriesSeeAllMapView from '../../screens/SeeAllScreen/DeliveriesSeeAllMapView';
@@ -36,6 +37,7 @@ export default function MultiVendorNavigator() {
         component={StoreDetailsScreen}
         options={hiddenHeaderOptions}
       />
+      <Stack.Screen name="StoreMenuSearch" component={StoreMenuSearchScreen} options={hiddenHeaderOptions} />
       <Stack.Screen
         name="SeeAllMapView"
         component={DeliveriesSeeAllMapView}

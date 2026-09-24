@@ -1,5 +1,6 @@
 import {
   InfiniteData,
+  keepPreviousData,
   useInfiniteQuery,
   useQueries,
   useQuery,
@@ -705,7 +706,7 @@ export function useStoreView(
 ) {
   return useQuery<DeliveryStoreViewApiResponse, ApiError>({
     queryKey: deliveryKeys.storeView(storeId),
-    queryFn: () => discoveryService.getStoreView(storeId),
+    queryFn: ({ signal }) => discoveryService.getStoreView(storeId, signal),
     staleTime: 5 * 60 * 1000,
     refetchOnMount: 'always',
     enabled: Boolean(storeId),
@@ -738,18 +739,24 @@ export function useStoreProducts(
       selectedCategoryId,
       selectedSubcategoryId,
     }),
-    queryFn: ({ pageParam }) =>
+    queryFn: ({ pageParam, signal }) =>
       discoveryService.getStoreProducts(storeId, {
         offset: pageParam,
         limit,
         search,
         selectedCategoryId,
         selectedSubcategoryId,
-      }),
+      }, signal),
     initialPageParam: 0,
     getNextPageParam: (lastPage) =>
       lastPage.isEnd ? undefined : (lastPage.nextOffset ?? undefined),
     enabled: Boolean(storeId),
+    // Switching in/out of a search term (or between category filters)
+    // changes this query's key, which would otherwise blank the screen
+    // back to its loading skeleton mid-browse — jarring, and it collapses
+    // the list's content height out from under the shopper's scroll
+    // position. Keep showing the previous results while the new ones load.
+    placeholderData: keepPreviousData,
     ...options,
   });
 }

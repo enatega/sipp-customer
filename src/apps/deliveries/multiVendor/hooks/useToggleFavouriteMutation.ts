@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { StoreMenuBootstrap } from '../../api/storeMenuService';
 import { ApiError } from '../../../../general/api/apiClient';
 import { deliveryKeys, favouriteKeys } from '../../api/queryKeys';
 import {
@@ -32,6 +33,9 @@ export function useToggleFavouriteMutation(options?: Options) {
                 queryClient.invalidateQueries({
                     queryKey: deliveryKeys.storeView(options.storeId),
                 });
+                queryClient.setQueryData<StoreMenuBootstrap>(deliveryKeys.storeMenu(options.storeId), (current) =>
+                    current ? { ...current, store: { ...current.store, isFavorited: data.isFavorite } } : current,
+                );
             }
 
             options?.onSuccess?.(data);

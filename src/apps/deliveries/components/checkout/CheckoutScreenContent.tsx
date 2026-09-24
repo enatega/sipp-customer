@@ -33,6 +33,7 @@ type Props = {
   isPreviewEnabled: boolean;
   isPreviewError: boolean;
   isStoreClosedError?: boolean;
+  isAddressOutsideDeliveryAreaError?: boolean;
   isPreviewPending: boolean;
   leaveAtDoor: boolean;
   onAddressPress: () => void;
@@ -78,6 +79,7 @@ export default function CheckoutScreenContent({
   isPreviewEnabled,
   isPreviewError,
   isStoreClosedError = false,
+  isAddressOutsideDeliveryAreaError = false,
   isPreviewPending,
   leaveAtDoor,
   onAddressPress,
@@ -286,18 +288,27 @@ export default function CheckoutScreenContent({
           {isPreviewEnabled && isPreviewError && !isPaymentBlocked ? (
             <ListStateView
               variant="error"
+              icon={isAddressOutsideDeliveryAreaError ? 'location-outline' : undefined}
               title={t(
-                isStoreClosedError
-                  ? 'checkout_store_closed_title'
-                  : 'checkout_preview_error_title',
+                isAddressOutsideDeliveryAreaError
+                  ? 'checkout_address_outside_delivery_area_title'
+                  : isStoreClosedError
+                    ? 'checkout_store_closed_title'
+                    : 'checkout_preview_error_title',
               )}
               description={t(
-                isStoreClosedError
-                  ? 'checkout_store_closed_message'
-                  : 'checkout_preview_error_message',
+                isAddressOutsideDeliveryAreaError
+                  ? 'checkout_address_outside_delivery_area_message'
+                  : isStoreClosedError
+                    ? 'checkout_store_closed_message'
+                    : 'checkout_preview_error_message',
               )}
-              actionLabel={t('generic_list_retry')}
-              onActionPress={onRetryPreview}
+              actionLabel={t(
+                isAddressOutsideDeliveryAreaError
+                  ? 'checkout_change_address'
+                  : 'generic_list_retry',
+              )}
+              onActionPress={isAddressOutsideDeliveryAreaError ? onAddressPress : onRetryPreview}
               containerStyle={styles.stateBlock}
             />
           ) : null}

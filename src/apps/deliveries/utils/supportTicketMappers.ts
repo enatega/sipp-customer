@@ -2,6 +2,11 @@ import type { SupportTicketListItemResponse } from '../api/supportTicketService'
 
 export type SupportTicketStatusTone = 'success' | 'info' | 'danger';
 
+export type SupportTicketFilter = 'all' | 'active' | 'closed';
+
+const ACTIVE_STATUS_KEYS = ['opened', 'open', 'in_progress'];
+const CLOSED_STATUS_KEYS = ['resolved', 'closed'];
+
 export type SupportTicketListItemModel = {
   assignedAdminId?: string;
   chatBoxId?: string;
@@ -10,6 +15,7 @@ export type SupportTicketListItemModel = {
   id: string;
   orderIdLabel?: string;
   preview: string;
+  statusKey: string;
   statusLabel: string;
   statusTone: SupportTicketStatusTone;
   title: string;
@@ -51,8 +57,24 @@ export function mapSupportTicketToListItem(
     dayNumber: ticket.date.day,
     dateLabel: ticket.date.month.trim().toUpperCase(),
     orderIdLabel: ticket.orderId ? orderIdTemplate(ticket.orderId) : undefined,
+    statusKey: ticket.status.key.trim().toLowerCase(),
     statusLabel: ticket.status.label,
     statusTone: getStatusTone(ticket.status.key),
     unreadCount: ticket.unreadCount > 0 ? ticket.unreadCount : undefined,
   };
+}
+
+export function matchesSupportTicketFilter(
+  ticket: Pick<SupportTicketListItemModel, 'statusKey'>,
+  filter: SupportTicketFilter,
+) {
+  if (filter === 'active') {
+    return ACTIVE_STATUS_KEYS.includes(ticket.statusKey);
+  }
+
+  if (filter === 'closed') {
+    return CLOSED_STATUS_KEYS.includes(ticket.statusKey);
+  }
+
+  return true;
 }

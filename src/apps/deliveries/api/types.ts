@@ -214,6 +214,7 @@ export interface DeliveryRecommendedStoresParams {
 }
 
 export interface DeliveryStoreProductsParams {
+    continuation?: string;
     offset?: number;
     limit?: number;
     search?: string;
@@ -425,7 +426,12 @@ export type DeliveryRecommendedStoresApiResponse =
     | DeliveryNearbyStore[];
 
 export type DeliveryStoreProductsApiResponse =
-    PaginatedDeliveryResponse<DeliveryStoreDetailsProduct>;
+    PaginatedDeliveryResponse<DeliveryStoreDetailsProduct> & {
+        continuation?: string | null;
+        previousContinuation?: string | null;
+        restart?: boolean;
+        searchMeta?: { provider: 'database' | 'algolia'; queryId?: string };
+    };
 
 export type DeliveryDealsApiResponse =
     | ApiResponse<DeliveryNearbyStore[]>

@@ -7,6 +7,7 @@ import SupportFaqListItem from '../../../../general/components/support/SupportFa
 import SupportHeader from '../../../../general/components/support/SupportHeader';
 import Text from '../../../../general/components/Text';
 import { useTheme } from '../../../../general/theme/theme';
+import { SUPPORT_NEW_TICKET_DEFAULT_ISSUE } from '../../constants/support';
 import { SupportFaqNavigationProp } from '../../navigation/supportNavigationTypes';
 import { supportFaqArticles } from '../../utils/supportFaqArticles';
 
@@ -64,8 +65,12 @@ export default function SupportFaqScreen() {
       </ScrollView>
 
       <SupportChatFooter
-        ctaLabel={t('support_chat_cta')}
-        onPress={() => navigation.navigate('SupportChat', { agentName: t('support_chat_agent_name') })}
+        ctaLabel={t('support_new_ticket')}
+        iconName="document-text-outline"
+        onPress={() => navigation.navigate('SupportContactForm', {
+          issueLabel: t('support_issue_appointment_support'),
+          issueValue: SUPPORT_NEW_TICKET_DEFAULT_ISSUE,
+        })}
       />
     </View>
   );

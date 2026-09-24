@@ -76,21 +76,24 @@ export default function StoreDetailActionButton({
     >
       <PlatformGlassSurface
         effectStyle="clear"
+        scrimColor={colors.glassControlScrim}
         style={[
           styles.button,
           {
+            borderColor: colors.glassBorder,
             borderRadius: shape.radius.pill,
+            borderWidth: StyleSheet.hairlineWidth,
             height: layout.touchTarget.minimum,
             width: layout.touchTarget.minimum,
           },
         ]}
       >
         {isLoading ? (
-          <ActivityIndicator color={active ? colors.danger : colors.textStrong} size="small" />
+          <ActivityIndicator color={active ? colors.danger : colors.glassControlForeground} size="small" />
         ) : (
           <Animated.View style={{ transform: [{ scale: selectionScale }] }}>
             <Icon
-              color={active ? colors.danger : colors.textStrong}
+              color={active ? colors.danger : colors.glassControlForeground}
               name={iconName}
               size={21}
               type={iconType}

@@ -32,13 +32,11 @@ import WalletScreen from "../screens/wallet/WalletScreen/WalletScreen";
 import NotificationsScreen from "../../../general/screens/notifications/NotificationsScreen";
 import AddCardScreen from "../screens/wallet/AddCardScreen/AddCardScreen";
 import WalletTransactionsScreen from "../screens/wallet/WalletTransactionsScreen/WalletTransactionsScreen";
+import WalletTransactionDetailsScreen from "../screens/wallet/WalletTransactionDetailsScreen/WalletTransactionDetailsScreen";
 import SupportScreen from "../screens/SupportScreen/SupportScreen";
-import SupportChatScreen from "../screens/SupportChatScreen/SupportChatScreen";
-import SupportConversationsScreen from "../screens/SupportConversationsScreen/SupportConversationsScreen";
 import SupportContactFormScreen from "../screens/SupportContactFormScreen/SupportContactFormScreen";
 import SupportFaqScreen from "../screens/SupportFaqScreen/SupportFaqScreen";
 import SupportFaqArticleScreen from "../screens/SupportFaqArticleScreen/SupportFaqArticleScreen";
-import SupportTicketsScreen from "../screens/SupportTicketsScreen/SupportTicketsScreen";
 import SupportTicketDetailScreen from "../screens/SupportTicketDetailScreen";
 import RiderChatScreen from "../screens/RiderChatScreen/RiderChatScreen";
 import CouponsScreen from "../screens/CouponsScreen/CouponsScreen";
@@ -63,6 +61,7 @@ import {
   useDeliveriesDeliveryMode,
 } from "../../../general/stores/useAppConfigStore";
 import { isDeliveriesDemoModeEnabled } from "./deliveryDemoMode";
+import StoreMenuSearchScreen from "../multiVendor/screens/StoreMenuSearchScreen";
 import StoreDetailsScreen from "../multiVendor/screens/StoreDetailsScreen/StoreDetailsScreen";
 import HomeLocationPermissionPopup from '../../../screens/home/HomeLocationPermissionPopup';
 import { useLocationPermissionPrompt } from '../../../general/hooks/useLocationPermissionPrompt';
@@ -242,23 +241,18 @@ export default function DeliveriesNavigator() {
         options={sharedScreenOptions}
       />
       <Stack.Screen
+        name="WalletTransactionDetails"
+        component={WalletTransactionDetailsScreen}
+        options={sharedScreenOptions}
+      />
+      <Stack.Screen
         name="Support"
         component={SupportScreen}
         options={sharedScreenOptions}
       />
       <Stack.Screen
-        name="SupportChat"
-        component={SupportChatScreen}
-        options={sharedScreenOptions}
-      />
-      <Stack.Screen
         name="SupportFaq"
         component={SupportFaqScreen}
-        options={sharedScreenOptions}
-      />
-      <Stack.Screen
-        name="SupportConversations"
-        component={SupportConversationsScreen}
         options={sharedScreenOptions}
       />
       <Stack.Screen
@@ -272,11 +266,6 @@ export default function DeliveriesNavigator() {
         options={sharedScreenOptions}
       />
       <Stack.Screen
-        name="SupportTickets"
-        component={SupportTicketsScreen}
-        options={sharedScreenOptions}
-      />
-      <Stack.Screen
         name="SupportTicketDetail"
         component={SupportTicketDetailScreen}
         options={sharedScreenOptions}
@@ -286,6 +275,7 @@ export default function DeliveriesNavigator() {
         component={ProductInfo}
         options={sharedScreenOptions}
       />
+      <Stack.Screen name="StoreMenuSearch" component={StoreMenuSearchScreen} options={{ headerShown: false }} />
       <Stack.Screen
         name="StoreDetails"
         component={StoreDetailsScreen}

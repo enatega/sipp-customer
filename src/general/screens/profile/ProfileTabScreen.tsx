@@ -104,6 +104,13 @@ export default function ProfileTabScreen({
         onPress={() => navigation.navigate('MyProfile')}
       />
 
+      <WalletCard
+        balance={wallet?.wallet_balance}
+        balanceLabel={t('profile_wallet_balance')}
+        buttonLabel={t('profile_view_wallet')}
+        onPressWallet={() => navigation.navigate('Wallet')}
+      />
+
       <ProfileMenuSection title={t('profile_section_essentials')}>
         <ProfileMenuItem
           icon={<Ionicons name="receipt-outline" size={ICON_SIZE} color={colors.quickActionOrdersForeground} />}
@@ -127,13 +134,6 @@ export default function ProfileTabScreen({
           onPress={favoritesEnabled ? onOpenFavourites : undefined}
         />
       </ProfileMenuSection>
-
-      <WalletCard
-        balance={wallet?.wallet_balance}
-        balanceLabel={t('profile_wallet_balance')}
-        buttonLabel={t('profile_view_wallet')}
-        onPressWallet={() => navigation.navigate('Wallet')}
-      />
 
       <ProfileMenuSection title={t('profile_section_preferences')}>
         <ProfileMenuItem

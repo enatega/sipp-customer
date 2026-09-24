@@ -1,4 +1,5 @@
 import type { RiderChatScreenParams } from '../screens/RiderChatScreen/RiderChatScreen';
+import type { WalletTransaction } from '../../../general/api/walletSavedCardsService';
 import type { NavigatorScreenParams } from "@react-navigation/native";
 import type { ProfileNavigationParamList } from "../../../general/navigation/profileTypes";
 import type { ChainStackParamList } from "../chain/navigation/types";
@@ -27,7 +28,7 @@ export type OrderConfirmationSnapshot = {
   totalAmount?: number;
 };
 
-type DeliveriesAccountNavigationParamList = ProfileNavigationParamList & {
+type DeliveriesAccountNavigationParamList = Omit<ProfileNavigationParamList, 'Wallet'> & {
   Coupons: undefined;
   Notifications: undefined;
   Settings: undefined;
@@ -43,15 +44,13 @@ type DeliveriesAccountNavigationParamList = ProfileNavigationParamList & {
   ColorMode: undefined;
   Language: undefined;
   Support: undefined;
-  Wallet: undefined;
+  Wallet: { suggestedTopUpAmount?: number } | undefined;
   AddCard: undefined;
   WalletTransactions: undefined;
-  SupportChat: import('./supportNavigationTypes').SupportNavigationParamList['SupportChat'];
-  SupportConversations: undefined;
+  WalletTransactionDetails: { transaction: WalletTransaction };
   SupportContactForm: import('./supportNavigationTypes').SupportNavigationParamList['SupportContactForm'];
   SupportFaq: undefined;
   SupportFaqArticle: import('./supportNavigationTypes').SupportNavigationParamList['SupportFaqArticle'];
-  SupportTickets: undefined;
   SupportTicketDetail: import('./supportNavigationTypes').SupportNavigationParamList['SupportTicketDetail'];
 };
 
@@ -78,6 +77,7 @@ export type DeliveriesStackParamList = DeliveriesAccountNavigationParamList & {
   ProductInfo: {
     productId: string;
   };
+  StoreMenuSearch: MultiVendorStackParamList['StoreMenuSearch'];
   StoreDetails: {
     store?: DeliveryNearbyStore;
   };

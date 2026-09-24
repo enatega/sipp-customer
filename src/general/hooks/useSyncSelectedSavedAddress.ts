@@ -26,7 +26,11 @@ export default function useSyncSelectedSavedAddress(
       setSelectedAddress,
     } = useAddressStore.getState();
 
-    if (selectedAddress?.id === 'current-location') {
+    // A saved/default address always wins over the ephemeral "current
+    // location" marker the home screen hydrates while no default exists —
+    // otherwise, once current-location is set, it would never be replaced
+    // even after the user's real default address becomes known.
+    if (selectedAddress?.id === 'current-location' && !apiSelectedAddress) {
       return;
     }
 

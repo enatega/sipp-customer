@@ -12,6 +12,7 @@ import SingleVendorProfileTabScreen from '../../screens/ProfileTab/SingleVendorP
 import OrdersScreen from '../../screens/OrdersScreen/OrdersScreen';
 import type { SingleVendorBottomTabParamList } from './types';
 import AuthenticatedDeliveriesScreen from '../../components/navigation/AuthenticatedDeliveriesScreen';
+import { createAuthGatedTabPressListener } from '../../navigation/deliveriesAuthGate';
 
 const Tab = createBottomTabNavigator<SingleVendorBottomTabParamList>();
 
@@ -84,6 +85,7 @@ export default function SinglevendorBottomTabNavigator() {
           tabBarLabel: t('single_vendor_tab_orders'),
           title: t('single_vendor_tab_orders'),
         }}
+        listeners={createAuthGatedTabPressListener}
       >
         {() => <AuthenticatedDeliveriesScreen component={OrdersScreen} />}
       </Tab.Screen>
@@ -101,6 +103,7 @@ export default function SinglevendorBottomTabNavigator() {
           tabBarLabel: t('single_vendor_tab_profile'),
           title: t('single_vendor_tab_profile'),
         }}
+        listeners={createAuthGatedTabPressListener}
       />
     </Tab.Navigator>
   );

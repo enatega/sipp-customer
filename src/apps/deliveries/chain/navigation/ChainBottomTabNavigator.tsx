@@ -12,6 +12,7 @@ import HomeScreen from '../screens/HomeScreen';
 import SearchScreen from '../screens/SearchScreen';
 import type { ChainBottomTabParamList } from './types';
 import AuthenticatedDeliveriesScreen from '../../components/navigation/AuthenticatedDeliveriesScreen';
+import { createAuthGatedTabPressListener } from '../../navigation/deliveriesAuthGate';
 
 const Tab = createBottomTabNavigator<ChainBottomTabParamList>();
 
@@ -76,6 +77,7 @@ export default function ChainBottomTabNavigator() {
           tabBarLabel: t('chain_tab_orders'),
           title: t('chain_tab_orders'),
         }}
+        listeners={createAuthGatedTabPressListener}
       >
         {() => <AuthenticatedDeliveriesScreen component={OrdersScreen} />}
       </Tab.Screen>
@@ -87,6 +89,7 @@ export default function ChainBottomTabNavigator() {
           tabBarLabel: t('chain_tab_profile'),
           title: t('chain_tab_profile'),
         }}
+        listeners={createAuthGatedTabPressListener}
       />
     </Tab.Navigator>
   );

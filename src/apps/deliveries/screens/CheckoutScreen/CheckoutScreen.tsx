@@ -1,11 +1,12 @@
 import React from 'react';
 import { useStripe } from '@stripe/stripe-react-native';
 import { View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { showToast } from '../../../../general/components/AppToast';
+import FeedbackModal from '../../../../general/components/FeedbackModal';
 import { useTheme } from '../../../../general/theme/theme';
 import AddressSelectionBottomSheet from '../../../../general/components/address/AddressSelectionBottomSheet';
 import useSavedAddresses from '../../../../general/hooks/useSavedAddresses';
@@ -75,6 +76,24 @@ function isStoreClosedError(error?: { status?: number; message?: string } | null
   return (
     error?.status === 400 &&
     error.message?.trim().toLowerCase() === 'store is currently closed'
+  );
+}
+
+function isAddressOutsideDeliveryAreaError(
+  error?: { status?: number; message?: string } | null,
+) {
+  return (
+    error?.status === 400 &&
+    error.message?.trim().toLowerCase() === 'delivery address is outside the store delivery area'
+  );
+}
+
+function isInsufficientWalletBalanceError(
+  error?: { status?: number; message?: string } | null,
+) {
+  return (
+    error?.status === 400 &&
+    error.message?.trim().toLowerCase() === 'insufficient wallet balance'
   );
 }
 
@@ -174,6 +193,7 @@ export default function CheckoutScreen() {
   const [stripeCheckout, setStripeCheckout] = React.useState<{
     checkoutUrl: string;
   } | null>(null);
+  const [isInsufficientBalanceModalVisible, setIsInsufficientBalanceModalVisible] = React.useState(false);
   const { selectedAddress } = useAddress();
   const { refreshCurrentLocation } = useCurrentLocation();
   const {
@@ -210,6 +230,7 @@ export default function CheckoutScreen() {
   const useCouponMutation = useUseCouponMutation();
   const savedCardsQuery = useWalletSavedCardsQuery('deliveries');
   const walletBalanceQuery = useCustomerWalletBalance();
+  const wantsWalletAfterTopUpRef = React.useRef(false);
   const setDefaultCardMutation = useWalletSetDefaultCardMutation('deliveries');
   const [selectedStripeCardId, setSelectedStripeCardId] = React.useState<string | null>(null);
   const {
@@ -295,6 +316,11 @@ export default function CheckoutScreen() {
           t('checkout_store_closed_title'),
           t('checkout_store_closed_message'),
         );
+        return;
+      }
+
+      if (isInsufficientWalletBalanceError(error)) {
+        setIsInsufficientBalanceModalVisible(true);
         return;
       }
 
@@ -621,9 +647,20 @@ export default function CheckoutScreen() {
   }, []);
 
   const handlePaymentMethodConfirm = React.useCallback((nextPaymentMethod: CheckoutPaymentMethod) => {
+    wantsWalletAfterTopUpRef.current = false;
     setPaymentMethod(nextPaymentMethod);
     setIsPaymentMethodScreenVisible(false);
   }, []);
+
+  const handleCloseInsufficientBalanceModal = React.useCallback(() => {
+    setIsInsufficientBalanceModalVisible(false);
+  }, []);
+
+  const handleChoosePaymentFromInsufficientBalance = React.useCallback(() => {
+    setIsInsufficientBalanceModalVisible(false);
+    setIsPaymentMethodScreenVisible(true);
+  }, []);
+
   const handleSelectStripeCard = React.useCallback(async (cardId: string) => {
     setSelectedStripeCardId(cardId);
     try {
@@ -758,6 +795,24 @@ export default function CheckoutScreen() {
     ? { ...preview, pricing: adjustedPricing }
     : preview;
   const previewTotal = adjustedPreview?.pricing.totalAmount ?? cart?.finalPrice ?? 0;
+  const handleAddFundsFromInsufficientBalance = React.useCallback(() => {
+    setIsInsufficientBalanceModalVisible(false);
+    wantsWalletAfterTopUpRef.current = true;
+    navigation.navigate('Wallet', {
+      suggestedTopUpAmount: Math.max(
+        0.01,
+        Math.ceil((previewTotal - (walletBalanceQuery.data ?? 0)) * 100) / 100,
+      ),
+    });
+  }, [navigation, previewTotal, walletBalanceQuery.data]);
+  useFocusEffect(React.useCallback(() => {
+    void walletBalanceQuery.refetch().then(({ data }) => {
+      if (wantsWalletAfterTopUpRef.current && data !== undefined && data >= previewTotal) {
+        wantsWalletAfterTopUpRef.current = false;
+        setPaymentMethod('wallet');
+      }
+    });
+  }, [previewTotal, walletBalanceQuery.refetch]));
   const selectedAddressLabel = formatDeliveryAddressLabel(effectiveSelectedAddress);
   const walletBalance = walletBalanceQuery.data ?? 0;
   const isWalletEnabled = walletBalanceQuery.data !== undefined && walletBalance >= Number(previewTotal || 0);
@@ -913,6 +968,7 @@ export default function CheckoutScreen() {
         isPreviewEnabled={Boolean(previewInput)}
         isPreviewError={isPreviewError}
         isStoreClosedError={isStoreClosedError(previewError)}
+        isAddressOutsideDeliveryAreaError={isAddressOutsideDeliveryAreaError(previewError)}
         isPreviewPending={isPreviewPending}
         canShowLeaveAtDoor={adjustedPreview?.store?.stripeAllowed ?? false}
         leaveAtDoor={leaveAtDoor}
@@ -988,6 +1044,22 @@ export default function CheckoutScreen() {
         savedCards={savedCardsQuery.data?.cards ?? []}
         selectedCardId={selectedSavedCard?.id ?? null}
         selectedMethod={paymentMethod}
+      />
+
+      <FeedbackModal
+        icon="wallet-outline"
+        message={t('checkout_insufficient_wallet_balance_message', {
+          balance: formatCartPrice(walletBalance),
+          total: formatCartPrice(previewTotal),
+        })}
+        onClose={handleCloseInsufficientBalanceModal}
+        onPrimaryPress={handleAddFundsFromInsufficientBalance}
+        onSecondaryPress={handleChoosePaymentFromInsufficientBalance}
+        primaryLabel={t('checkout_insufficient_wallet_balance_add_funds')}
+        secondaryLabel={t('checkout_insufficient_wallet_balance_choose_payment')}
+        title={t('checkout_insufficient_wallet_balance_title')}
+        variant="warning"
+        visible={isInsufficientBalanceModalVisible}
       />
     </View>
   );

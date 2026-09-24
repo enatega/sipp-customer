@@ -727,78 +727,26 @@ export const discoveryService = {
         }
     },
 
-    /** Fetch store view metadata for a specific deliveries store. */
-    getStoreView: async (
-        storeId: string,
-    ): Promise<DeliveryStoreViewApiResponse> => {
-        try {
-            console.log('[deliveries][getStoreView] request', { storeId });
-            const response = await apiClient.get<DeliveryStoreViewApiResponse>(
-                `/api/v1/apps/deliveries/stores/${storeId}/view`,
-            );
-            console.log('[deliveries][getStoreView] response', {
-                storeId,
-                response,
-            });
-            return response;
-        } catch (error) {
-            console.error('store view request failed', { storeId, error });
-            throw error;
-        }
-    },
+    /** Fetch store view metadata for older consumers. */
+    getStoreView: (storeId: string, signal?: AbortSignal): Promise<DeliveryStoreViewApiResponse> =>
+        apiClient.get(`/api/v1/apps/deliveries/stores/${storeId}/view`, undefined, { signal }),
 
-    /** Fetch store products for a specific deliveries store. */
-    getStoreProducts: async (
+    getStoreProducts: (
         storeId: string,
         params: DeliveryStoreProductsParams = {},
-    ): Promise<DeliveryStoreProductsApiResponse> => {
-        const {
-            offset = NEARBY_STORES_DEFAULTS.offset,
-            limit = NEARBY_STORES_DEFAULTS.limit,
-            search,
-            selectedCategoryId,
-            selectedSubcategoryId,
-        } = params;
-
-        try {
-            console.log('[deliveries][getStoreProducts] request', {
-                storeId,
-                offset,
-                limit,
-                search,
-                selectedCategoryId,
-                selectedSubcategoryId,
-            });
-            const response = await apiClient.get<DeliveryStoreProductsApiResponse>(
-                `/api/v1/apps/deliveries/stores/${storeId}/view/products`,
-                {
-                    offset,
-                    limit,
-                    search,
-                    categoryId: selectedCategoryId,
-                    subcategoryId: selectedSubcategoryId,
-                },
-            );
-            console.log('[deliveries][getStoreProducts] response', {
-                storeId,
-                offset,
-                limit,
-                response,
-            });
-            return response;
-        } catch (error) {
-            console.error('store products request failed', {
-                storeId,
-                offset,
-                limit,
-                search,
-                selectedCategoryId,
-                selectedSubcategoryId,
-                error,
-            });
-            throw error;
-        }
-    },
+        signal?: AbortSignal,
+    ): Promise<DeliveryStoreProductsApiResponse> => apiClient.get(
+        `/api/v1/apps/deliveries/stores/${storeId}/view/products`,
+        {
+            offset: params.offset ?? 0,
+            limit: params.limit ?? 24,
+            search: params.search,
+            categoryId: params.selectedCategoryId,
+            subcategoryId: params.selectedSubcategoryId,
+            continuation: params.continuation,
+        },
+        { signal },
+    ),
 
     /** Fetch deals for deliveries home discovery. */
     getDeals: async (

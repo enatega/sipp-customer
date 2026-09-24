@@ -1,41 +1,19 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useState } from 'react';
 
 type Params = {
   addressesCount: number;
   isLoading: boolean;
 };
 
-export default function useAddressSelectionSheet({
-  addressesCount,
-  isLoading,
-}: Params) {
+// Note: this intentionally never auto-opens the sheet when addressesCount is
+// 0. Having no saved address doesn't mean the user has no address — current
+// location is resolved and auto-selected once location permission is
+// granted (see the currentCoordinates hydration effect in the home
+// screens), so forcing this sheet open here would just race/compete with
+// that flow. The sheet only opens from explicit user action (open()).
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export default function useAddressSelectionSheet(_params: Params) {
   const [isVisible, setIsVisible] = useState(false);
-  const hasAutoOpenedRef = useRef(false);
-
-  useFocusEffect(
-    useCallback(() => {
-      hasAutoOpenedRef.current = false;
-    }, []),
-  );
-
-  useEffect(() => {
-    if (isLoading || isVisible) {
-      return;
-    }
-
-    if (addressesCount > 0) {
-      hasAutoOpenedRef.current = false;
-      return;
-    }
-
-    if (hasAutoOpenedRef.current) {
-      return;
-    }
-
-    hasAutoOpenedRef.current = true;
-    setIsVisible(true);
-  }, [addressesCount, isLoading, isVisible]);
 
   const open = useCallback(() => {
     setIsVisible(true);

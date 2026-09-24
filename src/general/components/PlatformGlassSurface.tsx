@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   AccessibilityInfo,
   Platform,
+  StyleSheet,
   type StyleProp,
   View,
   type ViewStyle,
@@ -18,6 +19,11 @@ import { useTheme } from '../theme/theme';
 type Props = {
   children?: React.ReactNode;
   effectStyle?: GlassStyle;
+  /**
+   * Optional tint layered under the children. Glass adapts poorly to the content behind it, so
+   * controls that float over photos use it to keep their icons legible on any backdrop.
+   */
+  scrimColor?: string;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -36,6 +42,7 @@ function canUseLiquidGlass() {
 export default function PlatformGlassSurface({
   children,
   effectStyle = 'regular',
+  scrimColor,
   style,
 }: Props) {
   const { colors, isDark } = useTheme();
@@ -73,6 +80,18 @@ export default function PlatformGlassSurface({
     };
   }, []);
 
+  const content = (
+    <>
+      {scrimColor ? (
+        <View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFill, { backgroundColor: scrimColor }]}
+        />
+      ) : null}
+      {children}
+    </>
+  );
+
   if (hasLiquidGlass && isReduceTransparencyEnabled === false) {
     return (
       <GlassView
@@ -80,7 +99,7 @@ export default function PlatformGlassSurface({
         glassEffectStyle={effectStyle}
         style={style}
       >
-        {children}
+        {content}
       </GlassView>
     );
   }
@@ -92,14 +111,14 @@ export default function PlatformGlassSurface({
         tint={isDark ? 'systemUltraThinMaterialDark' : 'systemUltraThinMaterialLight'}
         style={[{ backgroundColor: colors.glassSurface }, style]}
       >
-        {children}
+        {content}
       </BlurView>
     );
   }
 
   return (
     <View style={[{ backgroundColor: colors.surfaceElevated }, style]}>
-      {children}
+      {content}
     </View>
   );
 }

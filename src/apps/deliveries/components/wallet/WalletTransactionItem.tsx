@@ -1,121 +1,85 @@
-import React, { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import React from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
+
+import type { WalletTransaction } from '../../../../general/api/walletSavedCardsService';
 import Text from '../../../../general/components/Text';
 import { useTheme } from '../../../../general/theme/theme';
-
-type TransactionIconType = 'cashback' | 'booking' | 'refund' | 'topup';
+import {
+  formatWalletStatementAmount,
+  formatWalletStatementDate,
+  statementDescriptionKeys,
+  statementTitleKeys,
+} from './walletStatementPresentation';
 
 type Props = {
-  amount?: number;
+  transaction: WalletTransaction;
   currency: string;
-  iconType: TransactionIconType;
-  status?: string;
-  title: string;
-  subtitle: string;
-  time: string;
+  onPress?: () => void;
 };
 
-const ICON_MAP: Record<TransactionIconType, keyof typeof Ionicons.glyphMap> = {
-  cashback: 'sparkles-outline',
-  booking: 'bag-handle-outline',
-  refund: 'arrow-undo-outline',
-  topup: 'add-circle-outline',
-};
-
-function formatTime(value: string) {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat(undefined, {
-    day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit',
-  }).format(date);
-}
-
-export default function WalletTransactionItem({
-  amount, currency, iconType, status, subtitle, time, title,
-}: Props) {
+export default function WalletTransactionItem({ transaction, currency, onPress }: Props) {
   const { colors } = useTheme();
-  const isCredit = iconType === 'cashback' || iconType === 'refund' || iconType === 'topup';
-  const amountLabel = useMemo(() => {
-    if (amount === undefined) return null;
-    const formatted = Math.abs(amount).toLocaleString(undefined, {
-      maximumFractionDigits: 2,
-      minimumFractionDigits: 2,
-    });
-    return `${isCredit ? '+' : '−'}${currency} ${formatted}`;
-  }, [amount, currency, isCredit]);
-  const normalizedStatus = status?.replace(/_/g, ' ').trim();
+  const { t, i18n } = useTranslation('deliveries');
+  const isCredit = transaction.direction === 'credit';
+  const isUnknown = transaction.direction === 'unknown';
+  const title = t(statementTitleKeys[transaction.reasonCode]);
+  const description = t(statementDescriptionKeys[transaction.reasonCode]);
+  const showDescription = transaction.reasonCode === 'credit' || transaction.reasonCode === 'debit' || transaction.reasonCode === 'unknown';
+  const amount = formatWalletStatementAmount(transaction, currency, i18n.language);
+  const icon = transaction.reasonCode === 'order_payment'
+    ? 'bag-handle-outline'
+    : transaction.reasonCode === 'order_refund'
+      ? 'arrow-undo-outline'
+      : transaction.reasonCode === 'loyalty_conversion'
+        ? 'sparkles-outline'
+        : isCredit ? 'arrow-down-outline' : isUnknown ? 'swap-horizontal-outline' : 'arrow-up-outline';
+  const foreground = isCredit ? colors.successText : colors.text;
+  const iconForeground = isCredit ? colors.successText : colors.walletBlue;
 
   return (
-    <View style={[styles.container, { borderBottomColor: colors.divider }]}> 
-      <View style={[styles.iconWrap, { backgroundColor: isCredit ? colors.successSoft : colors.primarySoft }]}> 
-        <Ionicons name={ICON_MAP[iconType]} size={20} color={isCredit ? colors.successText : colors.primary} />
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${title}, ${amount}, ${formatWalletStatementDate(transaction.time, false, i18n.language)}`}
+      disabled={!onPress}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.container,
+        { borderBottomColor: colors.walletHairline, opacity: pressed ? 0.65 : 1 },
+      ]}
+    >
+      <View style={[styles.iconWrap, { backgroundColor: isCredit ? colors.successSoft : colors.walletSurfaceAlt }]}>
+        <Ionicons name={icon} size={18} color={iconForeground} />
       </View>
       <View style={styles.content}>
-        <Text numberOfLines={1} weight="semiBold" color={colors.text} style={styles.title}>
-          {title}
-        </Text>
-        {subtitle ? <Text numberOfLines={1} color={colors.mutedText} style={styles.subtitle}>{subtitle}</Text> : null}
-        <View style={styles.metaRow}>
-          {normalizedStatus ? <Text color={colors.textSubtle} weight="medium" style={styles.meta}>{normalizedStatus}</Text> : null}
-          {normalizedStatus && time ? <View style={[styles.dot, { backgroundColor: colors.iconDisabled }]} /> : null}
-          {time ? <Text color={colors.mutedText} style={styles.meta}>{formatTime(time)}</Text> : null}
-        </View>
+        <Text numberOfLines={2} weight="semiBold" color={colors.text} style={styles.title}>{title}</Text>
+        {showDescription ? <Text numberOfLines={1} color={colors.walletTextMuted} style={styles.subtitle}>{description}</Text> : null}
+        <Text color={colors.walletTextMuted} style={styles.time}>{formatWalletStatementDate(transaction.time, false, i18n.language)}</Text>
       </View>
-      {amountLabel ? <Text color={isCredit ? colors.successText : colors.text} weight="semiBold" style={styles.amount}>{amountLabel}</Text> : null}
-    </View>
+      <View style={styles.trailing}>
+        <Text color={foreground} weight="bold" style={styles.amount}>{amount}</Text>
+        {onPress ? <Ionicons name="chevron-forward" size={15} color={colors.walletTextMuted} /> : null}
+      </View>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    minHeight: 76,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  iconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  content: {
-    flex: 1,
-    gap: 2,
-  },
-  title: {
-    fontSize: 15,
-    lineHeight: 20,
-  },
-  subtitle: {
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  amount: {
-    fontSize: 14,
-    fontVariant: ['tabular-nums'],
-    lineHeight: 20,
-    textAlign: 'right',
-  },
-  dot: {
-    borderRadius: 2,
-    height: 3,
-    width: 3,
-  },
-  meta: {
-    fontSize: 12,
-    lineHeight: 16,
-    textTransform: 'capitalize',
-  },
-  metaRow: {
-    alignItems: 'center',
     flexDirection: 'row',
-    gap: 6,
+    gap: 10,
+    minHeight: 66,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
+  iconWrap: { alignItems: 'center', borderRadius: 12, height: 38, justifyContent: 'center', width: 38 },
+  content: { flex: 1, gap: 1 },
+  title: { fontSize: 14, lineHeight: 18 },
+  subtitle: { fontSize: 12, lineHeight: 17 },
+  time: { fontSize: 11, lineHeight: 15 },
+  trailing: { alignItems: 'flex-end', flexDirection: 'row', gap: 5, justifyContent: 'flex-end', maxWidth: '43%' },
+  amount: { fontSize: 14, fontVariant: ['tabular-nums'], lineHeight: 19, textAlign: 'right' },
 });

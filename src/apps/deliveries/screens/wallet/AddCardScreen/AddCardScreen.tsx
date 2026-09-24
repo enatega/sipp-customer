@@ -85,8 +85,8 @@ export default function AddCardScreen() {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScreenHeader title={t('wallet_add_card_title')} variant="close" />
+    <View style={[styles.container, { backgroundColor: colors.walletBackground }]}>
+      <ScreenHeader title={t('wallet_add_card_title')} variant="close" style={{ backgroundColor: colors.walletBackground }} />
 
       <ScrollView
         style={styles.scroll}
@@ -95,25 +95,25 @@ export default function AddCardScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.intro}>
-          <View style={[styles.secureIcon, { backgroundColor: colors.successSoft }]}> 
-            <Ionicons name="shield-checkmark-outline" size={24} color={colors.successText} />
+          <View style={[styles.secureIcon, { backgroundColor: colors.walletSurfaceAlt }]}> 
+            <Ionicons name="shield-checkmark-outline" size={24} color={colors.walletBlue} />
           </View>
           <View style={styles.introCopy}>
             <Text color={colors.text} weight="semiBold" style={styles.introTitle}>{t('wallet_card_secure_title')}</Text>
-            <Text color={colors.mutedText} style={styles.introBody}>{t('wallet_card_secure_description')}</Text>
+            <Text color={colors.walletTextMuted} style={styles.introBody}>{t('wallet_card_secure_description')}</Text>
           </View>
         </View>
-        <View style={[styles.formCard, { backgroundColor: colors.surface, borderColor: colors.border }]}> 
+        <View style={[styles.formCard, { backgroundColor: colors.walletSurface, borderColor: colors.walletHairline }]}> 
         <View style={styles.fieldGroup}>
           <Text weight="medium" color={colors.text} style={styles.label}>
             {t('wallet_name_on_card')}
           </Text>
-          <View style={[styles.inputRow, { borderColor: colors.border, backgroundColor: colors.surfaceSunken }]}> 
+          <View style={[styles.inputRow, { borderColor: colors.walletHairline, backgroundColor: colors.walletSurfaceAlt }]}> 
             <TextInput
               value={holderName}
               onChangeText={setHolderName}
               placeholder={t('wallet_name_placeholder')}
-              placeholderTextColor={colors.mutedText}
+              placeholderTextColor={colors.walletTextMuted}
               style={[styles.input, { color: colors.text }]}
               accessibilityLabel={t('wallet_name_on_card')}
             />
@@ -125,18 +125,18 @@ export default function AddCardScreen() {
             {t('wallet_card_number_label')}
           </Text>
           {hasStripeKey ? (
-            <View style={[styles.cardFieldWrap, { borderColor: colors.border, backgroundColor: colors.surfaceSunken }]}> 
+            <View style={[styles.cardFieldWrap, { borderColor: colors.walletHairline, backgroundColor: colors.walletSurfaceAlt }]}> 
               <CardField
                 postalCodeEnabled={false}
                 placeholders={{
                   number: '4242 4242 4242 4242',
                 }}
                 cardStyle={{
-                  backgroundColor: colors.surfaceSunken,
-                  borderColor: colors.surfaceSunken,
+                  backgroundColor: colors.walletSurfaceAlt,
+                  borderColor: colors.walletSurfaceAlt,
                   borderWidth: 0,
                   textColor: colors.text,
-                  placeholderColor: colors.mutedText,
+                  placeholderColor: colors.walletTextMuted,
                 }}
                 style={styles.cardField}
                 onCardChange={(details) => {
@@ -145,20 +145,20 @@ export default function AddCardScreen() {
               />
             </View>
           ) : (
-            <View style={[styles.inputRow, { borderColor: colors.border, backgroundColor: colors.surfaceSunken }]}> 
-              <Text color={colors.mutedText}>{t('wallet_stripe_publishable_key_missing')}</Text>
+            <View style={[styles.inputRow, { borderColor: colors.walletHairline, backgroundColor: colors.walletSurfaceAlt }]}> 
+              <Text color={colors.walletTextMuted}>{t('wallet_stripe_publishable_key_missing')}</Text>
             </View>
           )}
         </View>
         </View>
 
         <View style={styles.stripeRow}>
-          <Ionicons name="lock-closed-outline" size={15} color={colors.mutedText} />
-          <Text color={colors.mutedText} style={[styles.secureText, { fontSize: typography.size.sm2 }]}>{t('wallet_pay_securely')} Stripe</Text>
+          <Ionicons name="lock-closed-outline" size={15} color={colors.walletTextMuted} />
+          <Text color={colors.walletTextMuted} style={[styles.secureText, { fontSize: typography.size.sm2 }]}>{t('wallet_pay_securely')} Stripe</Text>
         </View>
       </ScrollView>
 
-      <View style={[styles.footer, { backgroundColor: colors.background, borderTopColor: colors.divider }]}> 
+      <View style={[styles.footer, { backgroundColor: colors.walletBackground, borderTopColor: colors.walletHairline }]}> 
         <Button
           label={t('wallet_save_card')}
           onPress={() => {
@@ -177,12 +177,12 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scroll: { flex: 1 },
   scrollContent: { padding: 16, gap: 18, paddingBottom: 140 },
-  formCard: { borderRadius: 16, borderWidth: 1, gap: 20, padding: 16 },
+  formCard: { borderRadius: 22, borderWidth: 1, gap: 20, padding: 16 },
   fieldGroup: { gap: 6 },
   label: { fontSize: 14, lineHeight: 22 },
   inputRow: {
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 16,
     height: 48,
     paddingHorizontal: 14,
     justifyContent: 'center',
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
   input: { flex: 1, fontSize: 16, lineHeight: 24 },
   cardFieldWrap: {
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 16,
     height: 54,
     justifyContent: 'center',
     overflow: 'hidden',

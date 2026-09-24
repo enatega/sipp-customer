@@ -7,10 +7,10 @@ const hasValidGoogleIosUrlScheme = googleIosUrlScheme?.startsWith('com.googleuse
 
 module.exports = {
   expo: {
-    name: 'Sip',
-    slug: 'EnategaSuperApp',
+    name: 'Sipp',
+    slug: 'sipp',
     version: '1.0.0',
-   
+    owner: "sipp-delivery",
     orientation: 'portrait',
     icon: './assets/icon.png',
     userInterfaceStyle: 'automatic',
@@ -22,7 +22,7 @@ module.exports = {
     },
     ios: {
       supportsTablet: true,
-      bundleIdentifier: 'com.enategasuper.app',
+      bundleIdentifier: 'com.sipp.delivery.app',
       usesAppleSignIn: true,
       splash: {
         image: './assets/splash-light.png',
@@ -70,21 +70,21 @@ module.exports = {
       },
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
-      package: 'com.enategasuper.app',
+      package: 'com.sipp.delivery.app',
        googleServicesFile: './google-services.json',
     },
     web: {
       favicon: './assets/favicon.png',
     },
     updates: {
-      url: 'https://u.expo.dev/4c12b75d-6b64-4ea6-a4a7-83e366964b04',
+      url: 'https://u.expo.dev/a27dddd4-d819-4adf-a3d8-7a4fc2f8efbf',
     },
     runtimeVersion: {
       policy: 'appVersion',
     },
     extra: {
       eas: {
-        projectId: '4c12b75d-6b64-4ea6-a4a7-83e366964b04',
+        projectId: 'a27dddd4-d819-4adf-a3d8-7a4fc2f8efbf',
       },
     },
     plugins: [

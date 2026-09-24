@@ -1,4 +1,5 @@
 import React from 'react';
+import { useRecyclingState } from '@shopify/flash-list';
 import { Platform, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
@@ -102,12 +103,8 @@ export default function StoreMenuProductCard({ onPress, product, state }: Props)
     storeProduct.category?.imageUrl,
     storeProduct.subcategory?.imageUrl,
   ].find((value): value is string => typeof value === 'string' && value.trim().length > 0) ?? null;
-  const [hasImageError, setHasImageError] = React.useState(false);
+  const [hasImageError, setHasImageError] = useRecyclingState(false, [product.id, productImageUrl]);
   const imageSize = isCompact ? 112 : 128;
-
-  React.useEffect(() => {
-    setHasImageError(false);
-  }, [productImageUrl]);
 
   return (
     <PressableScale

@@ -15,17 +15,16 @@ export default function AddCardRow({ label, onPress }: Props) {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.container, { opacity: pressed ? 0.72 : 1 }]}
+      style={({ pressed }) => [styles.container, { backgroundColor: colors.walletSurfaceAlt, opacity: pressed ? 0.72 : 1 }]}
       accessibilityRole="button"
       accessibilityLabel={label}
     >
-      <View style={[styles.iconWrap, { backgroundColor: colors.primarySoft }]}> 
-        <Ionicons name="add" size={22} color={colors.primary} />
+      <View style={styles.iconWrap}>
+        <Ionicons name="add" size={21} color={colors.walletBlue} />
       </View>
-      <Text weight="medium" color={colors.text} style={styles.label}>
+      <Text weight="medium" color={colors.walletBlue} style={styles.label}>
         {label}
       </Text>
-      <Ionicons name="chevron-forward" size={18} color={colors.iconMuted} />
     </Pressable>
   );
 }
@@ -34,20 +33,21 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    borderRadius: 14,
+    gap: 8,
+    height: 56,
+    marginTop: 6,
+    paddingHorizontal: 12,
   },
   iconWrap: {
-    width: 44,
+    width: 28,
     height: 44,
-    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
   label: {
     flex: 1,
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 14,
+    lineHeight: 20,
   },
 });

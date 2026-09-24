@@ -3,14 +3,7 @@ import type { SupportFaqArticleId } from '../utils/supportFaqArticles';
 import type { SupportTicketListItemModel } from '../utils/supportTicketMappers';
 
 export type SupportNavigationParamList = {
-  SupportChat:
-    | {
-        agentName?: string;
-        chatBoxId?: string;
-        receiverId?: string;
-      }
-    | undefined;
-  SupportConversations: undefined;
+  Support: undefined;
   SupportContactForm: {
     issueLabel: string;
     issueValue: string;
@@ -19,7 +12,6 @@ export type SupportNavigationParamList = {
   SupportFaqArticle: {
     articleId: SupportFaqArticleId;
   };
-  SupportTickets: undefined;
   SupportTicketDetail: {
     openMode?: 'fresh';
     ticket: SupportTicketListItemModel;

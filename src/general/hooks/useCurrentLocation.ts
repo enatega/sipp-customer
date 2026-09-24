@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
+import { AppState } from 'react-native';
 import * as Location from 'expo-location';
-import {
-  getLocationPermissionState,
-  requestLocationPermission,
-} from '../utils/locationPermission';
+import { getLocationPermissionState } from '../utils/locationPermission';
 
 export type CurrentCoordinates = {
   latitude: number;
@@ -23,17 +21,26 @@ export default function useCurrentLocation() {
 
   useEffect(() => {
     void refreshCurrentLocation();
+
+    // The actual permission prompt is owned by useLocationPermissionPrompt's
+    // in-app popup — this hook only ever reads the current permission state
+    // (never requests it) so the two flows can't trigger overlapping native
+    // and in-app dialogs on first launch. Re-check on foreground so
+    // coordinates are picked up as soon as the user grants access there.
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') {
+        void refreshCurrentLocation();
+      }
+    });
+
+    return () => subscription.remove();
   }, []);
 
   async function refreshCurrentLocation() {
     setIsLoadingCurrentLocation(true);
 
     try {
-      let permission = await getLocationPermissionState();
-
-      if (!permission.granted) {
-        permission = await requestLocationPermission();
-      }
+      const permission = await getLocationPermissionState();
 
       if (!permission.granted) {
         return null;

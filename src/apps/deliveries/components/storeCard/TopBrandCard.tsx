@@ -63,7 +63,7 @@ export default function TopBrandCard({
         <Image
           source={{ uri: brand.logo ?? '' }}
           style={[styles.image, imageStyle]}
-          resizeMode="contain"
+          resizeMode="cover"
         />
 
         {badgeLabel ? (

@@ -156,7 +156,7 @@ export default function SupportContactFormScreen() {
           return;
         }
 
-        navigation.navigate('SupportTickets');
+        navigation.navigate('Support');
         return;
       } catch {
         // Fall back to previous behavior if fetching my tickets fails.

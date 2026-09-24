@@ -1,95 +1,24 @@
 import React from 'react';
-import { ScrollView } from 'react-native';
+import type { FlashListRef } from '@shopify/flash-list';
 import type { DeliveryStoreDetailsFilterItem } from '../../api/types';
+import { useReducedMotion } from '../../../../general/hooks/useReducedMotion';
 
-const TABS_VIEWPORT_SIDE_PADDING = 32;
-const OFFERS_TAB_KEY = 'offers';
+type Params = { activeCategoryId: string | null; categories: DeliveryStoreDetailsFilterItem[] };
 
-type StoreDetailTabLayout = {
-  width: number;
-  x: number;
-};
-
-type GetStoreDetailCategoryPageIndexParams = {
-  activeCategoryId: string | null;
-  categories: DeliveryStoreDetailsFilterItem[];
-};
-
-type UseStoreDetailTabsScrollParams = {
-  activeCategoryId: string | null;
-  screenWidth: number;
-};
-
-export function buildStoreDetailCategoryIds(categories: DeliveryStoreDetailsFilterItem[]) {
-  return [null, ...categories.map((category) => category.id)];
-}
-
-export function getStoreDetailCategoryIdAtPageIndex(
-  pageIndex: number,
-  categories: DeliveryStoreDetailsFilterItem[],
-) {
-  return buildStoreDetailCategoryIds(categories)[pageIndex];
-}
-
-export function getStoreDetailCategoryPageIndex({
-  activeCategoryId,
-  categories,
-}: GetStoreDetailCategoryPageIndexParams) {
-  const categoryIds = buildStoreDetailCategoryIds(categories);
-  const activeCategoryIndex = categoryIds.findIndex((categoryId) => categoryId === activeCategoryId);
-
-  return activeCategoryIndex >= 0 ? activeCategoryIndex : 0;
-}
-
-export function getStoreDetailTabKey(categoryId: string | null) {
-  return categoryId ?? OFFERS_TAB_KEY;
-}
-
-export function useStoreDetailTabsScroll({
-  activeCategoryId,
-  screenWidth,
-}: UseStoreDetailTabsScrollParams) {
-  const scrollViewRef = React.useRef<ScrollView>(null);
-  const [tabLayouts, setTabLayouts] = React.useState<Record<string, StoreDetailTabLayout>>({});
-  const tabViewportWidth = Math.max(screenWidth - TABS_VIEWPORT_SIDE_PADDING, 0);
-
-  const registerTabLayout = (categoryId: string | null, nextLayout: StoreDetailTabLayout) => {
-    const tabKey = getStoreDetailTabKey(categoryId);
-
-    setTabLayouts((currentLayouts) => {
-      const currentLayout = currentLayouts[tabKey];
-
-      if (
-        currentLayout?.x === nextLayout.x &&
-        currentLayout?.width === nextLayout.width
-      ) {
-        return currentLayouts;
-      }
-
-      return {
-        ...currentLayouts,
-        [tabKey]: nextLayout,
-      };
-    });
-  };
-
+export function useStoreDetailTabsScroll({ activeCategoryId, categories }: Params) {
+  const scrollViewRef = React.useRef<FlashListRef<{ id: string; label: string; imageUrl: string | null }>>(null);
+  const isDragging = React.useRef(false);
+  const reducedMotion = useReducedMotion();
+  const activeIndex = categories.findIndex((category) => category.id === activeCategoryId);
   React.useEffect(() => {
-    const activeLayout = tabLayouts[getStoreDetailTabKey(activeCategoryId)];
-
-    if (!activeLayout) {
-      return;
-    }
-
-    const targetOffset = Math.max(
-      activeLayout.x - tabViewportWidth / 2 + activeLayout.width / 2,
-      0,
-    );
-
-    scrollViewRef.current?.scrollTo({ x: targetOffset, animated: true });
-  }, [activeCategoryId, tabLayouts, tabViewportWidth]);
-
+    if (activeIndex < 0 || isDragging.current) return;
+    void scrollViewRef.current?.scrollToIndex({ index: activeIndex, animated: !reducedMotion, viewPosition: 0.5 });
+  }, [activeIndex, activeCategoryId, reducedMotion]);
   return {
-    registerTabLayout,
     scrollViewRef,
+    onScrollBeginDrag: () => { isDragging.current = true; },
+    onScrollEndDrag: () => { isDragging.current = false; },
+    onMomentumScrollBegin: () => { isDragging.current = true; },
+    onMomentumScrollEnd: () => { isDragging.current = false; },
   };
 }

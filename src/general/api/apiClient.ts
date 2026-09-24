@@ -419,7 +419,7 @@ function toApiError(error: unknown): ApiError {
             : 'NETWORK_ERROR'),
         networkFailureDetails,
       );
-    } else {
+    } else if (!(status === 400 && axiosError.config?.url === '/api/v1/apps/deliveries/wallet/topup')) {
       console.error('[API] request failed with response', {
         ...requestDetails,
         message: axiosError.message,

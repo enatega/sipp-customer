@@ -27,6 +27,9 @@ type Props = {
   maxFontSizeMultiplier?: number;
   accessibilityRole?: "header" | "text";
   ellipsizeMode?: "head" | "middle" | "tail" | "clip";
+  selectable?: boolean;
+  adjustsFontSizeToFit?: boolean;
+  minimumFontScale?: number;
 };
 
 export default function Text({
@@ -40,6 +43,9 @@ export default function Text({
   maxFontSizeMultiplier = 1.8,
   accessibilityRole,
   ellipsizeMode,
+  selectable,
+  adjustsFontSizeToFit,
+  minimumFontScale,
 }: Props) {
   const { colors, typography } = useTheme();
 
@@ -88,6 +94,9 @@ export default function Text({
       maxFontSizeMultiplier={maxFontSizeMultiplier}
       accessibilityRole={accessibilityRole}
       ellipsizeMode={ellipsizeMode}
+      selectable={selectable}
+      adjustsFontSizeToFit={adjustsFontSizeToFit}
+      minimumFontScale={minimumFontScale}
     >
       {children}
     </RNText>

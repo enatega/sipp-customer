@@ -30,16 +30,19 @@ export default function ProductMediaActionButton({
     >
       <PlatformGlassSurface
         effectStyle="clear"
+        scrimColor={colors.glassControlScrim}
         style={[
           styles.surface,
           {
+            borderColor: colors.glassBorder,
             borderRadius: shape.radius.pill,
+            borderWidth: StyleSheet.hairlineWidth,
             height: layout.touchTarget.minimum,
             width: layout.touchTarget.minimum,
           },
         ]}
       >
-        <Icon color={colors.textStrong} name={iconName} size={22} type={iconType} />
+        <Icon color={colors.glassControlForeground} name={iconName} size={22} type={iconType} />
       </PlatformGlassSurface>
     </PressableScale>
   );

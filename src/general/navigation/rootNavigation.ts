@@ -1,4 +1,4 @@
-import { createNavigationContainerRef } from '@react-navigation/native';
+import { createNavigationContainerRef, StackActions } from '@react-navigation/native';
 import type { RootStackParamList, SharedStackParamList } from './navigationTypes';
 import type { SharedAppRouteName } from '../../apps/registry/generated/appRegistry';
 import { clearPendingAppRoute, getPendingAppRoute, setActiveAppRoute } from './pendingAppRedirect';
@@ -25,8 +25,23 @@ export async function redirectToPendingAppIfNeeded() {
   // stack underneath it. Popping back there preserves history (Home > Store
   // > Product…) instead of collapsing it into a single route, which is what
   // let the "GO_BACK" navigation error happen after login.
-  if (navigationRef.canGoBack()) {
-    navigationRef.goBack();
+  //
+  // A plain navigationRef.goBack() targets the currently *focused* navigator,
+  // which is AuthNavigator's own nested stack (login > enterEmail >
+  // enterPassword, or login > enterPhoneNumber > enterPhoneOtpLogin) — so it
+  // only pops one screen within that login flow instead of leaving Auth
+  // entirely, landing the user back on enterEmail/enterPhoneNumber instead of
+  // on the screen underneath. We need to pop the outer "Auth" route off the
+  // SharedNavigator (the "Main" route's nested state) specifically.
+  const sharedNavigatorState = navigationRef.getRootState()?.routes.find(
+    (route) => route.name === 'Main',
+  )?.state;
+
+  if (sharedNavigatorState?.key && (sharedNavigatorState.index ?? 0) > 0) {
+    navigationRef.dispatch({
+      ...StackActions.pop(),
+      target: sharedNavigatorState.key,
+    });
 
     if (pendingRoute) {
       await setActiveAppRoute(pendingRoute.routeName);
