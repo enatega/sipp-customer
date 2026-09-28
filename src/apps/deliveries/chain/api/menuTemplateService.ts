@@ -41,6 +41,8 @@ function toMenuCategoryProductsQueryParams(
     subcategory_id,
     price_tiers,
     sort_by,
+    latitude,
+    longitude,
   } = params;
 
   return {
@@ -51,6 +53,8 @@ function toMenuCategoryProductsQueryParams(
     subcategory_id,
     price_tiers,
     sort_by,
+    latitude,
+    longitude,
   };
 }
 
@@ -134,6 +138,8 @@ export const chainMenuTemplateService = {
       search,
       tab,
       sort_by,
+      latitude,
+      longitude,
     } = params;
 
     try {
@@ -145,6 +151,8 @@ export const chainMenuTemplateService = {
           search: search?.trim() || undefined,
           tab,
           sort_by,
+          latitude,
+          longitude,
         },
       );
     } catch (error) {

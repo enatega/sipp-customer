@@ -26,6 +26,8 @@ export type ChainMenuCategoriesParams = {
 };
 
 export type ChainMenuCategoryProductsParams = {
+  latitude?: number;
+  longitude?: number;
   menuTemplateId: string;
   categoryId: string;
   offset?: number;
@@ -38,6 +40,8 @@ export type ChainMenuCategoryProductsParams = {
 };
 
 export type ChainMenuDealsParams = {
+  latitude?: number;
+  longitude?: number;
   menuTemplateId: string;
   offset?: number;
   limit?: number;

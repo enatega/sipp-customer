@@ -167,12 +167,14 @@ export const singleVendorDiscoveryService = {
       limit = SINGLE_VENDOR_DEALS_DEFAULTS.limit,
       search,
       tab,
+      latitude,
+      longitude,
     } = params;
 
     try {
       return await apiClient.get<SingleVendorDealsApiResponse>(
         '/api/v1/apps/deliveries/discovery/single-vendor/deals',
-        { offset, limit, search, tab },
+        { offset, limit, search, tab, latitude, longitude },
       );
     } catch (error) {
       console.error('single vendor deals request failed', error);

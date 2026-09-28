@@ -256,6 +256,7 @@ export default function AddressDetailScreen() {
           latitude={Number(params.latitude)}
           longitude={Number(params.longitude)}
           initialLocationName={params.editLocationName}
+          initialSetAsDefault={params.preselectAsDefault}
           initialType={(params.editType as AddressType) ?? 'HOME'}
           onSave={handleSave}
           labels={{

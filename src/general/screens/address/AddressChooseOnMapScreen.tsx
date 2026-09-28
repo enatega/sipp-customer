@@ -51,8 +51,9 @@ export default function AddressChooseOnMapScreen() {
               editType: params.editType,
               editLocationName: params.editLocationName,
               origin: params.origin,
+              preselectAsDefault: params.preselectAsDefault,
             }
-          : { appPrefix: params.appPrefix, origin: params.origin }),
+          : { appPrefix: params.appPrefix, origin: params.origin, preselectAsDefault: params.preselectAsDefault }),
       });
     },
     [nav, params, setSelectedAddress],

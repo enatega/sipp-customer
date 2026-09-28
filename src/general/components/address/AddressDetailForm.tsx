@@ -37,6 +37,7 @@ type Props = {
   latitude: number;
   longitude: number;
   initialLocationName?: string;
+  initialSetAsDefault?: boolean;
   initialType?: AddressType;
   onSave: (data: AddressDetailFormSubmitData) => Promise<void>;
   labels: {
@@ -158,6 +159,7 @@ const AddressDetailFormInner = forwardRef<AddressDetailFormHandle, Props>(
       latitude,
       longitude,
       initialLocationName = '',
+      initialSetAsDefault = false,
       initialType = 'HOME',
       onSave,
       labels,
@@ -173,7 +175,7 @@ const AddressDetailFormInner = forwardRef<AddressDetailFormHandle, Props>(
     const [detailValues, setDetailValues] =
       useState<AddressDetailValues>(EMPTY_DETAIL_VALUES);
     const [isSaving, setIsSaving] = useState(false);
-    const [shouldSetDefault, setShouldSetDefault] = useState(false);
+    const [shouldSetDefault, setShouldSetDefault] = useState(initialSetAsDefault);
     const [showPredictions, setShowPredictions] = useState(false);
 
     const debouncedAddress = useDebouncedValue(editableAddress.trim(), 800);

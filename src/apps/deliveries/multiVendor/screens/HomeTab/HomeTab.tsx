@@ -40,6 +40,7 @@ import type {
   MultiVendorStackParamList,
 } from '../../navigation/types';
 import useDeliveriesTabSheetOffset from '../../../hooks/useDeliveriesTabSheetOffset';
+import useCompleteBrowseAddressFlow from '../../../hooks/useCompleteBrowseAddressFlow';
 
 type NavProp = CompositeNavigationProp<
   BottomTabNavigationProp<MultiVendorBottomTabParamList, 'MultiVendorTabHome'>,
@@ -50,6 +51,7 @@ type NavProp = CompositeNavigationProp<
 >;
 
 export default function HomeTab() {
+  useCompleteBrowseAddressFlow();
   const { colors, spacing } = useTheme();
   const { t } = useTranslation('deliveries');
   const navigation = useNavigation<NavProp>();
@@ -262,6 +264,7 @@ export default function HomeTab() {
       <DeliveryHomeScaffold
         contentContainerStyle={styles.contentContainer}
         headerProps={{
+          browseCityMode: true,
           addresses,
           addressVariant: 'label',
           onAddAddressPress: handleOpenAddressSheet,

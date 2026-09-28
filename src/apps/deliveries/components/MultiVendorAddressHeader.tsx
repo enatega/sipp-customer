@@ -15,6 +15,7 @@ import {
   formatDeliveryAddressLabel,
 } from '../../../general/utils/address';
 import DeliveriesChromeMaterial from './navigation/DeliveriesChromeMaterial';
+import { useBrowseCity, useBrowseCityStore } from '../stores/useBrowseCityStore';
 
 type Props = {
   addresses?: ProfileAddress[];
@@ -28,6 +29,7 @@ type Props = {
   rightAccessory?: ReactNode;
   showCartButton?: boolean;
   showDivider?: boolean;
+  browseCityMode?: boolean;
 };
 
 export default function MultiVendorAddressHeader({
@@ -42,6 +44,7 @@ export default function MultiVendorAddressHeader({
   rightAccessory,
   showCartButton = true,
   showDivider = true,
+  browseCityMode = false,
 }: Props) {
   const { colors, layout, motion, shape, spacing } = useTheme();
   const { t } = useTranslation('deliveries');
@@ -49,6 +52,8 @@ export default function MultiVendorAddressHeader({
   const isReducedMotionEnabled = useReducedMotion();
   const { gutter } = useWindowClass();
   const { selectedAddress, selectedAddressLabel } = useAddress();
+  const browseLocation = useBrowseCity();
+  const openCityPicker = useBrowseCityStore((state) => state.openPicker);
   const apiSelectedAddress = useMemo(
     () => createSelectedDeliveryAddress(addresses),
     [addresses],
@@ -66,10 +71,14 @@ export default function MultiVendorAddressHeader({
 
     return formatDeliveryAddressLabel(resolvedSelectedAddress) ?? selectedAddressLabel;
   })();
-  const addressLabel = resolvedSelectedAddressLabel ?? t('multi_vendor_address_label');
+  const addressLabel = browseCityMode
+    ? browseLocation?.name ?? t('browse_city_title')
+    : resolvedSelectedAddressLabel ?? t('multi_vendor_address_label');
   const addressTransition = useRef(new Animated.Value(1)).current;
   const isLabelVariant = addressVariant === 'label';
-  const handleAddressPress = resolvedSelectedAddress ? onAddressPress : onAddAddressPress;
+  const handleAddressPress = browseCityMode
+    ? openCityPicker
+    : resolvedSelectedAddress ? onAddressPress : onAddAddressPress;
 
   useEffect(() => {
     if (isReducedMotionEnabled) {
@@ -99,7 +108,7 @@ export default function MultiVendorAddressHeader({
       ]}
     >
       <Pressable
-        accessibilityLabel={addressLabel}
+        accessibilityLabel={browseCityMode ? t('browse_city_change', { city: addressLabel }) : addressLabel}
         accessibilityRole="button"
         accessibilityState={{ disabled: !handleAddressPress }}
         disabled={!handleAddressPress}
@@ -127,7 +136,7 @@ export default function MultiVendorAddressHeader({
         >
           <Icon
             color={colors.primary}
-            name={resolvedSelectedAddress ? 'location' : 'add'}
+            name={browseCityMode ? 'compass-outline' : resolvedSelectedAddress ? 'location' : 'add'}
             size={isLabelVariant ? 17 : 20}
             type="Ionicons"
           />
@@ -151,7 +160,7 @@ export default function MultiVendorAddressHeader({
         >
           {!isLabelVariant ? (
             <Text variant="caption" weight="medium" color={colors.textSubtle} numberOfLines={1}>
-              {resolvedSelectedAddress
+              {browseCityMode ? t('browse_city_header') : resolvedSelectedAddress
                 ? t('delivery_header_deliver_to')
                 : t('my_profile_add_address')}
             </Text>
@@ -163,12 +172,12 @@ export default function MultiVendorAddressHeader({
               numberOfLines={1}
               variant={isLabelVariant ? 'label' : 'body'}
               weight="semiBold"
-              color={resolvedSelectedAddress ? colors.textStrong : colors.primary}
+              color={browseCityMode || resolvedSelectedAddress ? colors.textStrong : colors.primary}
               style={styles.addressText}
             >
               {addressLabel}
             </Text>
-            {handleAddressPress && resolvedSelectedAddress ? (
+            {handleAddressPress && (browseCityMode || resolvedSelectedAddress) ? (
               <Icon color={colors.textSubtle} name="chevron-down" size={16} type="Ionicons" />
             ) : null}
           </View>

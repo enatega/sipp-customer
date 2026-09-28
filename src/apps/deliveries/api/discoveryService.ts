@@ -211,6 +211,8 @@ function toDealsQueryParams(
         category_ids,
         subcategory_id,
         shop_type_id,
+        latitude,
+        longitude,
     } = params;
 
     return {
@@ -221,6 +223,8 @@ function toDealsQueryParams(
         category_ids,
         subcategory_id,
         shop_type_id,
+        latitude,
+        longitude,
     };
 }
 
@@ -255,12 +259,16 @@ function toTopBrandsQueryParams(
         offset = TOP_BRANDS_DEFAULTS.offset,
         limit = TOP_BRANDS_DEFAULTS.limit,
         search,
+        latitude,
+        longitude,
     } = params;
 
     return {
         offset,
         limit,
         search,
+        latitude,
+        longitude,
     };
 }
 

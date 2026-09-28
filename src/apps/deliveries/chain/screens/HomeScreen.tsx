@@ -27,6 +27,7 @@ import { useChainMenuStore } from '../stores/useChainMenuStore';
 import HomeEntrance from '../../components/home/HomeEntrance';
 import DeliveryHomeScaffold from '../../components/home/DeliveryHomeScaffold';
 import useDeliveriesTabSheetOffset from '../../hooks/useDeliveriesTabSheetOffset';
+import useCompleteBrowseAddressFlow from '../../hooks/useCompleteBrowseAddressFlow';
 import type { ChainBottomTabParamList } from '../navigation/types';
 
 type Props = Record<string, never>;
@@ -37,6 +38,7 @@ type NavProp = CompositeNavigationProp<
 >;
 
 export default function HomeScreen({}: Props) {
+  useCompleteBrowseAddressFlow();
   const { spacing } = useTheme();
   const { t } = useTranslation('deliveries');
   const navigation = useNavigation<NavProp>();
@@ -145,6 +147,7 @@ export default function HomeScreen({}: Props) {
       <DeliveryHomeScaffold
         contentContainerStyle={styles.scrollContent}
         headerProps={{
+          browseCityMode: true,
           addressVariant: 'label',
           addresses,
           onAddAddressPress: handleOpenAddressSheet,

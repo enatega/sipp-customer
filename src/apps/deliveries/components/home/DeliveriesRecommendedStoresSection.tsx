@@ -5,8 +5,7 @@ import Text from '../../../../general/components/Text';
 import HorizontalList from '../../../../general/components/HorizontalList';
 import { useTheme } from '../../../../general/theme/theme';
 import { useRecommendedStores } from '../../hooks';
-import useAddress from '../../../../general/hooks/useAddress';
-import useCurrentLocation from '../../../../general/hooks/useCurrentLocation';
+import { useBrowseCity } from '../../stores/useBrowseCityStore';
 import StoreCard from '../storeCard/StoreCard';
 import DeliveriesSectionEmptyState from './DeliveriesSectionEmptyState';
 import {
@@ -25,11 +24,9 @@ export default function DeliveriesRecommendedStoresSection({
 }: Props) {
   const { typography, colors, spacing } = useTheme();
   const { t } = useTranslation('deliveries');
-  const { latitude: selectedLatitude, longitude: selectedLongitude } = useAddress();
-  const { currentCoordinates } = useCurrentLocation();
-
-  const latitude = currentCoordinates?.latitude ?? selectedLatitude;
-  const longitude = currentCoordinates?.longitude ?? selectedLongitude;
+  const city = useBrowseCity();
+  const latitude = city?.latitude;
+  const longitude = city?.longitude;
 
   const {
     data,

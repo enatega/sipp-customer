@@ -6,7 +6,7 @@ import type {
   PaginatedDeliveryResponse,
 } from '../../api/types';
 import type { GenericListFilters } from '../../components/filters/types';
-import useAddress from '../../../../general/hooks/useAddress';
+import { useBrowseCity } from '../../stores/useBrowseCityStore';
 import { singleVendorDiscoveryService } from '../api/discoveryService';
 
 type UseSingleVendorCategoryProductsMode = 'preview' | 'paginated';
@@ -52,10 +52,10 @@ export default function useSingleVendorCategoryProducts(
 ) {
   const mode = options?.mode ?? 'preview';
   const normalizedSearch = options?.search?.trim() ?? '';
-  const { latitude, longitude } = useAddress();
+  const city = useBrowseCity();
   const requestParams = {
-    latitude,
-    longitude,
+    latitude: city?.latitude,
+    longitude: city?.longitude,
     stock: normalizeStockValue(options?.filters?.stock),
     subcategory_id: normalizeSubcategoryId(options?.filters?.category_ids),
     price_tiers: options?.filters?.price_tiers

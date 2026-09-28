@@ -163,6 +163,8 @@ export interface DeliveryTopBrandsParams {
     offset?: number;
     limit?: number;
     search?: string;
+    latitude?: number;
+    longitude?: number;
 }
 
 export interface DeliveryNearbyStore {
@@ -296,6 +298,8 @@ export interface DeliveryStoreDetailsProduct {
 }
 
 export interface DeliveryDealsParams {
+    latitude?: number;
+    longitude?: number;
     offset?: number;
     limit?: number;
     search?: string;

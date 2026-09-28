@@ -34,6 +34,7 @@ import { searchService } from "../../api/searchService";
 import type { SearchProductItem, SearchStoreItem } from "../../api/searchServiceTypes";
 import { pushStoreDetails } from "../../navigation/storeDetailsNavigation";
 import type { DeliveryNearbyStore } from "../../api/types";
+import { useBrowseCity } from "../../stores/useBrowseCityStore";
 
 type DeliveriesNavigationProp =
   NativeStackNavigationProp<DeliveriesStackParamList>;
@@ -102,8 +103,8 @@ export default function useDeliverySearchFlow(
     route.key,
   ]);
   const origin = getAddressFlowOrigin(route.name);
-  const { latitude, longitude, selectedAddress, selectedAddressLabel } =
-    useAddress();
+  const { selectedAddress, selectedAddressLabel } = useAddress();
+  const city = useBrowseCity();
   const { refreshCurrentLocation } = useCurrentLocation();
   const {
     addresses,
@@ -122,14 +123,12 @@ export default function useDeliverySearchFlow(
 
   const location = useMemo(
     () => ({
-      latitude: options?.location?.latitude ?? latitude,
-      longitude: options?.location?.longitude ?? longitude,
+      latitude: city?.latitude,
+      longitude: city?.longitude,
     }),
     [
-      latitude,
-      longitude,
-      options?.location?.latitude,
-      options?.location?.longitude,
+      city?.latitude,
+      city?.longitude,
     ],
   );
   const shouldSearchStores = options?.searchStores ?? false;
