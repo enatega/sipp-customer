@@ -18,6 +18,7 @@ import StoreDeliveryInfo from "./subComponents/StoreDeliveryInfo";
 import { useTranslations } from "../../../../general/localization/LocalizationProvider";
 import PressableScale from "../../../../general/components/PressableScale";
 import { pushStoreDetails } from "../../navigation/storeDetailsNavigation";
+import { translateShopTypeName } from "../../utils/shopTypeLocalization";
 
 type StoreCardData =
   | DeliveryNearbyStore
@@ -107,7 +108,9 @@ export default function StoreCard({
   const resolvedReviewCount = store.reviewCount ?? undefined;
   const resolvedCuisine = isProductItem
     ? store.storeName ?? undefined
-    : store.shopTypeName ?? store.address ?? undefined;
+    : store.shopTypeName
+      ? translateShopTypeName(store.shopTypeName, t)
+      : store.address ?? undefined;
   const resolvedPrice = isProductItem ? store.price : store.baseFee;
   const resolvedDeliveryTime = store.deliveryTime;
   const resolvedDistance = store.distanceKm;

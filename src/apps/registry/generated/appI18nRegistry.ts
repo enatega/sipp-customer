@@ -3,6 +3,9 @@
 // Do not edit manually.
 
 import DeliveriesEn from '../../deliveries/localization/en';
+import DeliveriesDe from '../../deliveries/localization/de';
+import DeliveriesEs from '../../deliveries/localization/es';
+import DeliveriesAr from '../../deliveries/localization/ar';
 import DeliveriesFr from '../../deliveries/localization/fr';
 
 export const MINI_APPS = ['deliveries'] as const;
@@ -11,6 +14,15 @@ export type MiniAppId = (typeof MINI_APPS)[number];
 export const APP_I18N_RESOURCES = {
   en: {
     deliveries: DeliveriesEn,
+  },
+  de: {
+    deliveries: DeliveriesDe,
+  },
+  es: {
+    deliveries: DeliveriesEs,
+  },
+  ar: {
+    deliveries: DeliveriesAr,
   },
   fr: {
     deliveries: DeliveriesFr,

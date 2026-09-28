@@ -25,6 +25,7 @@ import { useTheme } from '../../../../../general/theme/theme';
 import StoreDetailHeroCurve from './StoreDetailHeroCurve';
 import StoreDetailInfoRow from './StoreDetailInfoRow';
 import { STORE_DETAIL_HERO_HEIGHT } from './StoreDetailNavigationHeader';
+import { translateShopTypeName } from '../../../utils/shopTypeLocalization';
 
 type Props = {
   coverImageUrl: string;
@@ -234,7 +235,7 @@ export default function StoreDetailListHeader({
               </Text>
               {storeType?.trim() ? (
                 <Text color={colors.textSubtle} numberOfLines={1} variant="supporting">
-                  {storeType}
+                  {translateShopTypeName(storeType, t)}
                 </Text>
               ) : null}
             </View>
