@@ -3,10 +3,12 @@ import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { useTheme } from '../../../../general/theme/theme';
 import RiderChatMessageBubble from './RiderChatMessageBubble';
 import type { RiderChatMessage } from './types';
+import Text from '../../../../general/components/Text';
 
 type Props = {
   isRefreshing: boolean;
   messages: RiderChatMessage[];
+  emptyMessage: string;
   onRefresh: () => void;
   scrollViewRef: RefObject<ScrollView | null>;
 };
@@ -14,6 +16,7 @@ type Props = {
 export default function RiderChatMessageList({
   isRefreshing,
   messages,
+  emptyMessage,
   onRefresh,
   scrollViewRef,
 }: Props) {
@@ -39,6 +42,7 @@ export default function RiderChatMessageList({
       }
     >
       <View style={styles.messageSection}>
+        {messages.length === 0 ? <Text style={{ color: colors.mutedText, textAlign: 'center' }}>{emptyMessage}</Text> : null}
         {messages.map((message) => (
           <RiderChatMessageBubble
             key={message.id}

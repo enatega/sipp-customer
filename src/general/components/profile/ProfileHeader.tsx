@@ -22,18 +22,21 @@ export default function ProfileHeader({
 }: Props) {
   const { colors } = useTheme();
   const displayName = name || '—';
+  const initial = name?.trim().charAt(0).toLocaleUpperCase() || '—';
 
   return (
     <View style={styles.container}>
       <View style={[styles.avatarWrapper, { backgroundColor: colors.primarySoft }]}> 
-        {imageUri ? (
+        {imageUri?.trim() ? (
           <Image
             source={{ uri: imageUri }}
             style={styles.avatar}
             accessibilityLabel={`${displayName} avatar`}
           />
         ) : (
-          <Ionicons name="person" size={30} color={colors.primary} />
+          <Text color={colors.primary} weight="bold" style={styles.initial}>
+            {initial}
+          </Text>
         )}
       </View>
       <View style={styles.info}>
@@ -94,6 +97,10 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 20,
+    lineHeight: 32,
+  },
+  initial: {
+    fontSize: 24,
     lineHeight: 32,
   },
   subtitle: {

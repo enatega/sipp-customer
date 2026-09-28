@@ -3,6 +3,7 @@ import type { ApiError } from '../../../general/api/apiClient';
 import { chatService } from '../api/chatService';
 import type {
   DeliveryChatBoxesResponse,
+  DeliveryChatMessageRecord,
   DeliveryChatMessagesResponse,
 } from '../api/chatServiceTypes';
 import { deliveryKeys } from '../api/queryKeys';
@@ -21,6 +22,15 @@ export function useDeliveryChatMessages(chatBoxId?: string) {
     queryKey: deliveryKeys.chatMessages(chatBoxId ?? 'unknown'),
     queryFn: () => chatService.getChatMessages(chatBoxId ?? ''),
     enabled: Boolean(chatBoxId),
+    staleTime: 10 * 1000,
+  });
+}
+
+export function useCustomerOrderChat(orderId: string) {
+  return useQuery<{ chatBoxId: string | null; messages: DeliveryChatMessageRecord[] }, ApiError>({
+    queryKey: [...deliveryKeys.chatBoxes("order"), orderId, "messages"],
+    queryFn: () => chatService.getOrderChat(orderId),
+    enabled: Boolean(orderId),
     staleTime: 10 * 1000,
   });
 }

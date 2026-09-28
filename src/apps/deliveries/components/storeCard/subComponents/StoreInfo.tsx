@@ -7,9 +7,10 @@ import { styles } from "../styles";
 interface StoreInfoProps {
   name: string;
   trailingLabel?: string;
+  dense?: boolean;
 }
 
-export default function StoreInfo({ name, trailingLabel }: StoreInfoProps) {
+export default function StoreInfo({ name, trailingLabel, dense = false }: StoreInfoProps) {
   const { colors } = useTheme();
 
   return (
@@ -17,7 +18,7 @@ export default function StoreInfo({ name, trailingLabel }: StoreInfoProps) {
       <Text
         variant="cardTitle"
         weight="semiBold"
-        style={[styles.name, { color: colors.text }]}
+        style={[styles.name, dense && styles.homeName, { color: colors.text }]}
         numberOfLines={1}
       >
         {name}

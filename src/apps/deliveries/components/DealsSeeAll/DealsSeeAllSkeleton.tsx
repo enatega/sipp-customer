@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import Skeleton from '../../../../general/components/Skeleton';
 
-const SKELETON_ITEMS = 6;
+const SKELETON_ITEMS = 4;
 
 type Props = {
   isTabsVisible?: boolean;
@@ -15,19 +15,21 @@ export default function DealsSeeAllSkeleton({
     <View style={styles.container}>
       {isTabsVisible ? (
         <View style={styles.tabsRow}>
-          <Skeleton width="20%" height={20} borderRadius={6} />
-          <Skeleton width="34%" height={20} borderRadius={6} />
-          <Skeleton width="24%" height={20} borderRadius={6} />
+          <Skeleton width={45} height={44} borderRadius={22} />
+          <Skeleton width={116} height={44} borderRadius={22} />
+          <Skeleton width={94} height={44} borderRadius={22} />
         </View>
       ) : null}
-      <Skeleton width="100%" height={72} borderRadius={8} />
-      <Skeleton width="52%" height={28} borderRadius={8} />
+      <Skeleton width="52%" height={26} borderRadius={8} />
       <View style={styles.grid}>
         {Array.from({ length: SKELETON_ITEMS }).map((_, index) => (
           <View key={index} style={styles.card}>
-            <Skeleton width="100%" height={150} borderRadius={14} />
-            <Skeleton width="40%" height={16} borderRadius={6} />
-            <Skeleton width="72%" height={22} borderRadius={6} />
+            <Skeleton width={94} height={94} borderRadius={12} />
+            <View style={styles.copy}>
+              <Skeleton width="40%" height={14} borderRadius={6} />
+              <Skeleton width="85%" height={20} borderRadius={6} />
+              <Skeleton width="55%" height={18} borderRadius={6} />
+            </View>
           </View>
         ))}
       </View>
@@ -37,23 +39,25 @@ export default function DealsSeeAllSkeleton({
 
 const styles = StyleSheet.create({
   card: {
-    gap: 8,
-    marginBottom: 14,
-    width: '48%',
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+    minHeight: 116,
+    width: '100%',
   },
+  copy: { flex: 1, gap: 10 },
   container: {
+    gap: 16,
     paddingHorizontal: 16,
     paddingBottom: 24,
-    paddingTop: 12,
+    paddingTop: 16,
   },
   grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    gap: 4,
   },
   tabsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 18,
+    gap: 8,
+    marginBottom: 4,
   },
 });

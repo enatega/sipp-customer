@@ -69,7 +69,7 @@ export default function DeliveriesRecommendedStoresSection({
 
   const renderItem = useCallback(
     ({ item }: { item: DeliveryNearbyStore }) => (
-      <StoreCard store={item} onPress={() => handlePressStore(item)} />
+      <StoreCard store={item} layout="home" onPress={() => handlePressStore(item)} />
     ),
     [handlePressStore],
   );
@@ -90,7 +90,7 @@ export default function DeliveriesRecommendedStoresSection({
       </Text>
 
       {isLoading ? (
-        <DiscoveryResultsSkeleton />
+        <DiscoveryResultsSkeleton home />
       ) : isError ? (
         <DiscoverySectionState
           tone="error"

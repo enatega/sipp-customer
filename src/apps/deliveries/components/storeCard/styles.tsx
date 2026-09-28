@@ -7,6 +7,9 @@ export const styles = StyleSheet.create({
   compactContainer: {
     width: 260,
   },
+  homeContainer: {
+    width: 268,
+  },
   fullWidthContainer: {
     width: '100%',
   },
@@ -23,6 +26,9 @@ export const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   compactImageContainer: {
+    height: 150,
+  },
+  homeImageContainer: {
     height: 150,
   },
   image: {
@@ -52,6 +58,22 @@ export const styles = StyleSheet.create({
     top: 8,
     left: 8,
   },
+  availabilityBadge: {
+    alignItems: 'center',
+    borderRadius: 18,
+    flexDirection: 'row',
+    gap: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    position: 'absolute',
+    right: 8,
+    top: 8,
+  },
+  availabilityDot: {
+    borderRadius: 4,
+    height: 6,
+    width: 6,
+  },
   content: {
     minHeight: 87,
   },
@@ -66,8 +88,16 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 22,
   },
+  homeName: {
+    fontSize: 17,
+    lineHeight: 23,
+  },
   cuisine: {
     flex: 1,
+  },
+  stackedCuisine: {
+    flex: undefined,
+    width: '100%',
   },
   location: {
     flexShrink: 1,
@@ -75,6 +105,9 @@ export const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  ratingStack: {
+    alignItems: 'flex-start',
   },
   deliveryInfoRow: {
     alignItems: 'center',

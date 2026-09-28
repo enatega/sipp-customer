@@ -9,7 +9,17 @@ import type {
 
 const ORDERS_BASE = "/api/v1/apps/deliveries/orders";
 
+export interface StripeOrderDraftStatus {
+  draftId: string;
+  status: string;
+  orderId: string | null;
+}
+
 export const ordersService = {
+  getStripeDraftStatus: (draftId: string): Promise<StripeOrderDraftStatus> =>
+    apiClient.get<StripeOrderDraftStatus>(
+      `${ORDERS_BASE}/stripe/drafts/${encodeURIComponent(draftId)}/status`,
+    ),
   getActiveOrders: (
     params: DeliveryOrdersListParams = {},
   ): Promise<ActiveOrdersResponse> =>

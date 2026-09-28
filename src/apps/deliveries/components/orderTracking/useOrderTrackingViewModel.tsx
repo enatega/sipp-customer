@@ -222,6 +222,7 @@ export function useOrderTrackingViewModel({
       }
 
       navigation.navigate("RiderChat", {
+        orderId,
         chatBoxId: chatBoxId ?? undefined,
         estimatedMinutes,
         orderCode: order?.summary.orderNumber || orderId,

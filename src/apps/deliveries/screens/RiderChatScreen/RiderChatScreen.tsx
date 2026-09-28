@@ -7,7 +7,6 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
 import { useRoute, type RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -29,10 +28,13 @@ import type { RiderChatMessage } from '../../components/riderChat/types';
 import { useDeliveriesSocketSession } from '../../hooks';
 import { useSendDeliveryChatMessage } from '../../hooks/useChatMutations';
 import { useDeliveryChatBoxes, useDeliveryChatMessages } from '../../hooks/useChatQueries';
+import { useCustomerOrderChat } from '../../hooks/useChatQueries';
+import { chatService } from '../../api/chatService';
 import { subscribeDeliveriesEvent } from '../../socket/deliveriesSocket';
 
 export type RiderChatScreenParams = {
   RiderChat: {
+    orderId: string;
     chatBoxId?: string;
     estimatedMinutes: number;
     orderCode: string;
@@ -135,17 +137,19 @@ export default function RiderChatScreen() {
   const insets = useSafeAreaInsets();
   const route = useRoute<RouteProp<RiderChatScreenParams, 'RiderChat'>>();
   const initialChatBoxId = route.params.chatBoxId;
+  const orderId = route.params.orderId;
   const riderName = route.params.riderName;
   const riderAvatarUri = route.params.riderAvatarUri;
   const senderId = sessionQuery.data?.user?.id;
   const receiverId = route.params.receiverId;
 
   const [draftMessage, setDraftMessage] = useState('');
-  const [activeChatBoxId, setActiveChatBoxId] = useState<string | null>(initialChatBoxId ?? null);
+  const [activeChatBoxId, setActiveChatBoxId] = useState<string | null>(null);
   const [messages, setMessages] = useState<RiderChatMessage[]>([]);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
   const chatBoxesQuery = useDeliveryChatBoxes(senderId);
+  const orderChatQuery = useCustomerOrderChat(orderId);
   const sendMessageMutation = useSendDeliveryChatMessage({
     onError: (error) => {
       showToast.error(t('rider_chat_send_error'), error.message);
@@ -158,6 +162,7 @@ export default function RiderChatScreen() {
   );
 
   const resolvedChatBoxId = useMemo(() => {
+    if (orderId) return orderChatQuery.data?.chatBoxId ?? activeChatBoxId;
     if (activeChatBoxId) {
       return activeChatBoxId;
     }
@@ -184,14 +189,12 @@ export default function RiderChatScreen() {
       ) ??
       null
     );
-  }, [activeChatBoxId, chatBoxes, receiverId, senderId]);
+  }, [activeChatBoxId, chatBoxes, orderChatQuery.data?.chatBoxId, orderId, receiverId, senderId]);
 
-  const chatMessagesQuery = useDeliveryChatMessages(resolvedChatBoxId ?? undefined);
+  const chatMessagesQuery = useDeliveryChatMessages(orderId ? undefined : resolvedChatBoxId ?? undefined);
 
   useEffect(() => {
-    const remoteMessages = getResponseItems<DeliveryChatMessageRecord>(
-      chatMessagesQuery.data as DeliveryChatMessagesResponse | undefined,
-    );
+    const remoteMessages = orderId ? orderChatQuery.data?.messages ?? [] : getResponseItems<DeliveryChatMessageRecord>(chatMessagesQuery.data as DeliveryChatMessagesResponse | undefined);
 
     setMessages(
       remoteMessages.map((message, index) => {
@@ -208,7 +211,12 @@ export default function RiderChatScreen() {
         };
       }),
     );
-  }, [chatMessagesQuery.data, senderId]);
+  }, [chatMessagesQuery.data, orderChatQuery.data?.messages, orderId, senderId]);
+
+  useEffect(() => {
+    if (!orderId || !orderChatQuery.data) return;
+    void chatService.markOrderChatRead(orderId).catch(() => undefined);
+  }, [orderId, orderChatQuery.data?.messages.length]);
 
   useEffect(() => {
     requestAnimationFrame(() => {
@@ -223,16 +231,22 @@ export default function RiderChatScreen() {
 
     return subscribeDeliveriesEvent('receive-message', (message: SocketReceivedMessage) => {
       const isConversationMessage =
-        message.receiver === senderId && message.sender === receiverId;
+        message.receiver === senderId && message.sender === receiverId && (!orderId || message.orderId === orderId);
 
       if (!isConversationMessage) {
         return;
       }
 
+      const incomingId = message.id?.trim();
+      const incomingChatBoxId = message.chatBoxId ?? message.chat_box_id;
+      if (resolvedChatBoxId && incomingChatBoxId && incomingChatBoxId !== resolvedChatBoxId) return;
+      if (!incomingId) {
+        void (orderId ? orderChatQuery.refetch() : chatMessagesQuery.refetch());
+        return;
+      }
+
       setMessages((current) => {
-        const alreadyExists = current.some(
-          (item) => item.sender === 'rider' && item.text === message.text,
-        );
+        const alreadyExists = current.some((item) => item.id === incomingId);
 
         if (alreadyExists) {
           return current;
@@ -241,22 +255,27 @@ export default function RiderChatScreen() {
         return [
           ...current,
           {
-            id: `realtime-${Date.now()}`,
+            id: incomingId,
             sender: 'rider',
             text: message.text,
-            timeLabel: formatMessageTime(new Date().toISOString()),
+            timeLabel: formatMessageTime(message.createdAt ?? new Date().toISOString()),
           },
         ];
       });
 
       void chatBoxesQuery.refetch();
-      if (resolvedChatBoxId) {
+      if (orderId) {
+        void orderChatQuery.refetch();
+        void chatService.markOrderChatRead(orderId).catch(() => undefined);
+      } else if (resolvedChatBoxId) {
         void chatMessagesQuery.refetch();
       }
     });
   }, [
     chatBoxesQuery,
     chatMessagesQuery,
+    orderChatQuery,
+    orderId,
     receiverId,
     resolvedChatBoxId,
     senderId,
@@ -290,16 +309,17 @@ export default function RiderChatScreen() {
       return;
     }
 
-    if (!receiverId) {
+    if (!receiverId && !orderId) {
       showToast.error(t('rider_chat_send_error'), t('rider_chat_missing_receiver_error'));
       return;
     }
 
     sendMessageMutation.mutate(
       {
-        chatBoxId: resolvedChatBoxId ?? initialChatBoxId,
+        chatBoxId: orderId ? undefined : resolvedChatBoxId ?? initialChatBoxId,
+        orderId,
         senderId,
-        receiverId,
+        receiverId: receiverId ?? '',
         text: trimmedMessage,
       },
       {
@@ -310,7 +330,7 @@ export default function RiderChatScreen() {
           setMessages((current) => [
             ...current,
             {
-              id: `${Date.now()}-${current.length}`,
+              id: response.detail?.id ?? `${Date.now()}-${current.length}`,
               sender: 'user',
               text: trimmedMessage,
               timeLabel: formatMessageTime(new Date().toISOString()),
@@ -320,7 +340,9 @@ export default function RiderChatScreen() {
           if (response.chatBoxId || resolvedChatBoxId) {
             void chatBoxesQuery.refetch();
           }
-          if (resolvedChatBoxId) {
+          if (orderId) {
+            void orderChatQuery.refetch();
+          } else if (resolvedChatBoxId) {
             void chatMessagesQuery.refetch();
           }
 
@@ -340,38 +362,8 @@ export default function RiderChatScreen() {
     submitMessage(draftMessage, true);
   }, [draftMessage]);
 
-  const handleAttachmentPress = useCallback(async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (status !== 'granted') {
-      showToast.error(
-        t('rider_chat_attachment_permission_title'),
-        t('rider_chat_attachment_permission_message'),
-      );
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: false,
-      quality: 0.8,
-    });
-
-    if (result.canceled || result.assets.length === 0) {
-      return;
-    }
-
-    const asset = result.assets[0];
-
-    showToast.success(
-      t('rider_chat_attachment_selected_title'),
-      t('rider_chat_attachment_selected_message', {
-        fileName: asset.fileName ?? asset.uri.split('/').pop() ?? 'image',
-      }),
-    );
-  }, [t]);
-
   const handleRefresh = useCallback(async () => {
+    if (orderId) { await orderChatQuery.refetch(); return; }
     await chatBoxesQuery.refetch();
 
     if (resolvedChatBoxId) {
@@ -396,21 +388,6 @@ export default function RiderChatScreen() {
     [messages],
   );
 
-  const displayMessages = useMemo<RiderChatMessage[]>(() => {
-    if (hasRealMessages) {
-      return messages;
-    }
-
-    return [
-      {
-        id: 'rider-chat-empty-state',
-        sender: 'rider',
-        text: t('rider_chat_auto_message'),
-        timeLabel: t('rider_chat_auto_time'),
-      },
-    ];
-  }, [hasRealMessages, messages, t]);
-
   const shouldShowQuickReplies = !hasRealMessages && !isKeyboardVisible;
 
   return (
@@ -418,7 +395,6 @@ export default function RiderChatScreen() {
       <RiderChatHeader
         riderAvatarUri={riderAvatarUri}
         riderName={riderName}
-        onCallPress={() => {}}
       />
 
       <KeyboardAvoidingView
@@ -428,7 +404,8 @@ export default function RiderChatScreen() {
       >
         <RiderChatMessageList
           isRefreshing={isRefreshing}
-          messages={displayMessages}
+          messages={messages}
+          emptyMessage={t('rider_chat_auto_message')}
           onRefresh={handleRefresh}
           scrollViewRef={scrollViewRef}
         />
@@ -444,7 +421,6 @@ export default function RiderChatScreen() {
         <RiderChatFooter
           bottomInset={insets.bottom}
           isKeyboardVisible={isKeyboardVisible}
-          onAttachmentPress={handleAttachmentPress}
           isSending={sendMessageMutation.isPending}
           value={draftMessage}
           onChangeText={setDraftMessage}

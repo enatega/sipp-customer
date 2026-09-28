@@ -125,9 +125,9 @@ export default function DeliveryHomeIntro({
       style={[
         styles.container,
         {
-          paddingBottom: spacing.sm,
+          paddingBottom: spacing.xs,
           paddingHorizontal: gutter,
-          paddingTop: spacing.sm,
+          paddingTop: spacing.xs,
         },
       ]}
     >
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
-    minHeight: 48,
+    minHeight: 44,
     width: '100%',
   },
   searchClip: {

@@ -23,11 +23,10 @@ export default function TopBrandsSeeAllSkeleton() {
       ]}
     >
       {Array.from({ length: columns * 2 }).map((_, index) => (
-        <View key={index} style={[styles.card, { marginBottom: spacing.lg, width: cardWidth }]}>
-          <Skeleton width="100%" height={156} borderRadius={shape.radius.surface} />
-          <View style={styles.content}>
-            <Skeleton width="58%" height={18} borderRadius={shape.radius.xs} />
-            <Skeleton width="42%" height={16} borderRadius={shape.radius.xs} />
+        <View key={index} style={[styles.card, { width: cardWidth }]}>
+          <Skeleton width="100%" height={cardWidth / 1.22} borderRadius={shape.radius.surface} />
+          <View style={[styles.content, { minHeight: 64 }]}>
+            <Skeleton width="76%" height={18} borderRadius={shape.radius.xs} />
           </View>
         </View>
       ))}
@@ -37,6 +36,7 @@ export default function TopBrandsSeeAllSkeleton() {
 
 const styles = StyleSheet.create({
   card: {
+    overflow: 'hidden',
   },
   content: {
     gap: 8,
@@ -48,6 +48,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     paddingBottom: 24,
+    paddingTop: 16,
     width: '100%',
   },
 });

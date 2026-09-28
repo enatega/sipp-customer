@@ -5,6 +5,7 @@ import SplashScreen from '../screens/SplashScreen';
 import SharedNavigator from '../general/navigation/SharedNavigator';
 import type { RootStackParamList } from '../general/navigation/navigationTypes';
 import { navigationRef } from '../general/navigation/rootNavigation';
+import { flushPendingOrderNotification } from '../general/navigation/notificationNavigation';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -12,7 +13,7 @@ export default function RootNavigator() {
   const [showSplash, setShowSplash] = useState(true);
 
   return (
-    <NavigationContainer ref={navigationRef}>
+    <NavigationContainer ref={navigationRef} onReady={flushPendingOrderNotification} onStateChange={flushPendingOrderNotification}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {showSplash ? (
           <Stack.Screen name="Splash">

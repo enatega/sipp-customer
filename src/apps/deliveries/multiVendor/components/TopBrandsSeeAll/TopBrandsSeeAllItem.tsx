@@ -16,7 +16,7 @@ export default function TopBrandsSeeAllItem({
   onPress,
   isDisabled = false,
 }: Props) {
-  const { shape, typography } = useTheme();
+  const { colors, shape, typography } = useTheme();
 
   return (
     <PressableScale
@@ -29,10 +29,12 @@ export default function TopBrandsSeeAllItem({
     >
       <TopBrandCard
         brand={brand}
-        cardStyle={styles.card}
+        cardStyle={[styles.card, { borderColor: colors.border }]}
         imageContainerStyle={styles.imageContainer}
+        imageResizeMode="cover"
         contentStyle={styles.content}
         badgeStyle={styles.badge}
+        titleNumberOfLines={2}
         titleStyle={{
           fontSize: typography.size.md2,
           lineHeight: typography.lineHeight.md2,
@@ -54,16 +56,21 @@ const styles = StyleSheet.create({
     top: 10,
   },
   card: {
-    borderRadius: 14,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    elevation: 0,
+    shadowOpacity: 0,
+    overflow: 'hidden',
     width: '100%',
   },
   content: {
-    minHeight: 58,
+    minHeight: 64,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 12,
   },
   imageContainer: {
-    height: 156,
+    aspectRatio: 1.22,
+    height: undefined,
     width: '100%',
   },
   item: {

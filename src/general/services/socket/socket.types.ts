@@ -9,9 +9,14 @@ export type SocketSentMessage = {
 };
 
 export type SocketReceivedMessage = {
+  id?: string;
+  orderId?: string;
   sender: string;
   receiver: string;
   text: string;
+  chatBoxId?: string;
+  chat_box_id?: string;
+  createdAt?: string;
 };
 
 export type SocketAck<TResponse = unknown> = (response: TResponse) => void;

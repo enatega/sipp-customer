@@ -355,7 +355,7 @@ export interface DeliveryBannerStore {
     coverImage?: string | null;
 }
 
-export type DeliveryBannerActionType = 'store' | 'product' | 'shop_type';
+export type DeliveryBannerActionType = 'store' | 'product' | 'shop_type' | 'all_restaurants';
 
 export interface DeliveryBannerProduct {
     id: string;

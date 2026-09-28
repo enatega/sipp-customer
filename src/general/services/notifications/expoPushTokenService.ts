@@ -48,12 +48,12 @@ async function getPushTokenInternal(): Promise<string | null> {
     const permissions = await Notifications.getPermissionsAsync();
     let status = permissions.status;
 
-    if (status !== "granted") {
+    if (status !== "granted" && permissions.ios?.status !== Notifications.IosAuthorizationStatus.PROVISIONAL) {
       const requested = await Notifications.requestPermissionsAsync();
       status = requested.status;
     }
 
-    if (status !== "granted") {
+    if (status !== "granted" && (await Notifications.getPermissionsAsync()).ios?.status !== Notifications.IosAuthorizationStatus.PROVISIONAL) {
       return null;
     }
 

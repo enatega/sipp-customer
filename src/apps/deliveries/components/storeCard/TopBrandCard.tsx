@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ImageStyle, StyleProp, TextStyle, ViewStyle } from 'react-native';
+import type { ImageResizeMode, ImageStyle, StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import Image from '../../../../general/components/Image';
 import Text from '../../../../general/components/Text';
@@ -12,10 +12,12 @@ type Props = {
   cardStyle?: StyleProp<ViewStyle>;
   imageContainerStyle?: StyleProp<ViewStyle>;
   imageStyle?: StyleProp<ImageStyle>;
+  imageResizeMode?: ImageResizeMode;
   contentStyle?: StyleProp<ViewStyle>;
   badgeStyle?: StyleProp<ViewStyle>;
   titleStyle?: StyleProp<TextStyle>;
   subtitleStyle?: StyleProp<TextStyle>;
+  titleNumberOfLines?: number;
 };
 
 export default function TopBrandCard({
@@ -23,10 +25,12 @@ export default function TopBrandCard({
   cardStyle,
   imageContainerStyle,
   imageStyle,
+  imageResizeMode = 'contain',
   contentStyle,
   badgeStyle,
   titleStyle,
   subtitleStyle,
+  titleNumberOfLines = 1,
 }: Props) {
   const { colors, elevation, shape, spacing, typography } = useTheme();
   const badgeLabel =
@@ -63,7 +67,7 @@ export default function TopBrandCard({
         <Image
           source={{ uri: brand.logo ?? '' }}
           style={[styles.image, imageStyle]}
-          resizeMode="cover"
+          resizeMode={imageResizeMode}
         />
 
         {badgeLabel ? (
@@ -84,7 +88,7 @@ export default function TopBrandCard({
       >
         <Text
           weight="semiBold"
-          numberOfLines={1}
+          numberOfLines={titleNumberOfLines}
           style={[
             typography.role.caption,
             titleStyle,

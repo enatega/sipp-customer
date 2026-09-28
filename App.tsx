@@ -12,6 +12,8 @@ import { StripeProvider } from "@stripe/stripe-react-native";
 import "./src/general/localization/i18n";
 import AppToast from "./src/general/components/AppToast";
 import { useSocketSession } from "./src/general/hooks/useSocketSession";
+import { usePushTokenSync } from './src/general/hooks/usePushTokenSync';
+import { queueOrderNotificationNavigation } from './src/general/navigation/notificationNavigation';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -25,10 +27,22 @@ Notifications.setNotificationHandler({
 function ThemedApp() {
   const { theme } = useAppTheme();
   useSocketSession();
+  usePushTokenSync();
 
   React.useEffect(() => {
-    const subscription = Notifications.addNotificationReceivedListener(() => undefined);
-    return () => subscription.remove();
+    const openResponse = (response: Notifications.NotificationResponse) => {
+      const data = response.notification.request.content.data;
+      queueOrderNotificationNavigation(data?.orderId);
+    };
+    const received = Notifications.addNotificationReceivedListener(() => undefined);
+    const tapped = Notifications.addNotificationResponseReceivedListener(openResponse);
+    void Notifications.getLastNotificationResponseAsync().then((response) => {
+      if (response) {
+        openResponse(response);
+        void Notifications.clearLastNotificationResponseAsync();
+      }
+    }).catch(() => undefined);
+    return () => { received.remove(); tapped.remove(); };
   }, []);
 
   return (

@@ -7,7 +7,6 @@ type Props = {
   bottomInset: number;
   isKeyboardVisible: boolean;
   isSending?: boolean;
-  onAttachmentPress: () => void;
   onChangeText: (value: string) => void;
   onSend: () => void;
   placeholder: string;
@@ -18,7 +17,6 @@ export default function RiderChatFooter({
   bottomInset,
   isKeyboardVisible,
   isSending = false,
-  onAttachmentPress,
   onChangeText,
   onSend,
   placeholder,
@@ -38,7 +36,6 @@ export default function RiderChatFooter({
       ]}
     >
       <RiderChatComposer
-        onAttachmentPress={onAttachmentPress}
         isSending={isSending}
         value={value}
         onChangeText={onChangeText}

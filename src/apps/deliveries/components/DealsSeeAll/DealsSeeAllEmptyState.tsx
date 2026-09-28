@@ -1,7 +1,7 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
+import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from "react-i18next";
-import Svg from "../../components/Svg";
 import Text from "../../../../general/components/Text";
 import { useTheme } from "../../../../general/theme/theme";
 
@@ -11,8 +11,8 @@ export default function DealsSeeAllEmptyState() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.iconContainer}>
-        <Svg name="noResultsFound" />
+      <View style={[styles.iconContainer, { backgroundColor: colors.primarySoft }]}>
+        <Ionicons name="pricetag-outline" size={32} color={colors.primary} />
       </View>
 
       <Text
@@ -26,7 +26,7 @@ export default function DealsSeeAllEmptyState() {
           },
         ]}
       >
-        {t("generic_list_empty_title")}
+        {t("deals_page_empty_title")}
       </Text>
       <Text
         style={[
@@ -37,7 +37,7 @@ export default function DealsSeeAllEmptyState() {
           },
         ]}
       >
-        {t("generic_list_empty_description")}
+        {t("deals_page_empty_description")}
       </Text>
     </View>
   );
@@ -56,7 +56,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   iconContainer: {
+    alignItems: 'center',
+    borderRadius: 34,
+    height: 68,
+    justifyContent: 'center',
     marginBottom: 16,
+    width: 68,
   },
   title: {
     textAlign: "center",

@@ -1,4 +1,5 @@
 export type SendDeliveryChatMessagePayload = {
+  orderId?: string;
   chatBoxId?: string;
   senderId: string;
   receiverId: string;
@@ -29,6 +30,7 @@ export type DeliveryChatMessageRecord = {
 export type SendDeliveryChatMessageResponse = {
   message?: string;
   chatBoxId?: string;
+  detail?: DeliveryChatMessageRecord;
 };
 
 export type DeliveryChatBoxRecord = {

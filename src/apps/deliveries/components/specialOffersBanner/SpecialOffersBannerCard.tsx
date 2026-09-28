@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, View } from 'react-native';
 import Text from '../../../../general/components/Text';
@@ -24,14 +25,17 @@ export default function SpecialOffersBannerCard({
   onPress,
 }: Props) {
   const { colors, shape, spacing } = useTheme();
+  const { t } = useTranslation('deliveries');
   const videoUri = banner.bannerVideoLink?.trim() ?? '';
   const storeAddress = banner.store?.address?.trim() ?? '';
+  const title = banner.title?.trim() ?? '';
   const description = banner.description?.trim() ?? '';
+  const hasCopy = Boolean(title || description);
   const isPressable = typeof onPress === 'function';
 
   return (
     <PressableScale
-      accessibilityLabel={banner.title}
+      accessibilityLabel={title || banner.shopType?.name || banner.store?.address || t('promotional_banner')}
       accessibilityRole={isPressable ? 'button' : undefined}
       disabled={!isPressable}
       onPress={onPress}
@@ -39,6 +43,7 @@ export default function SpecialOffersBannerCard({
         styles.container,
         {
           borderRadius: shape.radius.hero,
+          height,
           marginHorizontal: sidePadding,
           width,
         },
@@ -50,56 +55,56 @@ export default function SpecialOffersBannerCard({
         <SpecialOffersBannerMedia banner={banner} />
       )}
 
-      <View
-        style={[
-          styles.bannerCard,
-          {
-            borderRadius: shape.radius.hero,
-            height,
-            paddingHorizontal: spacing.xl,
-            paddingVertical: spacing.xl,
-          },
-        ]}
-      >
-        <LinearGradient
-          colors={[colors.mediaScrimStart, colors.mediaScrimEnd]}
-          end={{ x: 0.9, y: 1 }}
-          start={{ x: 0.2, y: 0 }}
-          style={styles.overlay}
-        />
+      {hasCopy ? (
+        <View
+          style={[
+            styles.bannerCard,
+            {
+              borderRadius: shape.radius.hero,
+              height,
+              paddingHorizontal: spacing.xl,
+              paddingVertical: spacing.xl,
+            },
+          ]}
+        >
+          <LinearGradient
+            colors={[colors.bannerScrimText, colors.bannerScrimEdge]}
+            end={{ x: 1, y: 0.3 }}
+            start={{ x: 0, y: 1 }}
+            style={styles.overlay}
+          />
 
-        <View style={[styles.content, { gap: spacing.sm }]}>
-          {storeAddress ? (
-            <Text
-              color={colors.white}
-              variant="caption"
-              weight="semiBold"
-            >
-              {storeAddress}
-            </Text>
-          ) : null}
+          <View style={[styles.content, { gap: spacing.sm }]}>
+            {storeAddress ? (
+              <Text color={colors.white} variant="caption" weight="semiBold">
+                {storeAddress}
+              </Text>
+            ) : null}
 
-          <Text
-            color={colors.white}
-            numberOfLines={2}
-            variant="sectionTitle"
-            weight="bold"
-          >
-            {banner.title}
-          </Text>
+            {title ? (
+              <Text
+                color={colors.white}
+                numberOfLines={2}
+                variant="sectionTitle"
+                weight="bold"
+              >
+                {title}
+              </Text>
+            ) : null}
 
-          {description ? (
-            <Text
-              color={colors.white}
-              numberOfLines={3}
-              weight="medium"
-              variant="supporting"
-            >
-              {description}
-            </Text>
-          ) : null}
+            {description ? (
+              <Text
+                color={colors.white}
+                numberOfLines={3}
+                weight="medium"
+                variant="supporting"
+              >
+                {description}
+              </Text>
+            ) : null}
+          </View>
         </View>
-      </View>
+      ) : null}
     </PressableScale>
   );
 }

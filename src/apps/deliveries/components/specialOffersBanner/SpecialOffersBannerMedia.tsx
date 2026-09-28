@@ -16,7 +16,7 @@ export default function SpecialOffersBannerMedia({ banner }: Props) {
     '';
 
   if (imageUri) {
-    return <Image resizeMode="cover" source={{ uri: imageUri }} style={styles.media} />;
+    return <Image resizeMode={banner.title?.trim() || banner.description?.trim() ? 'cover' : 'contain'} source={{ uri: imageUri }} style={styles.media} />;
   }
 
   return (

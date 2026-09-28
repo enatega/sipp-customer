@@ -10,6 +10,8 @@ interface StoreDeliveryInfoProps {
   price?: number | null;
   deliveryTime?: number | string | null;
   distance?: number | null;
+  showDistance?: boolean;
+  dense?: boolean;
   fallbackLabels?: {
     price: string;
     deliveryTime: string;
@@ -42,17 +44,25 @@ function toPositiveNumber(value: number | string | null | undefined) {
   return Number.isFinite(parsedValue) && parsedValue > 0 ? parsedValue : null;
 }
 
+function toNonNegativeNumber(value: number | null | undefined) {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0
+    ? value
+    : null;
+}
+
 export default function StoreDeliveryInfo({
   price,
   deliveryTime,
   distance,
+  showDistance = true,
+  dense = false,
   fallbackLabels,
 }: StoreDeliveryInfoProps) {
   const { colors, spacing } = useTheme();
   const currencyLabel = useDeliveriesCurrencyLabel();
   const deliveryTimeValue = toPositiveNumber(deliveryTime);
   const distanceValue = toPositiveNumber(distance);
-  const priceValue = toPositiveNumber(price);
+  const priceValue = toNonNegativeNumber(price);
   const priceLabel =
     priceValue != null
       ? formatPrice(priceValue, currencyLabel)
@@ -61,8 +71,9 @@ export default function StoreDeliveryInfo({
     deliveryTimeValue != null && deliveryTime != null
       ? formatDeliveryTime(deliveryTime)
       : fallbackLabels?.deliveryTime;
-  const distanceLabel =
-    distanceValue != null ? `${distanceValue} km` : fallbackLabels?.distance;
+  const distanceLabel = showDistance
+    ? distanceValue != null ? `${distanceValue} km` : fallbackLabels?.distance
+    : undefined;
   const infoItems = [
     priceLabel
       ? {
@@ -93,14 +104,14 @@ export default function StoreDeliveryInfo({
 
   return (
     <View
-      style={[styles.deliveryInfoRow, { gap: spacing.md }]}
+      style={[styles.deliveryInfoRow, { gap: dense ? spacing.xs : spacing.md }]}
     >
       {infoItems.map((item) => (
         <View key={`${item.iconName}-${item.label}`} style={styles.infoItem}>
           <Icon
             type={item.iconType}
             name={item.iconName}
-            size={16}
+            size={dense ? 14 : 16}
             color={colors.textSubtle}
           />
           <Text

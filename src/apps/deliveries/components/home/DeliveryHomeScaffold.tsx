@@ -143,7 +143,7 @@ export default function DeliveryHomeScaffold({
           styles.scrollContent,
           contentContainerStyle,
           {
-            gap: spacing.section.compact,
+            gap: spacing.sm,
             paddingBottom: tabBarHeight + insets.bottom + spacing.lg,
             paddingTop: headerOffset,
           },

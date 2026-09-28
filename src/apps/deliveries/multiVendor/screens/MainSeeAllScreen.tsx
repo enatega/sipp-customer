@@ -1,228 +1,185 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
-import { useQueryClient } from "@tanstack/react-query";
-import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
-import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { useTranslation } from "react-i18next";
-import { useTheme } from "../../../../general/theme/theme";
-import useDebouncedValue from "../../../../general/hooks/useDebouncedValue";
-import DeliveriesSeeAllHeader from "../../screens/SeeAllScreen/components/DeliveriesSeeAllHeader";
-import DeliveriesSeeAllFilterSheet from "../../screens/SeeAllScreen/components/DeliveriesSeeAllFilterSheet";
-import MultiVendorDealsSection from "../components/HomeTab/MultiVendorDealsSection";
-import OrderAgain from "../components/HomeTab/OrderAgain";
-import SelectedFilterChips from "../../components/filters/SelectedFilterChips";
-import {
-  MainSeeAllCategoriesSection,
-  MainSeeAllShopTypeTabs,
-} from "../components/MainSeeAll";
-import useGenericListFilters from "../../hooks/filterablePaginatedList/useGenericListFilters";
-import {
-  useFilterValues,
-  useShopTypeCategories,
-  useShopTypes,
-} from "../../hooks";
-import type { MultiVendorStackParamList } from "../navigation/types";
-import NearbyStoreList from "../components/HomeTab/NearbyStoreList";
-import { deliveryKeys } from "../../api/queryKeys";
-import { useWindowClass } from "../../../../general/hooks/useWindowClass";
+import React, { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../../../general/theme/theme';
+import { useWindowClass } from '../../../../general/hooks/useWindowClass';
+import Text from '../../../../general/components/Text';
+import useDebouncedValue from '../../../../general/hooks/useDebouncedValue';
+import DiscoveryListingHeader from '../../components/discovery/DiscoveryListingHeader';
+import DeliveriesSeeAllFilterSheet from '../../screens/SeeAllScreen/components/DeliveriesSeeAllFilterSheet';
+import SelectedFilterChips from '../../components/filters/SelectedFilterChips';
+import DeliveriesSectionEmptyState from '../../components/home/DeliveriesSectionEmptyState';
+import VerticalStoreListSkeleton from '../../components/VerticalStoreListSkeleton';
+import StoreCard from '../../components/storeCard/StoreCard';
+import ClosedStoreMenuPopup from '../../components/storeCard/ClosedStoreMenuPopup';
+import type { DeliveryNearbyStore } from '../../api/types';
+import useGenericListFilters from '../../hooks/filterablePaginatedList/useGenericListFilters';
+import { useFilterValues, useNearbyStores, useShopTypeCategories, useShopTypes } from '../../hooks';
+import { MainSeeAllCategoriesSection, MainSeeAllShopTypeTabs } from '../components/MainSeeAll';
+import type { MultiVendorStackParamList } from '../navigation/types';
+import { pushStoreDetails } from '../../navigation/storeDetailsNavigation';
 
-type NavigationProp = NativeStackNavigationProp<
-  MultiVendorStackParamList,
-  "MainSeeAllScreen"
->;
+type NavigationProp = NativeStackNavigationProp<MultiVendorStackParamList, 'MainSeeAllScreen'>;
+type MainSeeAllRouteProp = RouteProp<MultiVendorStackParamList, 'MainSeeAllScreen'>;
 
-type MainSeeAllRouteProp = RouteProp<
-  MultiVendorStackParamList,
-  "MainSeeAllScreen"
->;
+function decodeDisplayText(value: string) {
+  let decodedValue = value;
+  if (decodedValue.includes('%')) {
+    try { decodedValue = decodeURIComponent(decodedValue); } catch { decodedValue = value; }
+  }
+  return decodedValue.replace(/%amp;|&amp;|&#38;/gi, '&');
+}
 
 export default function MainSeeAllScreen() {
   const { colors, layout, spacing } = useTheme();
   const { gutter } = useWindowClass();
-  const { t } = useTranslation("deliveries");
-  const { t: tGeneral } = useTranslation("general");
+  const { t } = useTranslation('deliveries');
+  const { t: tGeneral } = useTranslation('general');
   const navigation = useNavigation<NavigationProp>();
-  const queryClient = useQueryClient();
   const route = useRoute<MainSeeAllRouteProp>();
-  const [searchValue, setSearchValue] = useState("");
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
+  const [selectedShopTypeId, setSelectedShopTypeId] = useState<string | null>(route.params?.initialShopTypeId ?? null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [selectedClosedStore, setSelectedClosedStore] = useState<DeliveryNearbyStore | null>(null);
   const debouncedSearch = useDebouncedValue(searchValue.trim(), 450);
-  const initialShopTypeId = route.params?.initialShopTypeId;
-
   const { data: shopTypes = [] } = useShopTypes();
   const { data: filterValues } = useFilterValues();
-  const filterState = useGenericListFilters({
-    filterData: filterValues?.filters,
-  });
-  const [selectedShopTypeId, setSelectedShopTypeId] = useState<string>("");
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
-    null,
-  );
+  const filterState = useGenericListFilters({ filterData: filterValues?.filters });
 
   useEffect(() => {
-    if (!selectedShopTypeId && initialShopTypeId && shopTypes.some((item) => item.id === initialShopTypeId)) {
-      setSelectedShopTypeId(initialShopTypeId);
-      return;
-    }
+    setSelectedShopTypeId(route.params?.initialShopTypeId ?? null);
+    setSelectedCategoryId(null);
+  }, [route.params?.initialShopTypeId]);
 
-    if (!selectedShopTypeId && shopTypes.length > 0) {
-      setSelectedShopTypeId(shopTypes[0].id);
-    }
-  }, [initialShopTypeId, selectedShopTypeId, shopTypes]);
-
-  const {
-    data: categories = [],
-    isPending: isCategoriesPending,
-    isError: hasCategoriesError,
-  } =
-    useShopTypeCategories(selectedShopTypeId, {
-      mode: "preview",
+  const { data: categories = [], isPending: isCategoriesPending, isError: hasCategoriesError } =
+    useShopTypeCategories(selectedShopTypeId ?? '', {
+      mode: 'preview',
       enabled: Boolean(selectedShopTypeId),
     });
 
-  useEffect(() => {
-    if (categories.length === 0) {
-      if (selectedCategoryId !== null) {
-        setSelectedCategoryId(null);
-      }
-      return;
-    }
+  const listQuery = useNearbyStores({
+    mode: 'paginated',
+    search: debouncedSearch,
+    filters: {
+      ...filterState.appliedFilters,
+      category_ids: selectedCategoryId ? [selectedCategoryId] : filterState.appliedFilters.category_ids,
+    },
+    requestParams: {
+      shop_type_id: selectedShopTypeId ?? undefined,
+      category_id: selectedCategoryId ?? undefined,
+    },
+  });
+  const {
+    data: stores = [], totalCount, isPending, isError, isRefetching,
+    isFetchingNextPage, hasNextPage, refetch, fetchNextPage,
+  } = listQuery;
 
-    const hasSelectedCategory = selectedCategoryId
-      ? categories.some((category) => category.id === selectedCategoryId)
-      : false;
-
-    if (!hasSelectedCategory) {
-      setSelectedCategoryId(categories[0].id);
-    }
-  }, [categories, selectedCategoryId]);
-
-  const handleCategorySelect = (categoryId: string) => {
-    setSelectedCategoryId((prev) => (prev === categoryId ? null : categoryId));
-  };
-
-  const handleShopTypeSelect = (shopTypeId: string) => {
-    setSelectedShopTypeId(shopTypeId);
+  const selectShopType = useCallback((id: string | null) => {
+    setSelectedShopTypeId(id);
     setSelectedCategoryId(null);
-  };
+  }, []);
+  const selectCategory = useCallback((id: string) => {
+    setSelectedCategoryId((previous) => previous === id ? null : id);
+  }, []);
+  const refresh = useCallback(() => { void refetch(); }, [refetch]);
+  const loadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
-  const handleRefresh = useCallback(async () => {
-    setIsRefreshing(true);
-
-    try {
-      await queryClient.refetchQueries({
-        queryKey: deliveryKeys.discovery(),
-        type: 'active',
-      });
-    } finally {
-      setIsRefreshing(false);
-    }
-  }, [queryClient]);
+  const selectedShopTypeName = selectedShopTypeId
+    ? decodeDisplayText(shopTypes.find((item) => item.id === selectedShopTypeId)?.name ?? t('home_all_stores'))
+    : t('home_all_stores');
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.canvas }]}> 
-      <DeliveriesSeeAllHeader
-        searchPlaceholder={t("generic_list_search_placeholder")}
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      <DiscoveryListingHeader
+        title={selectedShopTypeName}
         searchValue={searchValue}
-        isSearchEditable={true}
         onSearchChangeText={setSearchValue}
         onOpenFilters={filterState.openFilters}
-        onMapPress={() => {}}
-        isSearchVisible={true}
-        isFilterVisible={true}
-        isMapVisible={false}
       />
-      <View
-        style={[
-          styles.filters,
-          {
-            maxWidth: layout.contentMaxWidth.commerce,
-            paddingHorizontal: gutter,
-          },
-        ]}
-      >
-        <SelectedFilterChips
-          chips={filterState.chips}
-          clearAllLabel={tGeneral("clear_all")}
-          onRemoveChip={filterState.removeChip}
-          onClearAll={filterState.clearAllFilters}
-        />
-      </View>
-
       <MainSeeAllShopTypeTabs
         items={shopTypes}
-        selectedShopTypeId={selectedShopTypeId || null}
-        onSelectShopType={handleShopTypeSelect}
+        selectedShopTypeId={selectedShopTypeId}
+        onSelectShopType={selectShopType}
       />
-
-      <ScrollView
-        contentContainerStyle={[
-          styles.contentContainer,
-          {
-            gap: spacing.section.default,
-            paddingBottom: spacing.xxxl,
-            paddingVertical: spacing.lg,
-          },
-        ]}
-        refreshControl={(
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={() => {
-              void handleRefresh();
-            }}
-            tintColor={colors.primary}
+      <FlatList
+        data={stores}
+        keyExtractor={(item) => item.storeId}
+        keyboardDismissMode="on-drag"
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={[styles.content, { maxWidth: layout.contentMaxWidth.commerce, paddingHorizontal: gutter, paddingBottom: spacing.xxxl }]}
+        showsVerticalScrollIndicator={false}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.4}
+        refreshControl={<RefreshControl refreshing={isRefetching && !isFetchingNextPage} onRefresh={refresh} tintColor={colors.primary} />}
+        ListHeaderComponent={(
+          <View style={styles.listHeader}>
+            <SelectedFilterChips
+              chips={filterState.chips}
+              clearAllLabel={tGeneral('clear_all')}
+              onRemoveChip={filterState.removeChip}
+              onClearAll={filterState.clearAllFilters}
+            />
+            <View style={styles.intro}>
+              <Text color={colors.textSubtle} variant="supporting">
+                {typeof totalCount === 'number'
+                  ? t('home_store_count', { count: totalCount })
+                  : t('home_store_list_subtitle')}
+              </Text>
+            </View>
+            {selectedShopTypeId ? (
+              <View style={{ marginHorizontal: -gutter }}>
+              <MainSeeAllCategoriesSection
+                categories={categories}
+                isPending={isCategoriesPending}
+                isError={hasCategoriesError}
+                selectedCategoryId={selectedCategoryId}
+                onSelectCategory={selectCategory}
+                onSeeAllPress={() => navigation.navigate('CategoriesSeeAll', {
+                  shopTypeId: selectedShopTypeId,
+                  title: t('multi_vendor_categories_title'),
+                })}
+                sectionTitle={t('multi_vendor_main_shop_types_title')}
+                actionLabel={t('multi_vendor_see_all')}
+              />
+              </View>
+            ) : null}
+          </View>
+        )}
+        ListEmptyComponent={isPending ? (
+          <VerticalStoreListSkeleton />
+        ) : isError ? (
+          <DeliveriesSectionEmptyState
+            title={t('generic_list_error_title')}
+            message={t('generic_list_error_description')}
+            actionLabel={t('generic_list_retry')}
+            onActionPress={refresh}
+          />
+        ) : (
+          <DeliveriesSectionEmptyState
+            title={t('multi_vendor_home_section_empty_title')}
+            message={t('multi_vendor_location_stores_empty')}
           />
         )}
-        showsVerticalScrollIndicator={false}
-      >
-        <MainSeeAllCategoriesSection
-          categories={categories}
-          isPending={isCategoriesPending}
-          isError={hasCategoriesError}
-          selectedCategoryId={selectedCategoryId}
-          onSelectCategory={handleCategorySelect}
-          onSeeAllPress={() => {
-            if (!selectedShopTypeId) {
-              return;
-            }
-            navigation.navigate("CategoriesSeeAll", {
-              shopTypeId: selectedShopTypeId,
-              title: t("multi_vendor_categories_title"),
-            });
-          }}
-          sectionTitle={t("multi_vendor_main_shop_types_title")}
-          actionLabel={t("multi_vendor_see_all")}
-        />
-
-        <NearbyStoreList
-          search={debouncedSearch}
-          selectedCategoryId={selectedCategoryId}
-          selectedShopTypeId={selectedShopTypeId}
-          filters={filterState.appliedFilters}
-        />
-
-        <OrderAgain
-          search={debouncedSearch}
-          selectedCategoryId={selectedCategoryId}
-          selectedShopTypeId={selectedShopTypeId}
-          filters={filterState.appliedFilters}
-        />
-
-        <MultiVendorDealsSection
-          search={debouncedSearch}
-          selectedCategoryId={selectedCategoryId}
-          selectedShopTypeId={selectedShopTypeId}
-          filters={filterState.appliedFilters}
-        />
-      </ScrollView>
-
+        ListFooterComponent={isFetchingNextPage ? <ActivityIndicator color={colors.primary} style={styles.footer} /> : null}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        renderItem={({ item }) => (
+          <StoreCard
+            store={item}
+            layout="resultRow"
+            showClosedOverlay={item.isAvailable === false || ('isClosed' in item && item.isClosed === true)}
+            onClosedPress={() => setSelectedClosedStore(item)}
+          />
+        )}
+      />
       <DeliveriesSeeAllFilterSheet
         isCategoryVisible={false}
         visible={filterState.isFilterSheetVisible}
         draftFilters={filterState.draftFilters}
-        isApplyDisabled={
-          !filterState.hasDraftFilters && !filterState.hasAppliedFilters
-        }
+        isApplyDisabled={!filterState.hasDraftFilters && !filterState.hasAppliedFilters}
         onClose={filterState.closeFilters}
         onApply={filterState.applyFilters}
         onClear={filterState.clearDraftFilters}
@@ -233,18 +190,23 @@ export default function MainSeeAllScreen() {
         onSelectSort={filterState.selectSort}
         filters={filterValues?.filters}
       />
+      <ClosedStoreMenuPopup
+        store={selectedClosedStore}
+        onClose={() => setSelectedClosedStore(null)}
+        onSeeMenu={(store) => {
+          setSelectedClosedStore(null);
+          pushStoreDetails(navigation, store);
+        }}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  contentContainer: {
-  },
-  filters: {
-    alignSelf: 'center',
-    width: '100%',
-  },
-  screen: {
-    flex: 1,
-  },
+  screen: { flex: 1 },
+  content: { alignSelf: 'center', flexGrow: 1, paddingTop: 16, width: '100%' },
+  listHeader: { gap: 20, paddingBottom: 16 },
+  intro: { gap: 2 },
+  separator: { height: 12 },
+  footer: { paddingVertical: 20 },
 });

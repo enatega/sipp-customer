@@ -91,6 +91,7 @@ export default function NearbyStoreList(props: Props) {
   const renderItem = ({ item }: { item: DeliveryNearbyStore }) => (
     <StoreCard
       store={item}
+      layout="home"
       showClosedOverlay={
         item.isAvailable === false
         || ('isClosed' in item && item.isClosed === true)
@@ -114,11 +115,13 @@ export default function NearbyStoreList(props: Props) {
       />
 
       {isNearbyStoresPending ? (
-        <DiscoveryResultsSkeleton />
+        <DiscoveryResultsSkeleton home />
       ) : isEmpty ? (
         <DeliveriesSectionEmptyState
-          title={t('multi_vendor_home_section_empty_title')}
-          message={t('multi_vendor_location_stores_empty')}
+          title={t('home_no_nearby_stores_title')}
+          message={t('home_no_nearby_stores_message')}
+          actionLabel={t('multi_vendor_home_quick_browse')}
+          onActionPress={() => navigation.navigate('MainSeeAllScreen', { initialShopTypeId: undefined })}
         />
       ) : (
         <HorizontalList

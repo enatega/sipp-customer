@@ -78,13 +78,19 @@ export function useOrderStatusSocketSync(orderId?: string, options?: Options) {
         && deliveriesSocketClient.hasActiveConsumers()
       ) {
         void deliveriesSocketClient.connect();
+        const activeOrderId = currentOrderIdRef.current;
+        if (activeOrderId) {
+          void queryClient.invalidateQueries({ queryKey: deliveryKeys.orderDetail(activeOrderId) });
+        }
+        void queryClient.invalidateQueries({ queryKey: deliveryKeys.orders() });
+        void queryClient.invalidateQueries({ queryKey: deliveryKeys.chat() });
       }
     });
 
     return () => {
       subscription.remove();
     };
-  }, [isEnabled, token]);
+  }, [isEnabled, queryClient, token]);
 
   useEffect(() => {
     if (!isEnabled || !token) {

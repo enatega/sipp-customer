@@ -87,9 +87,10 @@ export default function TopBrandsSeeAllContainer({
           maxWidth: layout.contentMaxWidth.commerce,
           paddingBottom: spacing.section.default,
           paddingHorizontal: gutter,
+          paddingTop: spacing.md,
         },
       ]}
-      columnWrapperStyle={[styles.row, { gap: spacing.md, marginBottom: spacing.lg }]}
+      columnWrapperStyle={[styles.row, { gap: spacing.md, marginBottom: spacing.md }]}
       style={styles.list}
       onEndReached={handleLoadMore}
       onEndReachedThreshold={0.4}

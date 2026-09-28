@@ -10,6 +10,7 @@ interface StoreRatingProps {
   reviewCount?: number;
   cuisine?: string;
   fallbackLabel?: string;
+  stacked?: boolean;
 }
 
 function decodeDisplayText(value: string) {
@@ -31,6 +32,7 @@ export default function StoreRating({
   reviewCount,
   cuisine,
   fallbackLabel,
+  stacked = false,
 }: StoreRatingProps) {
   const { colors, spacing } = useTheme();
   const hasRating = typeof rating === "number" && Number.isFinite(rating) && rating > 0;
@@ -51,13 +53,13 @@ export default function StoreRating({
 
   return (
     <View
-      style={[styles.row, { gap: spacing.sm }]}
+      style={[stacked ? styles.ratingStack : styles.row, { gap: stacked ? spacing.xxs : spacing.sm }]}
     >
       {hasCuisine ? (
         <Text
           color={colors.textSubtle}
           numberOfLines={1}
-          style={styles.cuisine}
+          style={[styles.cuisine, stacked && styles.stackedCuisine]}
           variant="caption"
           weight="medium"
         >

@@ -27,7 +27,7 @@ type StoreCardData =
 export interface StoreCardProps {
   store: StoreCardData;
   actionSlot?: React.ReactNode;
-  layout?: "compact" | "fullWidth" | "resultRow";
+  layout?: "compact" | "fullWidth" | "resultRow" | "home";
   onPress?: () => void;
   showClosedOverlay?: boolean;
   onClosedPress?: () => void;
@@ -85,6 +85,7 @@ export default function StoreCard({
   const isProductItem = isProductStoreCardData(store);
   const isResultRow = layout === "resultRow";
   const isCompact = layout === "compact";
+  const isHome = layout === "home";
   const isPressable = Boolean(onPress) || !isProductItem;
   const hasStoreCoverImage =
     !isProductItem && Boolean(store.coverImage?.trim());
@@ -138,7 +139,9 @@ export default function StoreCard({
       disabled={!isPressable}
       style={[
         styles.container,
-        layout === "fullWidth"
+        isHome
+          ? styles.homeContainer
+          : layout === "fullWidth"
           ? styles.fullWidthContainer
           : isResultRow
             ? styles.resultRowContainer
@@ -146,7 +149,7 @@ export default function StoreCard({
         {
           backgroundColor: colors.surface,
           borderRadius: shape.radius.surface,
-          ...elevation.raised,
+          ...(isHome ? elevation.subtle : elevation.raised),
         },
       ]}
       onPress={handlePress}
@@ -158,6 +161,7 @@ export default function StoreCard({
         isClosed={isClosedStore}
         layout={layout}
         offer={resolvedOffer}
+        openLabel={isHome && !isProductItem && store.isAvailable === true ? t("store_status_open") : undefined}
         resizeMode={isProductItem || hasStoreCoverImage ? "cover" : "contain"}
       />
 
@@ -166,36 +170,42 @@ export default function StoreCard({
           styles.content,
           {
             flex: isResultRow ? 1 : undefined,
-            gap: isCompact ? spacing.xs : spacing.sm,
+            gap: isHome ? spacing.xs : isCompact ? spacing.xs : spacing.sm,
             justifyContent: isResultRow ? 'center' : undefined,
+            minHeight: isHome ? 0 : undefined,
             paddingBottom: spacing.md,
             paddingHorizontal: spacing.md,
-            paddingTop: isCompact ? spacing.sm + 2 : spacing.md,
+            paddingTop: isHome ? spacing.sm : isCompact ? spacing.sm + 2 : spacing.md,
           },
         ]}
       >
-        <StoreInfo name={resolvedName} />
+        <StoreInfo name={resolvedName} dense={isHome} />
         <StoreRating
           rating={resolvedRating}
-          reviewCount={resolvedReviewCount}
+          reviewCount={isHome ? undefined : resolvedReviewCount}
           cuisine={resolvedCuisine}
           fallbackLabel={!isProductItem ? t("store_card_new") : undefined}
+          stacked={isHome}
         />
-        <View
-          style={[
-            styles.line,
-            {
-              backgroundColor: colors.divider,
-              marginVertical: isCompact ? spacing.xxs : spacing.xs,
-            },
-          ]}
-        />
+        {!isHome ? (
+          <View
+            style={[
+              styles.line,
+              {
+                backgroundColor: colors.divider,
+                marginVertical: isCompact ? spacing.xxs : spacing.xs,
+              },
+            ]}
+          />
+        ) : null}
         <StoreDeliveryInfo
           price={resolvedPrice}
           deliveryTime={resolvedDeliveryTime}
           distance={resolvedDistance}
+          showDistance={!isHome}
+          dense={isHome}
           fallbackLabels={
-            !isProductItem
+            !isProductItem && !isHome
               ? {
                   price: t("store_card_delivery_fee_unavailable", {
                     currency: currencyLabel,

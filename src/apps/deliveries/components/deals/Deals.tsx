@@ -35,6 +35,7 @@ type Props = {
   onActionPress?: () => void;
   onClosedStorePress?: (store: DeliveryNearbyStore) => void;
   onItemPress?: (item: DealsItem) => void;
+  homeCards?: boolean;
 };
 
 function isProductItem(item: DealsItem): item is DeliveryShopTypeProduct {
@@ -58,6 +59,7 @@ export default function Deals({
   onActionPress,
   onClosedStorePress,
   onItemPress,
+  homeCards = false,
 }: Props) {
   const { spacing, typography } = useTheme();
   const { gutter } = useWindowClass();
@@ -99,13 +101,14 @@ export default function Deals({
       return (
         <StoreCard
           store={item}
+          layout={homeCards ? 'home' : 'compact'}
           showClosedOverlay={isClosedStore}
           onClosedPress={isClosedStore ? () => handleClosedStorePress(item) : undefined}
           onPress={onItemPress ? () => onItemPress(item) : undefined}
         />
       );
     },
-    [handleClosedStorePress, onItemPress],
+    [handleClosedStorePress, homeCards, onItemPress],
   );
 
   return (
@@ -127,7 +130,7 @@ export default function Deals({
       )}
 
       {isPending ? (
-        <DiscoveryResultsSkeleton />
+        <DiscoveryResultsSkeleton home={homeCards} />
       ) : isError ? (
         <DiscoverySectionState
           tone="error"
@@ -136,8 +139,8 @@ export default function Deals({
         />
       ) : isEmpty ? (
         <DeliveriesSectionEmptyState
-          title={t('multi_vendor_home_section_empty_title')}
-          message={t('multi_vendor_home_section_empty_message')}
+          title={t('home_no_deals_title')}
+          message={t('home_no_deals_message')}
           variant="offers"
         />
       ) : (

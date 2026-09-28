@@ -5,11 +5,12 @@ import { useTheme } from '../../../../../general/theme/theme';
 import type { DeliveryShopType } from '../../../api/types';
 import PressableScale from '../../../../../general/components/PressableScale';
 import { useWindowClass } from '../../../../../general/hooks/useWindowClass';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
   items: DeliveryShopType[];
   selectedShopTypeId: string | null;
-  onSelectShopType: (shopTypeId: string) => void;
+  onSelectShopType: (shopTypeId: string | null) => void;
 };
 
 function decodeDisplayText(value: string) {
@@ -33,9 +34,10 @@ export default function MainSeeAllShopTypeTabs({
 }: Props) {
   const { colors, shape, spacing } = useTheme();
   const { gutter } = useWindowClass();
+  const { t } = useTranslation('deliveries');
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.canvas }]}> 
+    <View style={[styles.container, { backgroundColor: colors.background }]}> 
       <ScrollView
         horizontal
         contentContainerStyle={[
@@ -44,6 +46,18 @@ export default function MainSeeAllShopTypeTabs({
         ]}
         showsHorizontalScrollIndicator={false}
       >
+        <PressableScale
+          accessibilityLabel={t('home_all_stores')}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: !selectedShopTypeId }}
+          onPress={() => onSelectShopType(null)}
+          pressedScale={0.97}
+          style={[styles.tab, { backgroundColor: !selectedShopTypeId ? colors.primary : colors.surfaceSunken, borderRadius: shape.radius.pill, paddingHorizontal: spacing.lg }]}
+        >
+          <Text color={!selectedShopTypeId ? colors.onPrimary : colors.textSubtle} variant="label" weight={!selectedShopTypeId ? 'semiBold' : 'medium'}>
+            {t('home_all_stores')}
+          </Text>
+        </PressableScale>
         {items.map((shopType) => {
           const isSelected = selectedShopTypeId === shopType.id;
           const resolvedShopTypeName = decodeDisplayText(shopType.name);

@@ -121,7 +121,7 @@ export default function HomeTab() {
   const handleQuickActionPress = useCallback((actionId: HomeQuickActionId) => {
     switch (actionId) {
       case 'browse':
-        navigation.navigate('MainSeeAllScreen');
+        navigation.navigate('MainSeeAllScreen', { initialShopTypeId: undefined });
         break;
       case 'deals':
         navigation.navigate('DealsSeeAll');
@@ -263,6 +263,7 @@ export default function HomeTab() {
         contentContainerStyle={styles.contentContainer}
         headerProps={{
           addresses,
+          addressVariant: 'label',
           onAddAddressPress: handleOpenAddressSheet,
           onAddressPress: handleOpenAddressSheet,
           rightAccessory: (
@@ -301,10 +302,10 @@ export default function HomeTab() {
           <ShopTypeList />
           <MultiVendorSpecialOffers />
           <AllInOneQuickActions onActionPress={handleQuickActionPress} />
+          <TopBrandsList onClosedStorePress={handleClosedStorePress} />
           <NearbyStoreList onClosedStorePress={handleClosedStorePress} />
         </HomeEntrance>
         <HomeEntrance index={2} style={[styles.sectionGroup, { gap: spacing.section.default }]}>
-          <TopBrandsList onClosedStorePress={handleClosedStorePress} />
           <MultiVendorDealsSection onClosedStorePress={handleClosedStorePress} />
           <ShopTypeStoreSections onClosedStorePress={handleClosedStorePress} />
           <OrderAgain />

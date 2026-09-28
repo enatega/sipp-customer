@@ -61,6 +61,7 @@ export default function MultiVendorDealsSection(props: Props) {
 
   return (
     <Deals
+      homeCards
       actionLabel={t('multi_vendor_see_all')}
       isError={hasDealsError}
       isPending={isDealsPending}

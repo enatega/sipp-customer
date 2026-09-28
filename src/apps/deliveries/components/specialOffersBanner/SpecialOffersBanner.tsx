@@ -22,6 +22,20 @@ type Props = {
 
 type BannerActionHandler = (banner: DeliveryBanner) => void;
 
+function hasBannerDestination(banner: DeliveryBanner): boolean {
+  switch (banner.actionType) {
+    case 'store':
+      return Boolean(banner.relatedStore?.trim() || banner.store?.id?.trim());
+    case 'product':
+      return Boolean(banner.relatedProduct?.trim() || banner.product?.id?.trim());
+    case 'shop_type':
+    case 'all_restaurants':
+      return Boolean(banner.relatedShopType?.trim() || banner.shopType?.id?.trim());
+    default:
+      return false;
+  }
+}
+
 function toStoreNavigationTarget(banner: DeliveryBanner): DeliveryNearbyStore | null {
   const storeId = banner.relatedStore?.trim() || banner.store?.id?.trim() || '';
 
@@ -116,6 +130,17 @@ export default function SpecialOffersBanner({
     },
     [navigation],
   );
+  const navigateToAllRestaurants = useCallback(
+    (banner: DeliveryBanner) => {
+      const shopTypeId = banner.relatedShopType?.trim() || banner.shopType?.id?.trim();
+      if (!shopTypeId) return;
+      navigation.navigate('MultiVendor', {
+        screen: 'MainSeeAllScreen',
+        params: { initialShopTypeId: shopTypeId },
+      });
+    },
+    [navigation],
+  );
   const bannerActionHandlers = useMemo<
     Record<DeliveryBannerActionType, BannerActionHandler>
   >(
@@ -123,8 +148,9 @@ export default function SpecialOffersBanner({
       store: navigateToStore,
       product: navigateToProduct,
       shop_type: navigateToShopType,
+      all_restaurants: navigateToAllRestaurants,
     }),
-    [navigateToProduct, navigateToShopType, navigateToStore],
+    [navigateToAllRestaurants, navigateToProduct, navigateToShopType, navigateToStore],
   );
   const handleBannerPress = useCallback(
     (banner: DeliveryBanner) => {
@@ -158,39 +184,45 @@ export default function SpecialOffersBanner({
         renderItem={({ item }) => (
           <SpecialOffersBannerCard
             banner={item}
-            height={isHomeVariant ? 164 : 176}
-            onPress={() => handleBannerPress(item)}
+            height={
+              item.bannerImageLink && !item.title?.trim() && !item.description?.trim()
+                ? bannerWidth / 3
+                : isHomeVariant ? 164 : 176
+            }
+            onPress={hasBannerDestination(item) ? () => handleBannerPress(item) : undefined}
             sidePadding={bannerSidePadding}
             width={bannerWidth}
           />
         )}
       />
 
-      <View
-        style={[
-          styles.bannerDots,
-          { gap: spacing.xs, marginTop: isHomeVariant ? spacing.xs : spacing.sm },
-        ]}
-      >
-        {banners.map((item, index) => (
-          <View
-            key={item.id}
-            style={[
-              styles.bannerDot,
-              index === activeBannerIndex
-                ? styles.bannerDotActive
-                : styles.bannerDotInactive,
-              {
-                backgroundColor:
-                  index === activeBannerIndex
-                    ? colors.primary
-                    : colors.iconDisabled,
-                borderRadius: shape.radius.pill,
-              },
-            ]}
-          />
-        ))}
-      </View>
+      {banners.length > 1 ? (
+        <View
+          style={[
+            styles.bannerDots,
+            { gap: spacing.xs, marginTop: isHomeVariant ? spacing.xs : spacing.sm },
+          ]}
+        >
+          {banners.map((item, index) => (
+            <View
+              key={item.id}
+              style={[
+                styles.bannerDot,
+                index === activeBannerIndex
+                  ? styles.bannerDotActive
+                  : styles.bannerDotInactive,
+                {
+                  backgroundColor:
+                    index === activeBannerIndex
+                      ? colors.primary
+                      : colors.iconDisabled,
+                  borderRadius: shape.radius.pill,
+                },
+              ]}
+            />
+          ))}
+        </View>
+      ) : null}
     </View>
   );
 }

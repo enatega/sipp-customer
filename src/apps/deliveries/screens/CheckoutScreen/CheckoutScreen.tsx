@@ -59,7 +59,7 @@ import {
   CHECKOUT_STRIPE_CANCEL_MATCHER,
   CHECKOUT_STRIPE_SUCCESS_URL,
   CHECKOUT_STRIPE_SUCCESS_MATCHER,
-  getLatestStripeCheckoutOrderId,
+  waitForStripeCheckoutOrderId,
 } from '../../components/checkout/checkoutStripeOrderUtils';
 import { deliveryKeys } from '../../api/queryKeys';
 import { useCheckoutCouponStore } from '../../stores/useCheckoutCouponStore';
@@ -192,6 +192,7 @@ export default function CheckoutScreen() {
   const [isCustomTipScreenVisible, setIsCustomTipScreenVisible] = React.useState(false);
   const [stripeCheckout, setStripeCheckout] = React.useState<{
     checkoutUrl: string;
+    draftId: string;
   } | null>(null);
   const [isInsufficientBalanceModalVisible, setIsInsufficientBalanceModalVisible] = React.useState(false);
   const { selectedAddress } = useAddress();
@@ -362,6 +363,7 @@ export default function CheckoutScreen() {
 
         setStripeCheckout({
           checkoutUrl: response.checkoutUrl,
+          draftId: response.draftId,
         });
         return;
       }
@@ -618,29 +620,25 @@ export default function CheckoutScreen() {
   }, [t]);
 
   const handleStripeCheckoutSuccess = React.useCallback(async () => {
+    if (!stripeCheckout?.draftId) return;
     try {
-      const orderId = await getLatestStripeCheckoutOrderId(
-        deliveryTimeMode === 'schedule',
-      );
+      const orderId = await waitForStripeCheckoutOrderId(stripeCheckout.draftId);
 
       if (orderId) {
         completePlacedOrder(orderId);
         return;
       }
-    } catch {
-      // Fall back to the delivery root if the latest order cannot be resolved.
+    } catch (error) {
+      if (error instanceof Error && error.message === 'payment_failed') {
+        setStripeCheckout(null);
+        showToast.error(t('checkout_payment_failed'));
+        return;
+      }
     }
 
     setStripeCheckout(null);
-    navigation.reset({
-      index: 0,
-      routes: [
-        {
-          name: getCheckoutRootRoute(navigation),
-        },
-      ],
-    } as never);
-  }, [completePlacedOrder, deliveryTimeMode, navigation]);
+    showToast.info(t('checkout_payment_confirmation_delayed'));
+  }, [completePlacedOrder, stripeCheckout?.draftId, t]);
 
   const handlePaymentMethodPress = React.useCallback(() => {
     setIsPaymentMethodScreenVisible(true);
@@ -800,7 +798,7 @@ export default function CheckoutScreen() {
     wantsWalletAfterTopUpRef.current = true;
     navigation.navigate('Wallet', {
       suggestedTopUpAmount: Math.max(
-        0.01,
+        500,
         Math.ceil((previewTotal - (walletBalanceQuery.data ?? 0)) * 100) / 100,
       ),
     });

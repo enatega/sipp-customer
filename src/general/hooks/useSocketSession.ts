@@ -3,6 +3,7 @@ import { AppState, type AppStateStatus } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import { useAuthSessionQuery } from './useAuthQueries';
 import { socketClient } from '../services/socket';
+import { useQueryClient } from '@tanstack/react-query';
 
 type Options = {
   enabled?: boolean;
@@ -12,6 +13,7 @@ type Options = {
 export function useSocketSession(options?: Options) {
   const { enabled = true, disconnectOnBackground = false } = options ?? {};
   const sessionQuery = useAuthSessionQuery();
+  const queryClient = useQueryClient();
   const token = sessionQuery.data?.token ?? null;
   const userId = sessionQuery.data?.user?.id ?? null;
   const tokenRef = useRef<string | null>(token);
@@ -42,6 +44,13 @@ export function useSocketSession(options?: Options) {
   }, [enabled, token]);
 
   useEffect(() => {
+    if (!enabled || !token) return undefined;
+    return socketClient.subscribe('notification-created', () => {
+      void queryClient.invalidateQueries({ queryKey: ['notifications', 'deliveries'] });
+    });
+  }, [enabled, queryClient, token]);
+
+  useEffect(() => {
     if (!enabled) {
       return undefined;
     }
@@ -61,11 +70,12 @@ export function useSocketSession(options?: Options) {
 
       if (nextState === 'active' && tokenRef.current) {
         void socketClient.connect();
+        void queryClient.invalidateQueries({ queryKey: ['notifications', 'deliveries'] });
       }
     });
 
     return () => subscription.remove();
-  }, [disconnectOnBackground, enabled]);
+  }, [disconnectOnBackground, enabled, queryClient]);
 
   useEffect(() => {
     if (!enabled) {
@@ -79,8 +89,9 @@ export function useSocketSession(options?: Options) {
       }
 
       void socketClient.connect();
+      void queryClient.invalidateQueries({ queryKey: ['notifications', 'deliveries'] });
     });
-  }, [enabled]);
+  }, [enabled, queryClient]);
 
   return {
     connect: socketClient.connect.bind(socketClient),

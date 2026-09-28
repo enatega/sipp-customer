@@ -5,7 +5,7 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../../../../general/theme/theme";
 import DealsSeeAllContainer from "../../components/DealsSeeAll/DealsSeeAllContainer";
-import DeliveriesSeeAllHeader from "../SeeAllScreen/components/DeliveriesSeeAllHeader";
+import DiscoveryListingHeader from "../../components/discovery/DiscoveryListingHeader";
 import DeliveriesSeeAllFilterSheet from "../SeeAllScreen/components/DeliveriesSeeAllFilterSheet";
 import type {
   DeliveryDealsTabType,
@@ -24,7 +24,7 @@ function getDealsSectionTitle(
   t: (key: string) => string,
 ) {
   if (source === "single-vendor" || source === "chain-vendor") {
-    return t("multi_vendor_deals_title");
+    return t("deals_see_all_section_title");
   }
 
   switch (selectedTab) {
@@ -93,16 +93,12 @@ export default function DealsSeeAll() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <DeliveriesSeeAllHeader
-        searchPlaceholder={t("generic_list_search_placeholder")}
+      <DiscoveryListingHeader
+        title={t('multi_vendor_deals_title')}
         searchValue={searchText}
-        isSearchEditable={true}
         onSearchChangeText={setSearchText}
         onOpenFilters={openFilters}
-        onMapPress={() => {}}
-        isSearchVisible={true}
-        isFilterVisible={isMultiVendorSource}
-        isMapVisible={false}
+        showFilters={isMultiVendorSource}
       />
       <DealsSeeAllContainer
         data={data}

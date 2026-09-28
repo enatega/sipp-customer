@@ -102,7 +102,7 @@ export default function ShopTypeStoreSections({ onClosedStorePress }: Props) {
               )}
 
               {isStoresPending ? (
-                <DiscoveryResultsSkeleton />
+                <DiscoveryResultsSkeleton home />
               ) : error ? (
                 <DiscoverySectionState
                   tone="error"
@@ -114,7 +114,7 @@ export default function ShopTypeStoreSections({ onClosedStorePress }: Props) {
                   actionLabel={t('multi_vendor_home_empty_explore_action')}
                   message={t('multi_vendor_shop_type_stores_empty')}
                   onActionPress={handleExploreAllStores}
-                  title={t('multi_vendor_home_section_empty_title')}
+                  title={t('home_no_shop_type_stores_title')}
                   variant="discovery"
                 />
               ) : (
@@ -130,6 +130,7 @@ export default function ShopTypeStoreSections({ onClosedStorePress }: Props) {
                   renderItem={({ item }) => (
                     <StoreCard
                       store={item}
+                      layout="home"
                       showClosedOverlay={
                         item.isAvailable === false
                         || ('isClosed' in item && item.isClosed === true)

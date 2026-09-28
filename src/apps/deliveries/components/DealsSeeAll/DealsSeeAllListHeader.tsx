@@ -1,9 +1,10 @@
-import React from "react";
-import { Pressable, StyleSheet, View } from "react-native";
-import { useTranslation } from "react-i18next";
-import Text from "../../../../general/components/Text";
-import { useTheme } from "../../../../general/theme/theme";
-import type { DeliveryDealsTabType } from "../../api/dealsServiceTypes";
+import React from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import PressableScale from '../../../../general/components/PressableScale';
+import Text from '../../../../general/components/Text';
+import { useTheme } from '../../../../general/theme/theme';
+import type { DeliveryDealsTabType } from '../../api/dealsServiceTypes';
 
 type Props = {
   isTabsVisible?: boolean;
@@ -12,112 +13,43 @@ type Props = {
   title: string;
 };
 
-export default function DealsSeeAllListHeader({
-  isTabsVisible = true,
-  onTabChange,
-  selectedTab,
-  title,
-}: Props) {
-  const { colors, typography } = useTheme();
-  const { t } = useTranslation("deliveries");
+export default function DealsSeeAllListHeader({ isTabsVisible = true, onTabChange, selectedTab, title }: Props) {
+  const { colors, shape } = useTheme();
+  const { t } = useTranslation('deliveries');
   const tabs: Array<{ key: DeliveryDealsTabType; label: string }> = [
-    { key: "all", label: t("deals_see_all_tab_all") },
-    { key: "limited", label: t("deals_see_all_tab_limited") },
-    { key: "weekly", label: t("deals_see_all_tab_weekly") },
+    { key: 'all', label: t('deals_see_all_tab_all') },
+    { key: 'limited', label: t('deals_see_all_tab_limited') },
+    { key: 'weekly', label: t('deals_see_all_tab_weekly') },
   ];
 
   return (
     <View style={styles.container}>
       {isTabsVisible ? (
-        <View style={styles.tabsRow}>
-          {tabs.map((tab, index) => {
-            const isSelected = selectedTab === tab?.key;
-
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabs}>
+          {tabs.map((tab) => {
+            const selected = tab.key === selectedTab;
             return (
-              <Pressable
+              <PressableScale
                 key={tab.key}
-                accessibilityRole="button"
+                accessibilityRole="tab"
+                accessibilityState={{ selected }}
+                accessibilityLabel={tab.label}
                 onPress={() => onTabChange(tab.key)}
-                style={[
-                  styles.tabButton,
-                  index === 0
-                    ? styles.tabButtonFirst
-                    : index === 1
-                      ? styles.tabButtonMiddle
-                      : styles.tabButtonLast,
-                  {
-                    borderBottomColor: isSelected
-                      ? colors.blue800
-                      : "transparent",
-                    backgroundColor: isSelected
-                      ? colors.blue100
-                      : "transparent",
-                  },
-                ]}
+                style={[styles.tab, { backgroundColor: selected ? colors.primary : colors.surfaceSunken, borderRadius: shape.radius.pill }]}
               >
-                <Text
-                  weight={isSelected ? "semiBold" : "regular"}
-                  style={{
-                    color: isSelected ? colors.blue800 : colors.mutedText,
-                    fontSize: typography.size.md,
-                    lineHeight: typography.lineHeight.md,
-                  }}
-                >
-                  {tab.label}
-                </Text>
-              </Pressable>
+                <Text color={selected ? colors.onPrimary : colors.textSubtle} variant="label" weight={selected ? 'semiBold' : 'medium'}>{tab.label}</Text>
+              </PressableScale>
             );
           })}
-        </View>
+        </ScrollView>
       ) : null}
-
-      <Text
-        weight="bold"
-        style={[
-          styles.title,
-          {
-            color: colors.text,
-            fontSize: typography.size.h5,
-            lineHeight: typography.lineHeight.h5,
-          },
-        ]}
-      >
-        {title}
-      </Text>
+      <Text accessibilityRole="header" color={colors.textStrong} variant="sectionTitle" weight="bold">{title}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    paddingBottom: 16,
-  },
-  tabButton: {
-    alignItems: "center",
-    borderBottomWidth: 3,
-    justifyContent: "center",
-    paddingBottom: 14,
-    paddingHorizontal: 10,
-    paddingTop: 12,
-  },
-  tabButtonFirst: {
-    minWidth: 66,
-  },
-  tabButtonLast: {
-    minWidth: 116,
-  },
-  tabButtonMiddle: {
-    minWidth: 150,
-  },
-  tabsRow: {
-    borderBottomColor: "rgba(17, 24, 39, 0.12)",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginHorizontal: -16,
-    paddingHorizontal: 16,
-  },
-  title: {
-    marginTop: 14,
-  },
+  container: { gap: 16, paddingBottom: 16, paddingTop: 16 },
+  tabs: { gap: 8, paddingRight: 16 },
+  tab: { alignItems: 'center', justifyContent: 'center', minHeight: 44, paddingHorizontal: 16 },
 });

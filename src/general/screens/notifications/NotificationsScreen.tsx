@@ -1,7 +1,7 @@
 import React from 'react';
-import { FlatList, ScrollView, StyleSheet, View } from 'react-native';
+import { FlatList, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import apiClient from '../../api/apiClient';
 import EmptyNotification from '../../assets/svgs/emptyNotification.svg';
@@ -11,6 +11,7 @@ import ScreenHeader from '../../components/ScreenHeader';
 import Text from '../../components/Text';
 import { useAuthSessionQuery } from '../../hooks/useAuthQueries';
 import { useTheme } from '../../theme/theme';
+import { queueOrderNotificationNavigation } from '../../navigation/notificationNavigation';
 
 const NOTIFICATIONS_LIMIT = 10;
 
@@ -21,6 +22,9 @@ type NotificationsApiItem = {
   title: string;
   description: string;
   createdAt: string;
+  isRead?: boolean;
+  deep_link?: string | null;
+  data?: { orderId?: string } | null;
 };
 
 type NotificationsApiResponse = {
@@ -43,9 +47,20 @@ export default function NotificationsScreen({
 }: Props) {
   const { colors, typography } = useTheme();
   const { t } = useTranslation('general');
+  const queryClient = useQueryClient();
 
   const sessionQuery = useAuthSessionQuery();
   const userId = userIdProp ?? sessionQuery.data?.user?.id ?? null;
+  const markRead = useMutation({
+    mutationFn: (id: string) => apiClient.patch(`/api/v1/apps/deliveries/users-notifications/mark-read/${id}`),
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['notifications', appPrefix] }),
+  });
+
+  const openNotification = (item: NotificationsApiItem) => {
+    if (!item.isRead) markRead.mutate(item.id);
+    const orderId = item.data?.orderId ?? item.deep_link?.match(/^\/orders\/([0-9a-f-]{36})$/i)?.[1];
+    queueOrderNotificationNavigation(orderId);
+  };
 
   const todayQuery = useInfiniteQuery<NotificationsApiResponse>({
     queryKey: ['notifications', appPrefix, 'today', userId, NOTIFICATIONS_LIMIT],
@@ -118,7 +133,7 @@ export default function NotificationsScreen({
                 scrollEnabled={false}
                 ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
                 renderItem={({ item }) => (
-                  <View style={styles.row}>
+                  <Pressable onPress={() => openNotification(item)} accessibilityRole="button" style={[styles.row, !item.isRead ? { backgroundColor: colors.surfaceSoft } : null]}>
                     <View
                       style={[
                         styles.iconWrap,
@@ -160,7 +175,8 @@ export default function NotificationsScreen({
                         {item.description}
                       </Text>
                     </View>
-                  </View>
+                    {!item.isRead ? <View style={styles.unreadDot} /> : null}
+                  </Pressable>
                 )}
                 ListFooterComponent={
                   todayQuery.hasNextPage ? (
@@ -204,7 +220,7 @@ export default function NotificationsScreen({
                 scrollEnabled={false}
                 ItemSeparatorComponent={() => <View style={styles.itemSeparator} />}
                 renderItem={({ item }) => (
-                  <View style={styles.row}>
+                  <Pressable onPress={() => openNotification(item)} accessibilityRole="button" style={[styles.row, !item.isRead ? { backgroundColor: colors.surfaceSoft } : null]}>
                     <View
                       style={[
                         styles.iconWrap,
@@ -246,7 +262,8 @@ export default function NotificationsScreen({
                         {item.description}
                       </Text>
                     </View>
-                  </View>
+                    {!item.isRead ? <View style={styles.unreadDot} /> : null}
+                  </Pressable>
                 )}
                 ListFooterComponent={
                   pastQuery.hasNextPage ? (
@@ -333,7 +350,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: 12,
+    borderRadius: 12,
+    padding: 8,
   },
+  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#D63D5B' },
   screen: {
     flex: 1,
   },

@@ -1,6 +1,7 @@
 import apiClient from '../../../general/api/apiClient';
 import type {
   DeliveryChatBoxesResponse,
+  DeliveryChatMessageRecord,
   DeliveryChatMessagesResponse,
   SendDeliveryChatMessagePayload,
   SendDeliveryChatMessageResponse,
@@ -9,6 +10,11 @@ import type {
 const DELIVERIES_CHAT_BASE = '/api/v1/apps/deliveries/chat';
 
 export const chatService = {
+  getOrderChat: (orderId: string) =>
+    apiClient.get<{ chatBoxId: string | null; messages: DeliveryChatMessageRecord[] }>(`${DELIVERIES_CHAT_BASE}/order/${orderId}/customer_rider`),
+
+  markOrderChatRead: (orderId: string) =>
+    apiClient.patch(`${DELIVERIES_CHAT_BASE}/order/${orderId}/customer_rider/read`),
   getChatBoxes: (userId: string) =>
     apiClient.get<DeliveryChatBoxesResponse>(
       `${DELIVERIES_CHAT_BASE}/${userId}`,
@@ -20,7 +26,13 @@ export const chatService = {
     ),
 
   sendMessage: (payload: SendDeliveryChatMessagePayload) => {
-    console.log('deliveries chat send payload', payload);
+    if (payload.orderId) {
+      return apiClient.post<SendDeliveryChatMessageResponse>(
+        `${DELIVERIES_CHAT_BASE}/order/${payload.orderId}/customer_rider/send`,
+        { text: payload.text },
+        { skipSessionExpiryHandling: true },
+      );
+    }
 
     return apiClient.post<SendDeliveryChatMessageResponse>(
       `${DELIVERIES_CHAT_BASE}/send`,

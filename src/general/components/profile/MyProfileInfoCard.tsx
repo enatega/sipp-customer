@@ -40,6 +40,7 @@ export default function MyProfileInfoCard({
   onEditName,
 }: Props) {
   const { colors, elevation } = useTheme();
+  const initial = displayName.trim().charAt(0).toLocaleUpperCase() || '—';
 
   return (
     <View
@@ -58,14 +59,16 @@ export default function MyProfileInfoCard({
             accessibilityRole={onPressAvatar ? 'button' : undefined}
             disabled={!onPressAvatar}
           >
-            {imageUri ? (
+            {imageUri?.trim() ? (
               <Image
                 source={{ uri: imageUri }}
                 style={styles.avatar}
                 accessibilityLabel={`${displayName} avatar`}
               />
             ) : (
-              <View style={[styles.avatar, { backgroundColor: colors.backgroundTertiary }]} />
+              <View style={[styles.avatar, styles.initialAvatar, { backgroundColor: colors.primarySoft }]}>
+                <Text color={colors.primary} weight="bold" style={styles.initial}>{initial}</Text>
+              </View>
             )}
           </PressableScale>
           <PressableScale
@@ -118,6 +121,14 @@ const styles = StyleSheet.create({
   avatarContainer: {
     height: AVATAR_SIZE,
     width: AVATAR_SIZE,
+  },
+  initialAvatar: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  initial: {
+    fontSize: 32,
+    lineHeight: 40,
   },
   avatarSection: {
     alignItems: 'center',
