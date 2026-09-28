@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Text from '../../../../general/components/Text';
@@ -11,47 +12,17 @@ import useSavedAddresses from '../../../../general/hooks/useSavedAddresses';
 import useSelectSavedAddress from '../../../../general/hooks/useSelectSavedAddress';
 import { useAddressStore } from '../../../../general/stores/useAddressStore';
 import { createDeliveryAddressFromSavedAddress, GUEST_SELECTED_LOCATION_ADDRESS_ID } from '../../../../general/utils/address';
-import { getSavedAddressTypeLabel } from '../../../../general/utils/savedAddressPresentation';
+import { getSavedAddressIcon, getSavedAddressTypeLabel } from '../../../../general/utils/savedAddressPresentation';
 import { BROWSE_CITIES, useBrowseCityStore } from '../../stores/useBrowseCityStore';
+import BrowseLocationOption from './BrowseLocationOption';
 
 type Props = { visible: boolean; onAddAddress: () => void };
-
-type OptionProps = {
-  label: string;
-  subtitle?: string;
-  selected?: boolean;
-  loading?: boolean;
-  disabled?: boolean;
-  onPress: () => void;
-};
-
-function LocationOption({ label, subtitle, selected = false, loading = false, disabled = false, onPress }: OptionProps) {
-  const { colors, motion, shape } = useTheme();
-  return (
-    <Pressable accessibilityRole="button" accessibilityLabel={subtitle ? `${label}, ${subtitle}` : label}
-      accessibilityState={{ selected, busy: loading, disabled }} disabled={disabled} onPress={onPress}
-      style={({ pressed }) => [styles.option, {
-        backgroundColor: selected ? colors.primarySoft : pressed ? colors.statePressed : colors.surfaceElevated,
-        borderColor: selected ? colors.primary : colors.divider,
-        borderRadius: shape.radius.control,
-        opacity: disabled ? motion.opacity.disabled : 1,
-      }]}>
-      <View style={styles.optionCopy}>
-        <Text variant="body" weight="semiBold" color={selected ? colors.primary : colors.textStrong} numberOfLines={1}>
-          {label}
-        </Text>
-        {subtitle ? <Text variant="caption" color={colors.textSubtle} numberOfLines={2}>{subtitle}</Text> : null}
-      </View>
-      {loading ? <ActivityIndicator size="small" color={colors.primary} /> :
-        selected ? <Text variant="body" weight="bold" color={colors.primary}>✓</Text> : null}
-    </Pressable>
-  );
-}
 
 export default function BrowseCityPopup({ visible, onAddAddress }: Props) {
   const { t } = useTranslation('deliveries');
   const { t: tGeneral } = useTranslation('general');
   const { colors, elevation, shape, spacing } = useTheme();
+  const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const reducedMotion = useReducedMotion();
   const sessionQuery = useAuthSessionQuery();
@@ -115,44 +86,55 @@ export default function BrowseCityPopup({ visible, onAddAddress }: Props) {
           onPress={dismissPicker} style={[StyleSheet.absoluteFill, { backgroundColor: colors.scrim }]} />
         <View style={[styles.card, elevation.overlay, {
           backgroundColor: colors.surfaceElevated,
-          borderRadius: shape.radius.sheet,
+          borderRadius: shape.radius.sheet + 4,
+          maxHeight: height - insets.top - insets.bottom - spacing.xl,
         }]}>
-          <ScrollView contentContainerStyle={{ padding: spacing.lg }} showsVerticalScrollIndicator={false}>
-            <Text variant="sectionTitle" weight="bold" accessibilityRole="header" style={styles.title}>
+          <View style={[styles.handle, { backgroundColor: colors.divider }]} />
+          <ScrollView contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: spacing.lg }}
+            showsVerticalScrollIndicator={false}>
+            <Text variant="title" weight="bold" accessibilityRole="header" style={styles.title}>
               {t('browse_city_title')}
             </Text>
             <View style={styles.options}>
-              {BROWSE_CITIES.map((city) => <LocationOption key={city.name} label={city.name}
+              {BROWSE_CITIES.map((city) => <BrowseLocationOption key={city.name} label={city.name}
+                kind="city" iconName="location"
                 selected={!browseAddress && city.name === cityName}
                 onPress={() => { void selectCity(city.name); }} />)}
             </View>
             <View style={[styles.divider, { backgroundColor: colors.divider }]} />
             <View style={styles.sectionHeading}>
-              <Text variant="label" weight="semiBold" color={colors.textSubtle}>
+              <Text variant="label" weight="semiBold" color={colors.textSubtle} style={styles.sectionLabel}>
                 {canSaveAddress ? t('browse_city_saved_addresses') : t('browse_city_address')}
               </Text>
               {isLoading ? <ActivityIndicator size="small" color={colors.primary} /> : null}
             </View>
-            {guestAddress ? <LocationOption label={t('browse_city_selected_address')}
-              subtitle={guestAddress.address} selected onPress={() => {
-                useAddressStore.getState().setSelectedAddress(guestAddress);
-                void selectBrowseAddress(guestAddress);
-              }} /> : null}
-            {addresses.map((address) => <LocationOption key={address.id}
-              label={address.location_name?.trim() || getSavedAddressTypeLabel(address.type, tGeneral)}
-              subtitle={address.address} selected={browseAddress?.id === address.id}
-              loading={selectingAddressId === address.id} disabled={Boolean(selectingAddressId)}
-              onPress={() => { void handleSelectAddress(address); }} />)}
+            <View style={styles.savedList}>
+              {guestAddress ? <BrowseLocationOption label={t('browse_city_selected_address')}
+                subtitle={guestAddress.address} kind="address" iconName="location-outline" selected
+                onPress={() => {
+                  useAddressStore.getState().setSelectedAddress(guestAddress);
+                  void selectBrowseAddress(guestAddress);
+                }} /> : null}
+              {addresses.map((address) => <BrowseLocationOption key={address.id}
+                label={address.location_name?.trim() || getSavedAddressTypeLabel(address.type, tGeneral)}
+                subtitle={address.address} kind="address" iconName={getSavedAddressIcon(address.type)}
+                selected={browseAddress?.id === address.id}
+                loading={selectingAddressId === address.id} disabled={Boolean(selectingAddressId)}
+                onPress={() => { void handleSelectAddress(address); }} />)}
+            </View>
             {error ? <Text variant="caption" color={colors.textSubtle} style={styles.error}>
               {t('browse_city_addresses_error')}
             </Text> : null}
             <Pressable accessibilityRole="button"
               accessibilityLabel={canSaveAddress ? t('browse_city_add_address') : t('browse_city_choose_address')}
               onPress={onAddAddress} style={({ pressed }) => [styles.addOption, {
-                backgroundColor: pressed ? colors.statePressed : colors.primarySoft,
-                borderRadius: shape.radius.control,
+                backgroundColor: pressed ? colors.primaryPressed : colors.primary,
+                borderRadius: shape.radius.surface,
               }]}>
-              <Text variant="body" weight="semiBold" color={colors.primary}>
+              <View style={styles.addIcon}>
+                <Ionicons name="add" size={25} color={colors.onPrimary} />
+              </View>
+              <Text variant="cardTitle" weight="semiBold" color={colors.onPrimary}>
                 {canSaveAddress ? t('browse_city_add_address') : t('browse_city_choose_address')}
               </Text>
             </Pressable>
@@ -166,12 +148,14 @@ export default function BrowseCityPopup({ visible, onAddAddress }: Props) {
 const styles = StyleSheet.create({
   overlay: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   card: { width: '100%', maxWidth: 440, maxHeight: '100%', overflow: 'hidden' },
+  handle: { width: 40, height: 5, borderRadius: 3, alignSelf: 'center', marginTop: 12 },
   title: { marginBottom: 20 },
-  options: { gap: 8 },
-  option: { minHeight: 54, borderWidth: 1, paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  optionCopy: { flex: 1, gap: 2 },
+  options: { gap: 10 },
   divider: { height: StyleSheet.hairlineWidth, marginVertical: 20 },
-  sectionHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+  sectionHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+  sectionLabel: { textTransform: 'uppercase', letterSpacing: 0.6 },
+  savedList: { gap: 10 },
   error: { marginBottom: 8 },
-  addOption: { minHeight: 52, marginTop: 8, paddingHorizontal: 16, justifyContent: 'center' },
+  addOption: { minHeight: 58, marginTop: 16, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  addIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.16)', alignItems: 'center', justifyContent: 'center' },
 });

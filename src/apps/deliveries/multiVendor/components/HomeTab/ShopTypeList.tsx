@@ -11,6 +11,8 @@ import { useWindowClass } from '../../../../../general/hooks/useWindowClass';
 import { useTheme } from '../../../../../general/theme/theme';
 import { useShopTypes } from '../../../hooks';
 import { DiscoveryCategorySection } from '../../../../../general/components/discovery';
+import DeliveriesSectionEmptyState from '../../../components/home/DeliveriesSectionEmptyState';
+import SectionActionHeader from '../../../../../general/components/SectionActionHeader';
 import { DeliveriesStackParamList } from '../../../navigation/types';
 import { MultiVendorStackParamList } from '../../navigation/types';
 
@@ -32,7 +34,7 @@ export default function ShopTypeList() {
   const { colors, layout, shape, spacing } = useTheme();
   const { gutter } = useWindowClass();
   const navigation = useNavigation<NavProp>();
-  const { data: shopTypes = [], isPending } = useShopTypes();
+  const { data: shopTypes = [], isPending } = useShopTypes({ home: true });
 
   const handleSeeAll = useCallback(() => navigation.navigate('MainSeeAllScreen', { initialShopTypeId: undefined }), [navigation]);
   const handleShopType = useCallback((id: string) => {
@@ -42,6 +44,10 @@ export default function ShopTypeList() {
   if (isPending) {
     return <View style={styles.loading}><ActivityIndicator color={colors.primary} /></View>;
   }
+  if (shopTypes.length === 0) return <View style={{ gap: spacing.md, paddingHorizontal: gutter }}>
+    <SectionActionHeader title={t('multi_vendor_shop_types_title')} />
+    <DeliveriesSectionEmptyState title={t('multi_vendor_shop_types_title')} message={t('multi_vendor_shop_types_empty')} />
+  </View>;
 
   if (shopTypes.length === 0 || shopTypes.length > 2) {
     return (

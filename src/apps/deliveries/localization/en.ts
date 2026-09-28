@@ -88,6 +88,7 @@ const en = {
   browse_city_header: 'Exploring',
   browse_city_change: 'Change location. Currently exploring {{city}}',
   multi_vendor_shop_types_title: 'Shop Types',
+  multi_vendor_special_offers_title: 'Special Offers',
   home_all_stores: 'All stores',
   home_store_count: '{{count}} stores to explore',
   home_store_count_one: '{{count}} store to explore',

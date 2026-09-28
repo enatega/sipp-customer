@@ -88,6 +88,7 @@ const fr = {
   browse_city_header: 'À découvrir',
   browse_city_change: 'Changer de lieu. Lieu actuel : {{city}}',
   multi_vendor_shop_types_title: 'Types de boutiques',
+  multi_vendor_special_offers_title: 'Offres spéciales',
   home_all_stores: 'Tous les magasins',
   home_store_count: '{{count}} magasins à découvrir',
   home_store_count_one: '{{count}} magasin à découvrir',

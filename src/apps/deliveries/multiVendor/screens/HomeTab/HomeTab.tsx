@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { RefreshControl } from 'react-native';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Location from 'expo-location';
 import { CompositeNavigationProp, useNavigation } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -12,6 +12,7 @@ import AddressSelectionBottomSheet from '../../../../../general/components/addre
 import type { DeliveriesStackParamList } from '../../../navigation/types';
 import ShopTypeList from '../../components/HomeTab/ShopTypeList';
 import ShopTypeStoreSections from '../../components/HomeTab/ShopTypeStoreSections';
+import HomeShopTypeStoreSection from '../../components/HomeTab/HomeShopTypeStoreSection';
 import MultiVendorSpecialOffers from '../../components/HomeTab/SpecialOffersBanner';
 import TopBrandsList from '../../components/HomeTab/TopBrandsList';
 import NearbyStoreList from '../../components/HomeTab/NearbyStoreList';
@@ -41,6 +42,21 @@ import type {
 } from '../../navigation/types';
 import useDeliveriesTabSheetOffset from '../../../hooks/useDeliveriesTabSheetOffset';
 import useCompleteBrowseAddressFlow from '../../../hooks/useCompleteBrowseAddressFlow';
+import apiClient from '../../../../../general/api/apiClient';
+
+type HomeSection = { key: string; kind: string; title: string };
+type HomeLayout = { revision: number; sections: HomeSection[] };
+
+const fallbackSections: HomeSection[] = [
+  { key: 'shop-types', kind: 'shop-types', title: 'Shop Types' },
+  { key: 'banners', kind: 'banners', title: 'Special Offers' },
+  { key: 'quick-actions', kind: 'quick-actions', title: 'Quick Actions' },
+  { key: 'top-brands', kind: 'top-brands', title: 'Top Brands' },
+  { key: 'nearby-stores', kind: 'nearby-stores', title: 'Nearby Stores' },
+  { key: 'deals', kind: 'deals', title: 'Deals' },
+  { key: 'shop-type-store-sections', kind: 'legacy-shop-type-stores', title: '' },
+  { key: 'order-again', kind: 'order-again', title: 'Order Again' },
+];
 
 type NavProp = CompositeNavigationProp<
   BottomTabNavigationProp<MultiVendorBottomTabParamList, 'MultiVendorTabHome'>,
@@ -57,6 +73,12 @@ export default function HomeTab() {
   const navigation = useNavigation<NavProp>();
   const addressSheetBottomOffset = useDeliveriesTabSheetOffset();
   const queryClient = useQueryClient();
+  const homeLayout = useQuery<HomeLayout>({
+    queryKey: deliveryKeys.homeLayout(),
+    queryFn: () => apiClient.get<HomeLayout>('/api/v1/apps/deliveries/discovery/home'),
+    staleTime: 60_000,
+    refetchOnWindowFocus: true,
+  });
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedClosedStore, setSelectedClosedStore] =
     useState<DeliveryNearbyStore | null>(null);
@@ -298,21 +320,23 @@ export default function HomeTab() {
           />
         )}
       >
-        <HomeEntrance
-          index={1}
-          style={[styles.sectionGroup, { gap: spacing.section.compact }]}
-        >
-          <ShopTypeList />
-          <MultiVendorSpecialOffers />
-          <AllInOneQuickActions onActionPress={handleQuickActionPress} />
-          <TopBrandsList onClosedStorePress={handleClosedStorePress} />
-          <NearbyStoreList onClosedStorePress={handleClosedStorePress} />
-        </HomeEntrance>
-        <HomeEntrance index={2} style={[styles.sectionGroup, { gap: spacing.section.default }]}>
-          <MultiVendorDealsSection onClosedStorePress={handleClosedStorePress} />
-          <ShopTypeStoreSections onClosedStorePress={handleClosedStorePress} />
-          <OrderAgain />
-        </HomeEntrance>
+        {(homeLayout.data?.sections ?? fallbackSections).map((section, index) => (
+          <HomeEntrance key={section.key} index={index + 1} style={[styles.sectionGroup, { marginBottom: spacing.section.default }]}>
+            {section.kind === 'shop-types' && <ShopTypeList />}
+            {section.kind === 'banners' && <MultiVendorSpecialOffers />}
+            {section.kind === 'quick-actions' && <AllInOneQuickActions onActionPress={handleQuickActionPress} />}
+            {section.kind === 'top-brands' && <TopBrandsList onClosedStorePress={handleClosedStorePress} />}
+            {section.kind === 'nearby-stores' && <NearbyStoreList onClosedStorePress={handleClosedStorePress} />}
+            {section.kind === 'deals' && <MultiVendorDealsSection onClosedStorePress={handleClosedStorePress} />}
+            {section.kind === 'shop-type-stores' && <HomeShopTypeStoreSection
+              shopTypeId={section.key.slice('shop-type:'.length)}
+              title={section.title}
+              onClosedStorePress={handleClosedStorePress}
+            />}
+            {section.kind === 'legacy-shop-type-stores' && <ShopTypeStoreSections onClosedStorePress={handleClosedStorePress} />}
+            {section.kind === 'order-again' && <OrderAgain />}
+          </HomeEntrance>
+        ))}
       </DeliveryHomeScaffold>
 
       <AddressSelectionBottomSheet

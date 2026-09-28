@@ -13,6 +13,7 @@ import useTopBrandNavigation from '../../hooks/useTopBrandNavigation';
 import { useTheme } from '../../../../../general/theme/theme';
 import { useWindowClass } from '../../../../../general/hooks/useWindowClass';
 import type { DeliveryNearbyStore } from '../../../api/types';
+import DeliveriesSectionEmptyState from '../../../components/home/DeliveriesSectionEmptyState';
 
 type NavigationProp = NativeStackNavigationProp<
   MultiVendorStackParamList,
@@ -33,17 +34,18 @@ export default function TopBrandsList({ onClosedStorePress }: Props) {
   const handleSeeAllPress = useCallback(() => {
     navigation.navigate('TopBrandsSeeAll');
   }, [navigation]);
-
   return (
     <View style={{ gap: spacing.sm, paddingHorizontal: gutter }}>
       <SectionActionHeader
-        actionLabel={t('multi_vendor_see_all')}
+        actionLabel={topBrands.length ? t('multi_vendor_see_all') : undefined}
         title={t('multi_vendor_top_brands_title')}
         onActionPress={handleSeeAllPress}
       />
 
       {isTopBrandsPending ? (
         <TopBrandsListSkeleton />
+      ) : topBrands.length === 0 ? (
+        <DeliveriesSectionEmptyState title={t('multi_vendor_top_brands_title')} message={t('multi_vendor_location_stores_empty')} />
       ) : (
         <HorizontalList
           data={topBrands}

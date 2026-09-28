@@ -54,11 +54,11 @@ export default function MultiVendorDealsSection(props: Props) {
       shop_type_id: activeShopTypeId,
     },
     {
+      home: true,
       enabled: !shouldSkipBecauseEmptyShopType,
     },
   );
   const navigation = useNavigation<NavigationProp>();
-
   return (
     <Deals
       homeCards

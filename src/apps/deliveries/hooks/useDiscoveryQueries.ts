@@ -40,7 +40,7 @@ import { useAuthSessionQuery } from '../../../general/hooks/useAuthQueries';
 type UseShopTypesOptions = Omit<
   UseQueryOptions<DeliveryShopType[], ApiError>,
   'queryKey' | 'queryFn'
->;
+> & { home?: boolean };
 
 type UseShopTypesMode = 'preview' | 'paginated';
 
@@ -71,6 +71,7 @@ type UsePaginatedTopBrandsOptions = {
 type UseNearbyStoresMode = 'preview' | 'paginated';
 
 type UseNearbyStoresOptions = {
+  home?: boolean;
   filters?: GenericListFilters;
   mode?: UseNearbyStoresMode;
   enabled?: boolean;
@@ -108,7 +109,7 @@ type UseStoreProductsParams = Omit<DeliveryStoreProductsParams, 'offset'>;
 type UseDealsOptions = Omit<
   UseQueryOptions<DeliveryNearbyStore[], ApiError>,
   'queryKey' | 'queryFn'
->;
+> & { home?: boolean };
 
 type UseDealsParams = DeliveryDealsParams;
 
@@ -149,6 +150,7 @@ type UseShopTypeProductsOptions = {
 type UseShopTypeStoresMode = 'preview' | 'paginated';
 
 type UseShopTypeStoresOptions = {
+  home?: boolean;
   mode?: UseShopTypeStoresMode;
   enabled?: boolean;
   search?: string;
@@ -225,11 +227,12 @@ function useDiscoveryCoordinates() {
 }
 
 export function useShopTypes(options?: UseShopTypesOptions) {
+  const { home = false, ...queryOptions } = options ?? {};
   return useQuery<DeliveryShopType[], ApiError>({
-    queryKey: deliveryKeys.shopTypes(),
-    queryFn: () => discoveryService.getShopTypes(),
+    queryKey: [...deliveryKeys.shopTypes(), home],
+    queryFn: () => discoveryService.getShopTypes({}, home),
     staleTime: 5 * 60 * 1000,
-    ...options,
+    ...queryOptions,
   });
 }
 
@@ -361,6 +364,7 @@ export function useShopTypeStores(
     queryKey: [
       ...deliveryKeys.shopTypeStores(shopTypeId, 0, limit),
       {
+        home: options?.home ?? false,
         filters: options?.filters,
         mode,
         requestParams: shopTypeStoreParams,
@@ -374,7 +378,7 @@ export function useShopTypeStores(
         limit,
         search: options?.search?.trim() || undefined,
         ...shopTypeStoreParams,
-      }),
+      }, options?.home ?? false),
     initialPageParam: 0,
     getNextPageParam: (lastPage) =>
       lastPage.isEnd ? undefined : (lastPage.nextOffset ?? undefined),
@@ -496,7 +500,7 @@ export function useShopTypeStoresSections(
     queries: featuredShopTypes.map((shopType) => ({
       queryKey: [
         ...deliveryKeys.shopTypeStores(shopType.id, 0, 10),
-        { latitude, longitude },
+        { latitude, longitude, home: true },
       ],
       queryFn: () =>
         discoveryService.getShopTypeStores({
@@ -504,7 +508,7 @@ export function useShopTypeStoresSections(
           limit: 10,
           latitude,
           longitude,
-        } satisfies DeliveryShopTypeStoresParams),
+        } satisfies DeliveryShopTypeStoresParams, true),
       staleTime: 5 * 60 * 1000,
       enabled: Boolean(shopType.id),
     })),
@@ -518,8 +522,8 @@ export function useShopTypeStoresSections(
 
 export function useMobileBanners(options?: UseMobileBannersOptions) {
   return useQuery<DeliveryBanner[], ApiError>({
-    queryKey: deliveryKeys.mobileBanners(),
-    queryFn: () => discoveryService.getMobileBanners(),
+    queryKey: [...deliveryKeys.mobileBanners(), 'home'],
+    queryFn: () => discoveryService.getMobileBanners({}, true),
     staleTime: 5 * 60 * 1000,
     ...options,
   });
@@ -528,8 +532,8 @@ export function useMobileBanners(options?: UseMobileBannersOptions) {
 export function useTopBrands(options?: UseTopBrandsOptions) {
   const { latitude, longitude } = useDiscoveryCoordinates();
   return useQuery<DeliveryTopBrand[], ApiError>({
-    queryKey: [...deliveryKeys.topBrands(), latitude, longitude],
-    queryFn: () => discoveryService.getTopBrands({ latitude, longitude }),
+    queryKey: [...deliveryKeys.topBrands(), latitude, longitude, 'home'],
+    queryFn: () => discoveryService.getTopBrands({ latitude, longitude }, true),
     staleTime: 5 * 60 * 1000,
     ...options,
   });
@@ -621,6 +625,7 @@ export function useNearbyStores(options?: UseNearbyStoresOptions) {
       }),
       {
         filters: options?.filters,
+        home: options?.home ?? false,
         mode,
         limit,
         requestParams: nearbyStoreParams,
@@ -635,7 +640,7 @@ export function useNearbyStores(options?: UseNearbyStoresOptions) {
         ...nearbyStoreParams,
       } satisfies DeliveryNearbyStoresParams;
       console.log('[deliveries-filters] nearby-request', requestPayload);
-      return discoveryService.getNearbyStoresPage(requestPayload);
+      return discoveryService.getNearbyStoresPage(requestPayload, options?.home ?? false);
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage) =>
@@ -773,6 +778,7 @@ export function useDeals(
 ) {
   const { latitude, longitude } = useDiscoveryCoordinates();
   const cityParams = { ...params, latitude, longitude };
+  const { home = false, ...queryOptions } = options ?? {};
   return useQuery<DeliveryNearbyStore[], ApiError>({
     queryKey: [...deliveryKeys.deals({
       limit: params.limit,
@@ -781,10 +787,10 @@ export function useDeals(
       category_ids: params.category_ids,
       shop_type_id: params.shop_type_id,
       subcategory_id: params.subcategory_id,
-    }), latitude, longitude],
-    queryFn: () => discoveryService.getDeals(cityParams),
+    }), latitude, longitude, home],
+    queryFn: () => discoveryService.getDeals(cityParams, home),
     // staleTime: 5 * 60 * 1000,
-    ...options,
+    ...queryOptions,
   });
 }
 
@@ -797,14 +803,14 @@ export function useOrderAgain(
 
   return useQuery<DeliveryOrderAgainItem[], ApiError>({
     ...queryOptions,
-    queryKey: deliveryKeys.orderAgain({
+    queryKey: [...deliveryKeys.orderAgain({
       limit: params.limit,
       search: params.search,
       category_id: params.category_id,
       category_ids: params.category_ids,
       shop_type_id: params.shop_type_id,
       subcategory_id: params.subcategory_id,
-    }),
+    }), sessionQuery.data?.user?.id ?? 'guest'],
     queryFn: () => discoveryService.getOrderAgain(params),
     enabled: Boolean(sessionQuery.data?.token) && enabled,
   });
