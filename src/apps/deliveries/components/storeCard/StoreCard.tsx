@@ -14,7 +14,7 @@ import { styles } from "./styles";
 import StoreImage from "./subComponents/StoreImage";
 import StoreInfo from "./subComponents/StoreInfo";
 import StoreRating from "./subComponents/StoreRating";
-import StoreDeliveryInfo from "./subComponents/StoreDeliveryInfo";
+import StoreCardMetaRow from "./subComponents/StoreCardMetaRow";
 import { useTranslations } from "../../../../general/localization/LocalizationProvider";
 import PressableScale from "../../../../general/components/PressableScale";
 import { pushStoreDetails } from "../../navigation/storeDetailsNavigation";
@@ -111,6 +111,7 @@ export default function StoreCard({
   const resolvedPrice = isProductItem ? store.price : store.baseFee;
   const resolvedDeliveryTime = store.deliveryTime;
   const resolvedDistance = store.distanceKm;
+  const resolvedMinimumOrder = isProductItem ? null : store.minimumOrder;
   const isClosedStore =
     !isProductItem && showClosedOverlay && isStoreClosed(store);
 
@@ -181,40 +182,19 @@ export default function StoreCard({
       >
         <StoreInfo name={resolvedName} dense={isHome} />
         <StoreRating
-          rating={resolvedRating}
-          reviewCount={isHome ? undefined : resolvedReviewCount}
           cuisine={resolvedCuisine}
-          fallbackLabel={!isProductItem ? t("store_card_new") : undefined}
-          stacked={isHome}
+          stacked
         />
-        {!isHome ? (
-          <View
-            style={[
-              styles.line,
-              {
-                backgroundColor: colors.divider,
-                marginVertical: isCompact ? spacing.xxs : spacing.xs,
-              },
-            ]}
-          />
-        ) : null}
-        <StoreDeliveryInfo
+        <StoreCardMetaRow
+          rating={resolvedRating}
+          reviewCount={resolvedReviewCount}
           price={resolvedPrice}
           deliveryTime={resolvedDeliveryTime}
+          minimumOrder={resolvedMinimumOrder}
           distance={resolvedDistance}
           showDistance={!isHome}
-          dense={isHome}
-          fallbackLabels={
-            !isProductItem && !isHome
-              ? {
-                  price: t("store_card_delivery_fee_unavailable", {
-                    currency: currencyLabel,
-                  }),
-                  deliveryTime: t("store_card_delivery_time_unavailable"),
-                  distance: t("store_card_distance_unavailable"),
-                }
-              : undefined
-          }
+          showReviewCount={!isHome}
+          showUnavailable={!isProductItem}
         />
       </View>
     </PressableScale>

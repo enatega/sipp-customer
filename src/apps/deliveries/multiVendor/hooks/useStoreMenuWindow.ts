@@ -17,6 +17,8 @@ export function useStoreMenuWindow(storeId: string, isFocused: boolean) {
   const instanceId = useId();
   const generation = useRef(0);
   const edgeRequest = useRef(false);
+  const handledStaleError = useRef<unknown>(null);
+  const wasFocused = useRef(false);
   const [isEdgeRequestPending, setEdgeRequestPending] = useState(false);
   const beforePageCommit = useRef<((preservePosition: boolean) => StoreMenuAnchor | undefined) | null>(null);
   const [target, setTarget] = useState<(StoreMenuAnchor & { generation: number }) | null>(null);
@@ -128,6 +130,18 @@ export function useStoreMenuWindow(storeId: string, isFocused: boolean) {
     }
   }, [bootstrap.refetch, client]);
 
+  useEffect(() => {
+    if (isFocused && !wasFocused.current && bootstrap.data) void refresh({ sectionId });
+    wasFocused.current = isFocused;
+  }, [isFocused, bootstrap.data, refresh, sectionId]);
+
+  useEffect(() => {
+    if (!(query.error instanceof ApiError) || ![404, 409].includes(query.error.status) ||
+      handledStaleError.current === query.error) return;
+    handledStaleError.current = query.error;
+    void refresh({ sectionId });
+  }, [query.error, refresh, sectionId]);
+
   const load = useCallback((direction: 'forward' | 'backward') => {
     if (!isFocused || isRefreshing || isEdgeRequestPending || query.isFetching || query.isError || edgeRequest.current) return false;
     if (direction === 'forward' ? !query.hasNextPage : !query.hasPreviousPage) return false;
@@ -145,7 +159,7 @@ export function useStoreMenuWindow(storeId: string, isFocused: boolean) {
   }, [isFocused, isRefreshing, isEdgeRequestPending, query.isFetching, query.isError, query.hasNextPage, query.hasPreviousPage, query.fetchNextPage, query.fetchPreviousPage]);
 
   const retryPage = useCallback((anchor?: StoreMenuAnchor) => {
-    if (query.error instanceof ApiError && query.error.status === 404) {
+    if (query.error instanceof ApiError && [404, 409].includes(query.error.status)) {
       void refresh(anchor ?? { sectionId });
       return;
     }

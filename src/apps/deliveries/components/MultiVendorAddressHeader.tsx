@@ -53,6 +53,7 @@ export default function MultiVendorAddressHeader({
   const { gutter } = useWindowClass();
   const { selectedAddress, selectedAddressLabel } = useAddress();
   const browseLocation = useBrowseCity();
+  const browseAddress = useBrowseCityStore((state) => state.browseAddress);
   const openCityPicker = useBrowseCityStore((state) => state.openPicker);
   const apiSelectedAddress = useMemo(
     () => createSelectedDeliveryAddress(addresses),
@@ -74,6 +75,9 @@ export default function MultiVendorAddressHeader({
   const addressLabel = browseCityMode
     ? browseLocation?.name ?? t('browse_city_title')
     : resolvedSelectedAddressLabel ?? t('multi_vendor_address_label');
+  const browseAddressLine = browseCityMode && browseAddress?.address?.trim() !== addressLabel
+    ? browseAddress?.address?.trim()
+    : null;
   const addressTransition = useRef(new Animated.Value(1)).current;
   const isLabelVariant = addressVariant === 'label';
   const handleAddressPress = browseCityMode
@@ -108,7 +112,9 @@ export default function MultiVendorAddressHeader({
       ]}
     >
       <Pressable
-        accessibilityLabel={browseCityMode ? t('browse_city_change', { city: addressLabel }) : addressLabel}
+        accessibilityLabel={browseCityMode
+          ? t('browse_city_change', { city: browseAddressLine ? `${addressLabel}, ${browseAddressLine}` : addressLabel })
+          : addressLabel}
         accessibilityRole="button"
         accessibilityState={{ disabled: !handleAddressPress }}
         disabled={!handleAddressPress}
@@ -136,7 +142,9 @@ export default function MultiVendorAddressHeader({
         >
           <Icon
             color={colors.primary}
-            name={browseCityMode ? 'compass-outline' : resolvedSelectedAddress ? 'location' : 'add'}
+            name={browseCityMode
+              ? browseAddress ? 'location' : 'compass-outline'
+              : resolvedSelectedAddress ? 'location' : 'add'}
             size={isLabelVariant ? 17 : 20}
             type="Ionicons"
           />
@@ -181,6 +189,11 @@ export default function MultiVendorAddressHeader({
               <Icon color={colors.textSubtle} name="chevron-down" size={16} type="Ionicons" />
             ) : null}
           </View>
+          {browseAddressLine ? (
+            <Text variant="caption" color={colors.textSubtle} numberOfLines={1}>
+              {browseAddressLine}
+            </Text>
+          ) : null}
         </Animated.View>
       </Pressable>
 

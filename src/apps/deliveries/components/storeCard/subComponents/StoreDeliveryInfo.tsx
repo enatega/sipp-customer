@@ -21,7 +21,10 @@ interface StoreDeliveryInfoProps {
 
 function formatDeliveryTime(value: number | string) {
   if (typeof value === "string") {
-    return value;
+    const trimmed = value.trim();
+    return /^\d+(?:\s*[-–]\s*\d+)?$/.test(trimmed)
+      ? `${trimmed} mins`
+      : trimmed;
   }
 
   return `${value} mins`;

@@ -90,9 +90,9 @@ export default function BrowseCityPopup({ visible, onAddAddress }: Props) {
           maxHeight: height - insets.top - insets.bottom - spacing.xl,
         }]}>
           <View style={[styles.handle, { backgroundColor: colors.divider }]} />
-          <ScrollView contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: spacing.lg }}
+          <ScrollView contentContainerStyle={{ paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.lg }}
             showsVerticalScrollIndicator={false}>
-            <Text variant="title" weight="bold" accessibilityRole="header" style={styles.title}>
+            <Text variant="sectionTitle" weight="bold" accessibilityRole="header" style={styles.title}>
               {t('browse_city_title')}
             </Text>
             <View style={styles.options}>
@@ -103,7 +103,7 @@ export default function BrowseCityPopup({ visible, onAddAddress }: Props) {
             </View>
             <View style={[styles.divider, { backgroundColor: colors.divider }]} />
             <View style={styles.sectionHeading}>
-              <Text variant="label" weight="semiBold" color={colors.textSubtle} style={styles.sectionLabel}>
+              <Text variant="caption" weight="semiBold" color={colors.textSubtle} style={styles.sectionLabel}>
                 {canSaveAddress ? t('browse_city_saved_addresses') : t('browse_city_address')}
               </Text>
               {isLoading ? <ActivityIndicator size="small" color={colors.primary} /> : null}
@@ -132,9 +132,9 @@ export default function BrowseCityPopup({ visible, onAddAddress }: Props) {
                 borderRadius: shape.radius.surface,
               }]}>
               <View style={styles.addIcon}>
-                <Ionicons name="add" size={25} color={colors.onPrimary} />
+                <Ionicons name="add" size={22} color={colors.onPrimary} />
               </View>
-              <Text variant="cardTitle" weight="semiBold" color={colors.onPrimary}>
+              <Text variant="button" weight="semiBold" color={colors.onPrimary}>
                 {canSaveAddress ? t('browse_city_add_address') : t('browse_city_choose_address')}
               </Text>
             </Pressable>
@@ -149,13 +149,13 @@ const styles = StyleSheet.create({
   overlay: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   card: { width: '100%', maxWidth: 440, maxHeight: '100%', overflow: 'hidden' },
   handle: { width: 40, height: 5, borderRadius: 3, alignSelf: 'center', marginTop: 12 },
-  title: { marginBottom: 20 },
-  options: { gap: 10 },
-  divider: { height: StyleSheet.hairlineWidth, marginVertical: 20 },
-  sectionHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+  title: { marginBottom: 18 },
+  options: { gap: 8 },
+  divider: { height: StyleSheet.hairlineWidth, marginVertical: 16 },
+  sectionHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
   sectionLabel: { textTransform: 'uppercase', letterSpacing: 0.6 },
-  savedList: { gap: 10 },
+  savedList: { gap: 8 },
   error: { marginBottom: 8 },
-  addOption: { minHeight: 58, marginTop: 16, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  addIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.16)', alignItems: 'center', justifyContent: 'center' },
+  addOption: { minHeight: 52, marginTop: 16, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  addIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.16)', alignItems: 'center', justifyContent: 'center' },
 });
