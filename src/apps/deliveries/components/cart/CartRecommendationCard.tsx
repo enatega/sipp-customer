@@ -8,6 +8,7 @@ import PressableScale from '../../../../general/components/PressableScale';
 import Text from '../../../../general/components/Text';
 import { useTheme } from '../../../../general/theme/theme';
 import { formatCartPrice } from './cartUtils';
+import { getLocalizedProductName } from '../../utils/productTranslation';
 
 type Props = {
   item: DeliveryOrderAgainItem;
@@ -16,7 +17,14 @@ type Props = {
 
 export default function CartRecommendationCard({ item, onPress }: Props) {
   const { colors, layout, shape, spacing } = useTheme();
-  const { t } = useTranslation('deliveries');
+  const { t, i18n } = useTranslation('deliveries');
+  const localizedName = getLocalizedProductName(
+    {
+      name: item.productName,
+      nameTranslations: item.productNameTranslations,
+    },
+    i18n.language,
+  );
   const [hasImageError, setHasImageError] = React.useState(false);
   const imageUri = item.productImage?.trim() || item.storeImage?.trim() || item.storeLogo?.trim();
   const price = item.discountedPrice ?? item.price ?? 0;
@@ -24,7 +32,7 @@ export default function CartRecommendationCard({ item, onPress }: Props) {
 
   return (
     <PressableScale
-      accessibilityLabel={t('cart_recommendation_accessibility', { product: item.productName })}
+      accessibilityLabel={t('cart_recommendation_accessibility', { product: localizedName })}
       accessibilityRole="button"
       onPress={onPress}
       style={[
@@ -38,7 +46,7 @@ export default function CartRecommendationCard({ item, onPress }: Props) {
     >
       {imageUri && !hasImageError ? (
         <Image
-          accessibilityLabel={item.productName}
+          accessibilityLabel={localizedName}
           onError={() => setHasImageError(true)}
           resizeMode="cover"
           source={{ uri: imageUri }}
@@ -52,7 +60,7 @@ export default function CartRecommendationCard({ item, onPress }: Props) {
 
       <View style={[styles.content, { gap: spacing.xs }]}>
         <Text numberOfLines={2} variant="label" weight="bold">
-          {item.productName}
+          {localizedName}
         </Text>
         {item.storeName ? (
           <Text color={colors.textSubtle} numberOfLines={1} variant="caption">

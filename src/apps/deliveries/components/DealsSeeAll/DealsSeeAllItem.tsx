@@ -7,12 +7,14 @@ import Text from '../../../../general/components/Text';
 import { useDeliveriesCurrencyLabel } from '../../../../general/stores/useAppConfigStore';
 import { useTheme } from '../../../../general/theme/theme';
 import type { DeliveryDealItem } from '../../api/dealsServiceTypes';
+import { getLocalizedProductName } from '../../utils/productTranslation';
 
 type Props = { item: DeliveryDealItem; onPress: (deal: DeliveryDealItem) => void };
 
 export default function DealsSeeAllItem({ item, onPress }: Props) {
   const { colors, shape } = useTheme();
-  const { t } = useTranslation('deliveries');
+  const { t, i18n } = useTranslation('deliveries');
+  const localizedName = getLocalizedProductName(item, i18n.language);
   const currency = useDeliveriesCurrencyLabel();
   const [imageFailed, setImageFailed] = useState(false);
   const price = item.discountedPrice ?? item.price;
@@ -36,7 +38,7 @@ export default function DealsSeeAllItem({ item, onPress }: Props) {
   return (
     <PressableScale
       accessibilityRole="button"
-      accessibilityLabel={item.name}
+      accessibilityLabel={localizedName}
       onPress={() => onPress(item)}
       pressedScale={0.98}
       style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.divider, borderRadius: shape.radius.surface }]}
@@ -52,7 +54,7 @@ export default function DealsSeeAllItem({ item, onPress }: Props) {
         {offer ? (
           <Text color={colors.primary} variant="badge" weight="bold" numberOfLines={1} style={styles.offer}>{offer}</Text>
         ) : null}
-        <Text variant="cardTitle" weight="bold" numberOfLines={2} style={styles.name}>{item.name}</Text>
+        <Text variant="cardTitle" weight="bold" numberOfLines={2} style={styles.name}>{localizedName}</Text>
         <View style={styles.priceRow}>
           {hasPrice && typeof price === 'number' ? (
             <Text color={colors.textStrong} variant="numeric" weight="bold" numberOfLines={1}>{currency} {price.toFixed(2)}</Text>

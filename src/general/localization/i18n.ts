@@ -4,17 +4,18 @@ import * as Localization from 'expo-localization';
 import * as SecureStore from 'expo-secure-store';
 import { translations } from './translations';
 import { APP_I18N_NAMESPACES } from '../../apps/registry/generated/appI18nRegistry';
-
-const SUPPORTED_LANGUAGES = ['en', 'fr'] as const;
-const LANGUAGE_STORAGE_KEY = 'super_app_language';
+import {
+  DEFAULT_LANGUAGE,
+  isSupportedLanguage,
+  LANGUAGE_STORAGE_KEY,
+  normalizeSupportedLanguage,
+} from './supportedLanguages';
 
 const normalizeLanguage = (languageTag: string) => {
-  console.log('Device language:', languageTag);
-  const short =  languageTag?.split('-')?.[0];
-  return SUPPORTED_LANGUAGES.includes(short as (typeof SUPPORTED_LANGUAGES)[number]) ? short : 'en';
+  return normalizeSupportedLanguage(languageTag);
 };
 
-const deviceLocale = Localization.getLocales?.()?.[0]?.languageTag ?? 'en';
+const deviceLocale = Localization.getLocales?.()?.[0]?.languageTag ?? DEFAULT_LANGUAGE;
 const defaultLanguage = normalizeLanguage(deviceLocale);
 
 void i18n
@@ -24,6 +25,9 @@ void i18n
     fallbackLng: 'en',
     resources: {
       en: translations.en,
+      de: translations.de,
+      es: translations.es,
+      ar: translations.ar,
       fr: translations.fr,
     },
     ns: ['general', ...APP_I18N_NAMESPACES],
@@ -35,10 +39,11 @@ void i18n
   })
   .then(async () => {
     const saved = await SecureStore.getItemAsync(LANGUAGE_STORAGE_KEY);
-    if (saved && SUPPORTED_LANGUAGES.includes(saved as (typeof SUPPORTED_LANGUAGES)[number])) {
+    if (saved && isSupportedLanguage(saved)) {
       await i18n.changeLanguage(saved);
     }
   });
 
 export default i18n;
-export type SupportedLanguage = typeof SUPPORTED_LANGUAGES[number];
+export type { SupportedLanguage } from './supportedLanguages';
+export { SUPPORTED_LANGUAGES } from './supportedLanguages';

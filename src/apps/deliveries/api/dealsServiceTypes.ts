@@ -6,6 +6,7 @@ export interface DeliveryDealItem {
   dealId: string;
   id: string;
   name: string;
+  nameTranslations?: Record<string, string>;
   imageUrl?: string | null;
   price?: number | null;
   deal?: string | null;

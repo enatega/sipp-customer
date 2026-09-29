@@ -41,6 +41,7 @@ export interface DeliveryShopTypeProduct {
     productId: string;
     storeId: string;
     productName: string;
+    productNameTranslations?: Record<string, string>;
     storeName?: string | null;
     shopTypeId?: string | null;
     shopTypeName?: string | null;
@@ -281,6 +282,7 @@ export interface DeliveryStoreDetailsFilterItem {
 export interface DeliveryStoreDetailsProduct {
     id: string;
     name: string;
+    nameTranslations?: Record<string, string>;
     imageUrl?: string | null;
     price?: number | null;
     shortDescription?: string | null;
@@ -309,6 +311,7 @@ export interface DeliveryOrderAgainItem {
     productId: string;
     storeId: string;
     productName: string;
+    productNameTranslations?: Record<string, string>;
     storeName?: string | null;
     productImage?: string | null;
     storeLogo?: string | null;

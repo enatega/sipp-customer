@@ -5,6 +5,7 @@ import Text from '../../../../../general/components/Text';
 import { useTheme } from '../../../../../general/theme/theme';
 import { useTranslation } from 'react-i18next';
 import { useNearbyStores } from '../../../hooks';
+import { translateShopTypeName } from '../../../utils/shopTypeLocalization';
 
 function formatTime(value?: number | string | null) {
   if (value == null) {
@@ -34,20 +35,6 @@ function formatFee(value?: number | null) {
   return `$${Math.round(value)}`;
 }
 
-function decodeDisplayText(value: string) {
-  let decodedValue = value;
-
-  if (decodedValue.includes('%')) {
-    try {
-      decodedValue = decodeURIComponent(decodedValue);
-    } catch {
-      decodedValue = value;
-    }
-  }
-
-  return decodedValue.replaceAll('&amp;', '&');
-}
-
 export default function AllInOneRecommendedRestaurants() {
   const { t } = useTranslation('deliveries');
   const { colors } = useTheme();
@@ -72,7 +59,7 @@ export default function AllInOneRecommendedRestaurants() {
         {displayStores.map((store) => {
           const imageUri = store.coverImage || store.logo || null;
           const resolvedShopTypeName = store.shopTypeName
-            ? decodeDisplayText(store.shopTypeName)
+            ? translateShopTypeName(store.shopTypeName, t)
             : t('multi_vendor_nearby_store_category_fast_food');
 
           return (

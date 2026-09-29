@@ -13,6 +13,7 @@ import OrderDetailsSummaryRow from "../orderDetails/OrderDetailsSummaryRow";
 import OrderTrackingInfoRow from "./OrderTrackingInfoRow";
 import type { OrderTrackingViewModel } from "./useOrderTrackingViewModel";
 import { getPreviewImages } from "./OrderTrackingModern.shared";
+import { getLocalizedOrderItemsSummary } from "../../utils/orderItems/orderItemsUtils";
 
 type Props = {
   isOrderItemsExpanded: boolean;
@@ -27,7 +28,7 @@ export default function OrderTrackingModernSections({
   order,
   viewModel,
 }: Props) {
-  const { t } = useTranslation("deliveries");
+  const { t, i18n } = useTranslation("deliveries");
   const { colors, shape } = useTheme();
   const isPickup = order.orderType === "pickup";
   const locationTitle = isPickup
@@ -42,6 +43,11 @@ export default function OrderTrackingModernSections({
     "out_for_delivery",
     "arrived",
   ].includes(order.status?.toLowerCase?.() ?? "");
+  const localizedOrderItemsSummary = getLocalizedOrderItemsSummary(
+    order.orderItems,
+    i18n.language,
+    t("order_tracking_order_items"),
+  );
 
   return (
     <>
@@ -125,7 +131,7 @@ export default function OrderTrackingModernSections({
             ) : null}
           </View>
           <Text color={colors.text} numberOfLines={1} style={styles.orderItemsLabel} weight="medium">
-            {order.orderItems.summaryLabel || t("order_tracking_order_items")}
+            {localizedOrderItemsSummary}
           </Text>
         </View>
         <Ionicons

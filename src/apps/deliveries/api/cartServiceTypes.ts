@@ -25,6 +25,7 @@ export type CartItem = {
   id: string;
   productId: string;
   name: string;
+  nameTranslations?: Record<string, string>;
   description: string | null;
   imageUrl: string | null;
   quantity: number;

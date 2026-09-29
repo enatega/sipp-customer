@@ -1,4 +1,6 @@
 const en = {
+  shop_type_grocery: 'Grocery',
+  shop_type_restaurant: 'Restaurant',
   promotional_banner: 'Promotional banner',
   store_menu_all_categories: "All categories",
   store_menu_page_error: "Could not load these items. Check your connection and try again.",
@@ -736,6 +738,9 @@ const en = {
   language_title: 'App languages',
   language_section_label: 'Select language',
   language_english: 'English',
+  language_german: 'German',
+  language_spanish: 'Spanish',
+  language_arabic: 'Arabic',
   language_french: 'French',
   popular: 'Popular',
   ingredients: 'Ingredients',

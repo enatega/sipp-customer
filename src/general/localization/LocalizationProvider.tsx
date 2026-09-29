@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import * as SecureStore from 'expo-secure-store';
 import i18n, { SupportedLanguage } from './i18n';
 import { Namespace } from './translations';
+import { LANGUAGE_STORAGE_KEY } from './supportedLanguages';
 
 type LocalizationContextValue = {
   language: SupportedLanguage;
@@ -26,6 +28,7 @@ export function LocalizationProvider({ children }: Props) {
       language,
       setLanguage: async (lang: SupportedLanguage) => {
         await i18n.changeLanguage(lang);
+        await SecureStore.setItemAsync(LANGUAGE_STORAGE_KEY, lang);
       },
     }),
     [language]
