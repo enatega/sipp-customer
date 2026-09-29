@@ -8,6 +8,8 @@ import PressableScale from '../../../../general/components/PressableScale';
 import Text from '../../../../general/components/Text';
 import { useTheme } from '../../../../general/theme/theme';
 import type { CartItem } from '../../api/cartServiceTypes';
+import { useProductInfo } from '../../hooks/useProductInfo';
+import { getLocalizedProductName } from '../../utils/productTranslation';
 import { formatCartPrice, getCartItemSubtitle } from './cartUtils';
 
 type Props = {
@@ -30,7 +32,22 @@ export default function CartItemRow({
   onRemove,
 }: Props) {
   const { colors, layout, shape, spacing } = useTheme();
-  const { t } = useTranslation('deliveries');
+  const { t, i18n } = useTranslation('deliveries');
+  const languageCode = i18n.language.trim().toLowerCase().split('-')[0];
+  const hasSelectedTranslation = Boolean(
+    item.nameTranslations?.[languageCode]?.trim(),
+  );
+  const { data: productInfo } = useProductInfo(item.productId, {
+    enabled: !hasSelectedTranslation && item.productId.length > 0,
+  });
+  const localizedName = getLocalizedProductName(
+    {
+      name: productInfo?.name ?? item.name,
+      nameTranslations:
+        productInfo?.nameTranslations ?? item.nameTranslations,
+    },
+    i18n.language,
+  );
   const subtitle = getCartItemSubtitle(item);
   const [hasImageError, setHasImageError] = React.useState(false);
   const [localQuantity, setLocalQuantity] = React.useState(item.quantity);
@@ -147,7 +164,7 @@ export default function CartItemRow({
     >
       {imageUri && !hasImageError ? (
         <Image
-          accessibilityLabel={item.name}
+          accessibilityLabel={localizedName}
           onError={() => setHasImageError(true)}
           resizeMode="cover"
           source={{ uri: imageUri }}
@@ -171,7 +188,7 @@ export default function CartItemRow({
         <View style={[styles.copy, { gap: spacing.xs }]}>
           <View style={styles.titleRow}>
             <Text numberOfLines={2} style={styles.title} variant="cardTitle" weight="bold">
-              {item.name}
+              {localizedName}
             </Text>
             {hasPendingState ? <ActivityIndicator color={colors.primary} size="small" /> : null}
           </View>

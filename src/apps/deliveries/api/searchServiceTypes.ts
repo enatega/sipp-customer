@@ -56,6 +56,7 @@ export type SearchProductItem = {
   productId: string;
   storeId: string;
   productName: string;
+  productNameTranslations?: Record<string, string>;
   storeName: string;
   productImage: string;
   storeLogo: string;

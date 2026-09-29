@@ -19,6 +19,7 @@ import { useTranslations } from "../../../../general/localization/LocalizationPr
 import PressableScale from "../../../../general/components/PressableScale";
 import { pushStoreDetails } from "../../navigation/storeDetailsNavigation";
 import { translateShopTypeName } from "../../utils/shopTypeLocalization";
+import { getLocalizedProductName } from "../../utils/productTranslation";
 
 type StoreCardData =
   | DeliveryNearbyStore
@@ -80,7 +81,7 @@ export default function StoreCard({
   onClosedPress,
 }: StoreCardProps) {
   const { colors, elevation, shape, spacing } = useTheme();
-  const { t } = useTranslations("deliveries");
+  const { t, i18n } = useTranslations("deliveries");
   const currencyLabel = useDeliveriesCurrencyLabel();
   const navigation = useNavigation<NavigationProp>();
   const isProductItem = isProductStoreCardData(store);
@@ -103,7 +104,15 @@ export default function StoreCard({
     currencyLabel,
     t("off"),
   );
-  const resolvedName = isProductItem ? store.productName : store.name;
+  const resolvedName = isProductItem
+    ? getLocalizedProductName(
+        {
+          name: store.productName,
+          nameTranslations: store.productNameTranslations,
+        },
+        i18n.language,
+      )
+    : store.name;
   const resolvedRating = store.averageRating ?? undefined;
   const resolvedReviewCount = store.reviewCount ?? undefined;
   const resolvedCuisine = isProductItem

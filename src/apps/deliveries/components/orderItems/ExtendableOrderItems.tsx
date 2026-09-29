@@ -10,6 +10,8 @@ import OrderDetailsProductCard from "../orderDetails/OrderDetailsProductCard";
 import { formatCurrency } from "../../utils/orderDetails/orderDetailsUtils";
 import {
   getOrderPreviewImages,
+  getLocalizedOrderItemsSummary,
+  getLocalizedOrderProductName,
   getProductAddonLines,
   getRemainingOrderItemsCount,
 } from "../../utils/orderItems/orderItemsUtils";
@@ -30,7 +32,7 @@ export default function ExtendableOrderItems({
   isCollapsible = true,
   orderItems,
 }: Props) {
-  const { t } = useTranslation("deliveries");
+  const { t, i18n } = useTranslation("deliveries");
   const { colors, typography } = useTheme();
   const hasMultipleProducts = orderItems.products.length > 1;
   const shouldUseCollapsibleLayout = isCollapsible && hasMultipleProducts;
@@ -45,6 +47,15 @@ export default function ExtendableOrderItems({
   const remainingCount = useMemo(
     () => getRemainingOrderItemsCount(orderItems),
     [orderItems],
+  );
+  const localizedSummaryLabel = useMemo(
+    () =>
+      getLocalizedOrderItemsSummary(
+        orderItems,
+        i18n.language,
+        t("order_details_empty_items"),
+      ),
+    [i18n.language, orderItems, t],
   );
 
   const detailsContent =
@@ -64,8 +75,8 @@ export default function ExtendableOrderItems({
             addonLines={getProductAddonLines(product)}
             imageUri={product.image}
             name={
-              product.name ||
-              orderItems.summaryLabel ||
+              getLocalizedOrderProductName(product, i18n.language) ||
+              localizedSummaryLabel ||
               t("order_details_empty_items")
             }
             priceLabel={
@@ -104,7 +115,7 @@ export default function ExtendableOrderItems({
         ]}
         weight="medium"
       >
-        {orderItems.summaryLabel || t("order_details_empty_items")}
+        {localizedSummaryLabel}
       </Text>
     );
 
@@ -185,7 +196,7 @@ export default function ExtendableOrderItems({
                 }}
                 weight={collapsedVariant === "tracking" ? "medium" : "semiBold"}
               >
-                {orderItems.summaryLabel || t("order_details_empty_items")}
+                {localizedSummaryLabel}
               </Text>
             </View>
 
