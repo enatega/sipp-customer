@@ -15,19 +15,12 @@ import DeliveriesSectionEmptyState from '../../../components/home/DeliveriesSect
 import SectionActionHeader from '../../../../../general/components/SectionActionHeader';
 import { DeliveriesStackParamList } from '../../../navigation/types';
 import { MultiVendorStackParamList } from '../../navigation/types';
+import { decodeShopTypeName, translateShopTypeName } from '../../../utils/shopTypeLocalization';
 
 type NavProp = CompositeNavigationProp<
   NativeStackNavigationProp<MultiVendorStackParamList>,
   NativeStackNavigationProp<DeliveriesStackParamList>
 >;
-
-function decodeDisplayText(value: string) {
-  let decodedValue = value;
-  if (decodedValue.includes('%')) {
-    try { decodedValue = decodeURIComponent(decodedValue); } catch { decodedValue = value; }
-  }
-  return decodedValue.replace(/%amp;|&amp;|&#38;/gi, '&');
-}
 
 export default function ShopTypeList() {
   const { t } = useTranslation('deliveries');
@@ -53,7 +46,7 @@ export default function ShopTypeList() {
     return (
       <DiscoveryCategorySection
         actionLabel={t('multi_vendor_see_all')}
-        items={shopTypes.map((item) => ({ id: item.id, name: decodeDisplayText(item.name), imageUrl: item.image ?? null }))}
+        items={shopTypes.map((item) => ({ id: item.id, name: translateShopTypeName(item.name, t), imageUrl: item.image ?? null }))}
         isPending={false}
         onActionPress={handleSeeAll}
         onItemPress={(item) => handleShopType(item.id)}
@@ -67,8 +60,9 @@ export default function ShopTypeList() {
     <View style={[styles.section, { maxWidth: layout.contentMaxWidth.commerce, paddingHorizontal: gutter, gap: spacing.md }]}>
       <View style={styles.cards}>
         {shopTypes.map((shopType, index) => {
-          const name = decodeDisplayText(shopType.name);
-          const icon: keyof typeof Ionicons.glyphMap = /grocer|market|épicer|super/i.test(name) ? 'basket-outline' : /restaur|food|repas/i.test(name) ? 'restaurant-outline' : 'storefront-outline';
+          const rawName = decodeShopTypeName(shopType.name);
+          const name = translateShopTypeName(shopType.name, t);
+          const icon: keyof typeof Ionicons.glyphMap = /grocer|market|épicer|super/i.test(rawName) ? 'basket-outline' : /restaur|food|repas/i.test(rawName) ? 'restaurant-outline' : 'storefront-outline';
           const tint = index === 0 ? colors.cardMint : colors.cardPeach;
           const ink = index === 0 ? colors.quickActionOrdersForeground : colors.quickActionDealsForeground;
           const imageUri = shopType.image?.trim();

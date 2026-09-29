@@ -20,17 +20,10 @@ import { useFilterValues, useNearbyStores, useShopTypeCategories, useShopTypes }
 import { MainSeeAllCategoriesSection, MainSeeAllShopTypeTabs } from '../components/MainSeeAll';
 import type { MultiVendorStackParamList } from '../navigation/types';
 import { pushStoreDetails } from '../../navigation/storeDetailsNavigation';
+import { translateShopTypeName } from '../../utils/shopTypeLocalization';
 
 type NavigationProp = NativeStackNavigationProp<MultiVendorStackParamList, 'MainSeeAllScreen'>;
 type MainSeeAllRouteProp = RouteProp<MultiVendorStackParamList, 'MainSeeAllScreen'>;
-
-function decodeDisplayText(value: string) {
-  let decodedValue = value;
-  if (decodedValue.includes('%')) {
-    try { decodedValue = decodeURIComponent(decodedValue); } catch { decodedValue = value; }
-  }
-  return decodedValue.replace(/%amp;|&amp;|&#38;/gi, '&');
-}
 
 export default function MainSeeAllScreen() {
   const { colors, layout, spacing } = useTheme();
@@ -89,7 +82,10 @@ export default function MainSeeAllScreen() {
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   const selectedShopTypeName = selectedShopTypeId
-    ? decodeDisplayText(shopTypes.find((item) => item.id === selectedShopTypeId)?.name ?? t('home_all_stores'))
+    ? translateShopTypeName(
+        shopTypes.find((item) => item.id === selectedShopTypeId)?.name ?? t('home_all_stores'),
+        t,
+      )
     : t('home_all_stores');
 
   return (

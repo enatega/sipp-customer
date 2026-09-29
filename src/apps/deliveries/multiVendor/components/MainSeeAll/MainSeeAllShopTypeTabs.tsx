@@ -6,26 +6,13 @@ import type { DeliveryShopType } from '../../../api/types';
 import PressableScale from '../../../../../general/components/PressableScale';
 import { useWindowClass } from '../../../../../general/hooks/useWindowClass';
 import { useTranslation } from 'react-i18next';
+import { translateShopTypeName } from '../../../utils/shopTypeLocalization';
 
 type Props = {
   items: DeliveryShopType[];
   selectedShopTypeId: string | null;
   onSelectShopType: (shopTypeId: string | null) => void;
 };
-
-function decodeDisplayText(value: string) {
-  let decodedValue = value;
-
-  if (decodedValue.includes('%')) {
-    try {
-      decodedValue = decodeURIComponent(decodedValue);
-    } catch {
-      decodedValue = value;
-    }
-  }
-
-  return decodedValue.replace(/%amp;|&amp;|&#38;/gi, '&');
-}
 
 export default function MainSeeAllShopTypeTabs({
   items,
@@ -60,7 +47,7 @@ export default function MainSeeAllShopTypeTabs({
         </PressableScale>
         {items.map((shopType) => {
           const isSelected = selectedShopTypeId === shopType.id;
-          const resolvedShopTypeName = decodeDisplayText(shopType.name);
+          const resolvedShopTypeName = translateShopTypeName(shopType.name, t);
 
           return (
             <PressableScale

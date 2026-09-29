@@ -41,6 +41,7 @@ function normalizeSingleVendorDealItem(
     dealId: `${item.productId}-${item.storeId}`,
     id: item.productId,
     name: item.productName,
+    nameTranslations: item.productNameTranslations,
     imageUrl: item.productImage,
     price: item.price,
     deal: item.deal,
