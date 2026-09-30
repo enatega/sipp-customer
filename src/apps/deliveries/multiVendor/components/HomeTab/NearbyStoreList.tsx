@@ -54,6 +54,7 @@ export default function NearbyStoreList(props: Props) {
     hasSelectedShopTypeProp && !activeShopTypeId;
 
   const { data: nearbyStoresData = [], isPending: isNearbyStoresPending } = useNearbyStores({
+    home: true,
     enabled: !shouldSkipBecauseEmptyShopType,
     search,
     filters: {

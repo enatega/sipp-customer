@@ -6,25 +6,12 @@ import CategorySeeAllGrid from "../../../components/categorySeeAll/CategorySeeAl
 import type { DeliveryDiscoveryCategoryItem } from "../../../components/discovery";
 import { usePaginatedShopTypes } from "../../../hooks";
 import type { DeliveriesStackParamList } from "../../../navigation/types";
+import { translateShopTypeName } from "../../../utils/shopTypeLocalization";
 
 type NavigationProp = NativeStackNavigationProp<
   DeliveriesStackParamList,
   "SeeAllScreen"
 >;
-
-function decodeDisplayText(value: string) {
-  let decodedValue = value;
-
-  if (decodedValue.includes("%")) {
-    try {
-      decodedValue = decodeURIComponent(decodedValue);
-    } catch {
-      decodedValue = value;
-    }
-  }
-
-  return decodedValue.replace(/%amp;|&amp;|&#38;/gi, "&");
-}
 
 const ShopTypesSeeAllContainer = () => {
   const navigation = useNavigation<NavigationProp>();
@@ -46,19 +33,19 @@ const ShopTypesSeeAllContainer = () => {
     (shopType: DeliveryDiscoveryCategoryItem) => {
       navigation.navigate("SeeAllScreen", {
         queryType: "shop-type-stores",
-        title: decodeDisplayText(shopType.name),
+        title: translateShopTypeName(shopType.name, t),
         cardType: "store",
         shopTypeId: shopType.id,
       });
     },
-    [navigation],
+    [navigation, t],
   );
 
   return (
     <CategorySeeAllGrid
       data={shopTypes.map((shopType) => ({
         id: shopType.id,
-        name: decodeDisplayText(shopType.name),
+        name: translateShopTypeName(shopType.name, t),
         imageUrl: shopType.image ?? null,
       }))}
       fetchNextPage={fetchNextPage}

@@ -38,6 +38,7 @@ export interface ProductInfoResponse {
   productId: string;
   storeId: string;
   name: string;
+  nameTranslations?: Record<string, string>;
   imageUrl: string;
   description: string;
   price: number;

@@ -211,6 +211,8 @@ function toDealsQueryParams(
         category_ids,
         subcategory_id,
         shop_type_id,
+        latitude,
+        longitude,
     } = params;
 
     return {
@@ -221,6 +223,8 @@ function toDealsQueryParams(
         category_ids,
         subcategory_id,
         shop_type_id,
+        latitude,
+        longitude,
     };
 }
 
@@ -255,12 +259,16 @@ function toTopBrandsQueryParams(
         offset = TOP_BRANDS_DEFAULTS.offset,
         limit = TOP_BRANDS_DEFAULTS.limit,
         search,
+        latitude,
+        longitude,
     } = params;
 
     return {
         offset,
         limit,
         search,
+        latitude,
+        longitude,
     };
 }
 
@@ -403,12 +411,13 @@ export const discoveryService = {
     /** Fetch available deliveries shop types for app discovery. */
     getShopTypes: async (
         params: DeliveryShopTypesParams = {},
+        home = false,
     ): Promise<DeliveryShopType[]> => {
         const { offset = 0, limit = 10 } = params;
         try {
             const response = await apiClient.get<DeliveryShopTypesApiResponse>(
                 '/api/v1/apps/deliveries/discovery/shop-types',
-                { offset, limit },
+                { offset, limit, home },
             );
 
             if (Array.isArray(response)) {
@@ -518,14 +527,16 @@ export const discoveryService = {
     /** Fetch stores for a specific shop type in deliveries discovery. */
     getShopTypeStores: async (
         params: DeliveryShopTypeStoresParams,
+        home = false,
     ): Promise<DeliveryNearbyStore[]> => {
-        const response = await discoveryService.getShopTypeStoresPage(params);
+        const response = await discoveryService.getShopTypeStoresPage(params, home);
         return response.items;
     },
 
     /** Fetch paginated stores for a specific shop type in deliveries discovery. */
     getShopTypeStoresPage: async (
         params: DeliveryShopTypeStoresParams,
+        home = false,
     ): Promise<PaginatedDeliveryResponse<DeliveryNearbyStore>> => {
         const { shopTypeId } = params;
         const queryParams = toShopTypeStoresQueryParams(params);
@@ -541,7 +552,7 @@ export const discoveryService = {
         try {
             const response = await apiClient.get<DeliveryShopTypeStoresApiResponse>(
                 `/api/v1/apps/deliveries/discovery/shop-types/${shopTypeId}/stores`,
-                queryParams,
+                { ...queryParams, home },
             );
 
             return toPaginatedResponse(response, { offset, limit });
@@ -590,11 +601,12 @@ export const discoveryService = {
     /** Fetch mobile banners from the public deliveries carousel endpoint. */
     getMobileBanners: async (
         params: DeliveryBannersParams = {},
+        home = false,
     ): Promise<DeliveryBanner[]> => {
         const { offset = 0, limit = 10 } = params;
         const response = await apiClient.get<DeliveryBannersApiResponse>(
             '/api/v1/deliveries/banners/mobile',
-            { offset, limit },
+            { offset, limit, home },
         );
 
         if (Array.isArray(response)) {
@@ -615,12 +627,13 @@ export const discoveryService = {
     /** Fetch top brands for deliveries home discovery. */
     getTopBrands: async (
         params: DeliveryTopBrandsParams = {},
+        home = false,
     ): Promise<DeliveryTopBrand[]> => {
         const queryParams = toTopBrandsQueryParams(params);
         try {
             const response = await apiClient.get<DeliveryTopBrandsApiResponse>(
                 '/api/v1/apps/deliveries/discovery/top-brands',
-                queryParams,
+                { ...queryParams, home },
             );
 
             if (Array.isArray(response)) {
@@ -672,6 +685,7 @@ export const discoveryService = {
     /** Fetch nearby stores for deliveries home discovery. */
     getNearbyStoresPage: async (
         params: DeliveryNearbyStoresParams = {},
+        home = false,
     ): Promise<PaginatedDeliveryResponse<DeliveryNearbyStore>> => {
         const queryParams = toNearbyStoresQueryParams(params);
         const offset =
@@ -686,7 +700,7 @@ export const discoveryService = {
         try {
             const response = await apiClient.get<DeliveryNearbyStoresApiResponse>(
                 '/api/v1/apps/deliveries/discovery/nearby-stores',
-                queryParams,
+                { ...queryParams, home },
             );
 
             return toPaginatedResponse(response, { offset, limit });
@@ -751,14 +765,16 @@ export const discoveryService = {
     /** Fetch deals for deliveries home discovery. */
     getDeals: async (
         params: DeliveryDealsParams = {},
+        home = false,
     ): Promise<DeliveryNearbyStore[]> => {
-        const response = await discoveryService.getDealsPage(params);
+        const response = await discoveryService.getDealsPage(params, home);
         return response.items;
     },
 
     /** Fetch deals for deliveries home discovery. */
     getDealsPage: async (
         params: DeliveryDealsParams = {},
+        home = false,
     ): Promise<PaginatedDeliveryResponse<DeliveryNearbyStore>> => {
         const queryParams = toDealsQueryParams(params);
         const offset =
@@ -773,7 +789,7 @@ export const discoveryService = {
         try {
             const response = await apiClient.get<DeliveryDealsApiResponse>(
                 '/api/v1/apps/deliveries/deals/home',
-                queryParams,
+                { ...queryParams, home },
             );
 
             return toPaginatedResponse(response, { offset, limit });

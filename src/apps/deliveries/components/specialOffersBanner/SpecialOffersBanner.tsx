@@ -12,6 +12,8 @@ import type { DeliveriesStackParamList } from '../../navigation/types';
 import SpecialOffersBannerCard from './SpecialOffersBannerCard';
 import SpecialOffersBannerSkeleton from './SpecialOffersBannerSkeleton';
 import { useWindowClass } from '../../../../general/hooks/useWindowClass';
+import { useTranslation } from 'react-i18next';
+import { translateShopTypeName } from '../../utils/shopTypeLocalization';
 
 type Props = {
   banners: DeliveryBanner[];
@@ -53,11 +55,14 @@ function toStoreNavigationTarget(banner: DeliveryBanner): DeliveryNearbyStore | 
   };
 }
 
-function resolveShopTypeTitle(banner: DeliveryBanner): string {
+function resolveShopTypeTitle(
+  banner: DeliveryBanner,
+  t: (key: string) => string,
+): string {
   const shopTypeName = banner.shopType?.name?.trim();
 
   if (shopTypeName) {
-    return shopTypeName;
+    return translateShopTypeName(shopTypeName, t);
   }
 
   return (
@@ -75,6 +80,7 @@ export default function SpecialOffersBanner({
   variant = 'default',
 }: Props) {
   const navigation = useNavigation<NavigationProp<DeliveriesStackParamList>>();
+  const { t } = useTranslation('deliveries');
   const { colors, layout, shape, spacing } = useTheme();
   const { gutter, width } = useWindowClass();
   const [bannerIndex, setBannerIndex] = useState(0);
@@ -123,12 +129,12 @@ export default function SpecialOffersBanner({
 
       navigation.navigate('SeeAllScreen', {
         queryType: 'shop-type-stores',
-        title: resolveShopTypeTitle(banner),
+        title: resolveShopTypeTitle(banner, t),
         cardType: 'store',
         shopTypeId,
       });
     },
-    [navigation],
+    [navigation, t],
   );
   const navigateToAllRestaurants = useCallback(
     (banner: DeliveryBanner) => {

@@ -71,8 +71,9 @@ export default function AddressSearchScreen() {
         editType: params.editType,
         editLocationName: params.editLocationName,
         origin: params.origin,
+        preselectAsDefault: params.preselectAsDefault,
       }
-    : { appPrefix: params.appPrefix, origin: params.origin };
+    : { appPrefix: params.appPrefix, origin: params.origin, preselectAsDefault: params.preselectAsDefault };
 
   const selectGuestLocation = useCallback(
     (address: string, latitude: number, longitude: number) => {

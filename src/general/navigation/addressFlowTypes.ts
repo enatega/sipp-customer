@@ -15,6 +15,7 @@ export type AddressFlowParams = {
   initialLatitude?: number;
   initialLongitude?: number;
   origin?: AddressFlowOrigin;
+  preselectAsDefault?: boolean;
 };
 
 export type AddressDetailParams = {
@@ -26,6 +27,7 @@ export type AddressDetailParams = {
   editType?: string;
   editLocationName?: string;
   origin?: AddressFlowOrigin;
+  preselectAsDefault?: boolean;
 };
 
 export type AddressFlowParamList = {

@@ -1,4 +1,6 @@
 const fr = {
+  shop_type_grocery: 'Épicerie',
+  shop_type_restaurant: 'Restaurant',
   promotional_banner: 'Bannière promotionnelle',
   store_menu_all_categories: "Toutes les catégories",
   store_menu_page_error: "Impossible de charger ces articles. Vérifiez votre connexion et réessayez.",
@@ -77,7 +79,18 @@ const fr = {
   logout: 'Se déconnecter',
   multi_vendor_address_label: 'Sélectionner une adresse',
   delivery_header_deliver_to: 'Livrer à',
+  browse_city_title: 'Choisir un lieu',
+  browse_city_saved_addresses: 'Adresses enregistrées',
+  browse_city_address: 'Adresse',
+  browse_city_selected_address: 'Adresse choisie',
+  browse_city_addresses_error: 'Impossible de charger les adresses enregistrées.',
+  browse_city_add_address: 'Ajouter une adresse',
+  browse_city_choose_address: 'Choisir une adresse',
+  browse_city_close: 'Fermer le choix du lieu',
+  browse_city_header: 'À découvrir',
+  browse_city_change: 'Changer de lieu. Lieu actuel : {{city}}',
   multi_vendor_shop_types_title: 'Types de boutiques',
+  multi_vendor_special_offers_title: 'Offres spéciales',
   home_all_stores: 'Tous les magasins',
   home_store_count: '{{count}} magasins à découvrir',
   home_store_count_one: '{{count}} magasin à découvrir',
@@ -103,6 +116,9 @@ const fr = {
   multi_vendor_home_quick_orders: 'Commander à nouveau',
   multi_vendor_home_quick_favourites: 'Favoris',
   multi_vendor_deals_title: 'Offres',
+  home_deals_limited_time: 'Offre limitée',
+  home_deals_featured_title: 'Les meilleures offres pour vous',
+  home_deals_featured_description: 'Offres à durée limitée près de chez vous',
   multi_vendor_recommended_restaurants_title: 'Restaurants recommandés',
   deals_see_all_tab_all: 'Tout',
   deals_see_all_tab_limited: 'Offres limitees',
@@ -389,7 +405,6 @@ const fr = {
   notif_settings_success_message: 'Préférence de notification mise à jour.',
   notif_settings_error_title: 'Erreur',
   // Privacy Policy screen
-  privacy_screen_header: 'Politique de confidentialité',
   privacy_title: 'Politique de confidentialité',
   privacy_last_updated: 'Dernière mise à jour il y a 2 mois',
   privacy_intro:
@@ -414,7 +429,6 @@ const fr = {
   privacy_contact_email: 'E-mail : contact@fooddelivery.com',
   privacy_contact_address: 'Adresse : Doha, Qatar',
   // Terms of Service screen
-  tos_screen_header: "Conditions d'utilisation",
   tos_title: "Conditions d'utilisation",
   tos_last_updated: 'dernière mise à jour il y a 2 mois',
   tos_intro:
@@ -439,7 +453,6 @@ const fr = {
   tos_contact_email: 'E-mail : contact@fooddelivery.com',
   tos_contact_address: 'Adresse : Doha, Qatar',
   // Terms of Use screen
-  tou_screen_header: "Conditions d'usage",
   tou_title: "Conditions d'usage",
   tou_last_updated: 'mise à jour il y a 2 mois',
   tou_intro:
@@ -467,6 +480,7 @@ const fr = {
   tou_contact_email: 'E-mail : contact@fooddelivery.com',
   tou_contact_address: 'Adresse : Doha, Qatar',
   // Search / map
+  searching_near: 'Recherche à proximité de',
   products: 'Produits',
   stores: 'Magasins',
   see_all: 'Voir tout',
@@ -551,6 +565,9 @@ const fr = {
   language_title: 'Langues de l\'application',
   language_section_label: 'Sélectionner la langue',
   language_english: 'Anglais',
+  language_german: 'Allemand',
+  language_spanish: 'Espagnol',
+  language_arabic: 'Arabe',
   language_french: 'Français',
   popular: 'Populaire',
   ingredients: 'Ingrédients',
@@ -745,15 +762,6 @@ const fr = {
     'Le solde de votre portefeuille ({{balance}}) ne couvre pas le total de cette commande ({{total}}). Ajoutez des fonds ou choisissez un autre moyen de paiement.',
   checkout_insufficient_wallet_balance_add_funds: 'Ajouter des fonds au portefeuille',
   checkout_insufficient_wallet_balance_choose_payment: 'Choisir un autre moyen de paiement',
-  checkout_payment_wallet_title: 'Portefeuille',
-  checkout_payment_wallet_subtitle:
-    'Payez avec le solde de votre portefeuille',
-  checkout_payment_option_wallet_description:
-    'Payez avec le solde de votre portefeuille.',
-  checkout_payment_wallet_insufficient_balance:
-    'Solde insuffisant pour cette commande.',
-  checkout_payment_wallet_balance:
-    'Solde du portefeuille : {{currency}} {{amount}}',
   cart_empty_title: 'Votre panier est vide',
   cart_empty_message: 'Lorsque vous ajoutez des articles depuis une boutique, votre commande apparaîtra ici pour que vous puissiez la modifier quand vous le souhaitez.',
   cart_start_shopping: 'Commencer vos achats',
@@ -1055,6 +1063,7 @@ const fr = {
   order_cancel_message: 'Les commandes payées seront remboursées dans votre portefeuille.',
   order_cancel_keep: 'Garder la commande',
   order_cancel_confirm: 'Annuler la commande',
+  order_cancel_failed: 'Impossible d’annuler la commande',
   order_details_title: 'Détails de la commande',
   order_details_error_title: 'Impossible de charger cette commande pour le moment.',
   order_details_status: 'Statut de la commande',

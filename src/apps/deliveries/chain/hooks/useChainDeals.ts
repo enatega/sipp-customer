@@ -8,6 +8,7 @@ import type {
 } from '../../api/types';
 import { chainMenuTemplateService } from '../api/menuTemplateService';
 import { useChainMenuStore } from '../stores/useChainMenuStore';
+import { useBrowseCity } from '../../stores/useBrowseCityStore';
 
 type UseChainDealsMode = 'preview' | 'paginated';
 
@@ -26,6 +27,7 @@ export default function useChainDeals(options?: UseChainDealsOptions) {
   const normalizedSearch = options?.search?.trim() ?? '';
   const tab = options?.tab ?? 'all';
   const sortBy = options?.sortBy?.trim() ?? '';
+  const city = useBrowseCity();
   const selectedMenuTemplateId = useChainMenuStore(
     (state) => state.selectedMenuTemplateId,
   );
@@ -42,7 +44,7 @@ export default function useChainDeals(options?: UseChainDealsOptions) {
         tab,
         sort_by: sortBy,
       }),
-      { mode },
+      { mode, cityName: city?.name },
     ],
     queryFn: ({ pageParam = 0 }) =>
       chainMenuTemplateService.getDealsPage({
@@ -52,6 +54,8 @@ export default function useChainDeals(options?: UseChainDealsOptions) {
         search: normalizedSearch || undefined,
         tab,
         sort_by: sortBy || undefined,
+        latitude: city?.latitude,
+        longitude: city?.longitude,
       }),
     initialPageParam: 0,
     getNextPageParam: (lastPage) =>

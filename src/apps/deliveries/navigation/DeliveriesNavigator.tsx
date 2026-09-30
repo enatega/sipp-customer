@@ -63,8 +63,11 @@ import {
 import { isDeliveriesDemoModeEnabled } from "./deliveryDemoMode";
 import StoreMenuSearchScreen from "../multiVendor/screens/StoreMenuSearchScreen";
 import StoreDetailsScreen from "../multiVendor/screens/StoreDetailsScreen/StoreDetailsScreen";
-import HomeLocationPermissionPopup from '../../../screens/home/HomeLocationPermissionPopup';
-import { useLocationPermissionPrompt } from '../../../general/hooks/useLocationPermissionPrompt';
+import BrowseCityPopup from '../components/home/BrowseCityPopup';
+import { useBrowseCityStore } from '../stores/useBrowseCityStore';
+import { navigationRef } from '../../../general/navigation/rootNavigation';
+import { useAddressStore } from '../../../general/stores/useAddressStore';
+import type { DeliveryAddress } from '../../../general/api/addressService';
 
 const Stack = createNativeStackNavigator<DeliveriesStackParamList>();
 
@@ -89,7 +92,16 @@ function DeliveriesModeSelectorScreen() {
 }
 
 export default function DeliveriesNavigator() {
-  const locationPrompt = useLocationPermissionPrompt();
+  const hydrateCity = useBrowseCityStore((state) => state.hydrate);
+  const isCityHydrated = useBrowseCityStore((state) => state.isHydrated);
+  const isCityConfirmed = useBrowseCityStore((state) => state.isConfirmedForLaunch);
+  const isCityPickerVisible = useBrowseCityStore((state) => state.isPickerVisible);
+  const dismissCityPicker = useBrowseCityStore((state) => state.dismissPicker);
+  const markAddAddressPending = useBrowseCityStore((state) => state.markAddAddressPending);
+  const [addAddressBaseline, setAddAddressBaseline] = React.useState<DeliveryAddress | null | undefined>(undefined);
+  React.useEffect(() => {
+    void hydrateCity();
+  }, [hydrateCity]);
   const isDemoModeEnabled = isDeliveriesDemoModeEnabled();
   const deliveryMode = useDeliveriesDeliveryMode();
   const configQuery = useInitializeDeliveriesConfig();
@@ -97,9 +109,43 @@ export default function DeliveriesNavigator() {
     isDemoModeEnabled 
       ? 'DeliveriesModeSelector'
       : mapDeliveryModeToRoute(deliveryMode ?? DEFAULT_DELIVERY_MODE);
+  const isStartupReady = !configQuery.isHydratingCache &&
+    Boolean(deliveryMode || (!configQuery.isLoading && !configQuery.isFetching));
 
-  if (configQuery.isHydratingCache) {
+  const handleAddAddress = React.useCallback(() => {
+    setAddAddressBaseline(useAddressStore.getState().selectedAddress);
+    dismissCityPicker();
+  }, [dismissCityPicker]);
+
+  React.useEffect(() => {
+    if (addAddressBaseline === undefined || !isCityConfirmed || !isStartupReady) return;
+    const frame = requestAnimationFrame(() => {
+      const origin = initialRouteName === 'SingleVendor'
+        ? 'single-vendor-home'
+        : initialRouteName === 'Chain'
+          ? 'chain-home'
+          : 'multi-vendor-home';
+      navigationRef.navigate('Main', {
+        screen: 'Deliveries',
+        params: { screen: 'AddressSearch', params: { appPrefix: 'deliveries', origin, preselectAsDefault: true } },
+      });
+      markAddAddressPending(addAddressBaseline);
+      setAddAddressBaseline(undefined);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [addAddressBaseline, initialRouteName, isCityConfirmed, isStartupReady, markAddAddressPending]);
+
+  if (configQuery.isHydratingCache || !isCityHydrated) {
     return null;
+  }
+
+  if (!isCityConfirmed) {
+    return (
+      <>
+        <DeliveriesStartupSkeleton />
+        <BrowseCityPopup visible onAddAddress={handleAddAddress} />
+      </>
+    );
   }
 
   if (!deliveryMode && (configQuery.isLoading || configQuery.isFetching)) {
@@ -347,14 +393,7 @@ export default function DeliveriesNavigator() {
         options={sharedScreenOptions}
       />
     </Stack.Navigator>
-    <HomeLocationPermissionPopup
-      visible={locationPrompt.isVisible}
-      mode={locationPrompt.mode}
-      isLoading={locationPrompt.isRequesting}
-      onRequestLocation={locationPrompt.requestPermission}
-      onOpenSettings={locationPrompt.openSettings}
-      onDismiss={locationPrompt.dismiss}
-    />
+    <BrowseCityPopup visible={isCityPickerVisible} onAddAddress={handleAddAddress} />
     </>
   );
 }

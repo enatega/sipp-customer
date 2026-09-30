@@ -69,9 +69,17 @@ export default function OrderAgain(props: Props) {
   };
 
   if (!isAuthenticated) {
-    return null;
+    return <View style={[styles.section, { gap: spacing.md, paddingHorizontal: gutter }]}>
+      <SectionActionHeader title={t('multi_vendor_order_again_title')} />
+      <DeliveriesSectionEmptyState
+        actionLabel={t('multi_vendor_home_empty_order_action')}
+        message={t('multi_vendor_home_section_empty_order_again')}
+        onActionPress={handleDiscoverPress}
+        title={t('multi_vendor_home_empty_order_again_title')}
+        variant="orderAgain"
+      />
+    </View>;
   }
-
   return (
     <View
       style={[styles.section, { gap: spacing.md, paddingHorizontal: gutter }]}

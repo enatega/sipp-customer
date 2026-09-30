@@ -8,6 +8,7 @@ import type {
 } from '../../api/types';
 import { chainMenuTemplateService } from '../api/menuTemplateService';
 import { useChainMenuStore } from '../stores/useChainMenuStore';
+import { useBrowseCity } from '../../stores/useBrowseCityStore';
 
 type UseChainCategoryProductsMode = 'preview' | 'paginated';
 
@@ -52,10 +53,13 @@ export default function useChainCategoryProducts(
 ) {
   const mode = options?.mode ?? 'preview';
   const normalizedSearch = options?.search?.trim() ?? '';
+  const city = useBrowseCity();
   const selectedMenuTemplateId = useChainMenuStore(
     (state) => state.selectedMenuTemplateId,
   );
   const requestParams = {
+    latitude: city?.latitude,
+    longitude: city?.longitude,
     stock: normalizeStockValue(options?.filters?.stock),
     subcategory_id: normalizeSubcategoryId(options?.filters?.category_ids),
     price_tiers: options?.filters?.price_tiers

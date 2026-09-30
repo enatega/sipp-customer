@@ -4,7 +4,7 @@ import { dealsService } from "../api/dealsService";
 import type { DeliveryDealItem } from "../api/dealsServiceTypes";
 import { deliveryKeys } from "../api/queryKeys";
 import type { PaginatedDeliveryResponse } from "../api/types";
-import useAddress from "../../../general/hooks/useAddress";
+import { useBrowseCity } from "../stores/useBrowseCityStore";
 import type { UseDealsOptions } from "./useDealsTypes";
 
 const UUID_PATTERN =
@@ -28,12 +28,11 @@ function normalizeCategoryIds(categorySelections?: string[]) {
 export default function useDeals(options?: UseDealsOptions) {
   const mode = options?.mode ?? "preview";
   const limit = 10;
-  const { latitude, longitude } = useAddress();
+  const city = useBrowseCity();
   const normalizedSearch = options?.search?.trim() ?? "";
   const requestParams = {
-    // ...options?.requestParams,
-    // latitude: options?.requestParams?.latitude ?? latitude,
-    // longitude: options?.requestParams?.longitude ?? longitude,
+    latitude: city?.latitude,
+    longitude: city?.longitude,
     // category_ids: normalizeCategoryIds(options?.filters?.category_ids),
     price_tiers: options?.filters?.price_tiers
       ? [options.filters.price_tiers]

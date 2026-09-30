@@ -89,8 +89,8 @@ export const styles = StyleSheet.create({
     lineHeight: 22,
   },
   homeName: {
-    fontSize: 17,
-    lineHeight: 23,
+    fontSize: 15,
+    lineHeight: 20,
   },
   cuisine: {
     flex: 1,

@@ -23,6 +23,7 @@ import SingleVendorSpecialOffersBanner from '../../components/HomeScreen/SingleV
 import HomeEntrance from '../../../components/home/HomeEntrance';
 import DeliveryHomeScaffold from '../../../components/home/DeliveryHomeScaffold';
 import useDeliveriesTabSheetOffset from '../../../hooks/useDeliveriesTabSheetOffset';
+import useCompleteBrowseAddressFlow from '../../../hooks/useCompleteBrowseAddressFlow';
 import type { SingleVendorBottomTabParamList } from '../../navigation/types';
 
 type NavProp = CompositeNavigationProp<
@@ -34,6 +35,7 @@ type NavProp = CompositeNavigationProp<
 >;
 
 export default function HomeScreen() {
+  useCompleteBrowseAddressFlow();
   const { spacing } = useTheme();
   const { t } = useTranslation('deliveries');
   const navigation = useNavigation<NavProp>();
@@ -108,6 +110,7 @@ export default function HomeScreen() {
       <DeliveryHomeScaffold
         contentContainerStyle={styles.scrollContent}
         headerProps={{
+          browseCityMode: true,
           addresses,
           cartCount: cartCount?.totalItems,
           onAddAddressPress: handleOpenAddressSheet,

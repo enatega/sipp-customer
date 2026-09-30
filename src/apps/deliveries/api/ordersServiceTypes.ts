@@ -71,6 +71,7 @@ export interface DeliveryOrderProduct {
   id?: string;
   productId?: string;
   name?: string | null;
+  nameTranslations?: Record<string, string> | null;
   quantity?: number | null;
   image?: string | null;
   price?: number | null;

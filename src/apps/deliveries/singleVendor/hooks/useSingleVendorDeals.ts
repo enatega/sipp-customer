@@ -7,6 +7,7 @@ import type {
   PaginatedDeliveryResponse,
 } from '../../api/types';
 import { singleVendorDiscoveryService } from '../api/discoveryService';
+import { useBrowseCity } from '../../stores/useBrowseCityStore';
 
 type UseSingleVendorDealsMode = 'preview' | 'paginated';
 
@@ -25,6 +26,7 @@ export default function useSingleVendorDeals(
   const mode = options?.mode ?? 'preview';
   const normalizedSearch = options?.search?.trim() ?? '';
   const tab = options?.tab ?? 'all';
+  const city = useBrowseCity();
   const query = useInfiniteQuery<
     PaginatedDeliveryResponse<DeliveryShopTypeProduct>,
     ApiError
@@ -35,7 +37,7 @@ export default function useSingleVendorDeals(
         search: normalizedSearch,
         tab,
       }),
-      { mode },
+      { mode, cityName: city?.name },
     ],
     queryFn: ({ pageParam = 0 }) =>
       singleVendorDiscoveryService.getDealsPage({
@@ -43,6 +45,8 @@ export default function useSingleVendorDeals(
         limit: SINGLE_VENDOR_DEALS_LIMIT,
         search: normalizedSearch || undefined,
         tab,
+        latitude: city?.latitude,
+        longitude: city?.longitude,
       }),
     initialPageParam: 0,
     getNextPageParam: (lastPage) =>

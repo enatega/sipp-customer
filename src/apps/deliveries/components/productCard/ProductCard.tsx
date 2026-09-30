@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { DeliveryProductActionTarget } from '../../cart/productActionTypes';
@@ -21,6 +22,7 @@ import type {
   ProductCardVariant,
 } from './types';
 import { isStoreDetailsProduct } from './types';
+import { getLocalizedProductName } from '../../utils/productTranslation';
 
 type Props = {
   product: ProductCardData;
@@ -79,10 +81,30 @@ function ProductCard({
   onPress,
   productAction,
 }: Props) {
+  const { i18n } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
+  const localizedProduct = React.useMemo<ProductCardData>(() => {
+    if (isStoreDetailsProduct(product)) {
+      return {
+        ...product,
+        name: getLocalizedProductName(product, i18n.language),
+      };
+    }
+
+    return {
+      ...product,
+      productName: getLocalizedProductName(
+        {
+          name: product.productName,
+          nameTranslations: product.productNameTranslations,
+        },
+        i18n.language,
+      ),
+    };
+  }, [i18n.language, product]);
   const target = React.useMemo(
-    () => buildTarget(product, variant, storeId),
-    [product, storeId, variant],
+    () => buildTarget(localizedProduct, variant, storeId),
+    [localizedProduct, storeId, variant],
   );
   const resolvedProductAction = React.useMemo(
     () => ({
@@ -111,7 +133,7 @@ function ProductCard({
     return (
       <MiniProductCard
         onPress={handleCardPress}
-        product={product as SearchProductItem | DeliveryShopTypeProduct}
+        product={localizedProduct as SearchProductItem | DeliveryShopTypeProduct}
         state={state}
       />
     );
@@ -121,7 +143,7 @@ function ProductCard({
     return (
       <OrderAgainProductCard
         onPress={handleCardPress}
-        product={product as DeliveryOrderAgainItem}
+        product={localizedProduct as DeliveryOrderAgainItem}
         state={state}
       />
     );
@@ -131,7 +153,7 @@ function ProductCard({
     return (
       <StoreMenuProductCard
         onPress={handleCardPress}
-        product={product as DeliveryStoreDetailsProduct}
+        product={localizedProduct as DeliveryStoreDetailsProduct}
         state={state}
       />
     );
@@ -141,7 +163,7 @@ function ProductCard({
     <RailProductCard
       isFullWidth={isFullWidth}
       onPress={handleCardPress}
-      product={product as DeliveryShopTypeProduct}
+      product={localizedProduct as DeliveryShopTypeProduct}
       state={state}
     />
   );

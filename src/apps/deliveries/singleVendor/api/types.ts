@@ -29,6 +29,8 @@ export interface SingleVendorCategoryProductsParams {
 }
 
 export interface SingleVendorDealsParams {
+  latitude?: number;
+  longitude?: number;
   offset?: number;
   limit?: number;
   search?: string;

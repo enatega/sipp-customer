@@ -1,10 +1,13 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import Skeleton from '../../../../../general/components/Skeleton';
+import { useWindowClass } from '../../../../../general/hooks/useWindowClass';
 import { useTheme } from '../../../../../general/theme/theme';
 
 export default function StoreDetailMenuCardSkeleton() {
   const { colors, elevation, shape, spacing } = useTheme();
+  const { isCompact } = useWindowClass();
+  const imageSize = isCompact ? 96 : 112;
 
   return (
     <View
@@ -19,13 +22,13 @@ export default function StoreDetailMenuCardSkeleton() {
         },
       ]}
     >
-      <Skeleton height={112} width={112} borderRadius={shape.radius.control} />
+      <Skeleton height={imageSize} width={imageSize} borderRadius={shape.radius.control} />
       <View style={[styles.content, { gap: spacing.sm }]}>
-        <Skeleton height={20} width="78%" borderRadius={shape.radius.xs} />
-        <Skeleton height={15} width="94%" borderRadius={shape.radius.xs} />
-        <Skeleton height={15} width="64%" borderRadius={shape.radius.xs} />
+        <Skeleton height={16} width="78%" borderRadius={shape.radius.xs} />
+        <Skeleton height={13} width="94%" borderRadius={shape.radius.xs} />
+        <Skeleton height={13} width="64%" borderRadius={shape.radius.xs} />
         <View style={styles.footer}>
-          <Skeleton height={22} width="38%" borderRadius={shape.radius.xs} />
+          <Skeleton height={18} width="38%" borderRadius={shape.radius.xs} />
           <Skeleton height={44} width={44} borderRadius={shape.radius.pill} />
         </View>
       </View>

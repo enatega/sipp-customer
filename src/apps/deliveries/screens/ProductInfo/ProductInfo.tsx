@@ -1,4 +1,5 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import MainContainer from "../../components/productInfo/MainContainer";
 import ProductInfoErrorState from "../../components/productInfo/ProductInfoErrorState";
 import ProductInfoLoadingSkeleton from "../../components/productInfo/ProductInfoLoadingSkeleton";
@@ -6,6 +7,7 @@ import {
   useProductInfo,
   useProductInfoCustomizations,
 } from "../../hooks/useProductInfo";
+import { getLocalizedProductName } from "../../utils/productTranslation";
 
 type ProductInfoProps = {
   route?: {
@@ -16,6 +18,7 @@ type ProductInfoProps = {
 };
 
 const ProductInfo = ({ route }: ProductInfoProps) => {
+  const { i18n } = useTranslation();
   const productId = route?.params?.productId ?? "";
   const {
     data: productInfo,
@@ -42,12 +45,22 @@ const ProductInfo = ({ route }: ProductInfoProps) => {
     }
   }, [productInfo?.productId, refetchCustomizations, refetchProductInfo]);
   const isRefreshing = isProductInfoFetching || isCustomizationsFetching;
+  const localizedProductInfo = useMemo(
+    () =>
+      productInfo
+        ? {
+            ...productInfo,
+            name: getLocalizedProductName(productInfo, i18n.language),
+          }
+        : undefined,
+    [i18n.language, productInfo],
+  );
 
   if (isProductInfoLoading && !productInfo) {
     return <ProductInfoLoadingSkeleton />;
   }
 
-  if (!productInfo) {
+  if (!localizedProductInfo) {
     return (
       <ProductInfoErrorState
         isRetrying={isRefreshing}
@@ -61,7 +74,7 @@ const ProductInfo = ({ route }: ProductInfoProps) => {
   return (
     <MainContainer
       customizations={customizations}
-      data={productInfo}
+      data={localizedProductInfo}
       isCustomizationsLoading={isCustomizationsLoading}
       isRefreshing={isRefreshing}
       onRefresh={handleRefresh}

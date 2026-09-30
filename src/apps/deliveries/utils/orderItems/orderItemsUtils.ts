@@ -4,6 +4,7 @@ import type {
   DeliveryOrderProductAddon,
 } from "../../api/ordersServiceTypes";
 import { getDeliveriesCurrencyLabel } from '../../../../general/stores/useAppConfigStore';
+import { getLocalizedProductName } from '../productTranslation';
 
 export type OrderProductAddonLine = {
   label: string;
@@ -48,6 +49,39 @@ export function getRemainingOrderItemsCount(orderItems: DeliveryOrderItems) {
   }
 
   return Math.max(orderItems.products.length - getOrderPreviewImages(orderItems).length, 0);
+}
+
+export function getLocalizedOrderProductName(
+  product: DeliveryOrderProduct,
+  language: string,
+): string {
+  return getLocalizedProductName(
+    {
+      name: product.name,
+      nameTranslations: product.nameTranslations,
+    },
+    language,
+  );
+}
+
+export function getLocalizedOrderItemsSummary(
+  orderItems: DeliveryOrderItems,
+  language: string,
+  fallbackLabel: string,
+): string {
+  const names = orderItems.products
+    .map((product) => getLocalizedOrderProductName(product, language))
+    .filter(Boolean);
+
+  if (names.length === 0) {
+    return orderItems.summaryLabel?.trim() || fallbackLabel;
+  }
+
+  if (names.length === 1) {
+    return names[0];
+  }
+
+  return `${names[0]} + ${names[1]}`;
 }
 
 function formatAddonLine(

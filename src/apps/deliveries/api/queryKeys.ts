@@ -17,6 +17,7 @@ export const deliveryKeys = {
 
     // Discovery
     discovery: () => [...deliveryKeys.all, 'discovery'] as const,
+    homeLayout: () => [...deliveryKeys.discovery(), 'home-layout'] as const,
     shopTypes: (filters?: { limit?: number }) =>
         [...deliveryKeys.discovery(), 'shop-types', filters] as const,
     singleVendorCategories: (filters?: { limit?: number }) =>

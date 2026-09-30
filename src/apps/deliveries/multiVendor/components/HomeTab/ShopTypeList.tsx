@@ -11,28 +11,23 @@ import { useWindowClass } from '../../../../../general/hooks/useWindowClass';
 import { useTheme } from '../../../../../general/theme/theme';
 import { useShopTypes } from '../../../hooks';
 import { DiscoveryCategorySection } from '../../../../../general/components/discovery';
+import DeliveriesSectionEmptyState from '../../../components/home/DeliveriesSectionEmptyState';
+import SectionActionHeader from '../../../../../general/components/SectionActionHeader';
 import { DeliveriesStackParamList } from '../../../navigation/types';
 import { MultiVendorStackParamList } from '../../navigation/types';
+import { decodeShopTypeName, translateShopTypeName } from '../../../utils/shopTypeLocalization';
 
 type NavProp = CompositeNavigationProp<
   NativeStackNavigationProp<MultiVendorStackParamList>,
   NativeStackNavigationProp<DeliveriesStackParamList>
 >;
 
-function decodeDisplayText(value: string) {
-  let decodedValue = value;
-  if (decodedValue.includes('%')) {
-    try { decodedValue = decodeURIComponent(decodedValue); } catch { decodedValue = value; }
-  }
-  return decodedValue.replace(/%amp;|&amp;|&#38;/gi, '&');
-}
-
 export default function ShopTypeList() {
   const { t } = useTranslation('deliveries');
   const { colors, layout, shape, spacing } = useTheme();
   const { gutter } = useWindowClass();
   const navigation = useNavigation<NavProp>();
-  const { data: shopTypes = [], isPending } = useShopTypes();
+  const { data: shopTypes = [], isPending } = useShopTypes({ home: true });
 
   const handleSeeAll = useCallback(() => navigation.navigate('MainSeeAllScreen', { initialShopTypeId: undefined }), [navigation]);
   const handleShopType = useCallback((id: string) => {
@@ -42,12 +37,16 @@ export default function ShopTypeList() {
   if (isPending) {
     return <View style={styles.loading}><ActivityIndicator color={colors.primary} /></View>;
   }
+  if (shopTypes.length === 0) return <View style={{ gap: spacing.md, paddingHorizontal: gutter }}>
+    <SectionActionHeader title={t('multi_vendor_shop_types_title')} />
+    <DeliveriesSectionEmptyState title={t('multi_vendor_shop_types_title')} message={t('multi_vendor_shop_types_empty')} />
+  </View>;
 
   if (shopTypes.length === 0 || shopTypes.length > 2) {
     return (
       <DiscoveryCategorySection
         actionLabel={t('multi_vendor_see_all')}
-        items={shopTypes.map((item) => ({ id: item.id, name: decodeDisplayText(item.name), imageUrl: item.image ?? null }))}
+        items={shopTypes.map((item) => ({ id: item.id, name: translateShopTypeName(item.name, t), imageUrl: item.image ?? null }))}
         isPending={false}
         onActionPress={handleSeeAll}
         onItemPress={(item) => handleShopType(item.id)}
@@ -61,8 +60,9 @@ export default function ShopTypeList() {
     <View style={[styles.section, { maxWidth: layout.contentMaxWidth.commerce, paddingHorizontal: gutter, gap: spacing.md }]}>
       <View style={styles.cards}>
         {shopTypes.map((shopType, index) => {
-          const name = decodeDisplayText(shopType.name);
-          const icon: keyof typeof Ionicons.glyphMap = /grocer|market|épicer|super/i.test(name) ? 'basket-outline' : /restaur|food|repas/i.test(name) ? 'restaurant-outline' : 'storefront-outline';
+          const rawName = decodeShopTypeName(shopType.name);
+          const name = translateShopTypeName(shopType.name, t);
+          const icon: keyof typeof Ionicons.glyphMap = /grocer|market|épicer|super/i.test(rawName) ? 'basket-outline' : /restaur|food|repas/i.test(rawName) ? 'restaurant-outline' : 'storefront-outline';
           const tint = index === 0 ? colors.cardMint : colors.cardPeach;
           const ink = index === 0 ? colors.quickActionOrdersForeground : colors.quickActionDealsForeground;
           const imageUri = shopType.image?.trim();

@@ -21,25 +21,12 @@ import {
 } from '../../../components/discovery';
 import { useWindowClass } from '../../../../../general/hooks/useWindowClass';
 import type { DeliveryNearbyStore } from '../../../api/types';
+import { translateShopTypeName } from '../../../utils/shopTypeLocalization';
 
 type NavProp = CompositeNavigationProp<
   NativeStackNavigationProp<MultiVendorStackParamList>,
   NativeStackNavigationProp<DeliveriesStackParamList>
 >;
-
-function decodeDisplayText(value: string) {
-  let decodedValue = value;
-
-  if (decodedValue.includes('%')) {
-    try {
-      decodedValue = decodeURIComponent(decodedValue);
-    } catch {
-      decodedValue = value;
-    }
-  }
-
-  return decodedValue.replace(/%amp;|&amp;|&#38;/gi, '&');
-}
 
 type Props = {
   onClosedStorePress?: (store: DeliveryNearbyStore) => void;
@@ -73,7 +60,7 @@ export default function ShopTypeStoreSections({ onClosedStorePress }: Props) {
     <View style={[styles.container, { gap: spacing.section.default }]}>
       {shopTypeStoreSections.map(
         ({ shopType, data = [], error, isPending: isStoresPending }) => {
-          const resolvedShopTypeName = decodeDisplayText(shopType.name);
+          const resolvedShopTypeName = translateShopTypeName(shopType.name, t);
           const isEmpty = !isStoresPending && !error && data.length === 0;
           const shouldShowSeeAll = !isStoresPending && !error && data.length > 0;
 
