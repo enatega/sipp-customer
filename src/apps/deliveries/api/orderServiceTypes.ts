@@ -6,6 +6,7 @@ export type CheckoutPreviewInput = {
   storeId: string;
   bucketId: string;
   orderType: CheckoutOrderType;
+  paymentMethod: CheckoutPaymentMethod;
   addressId?: string;
   couponCode?: string;
   scheduledAt?: string;

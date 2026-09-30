@@ -185,6 +185,7 @@ export const deliveryKeys = {
         storeId: string;
         bucketId: string;
         orderType: 'delivery' | 'pickup';
+        paymentMethod: 'cod' | 'stripe' | 'wallet';
         addressId?: string;
         scheduledAt?: string;
         riderTip?: number;
