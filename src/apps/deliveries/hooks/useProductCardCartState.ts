@@ -4,18 +4,19 @@ import type { DeliveryProductActionBinding } from '../cart/productActionTypes';
 
 type Params = {
   productAction?: DeliveryProductActionBinding;
+  isUnavailable?: boolean;
 };
 
-export function useProductCardCartState({ productAction }: Params) {
+export function useProductCardCartState({ productAction, isUnavailable = false }: Params) {
   const { getProductQuantity, getQuantity } = useCartDomain();
   const target = productAction?.target;
   const exactQuantity = target ? getQuantity(target) : 0;
   const totalQuantity = target ? getProductQuantity(target.productId) : 0;
   const canUseInlineQuantity = Boolean(productAction?.onRequestCartAction && exactQuantity > 0);
-  const isDisabled = !productAction?.onRequestCartAction && !productAction?.onOpenProduct;
+  const isDisabled = isUnavailable || (!productAction?.onRequestCartAction && !productAction?.onOpenProduct);
 
   const handlePrimaryCartAction = React.useCallback(() => {
-    if (!target) {
+    if (!target || isUnavailable) {
       return;
     }
 
@@ -25,7 +26,7 @@ export function useProductCardCartState({ productAction }: Params) {
     }
 
     productAction?.onOpenProduct?.(target);
-  }, [productAction, target]);
+  }, [isUnavailable, productAction, target]);
 
   return {
     canUseInlineQuantity,

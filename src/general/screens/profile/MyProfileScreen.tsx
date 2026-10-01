@@ -31,6 +31,7 @@ import type {
   ProfileStackParamList,
 } from '../../navigation/profileTypes';
 import { formatDeliveryAddressLabel } from '../../utils/address';
+import { normalizeInternationalPhone } from '../../utils/phone';
 
 type Props = {
   profilePrefix: ProfileAppPrefix;
@@ -172,7 +173,7 @@ export default function MyProfileScreen({ profilePrefix }: Props) {
               displayName={displayName}
               fullName={displayName}
               dateOfBirth={formattedDob}
-              phone={user?.phone}
+              phone={user?.phone ? normalizeInternationalPhone(user.phone) : user?.phone}
               email={user?.email}
               editLabel={t('my_profile_edit')}
               nameLabel={t('my_profile_full_name')}

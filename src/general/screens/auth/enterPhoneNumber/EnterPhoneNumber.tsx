@@ -17,8 +17,9 @@ const EnterPhoneNumber = () => {
   const styles = useStyles(colors);
   const { t } = useTranslation();
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [nationalPhoneNumber, setNationalPhoneNumber] = useState("");
   const [isValidPhone, setIsValidPhone] = useState(false);
-  const hasPhoneInput = phoneNumber.length > 0;
+  const hasPhoneInput = nationalPhoneNumber.length > 0;
 
   return (
     <KeyboardDismissWrapper style={styles.container}>
@@ -32,11 +33,11 @@ const EnterPhoneNumber = () => {
           description="login_desc"
         />
         <PhoneNumberInput
-          value={phoneNumber}
-          onChangeText={setPhoneNumber}
+          value={nationalPhoneNumber}
+          onChangeText={setNationalPhoneNumber}
           onChangeFormattedText={(formatted) => {
             setPhoneNumber(formatted);
-            setIsValidPhone(formatted.length >= 10);
+            setIsValidPhone(formatted.startsWith('+') && formatted.replace(/\D/g, '').length >= 7);
           }}
           isActive={hasPhoneInput}
         />
@@ -49,7 +50,7 @@ const EnterPhoneNumber = () => {
           onPress={() =>
             navigation.navigate("enterPhoneOtpLogin", { phone: phoneNumber })
           }
-          disabled={!hasPhoneInput}
+          disabled={!isValidPhone}
         />
       </Footer>
     </KeyboardDismissWrapper>

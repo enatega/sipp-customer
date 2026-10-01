@@ -164,7 +164,7 @@ export default function OrderTrackingModernEtaFrame({
         {arrivalWindowLabel ? (
           <Text
             color={accentColor}
-            numberOfLines={1}
+            numberOfLines={2}
             style={styles.arrivalWindow}
             weight="semiBold"
           >
@@ -297,16 +297,17 @@ const styles = StyleSheet.create({
   statusCopy: {
     flex: 1,
     minWidth: 0,
-    paddingRight: 56,
   },
   statusMessage: {
     fontSize: 13,
     lineHeight: 18,
     marginTop: 4,
+    paddingRight: 48,
   },
   statusTitle: {
     fontSize: 20,
     letterSpacing: -0.5,
     lineHeight: 25,
+    paddingRight: 48,
   },
 });

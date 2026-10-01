@@ -186,6 +186,7 @@ export const deliveryKeys = {
         storeId: string;
         bucketId: string;
         orderType: 'delivery' | 'pickup';
+        paymentMethod: 'cod' | 'stripe' | 'wallet';
         addressId?: string;
         scheduledAt?: string;
         riderTip?: number;
@@ -227,6 +228,7 @@ export const deliveryKeys = {
 
     // Chat
     chat: () => [...deliveryKeys.all, 'chat'] as const,
+    orderChatUnread: () => [...deliveryKeys.chat(), 'order-unread'] as const,
     chatBoxes: (userId: string) => [...deliveryKeys.chat(), 'boxes', userId] as const,
     chatMessages: (chatBoxId: string) =>
         [...deliveryKeys.chat(), 'messages', chatBoxId] as const,

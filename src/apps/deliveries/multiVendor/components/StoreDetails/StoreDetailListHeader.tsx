@@ -66,7 +66,8 @@ export default function StoreDetailListHeader({
   tagLine,
   storeType,
 }: Props) {
-  const { colors, shape, spacing } = useTheme();
+  const { colors, isDark, shape, spacing } = useTheme();
+  const pageBackground = isDark ? colors.canvas : colors.surface;
   const { t } = useTranslation('deliveries');
   const { gutter } = useWindowClass();
   const isReducedMotionEnabled = useReducedMotion();
@@ -187,7 +188,7 @@ export default function StoreDetailListHeader({
             </Text>
           </Animated.View>
         ) : null}
-        <StoreDetailHeroCurve fillColor={colors.canvas} scrollY={scrollY} />
+        <StoreDetailHeroCurve fillColor={pageBackground} scrollY={scrollY} />
       </View>
 
       <Animated.View
@@ -200,7 +201,7 @@ export default function StoreDetailListHeader({
         ]}
       >
         <Surface
-          elevation="raised"
+          elevation="subtle"
           tone="elevated"
           style={[
             {

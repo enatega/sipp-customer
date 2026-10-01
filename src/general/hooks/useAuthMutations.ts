@@ -32,6 +32,7 @@ import { authSession } from "../auth/authSession";
 import { redirectToPendingAppIfNeeded } from "../navigation/rootNavigation";
 import { clearActiveAppRoute } from "../navigation/pendingAppRedirect";
 import { socketClient } from "../services/socket";
+import { useAuthStore } from "../stores/useAuthStore";
 
 async function finalizeAuthSession(
   queryClient: ReturnType<typeof useQueryClient>,
@@ -55,6 +56,7 @@ export async function clearStoredAuthSession() {
   await socketClient.updateAuthToken(null);
   socketClient.disconnect();
   await authSession.clearSession();
+  useAuthStore.getState().resetSignup();
   await clearActiveAppRoute();
 }
 
@@ -68,6 +70,7 @@ export function useSignupSendOtp(
   return useMutation<SignupSendOtpResponse, ApiError, SignupSendOtpPayload>({
     mutationFn: authService.sendSignupOtp,
     ...options,
+    retry: false,
   });
 }
 
@@ -84,7 +87,9 @@ export function useSignupVerifyOtp(
     {
       mutationFn: authService.verifySignupOtp,
       ...options,
+      retry: false,
       onSuccess: async (data, variables, onMutateResult, context) => {
+        useAuthStore.getState().resetSignup();
         await finalizeAuthSession(queryClient, data);
         options?.onSuccess?.(data, variables, onMutateResult, context);
         await redirectToPendingAppIfNeeded();
@@ -103,6 +108,7 @@ export function useLoginSendOtp(
   return useMutation<LoginSendOtpResponse, ApiError, LoginSendOtpPayload>({
     mutationFn: authService.sendLoginOtp,
     ...options,
+    retry: false,
   });
 }
 
@@ -118,6 +124,7 @@ export function useLoginVerifyOtp(
   return useMutation<LoginVerifyOtpResponse, ApiError, LoginVerifyOtpPayload>({
     mutationFn: authService.verifyLoginOtp,
     ...options,
+    retry: false,
     onSuccess: async (data, variables, onMutateResult, context) => {
       await finalizeAuthSession(queryClient, data);
       options?.onSuccess?.(data, variables, onMutateResult, context);
@@ -214,6 +221,7 @@ export function useForgotPasswordSendOtp(
   >({
     mutationFn: authService.sendForgotPasswordOtp,
     ...options,
+    retry: false,
   });
 }
 
@@ -231,6 +239,7 @@ export function useForgotPasswordVerifyOtp(
   >({
     mutationFn: authService.verifyForgotPasswordOtp,
     ...options,
+    retry: false,
   });
 }
 

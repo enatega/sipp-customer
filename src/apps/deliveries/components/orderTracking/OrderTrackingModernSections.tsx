@@ -66,30 +66,61 @@ export default function OrderTrackingModernSections({
 
       {order.rider || expectsCourier ? (
         <View style={[styles.courierPanel, { backgroundColor: colors.surfaceSunken, borderRadius: shape.radius.surface }]}> 
-          {viewModel.riderAvatarUri ? (
-            <Image source={{ uri: viewModel.riderAvatarUri }} style={styles.courierAvatar} />
-          ) : (
-            <View style={[styles.courierAvatarFallback, { backgroundColor: colors.blue100 }]}> 
-              <Ionicons color={colors.primary} name="bicycle-outline" size={22} />
+          <View style={styles.courierIdentity}>
+            {viewModel.riderAvatarUri ? (
+              <Image source={{ uri: viewModel.riderAvatarUri }} style={styles.courierAvatar} />
+            ) : (
+              <View style={[styles.courierAvatarFallback, { backgroundColor: colors.blue100 }]}> 
+                <Ionicons color={colors.primary} name="bicycle-outline" size={22} />
+              </View>
+            )}
+            <View style={styles.courierCopy}>
+              <Text color={colors.textSubtle} style={styles.courierEyebrow} weight="medium">
+                {t("order_tracking_courier_role")}
+              </Text>
+              <Text color={colors.text} numberOfLines={1} style={styles.courierName} weight="semiBold">
+                {order.rider ? viewModel.riderName : t("order_tracking_courier_pending")}
+              </Text>
             </View>
-          )}
-          <View style={styles.courierCopy}>
-            <Text color={colors.textSubtle} style={styles.courierEyebrow} weight="medium">
-              {t("order_tracking_courier_role")}
-            </Text>
-            <Text color={colors.text} numberOfLines={1} style={styles.courierName} weight="semiBold">
-              {order.rider ? viewModel.riderName : t("order_tracking_courier_pending")}
-            </Text>
           </View>
-          {viewModel.canContactCourier ? (
-            <PressableScale
-              accessibilityLabel={t("order_tracking_message_courier")}
-              accessibilityRole="button"
-              onPress={viewModel.onContactCourierPress}
-              style={[styles.messageButton, { backgroundColor: colors.primary, borderRadius: shape.radius.pill }]}
-            >
-              <Ionicons color={colors.onPrimary} name="chatbubble-ellipses-outline" size={19} />
-            </PressableScale>
+          {viewModel.canContactCourier || viewModel.canCallCourier ? (
+            <View style={styles.courierActions}>
+              {viewModel.canContactCourier ? (
+                <PressableScale
+                  accessibilityLabel={viewModel.unreadCourierMessages > 0
+                    ? t("order_tracking_chat_unread", { count: viewModel.unreadCourierMessages })
+                    : t("order_tracking_chat_with_rider")}
+                  accessibilityRole="button"
+                  onPress={viewModel.onContactCourierPress}
+                  style={[styles.messageButton, { backgroundColor: colors.primary, borderRadius: shape.radius.pill }]}
+                >
+                  <Ionicons color={colors.onPrimary} name="chatbubble-ellipses-outline" size={19} />
+                  <Text color={colors.onPrimary} style={styles.actionLabel} weight="semiBold">
+                    {t("order_tracking_chat_with_rider")}
+                  </Text>
+                  {viewModel.unreadCourierMessages > 0 ? (
+                    <View style={[styles.unreadBadge, { backgroundColor: colors.danger, borderColor: colors.surfaceSunken }]}>
+                      <Text color={colors.onPrimary} style={styles.unreadBadgeText} weight="bold">
+                        {viewModel.unreadCourierMessages > 99 ? "99+" : viewModel.unreadCourierMessages}
+                      </Text>
+                    </View>
+                  ) : null}
+                </PressableScale>
+              ) : null}
+              {viewModel.canCallCourier ? (
+                <PressableScale
+                  accessibilityLabel={t("rider_chat_call_action")}
+                  accessibilityRole="button"
+                  onPress={viewModel.onCallCourierPress}
+                  style={[styles.callButton, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: shape.radius.pill }]}
+                >
+                  <Ionicons color={colors.primary} name="call-outline" size={19} />
+                  <Text color={colors.primary} style={styles.actionLabel} weight="semiBold">
+                    {t("rider_chat_call_action")}
+                  </Text>
+                </PressableScale>
+              ) : null}
+            </View>
           ) : null}
         </View>
       ) : null}
@@ -201,12 +232,18 @@ const styles = StyleSheet.create({
   courierCopy: { flex: 1, minWidth: 0 },
   courierEyebrow: { fontSize: 11, lineHeight: 15 },
   courierName: { fontSize: 16, lineHeight: 22, marginTop: 1 },
-  courierPanel: { alignItems: "center", flexDirection: "row", gap: 12, marginTop: 10, padding: 12 },
+  courierPanel: { gap: 12, marginTop: 10, padding: 12 },
+  courierIdentity: { alignItems: "center", flexDirection: "row", gap: 12 },
+  courierActions: { flexDirection: "row", gap: 8 },
+  actionLabel: { fontSize: 12, lineHeight: 17 },
+  callButton: { alignItems: "center", borderWidth: 1, flexDirection: "row", gap: 6, justifyContent: "center", minHeight: 42, paddingHorizontal: 12 },
   divider: { height: StyleSheet.hairlineWidth, marginTop: 20 },
   itemsExpandedContainer: { marginHorizontal: -4, paddingTop: 2 },
   itemsRow: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", minHeight: 58, paddingHorizontal: 4, paddingVertical: 8 },
   itemsRowContent: { alignItems: "center", flex: 1, flexDirection: "row", gap: 12, minWidth: 0, paddingRight: 10 },
-  messageButton: { alignItems: "center", height: 44, justifyContent: "center", width: 44 },
+  messageButton: { alignItems: "center", flex: 1, flexDirection: "row", gap: 8, justifyContent: "center", minHeight: 42, position: "relative" },
+  unreadBadge: { alignItems: "center", borderRadius: 10, borderWidth: 2, justifyContent: "center", minHeight: 20, minWidth: 20, paddingHorizontal: 3, position: "absolute", right: -5, top: -7 },
+  unreadBadgeText: { fontSize: 10, lineHeight: 13 },
   notesWrap: { marginBottom: 10, marginTop: 22 },
   orderItemsLabel: { flex: 1, fontSize: 14, lineHeight: 20 },
   rowItem: { paddingHorizontal: 0 },

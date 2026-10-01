@@ -1,17 +1,25 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, StyleSheet } from "react-native";
+import { ActivityIndicator, View, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import PhoneInput from "react-native-phone-number-input";
-import * as Location from "expo-location";
+import PhoneInput, { type PhoneInputProps } from "react-native-phone-number-input";
 import { useTheme } from "../../theme/theme";
+import { normalizeInternationalPhone } from '../../utils/phone';
+import { getIpCountryCode } from '../../utils/ipCountry';
+
+type CountryCode = NonNullable<PhoneInputProps['defaultCode']>;
+type Country = Parameters<NonNullable<PhoneInputProps['onChangeCountry']>>[0];
+const fallbackCountryCode: CountryCode = 'CR';
 
 type Props = {
   value: string;
   onChangeText: (text: string) => void;
   onChangeFormattedText?: (text: string) => void;
-  onChangeCountry?: (country: any) => void;
+  onChangeCountry?: (country: Country) => void;
+  countryCode?: CountryCode;
   resetOnCountryChange?: boolean;
   isActive?: boolean;
+  hasError?: boolean;
+  disabled?: boolean;
   onFocus?: () => void;
   onBlur?: () => void;
 };
@@ -21,68 +29,61 @@ export default function PhoneNumberInput({
   onChangeText,
   onChangeFormattedText,
   onChangeCountry,
+  countryCode,
   resetOnCountryChange = false,
   isActive = false,
+  hasError = false,
+  disabled = false,
   onFocus,
   onBlur,
 }: Props) {
   const { colors } = useTheme();
   const phoneInput = useRef<PhoneInput>(null);
+  const manuallySelectedCountry = useRef(false);
+  const [ipCountryCode, setIpCountryCode] = useState<CountryCode | null>(null);
+  const [isCountryLookupComplete, setIsCountryLookupComplete] = useState(false);
   const insets = useSafeAreaInsets();
-  const [defaultCountryCode, setDefaultCountryCode] = useState("US");
 
   useEffect(() => {
-    let isMounted = true;
-
-    void (async () => {
-      try {
-        const permission = await Location.getForegroundPermissionsAsync();
-        if (!permission.granted) {
-          return;
+    if (countryCode) return;
+    let mounted = true;
+    void getIpCountryCode()
+      .then((code) => {
+        if (mounted && code && !manuallySelectedCountry.current) {
+          setIpCountryCode(code);
         }
+      })
+      .finally(() => {
+        if (mounted) setIsCountryLookupComplete(true);
+      });
+    return () => { mounted = false; };
+  }, [countryCode]);
 
-        const lastKnownPosition = await Location.getLastKnownPositionAsync();
-        const currentPosition = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
-        }).catch(() => null);
-        const resolvedPosition = currentPosition ?? lastKnownPosition;
+  const selectedCountryCode = countryCode ?? ipCountryCode ?? fallbackCountryCode;
 
-        if (!resolvedPosition) {
-          return;
-        }
-
-        const [locationResult] = await Location.reverseGeocodeAsync({
-          latitude: resolvedPosition.coords.latitude,
-          longitude: resolvedPosition.coords.longitude,
-        });
-        const countryIso = locationResult?.isoCountryCode?.toUpperCase();
-
-        if (!isMounted || !countryIso) {
-          return;
-        }
-
-        setDefaultCountryCode(countryIso);
-      } catch (error) {
-        console.warn("Unable to resolve phone default country", error);
-      }
-    })();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  if (!countryCode && !isCountryLookupComplete) {
+    return (
+      <View style={[styles.phoneContainer, styles.countryLoading, { borderColor: colors.border, backgroundColor: colors.surface }]}>
+        <ActivityIndicator color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <PhoneInput
-        key={`phone-input-${defaultCountryCode}`}
+        key={selectedCountryCode}
         ref={phoneInput}
         value={value}
-        defaultCode={defaultCountryCode}
+        defaultCode={selectedCountryCode}
+        disabled={disabled}
         layout="first"
         onChangeText={onChangeText}
-        onChangeFormattedText={onChangeFormattedText}
+        onChangeFormattedText={onChangeFormattedText
+          ? (text) => onChangeFormattedText(normalizeInternationalPhone(text))
+          : undefined}
         onChangeCountry={(country) => {
+          manuallySelectedCountry.current = true;
           onChangeCountry?.(country);
           if (resetOnCountryChange) {
             onChangeText("");
@@ -93,7 +94,7 @@ export default function PhoneNumberInput({
           styles.phoneContainer,
           {
             backgroundColor: colors.gray100,
-            borderColor: isActive ? colors.primary : colors.border,
+            borderColor: hasError ? colors.danger : isActive ? colors.primary : colors.border,
           },
         ]}
         textContainerStyle={[
@@ -106,6 +107,7 @@ export default function PhoneNumberInput({
         countryPickerButtonStyle={styles.countryPickerButton}
         placeholder="(000) 000-0000"
         textInputProps={{
+          value,
           onFocus,
           onBlur,
         }}
@@ -147,6 +149,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     borderWidth: 1,
   },
+  countryLoading: { alignItems: 'center', justifyContent: 'center' },
   textContainer: {
     paddingVertical: 0,
     borderTopEndRadius: 12,

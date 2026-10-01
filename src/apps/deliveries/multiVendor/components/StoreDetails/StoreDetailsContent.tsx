@@ -28,7 +28,8 @@ import StoreMenuViewport from './StoreMenuViewport';
 type Props = { selectedStore?: DeliveryNearbyStore };
 
 export default function StoreDetailsContent({ selectedStore }: Props) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+  const pageBackground = isDark ? colors.canvas : colors.surface;
   const { t } = useTranslation('deliveries');
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<MultiVendorStackParamList>>();
@@ -85,7 +86,7 @@ export default function StoreDetailsContent({ selectedStore }: Props) {
 
   if (storeId && menu.bootstrap.isPending) return <StoreDetailsScreenSkeleton />;
   if (!store || !storeId) return (
-    <View style={{ flex: 1, backgroundColor: colors.canvas }}>
+    <View style={{ flex: 1, backgroundColor: pageBackground }}>
       <ScreenHeader showBack onBack={onBack} />
       <ListStateView variant="error" description={t(storeId ? 'store_details_load_error' : 'store_details_store_missing')}
         actionLabel={storeId ? t('generic_list_retry') : undefined}
@@ -94,7 +95,7 @@ export default function StoreDetailsContent({ selectedStore }: Props) {
   );
   const hasCart = Boolean(cart && !cart.isEmpty && cart.totalItems > 0);
   return (
-    <View style={{ flex: 1, backgroundColor: colors.canvas }}>
+    <View style={{ flex: 1, backgroundColor: pageBackground }}>
       <StoreMenuViewport key={`${storeId}:${menu.target?.generation ?? 0}`} storeId={storeId} menu={menu}
         hero={hero} scrollY={scrollY} navigationHeight={insets.top + 60}
         bottomPadding={hasCart ? insets.bottom + 112 : insets.bottom + 24}

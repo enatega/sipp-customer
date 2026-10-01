@@ -73,6 +73,7 @@ export default function BrowseCityPopup({ visible, onAddAddress }: Props) {
 
   const guestAddress = browseAddress?.id === GUEST_SELECTED_LOCATION_ADDRESS_ID ? browseAddress : null;
   const canSaveAddress = sessionQuery.isPending || Boolean(sessionQuery.data?.token);
+  const hasSelectedLocation = Boolean(cityName || browseAddress);
 
   return (
     <Modal visible={visible} transparent statusBarTranslucent
@@ -125,20 +126,34 @@ export default function BrowseCityPopup({ visible, onAddAddress }: Props) {
             {error ? <Text variant="caption" color={colors.textSubtle} style={styles.error}>
               {t('browse_city_addresses_error')}
             </Text> : null}
+          </ScrollView>
+          <View style={[styles.footer, { borderTopColor: colors.divider, paddingHorizontal: spacing.lg, paddingBottom: spacing.lg }]}>
             <Pressable accessibilityRole="button"
               accessibilityLabel={canSaveAddress ? t('browse_city_add_address') : t('browse_city_choose_address')}
               onPress={onAddAddress} style={({ pressed }) => [styles.addOption, {
-                backgroundColor: pressed ? colors.primaryPressed : colors.primary,
+                backgroundColor: pressed ? colors.statePressed : colors.surfaceElevated,
+                borderColor: colors.primary,
                 borderRadius: shape.radius.surface,
               }]}>
-              <View style={styles.addIcon}>
-                <Ionicons name="add" size={22} color={colors.onPrimary} />
-              </View>
-              <Text variant="button" weight="semiBold" color={colors.onPrimary}>
+              <Ionicons name="add" size={22} color={colors.primary} />
+              <Text variant="button" weight="semiBold" color={colors.primary}>
                 {canSaveAddress ? t('browse_city_add_address') : t('browse_city_choose_address')}
               </Text>
             </Pressable>
-          </ScrollView>
+            {hasSelectedLocation ? <Pressable accessibilityRole="button"
+              accessibilityLabel={t('browse_city_continue')}
+              accessibilityState={{ disabled: Boolean(selectingAddressId) }}
+              disabled={Boolean(selectingAddressId)}
+              onPress={dismissPicker} style={({ pressed }) => [styles.continueOption, {
+                backgroundColor: pressed ? colors.primaryPressed : colors.primary,
+                borderRadius: shape.radius.surface,
+                opacity: selectingAddressId ? 0.5 : 1,
+              }]}>
+              <Text variant="button" weight="semiBold" color={colors.onPrimary}>
+                {t('browse_city_continue')}
+              </Text>
+            </Pressable> : null}
+          </View>
         </View>
       </View>
     </Modal>
@@ -156,6 +171,7 @@ const styles = StyleSheet.create({
   sectionLabel: { textTransform: 'uppercase', letterSpacing: 0.6 },
   savedList: { gap: 8 },
   error: { marginBottom: 8 },
-  addOption: { minHeight: 52, marginTop: 16, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 10 },
-  addIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.16)', alignItems: 'center', justifyContent: 'center' },
+  footer: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 8, gap: 8 },
+  addOption: { minHeight: 52, borderWidth: 1, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  continueOption: { minHeight: 52, alignItems: 'center', justifyContent: 'center' },
 });

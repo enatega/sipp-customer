@@ -1,10 +1,17 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useIsFocused } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useQueryClient } from "@tanstack/react-query";
+import { Linking } from "react-native";
 import { useTranslation } from "react-i18next";
 import type { LatLng, Region } from "react-native-maps";
 
 import type { MapMarker, MapPolyline } from "../../../../general/components/Map";
 import { useTheme } from "../../../../general/theme/theme";
+import { useAuthSessionQuery } from "../../../../general/hooks/useAuthQueries";
+import { deliveryKeys } from "../../api/queryKeys";
+import { useOrderChatUnreadCounts } from "../../hooks/useChatQueries";
+import { subscribeDeliveriesEvent } from "../../socket/deliveriesSocket";
 import type {
   DeliveryOrderEta,
   DeliveryOrderRider,
@@ -24,6 +31,7 @@ const TRACKING_RIDER_MARKER = require("../../../../general/assets/map-markers/tr
 
 export type OrderTrackingViewModel = {
   canContactCourier: boolean;
+  canCallCourier: boolean;
   chatBoxId: string | null | undefined;
   courierNote: string | null;
   estimatedMinutes: number;
@@ -36,6 +44,7 @@ export type OrderTrackingViewModel = {
   mapPolylines: MapPolyline[];
   mapRegion: Region | null;
   onContactCourierPress: () => void;
+  onCallCourierPress: () => void;
   onClose: () => void;
   onOpenOrderDetails: () => void;
   onOrderUnavailableAcknowledge: () => void;
@@ -50,6 +59,7 @@ export type OrderTrackingViewModel = {
   riderAvatarUri: string | undefined;
   riderId: string | null;
   riderName: string;
+  unreadCourierMessages: number;
   shouldShowNotes: boolean;
 };
 
@@ -80,6 +90,10 @@ export function useOrderTrackingViewModel({
 }: Props): OrderTrackingViewModel {
   const { t } = useTranslation("deliveries");
   const { colors } = useTheme();
+  const queryClient = useQueryClient();
+  const isFocused = useIsFocused();
+  const authSessionQuery = useAuthSessionQuery();
+  const customerId = authSessionQuery.data?.user?.id;
 
   useOrderStatusSocketSync(orderId);
 
@@ -192,18 +206,53 @@ export function useOrderTrackingViewModel({
     setHasAcknowledgedUnavailable(true);
     goToDeliveriesHome();
   }, [goToDeliveriesHome]);
-  const canContactCourier = [
+  const isCourierContactAvailable = [
     "rider_assigned",
     "picked_up",
     "out_for_delivery",
     "arrived",
-  ].includes(order?.status ?? "") && Boolean(riderId || chatBoxId);
+  ].includes(order?.status ?? "");
+  const canContactCourier = isCourierContactAvailable && Boolean(riderId || chatBoxId);
+  const riderPhone = order?.rider?.phone?.trim() ?? "";
+  const normalizedRiderPhone = riderPhone.replace(/[^\d+]/g, "");
+  const dialableRiderPhone = /^\+?[\d\s().-]+$/.test(riderPhone)
+    && (normalizedRiderPhone.match(/\d/g)?.length ?? 0) >= 6
+      ? normalizedRiderPhone
+      : "";
+  const canCallCourier = isCourierContactAvailable && Boolean(dialableRiderPhone);
+  const unreadChatQuery = useOrderChatUnreadCounts(Boolean(customerId && canContactCourier));
+  const refetchUnread = unreadChatQuery.refetch;
+  const unreadCourierMessages = unreadChatQuery.data?.byOrderAndKind?.[orderId]?.customer_rider ?? 0;
+
+  useEffect(() => {
+    if (isFocused && customerId && canContactCourier) {
+      void refetchUnread();
+    }
+  }, [isFocused, customerId, canContactCourier, orderId, refetchUnread]);
+
+  useEffect(() => {
+    if (!customerId || !canContactCourier) return;
+    const invalidateUnread = () => {
+      void queryClient.invalidateQueries({ queryKey: deliveryKeys.orderChatUnread() });
+    };
+    const unsubscribeMessage = subscribeDeliveriesEvent("receive-message", (message) => {
+      if (message.orderId === orderId && message.receiver === customerId) invalidateUnread();
+    });
+    const unsubscribeRead = subscribeDeliveriesEvent("order-chat-read", (event) => {
+      if (event.orderId === orderId && event.kind === "customer_rider") invalidateUnread();
+    });
+    return () => {
+      unsubscribeMessage();
+      unsubscribeRead();
+    };
+  }, [canContactCourier, customerId, orderId, queryClient]);
   const restaurantNote = order?.restaurantNote?.trim() || null;
   const courierNote = order?.courierNote?.trim() || null;
   const shouldShowNotes = Boolean(restaurantNote || courierNote);
 
   return {
     canContactCourier,
+    canCallCourier,
     chatBoxId,
     courierNote,
     estimatedMinutes,
@@ -231,6 +280,11 @@ export function useOrderTrackingViewModel({
         riderName,
       });
     },
+    onCallCourierPress: () => {
+      if (canCallCourier) {
+        void Linking.openURL(`tel:${dialableRiderPhone}`).catch(() => undefined);
+      }
+    },
     onClose: () => {
       if (navigation.canGoBack()) {
         navigation.goBack();
@@ -255,6 +309,7 @@ export function useOrderTrackingViewModel({
     riderAvatarUri,
     riderId,
     riderName,
+    unreadCourierMessages,
     shouldShowNotes,
   };
 }

@@ -24,15 +24,16 @@ type Props = {
 };
 
 export default function StoreMenuToolbar(props: Props) {
-  const { colors, spacing, layout, shape } = useTheme();
+  const { colors, isDark, spacing, layout, shape } = useTheme();
+  const pageBackground = isDark ? colors.canvas : colors.surface;
   const { gutter } = useWindowClass();
   const { t } = useTranslation('deliveries');
   return (
-    <View onLayout={props.onLayout} style={{ backgroundColor: colors.canvas, paddingBottom: spacing.xs }}>
+    <View onLayout={props.onLayout} style={{ backgroundColor: pageBackground, paddingBottom: spacing.xs }}>
       <View style={[styles.actions, { paddingHorizontal: gutter, gap: spacing.sm }]}>
         <PressableScale accessibilityRole="button" accessibilityLabel={t('store_details_search_placeholder')}
           onPress={props.onSearch} style={[styles.search, {
-            backgroundColor: colors.surfaceElevated, borderRadius: shape.radius.control,
+            backgroundColor: colors.surfaceElevated, borderColor: colors.border, borderRadius: shape.radius.control,
             minHeight: layout.touchTarget.comfortable, paddingHorizontal: spacing.md, gap: spacing.sm,
           }]}>
           <Icon name="search" type="Feather" size={20} color={colors.iconMuted} />
@@ -51,6 +52,6 @@ export default function StoreMenuToolbar(props: Props) {
 
 const styles = StyleSheet.create({
   actions: { flexDirection: 'row', alignItems: 'center' },
-  search: { flex: 1, flexDirection: 'row', alignItems: 'center' },
+  search: { flex: 1, flexDirection: 'row', alignItems: 'center', borderWidth: StyleSheet.hairlineWidth },
   label: { flex: 1 },
 });

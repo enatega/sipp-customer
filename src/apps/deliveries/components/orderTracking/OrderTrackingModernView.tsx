@@ -18,7 +18,7 @@ import OrderTrackingModernEtaFrame from "./OrderTrackingModernEtaFrame";
 import OrderTrackingModernProgressCard from "./OrderTrackingModernProgressCard";
 import OrderTrackingModernSections from "./OrderTrackingModernSections";
 import type { OrderTrackingViewModel } from "./useOrderTrackingViewModel";
-import { formatEstimatedArrivalWindow } from "../../utils/orderTracking/orderTrackingUtils";
+import { getEstimatedArrival } from "../../utils/orderTracking/orderTrackingUtils";
 
 type Props = { viewModel: OrderTrackingViewModel };
 
@@ -31,7 +31,12 @@ export default function OrderTrackingModernView({ viewModel }: Props) {
   const [isOrderItemsExpanded, setIsOrderItemsExpanded] = useState(false);
   const [isMapReady, setIsMapReady] = useState(false);
   const [sheetState, setSheetState] = useState<"collapsed" | "default" | "expanded">("expanded");
+  const [currentTime, setCurrentTime] = useState(Date.now);
   const mapRef = useRef<MapView>(null);
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(Date.now()), 30_000);
+    return () => clearInterval(timer);
+  }, []);
   const sheetExpandedHeight = Math.min(
     windowHeight - insets.top - 92,
     Math.max(500, windowHeight * 0.7),
@@ -114,21 +119,15 @@ export default function OrderTrackingModernView({ viewModel }: Props) {
     );
   }
 
-  const dynamicEtaMinutes = viewModel.eta?.estimatedMinutes;
-  const safeDynamicEtaMinutes = typeof dynamicEtaMinutes === "number"
-    && Number.isFinite(dynamicEtaMinutes)
-    && dynamicEtaMinutes > 0
-      ? Math.ceil(dynamicEtaMinutes)
-      : null;
-  const hasLiveEta = safeDynamicEtaMinutes !== null;
-  const arrivalWindow = formatEstimatedArrivalWindow(viewModel.eta);
+  const estimatedArrival = getEstimatedArrival(viewModel.eta, currentTime);
+  const hasLiveEta = estimatedArrival !== null;
   const etaLabel = viewModel.isDelivered
     ? t("order_tracking_delivered_title")
     : hasLiveEta
-      ? `${safeDynamicEtaMinutes} min`
+      ? `${estimatedArrival.remainingMinutes} min`
       : t("order_tracking_eta_pending");
-  const arrivalWindowLabel = arrivalWindow
-    ? t("order_tracking_estimated_arrival", { time: arrivalWindow })
+  const arrivalWindowLabel = estimatedArrival && !viewModel.isDelivered
+    ? t("order_tracking_estimated_arrival", { time: estimatedArrival.arrivalTime })
     : null;
 
   return (

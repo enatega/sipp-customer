@@ -118,7 +118,11 @@ function ProductCard({
     }),
     [navigation, productAction?.onOpenProduct, productAction?.onRequestCartAction, target],
   );
-  const state = useProductCardCartState({ productAction: resolvedProductAction });
+  const isUnavailable = isStoreDetailsProduct(localizedProduct) && localizedProduct.inStock === false;
+  const state = useProductCardCartState({
+    productAction: resolvedProductAction,
+    isUnavailable,
+  });
 
   const handleCardPress = React.useCallback(() => {
     if (onPress) {

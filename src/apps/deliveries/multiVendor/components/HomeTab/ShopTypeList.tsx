@@ -25,7 +25,7 @@ type NavProp = CompositeNavigationProp<
 export default function ShopTypeList() {
   const { t } = useTranslation('deliveries');
   const { colors, layout, shape, spacing } = useTheme();
-  const { gutter } = useWindowClass();
+  const { gutter, isCompact } = useWindowClass();
   const navigation = useNavigation<NavProp>();
   const { data: shopTypes = [], isPending } = useShopTypes({ home: true });
 
@@ -75,8 +75,10 @@ export default function ShopTypeList() {
               pressedScale={0.97}
               style={[styles.card, { backgroundColor: tint, borderColor: colors.border, borderRadius: shape.radius.surface }]}
             >
-              <Text color={colors.textStrong} weight="bold" variant="cardTitle" numberOfLines={2} style={styles.cardTitle}>{name}</Text>
-              <View style={[styles.imageFrame, { backgroundColor: colors.surfaceElevated }]}>
+              <Text color={colors.textStrong} weight="bold" variant="cardTitle" numberOfLines={1}
+                adjustsFontSizeToFit minimumFontScale={0.82}
+                style={[styles.cardTitle, isCompact && styles.compactCardTitle]}>{name}</Text>
+              <View style={[styles.imageFrame, isCompact && styles.compactImageFrame, { backgroundColor: colors.surfaceElevated }]}>
                 {imageUri ? (
                   <Image source={{ uri: imageUri }} resizeMode="cover" style={styles.image} />
                 ) : (
@@ -94,9 +96,11 @@ export default function ShopTypeList() {
 const styles = StyleSheet.create({
   section: { alignSelf: 'center', width: '100%' },
   cards: { flexDirection: 'row', gap: 10 },
-  card: { alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, flex: 1, flexDirection: 'row', gap: 6, minHeight: 96, minWidth: 0, paddingLeft: 12, paddingRight: 8 },
+  card: { alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, flex: 1, flexDirection: 'row', gap: 4, minHeight: 96, minWidth: 0, paddingLeft: 10, paddingRight: 8 },
   cardTitle: { flex: 1, fontSize: 15, lineHeight: 20, minWidth: 0 },
+  compactCardTitle: { fontSize: 14 },
   imageFrame: { alignItems: 'center', borderRadius: 30, height: 60, justifyContent: 'center', overflow: 'hidden', width: 60 },
+  compactImageFrame: { height: 52, width: 52 },
   image: { height: '100%', width: '100%' },
   loading: { minHeight: 96, justifyContent: 'center' },
 });

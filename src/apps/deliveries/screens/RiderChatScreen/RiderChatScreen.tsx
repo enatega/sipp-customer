@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import { useRoute, type RouteProp } from '@react-navigation/native';
+import { useQueryClient } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { showToast } from '../../../../general/components/AppToast';
@@ -30,6 +31,7 @@ import { useSendDeliveryChatMessage } from '../../hooks/useChatMutations';
 import { useDeliveryChatBoxes, useDeliveryChatMessages } from '../../hooks/useChatQueries';
 import { useCustomerOrderChat } from '../../hooks/useChatQueries';
 import { chatService } from '../../api/chatService';
+import { deliveryKeys } from '../../api/queryKeys';
 import { subscribeDeliveriesEvent } from '../../socket/deliveriesSocket';
 
 export type RiderChatScreenParams = {
@@ -129,6 +131,7 @@ function formatMessageTime(value?: string): string | undefined {
 }
 
 export default function RiderChatScreen() {
+  const queryClient = useQueryClient();
   const scrollViewRef = useRef<ScrollView>(null);
   const { colors } = useTheme();
   const { t } = useTranslation('deliveries');
@@ -215,8 +218,10 @@ export default function RiderChatScreen() {
 
   useEffect(() => {
     if (!orderId || !orderChatQuery.data) return;
-    void chatService.markOrderChatRead(orderId).catch(() => undefined);
-  }, [orderId, orderChatQuery.data?.messages.length]);
+    void chatService.markOrderChatRead(orderId)
+      .then(() => queryClient.invalidateQueries({ queryKey: deliveryKeys.orderChatUnread() }))
+      .catch(() => undefined);
+  }, [orderId, orderChatQuery.data?.messages.length, queryClient]);
 
   useEffect(() => {
     requestAnimationFrame(() => {
@@ -266,7 +271,9 @@ export default function RiderChatScreen() {
       void chatBoxesQuery.refetch();
       if (orderId) {
         void orderChatQuery.refetch();
-        void chatService.markOrderChatRead(orderId).catch(() => undefined);
+        void chatService.markOrderChatRead(orderId)
+          .then(() => queryClient.invalidateQueries({ queryKey: deliveryKeys.orderChatUnread() }))
+          .catch(() => undefined);
       } else if (resolvedChatBoxId) {
         void chatMessagesQuery.refetch();
       }
@@ -276,6 +283,7 @@ export default function RiderChatScreen() {
     chatMessagesQuery,
     orderChatQuery,
     orderId,
+    queryClient,
     receiverId,
     resolvedChatBoxId,
     senderId,

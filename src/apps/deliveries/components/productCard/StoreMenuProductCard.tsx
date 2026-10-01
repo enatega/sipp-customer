@@ -98,6 +98,7 @@ export default function StoreMenuProductCard({ onPress, product, state }: Props)
     ? product.shortDescription ?? product.description
     : null;
   const storeProduct = product as DeliveryStoreDetailsProduct;
+  const isOutOfStock = 'inStock' in product && product.inStock === false;
   const productImageUrl = [
     product.imageUrl,
     storeProduct.category?.imageUrl,
@@ -105,7 +106,7 @@ export default function StoreMenuProductCard({ onPress, product, state }: Props)
   ].find((value): value is string => typeof value === 'string' && value.trim().length > 0) ?? null;
   const [hasImageError, setHasImageError] = useRecyclingState(false, [product.id, productImageUrl]);
   const imageSize = isCompact ? 96 : 112;
-  const isQuantityMode = state.controlMode === 'quantity';
+  const isQuantityMode = !isOutOfStock && state.controlMode === 'quantity';
 
   return (
     <PressableScale
@@ -167,6 +168,13 @@ export default function StoreMenuProductCard({ onPress, product, state }: Props)
             {description.trim()}
           </Text>
         ) : null}
+        {isOutOfStock ? (
+          <View style={[styles.stockBadge, { backgroundColor: colors.dangerSoft, borderRadius: shape.radius.pill }]}>
+            <Text color={colors.dangerText} variant="badge" weight="bold">
+              {t('store_details_out_of_stock')}
+            </Text>
+          </View>
+        ) : null}
         {hasDeal && resolvedOffer ? (
           <View
             style={[
@@ -209,7 +217,7 @@ export default function StoreMenuProductCard({ onPress, product, state }: Props)
             accessibilityLabel={t('store_details_add_product', { item: product.name })}
             count={state.controlCount}
             disabled={state.isDisabled}
-            mode={state.controlMode}
+            mode={isOutOfStock ? 'add' : state.controlMode}
             onAdd={state.handleAdd}
             onDecrement={state.handleDecrement}
             onIncrement={state.handleIncrement}
@@ -223,6 +231,11 @@ export default function StoreMenuProductCard({ onPress, product, state }: Props)
 }
 
 const styles = StyleSheet.create({
+  stockBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+  },
   offerChip: {
     alignSelf: 'flex-start',
     alignItems: 'center',

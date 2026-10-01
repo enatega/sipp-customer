@@ -18,9 +18,10 @@ const LoginFooterContent: React.FC<LoginFooterContentProps> = ({
   const { colors } = useTheme();
   const { t } = useTranslation("general");
   const navigation = useNavigation();
-  const { setFlowType } = useAuthStore();
+  const { setFlowType, resetSignup } = useAuthStore();
 
   const handleSignUpPress = () => {
+    resetSignup();
     setFlowType("signup");
     navigation.navigate("signup");
   };

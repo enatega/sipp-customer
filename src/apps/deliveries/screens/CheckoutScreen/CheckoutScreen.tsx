@@ -116,6 +116,7 @@ function getCheckoutRootRoute(
 function getPreviewInput(
   cart: CartResponse | undefined,
   orderType: CheckoutOrderType,
+  paymentMethod: CheckoutPaymentMethod,
   selectedAddressId?: string,
   couponCode?: string,
   scheduledAt?: string,
@@ -133,6 +134,7 @@ function getPreviewInput(
     storeId: cart.storeId,
     bucketId: cart.bucketId,
     orderType,
+    paymentMethod,
     addressId: orderType === 'delivery' ? selectedAddressId : undefined,
     couponCode: couponCode ?? undefined,
     scheduledAt,
@@ -245,6 +247,7 @@ export default function CheckoutScreen() {
     () => getPreviewInput(
       cart,
       orderType,
+      paymentMethod,
       resolvedAddressId,
       selectedCoupon?.code,
       previewScheduledAt,
@@ -253,6 +256,7 @@ export default function CheckoutScreen() {
     [
       cart,
       orderType,
+      paymentMethod,
       resolvedAddressId,
       selectedCoupon?.code,
       previewScheduledAt,

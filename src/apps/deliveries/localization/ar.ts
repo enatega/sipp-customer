@@ -55,7 +55,7 @@ const ar = {
   "delivery_home_greeting_evening": "مساء الخير",
   "delivery_home_title": "كل ما تحتاجه، تسليم.",
   "delivery_home_subtitle": "استكشاف المتاجر المجاورة ووجبات جديدة ووجبات ضرورية كل يوم",
-  "delivery_home_search_placeholder": "مخازن البحث والوجبات والمواد الأساسية",
+  "delivery_home_search_placeholder": "ابحث عن متاجر أو وجبات",
   "multi_vendor_tab_home": "البيت",
   "multi_vendor_tab_search": "البحث",
   "multi_vendor_tab_orders": "الأوامر",

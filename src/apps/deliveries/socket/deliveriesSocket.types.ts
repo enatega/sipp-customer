@@ -32,6 +32,7 @@ export type DeliveriesServerEventMap = {
     updatedAt?: string;
   };
   'receive-message': SocketReceivedMessage;
+  'order-chat-read': { orderId: string; kind: string };
 };
 
 export type DeliveriesClientEventName = keyof DeliveriesClientEventMap;

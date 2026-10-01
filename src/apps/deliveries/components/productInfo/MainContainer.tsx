@@ -13,6 +13,8 @@ import {
 import Animated, {
   Extrapolation,
   interpolate,
+  runOnJS,
+  useAnimatedReaction,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
@@ -21,6 +23,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDeliveriesCurrencyLabel } from "../../../../general/stores/useAppConfigStore";
 import { useWindowClass } from "../../../../general/hooks/useWindowClass";
 import { useTheme } from "../../../../general/theme/theme";
+import Text from "../../../../general/components/Text";
 import type { DeliveriesStackParamList } from "../../navigation/types";
 import type {
   ProductInfoCustomizationsResponse,
@@ -68,7 +71,7 @@ export default function MainContainer({
   isRefreshing = false,
   onRefresh,
 }: Props) {
-  const { colors, elevation, layout, shape, spacing } = useTheme();
+  const { colors, elevation, isDark, layout, shape, spacing } = useTheme();
   const { t } = useTranslation("deliveries");
   const currencyLabel = useDeliveriesCurrencyLabel();
   const navigation = useNavigation<NavigationProp<DeliveriesStackParamList>>();
@@ -78,11 +81,15 @@ export default function MainContainer({
   const [quantity, setQuantity] = useState(1);
   const [isAddedToCartVisible, setIsAddedToCartVisible] = useState(false);
   const [showSelectionErrors, setShowSelectionErrors] = useState(false);
+  const [isCompactHeader, setIsCompactHeader] = useState(false);
   const scrollY = useSharedValue(0);
   const variations = customizations?.variations ?? [];
   const addons = customizations?.addons ?? [];
   const maxHeaderHeight = getProductInfoHeaderMaxHeight(width);
   const headerTravel = Math.max(120, maxHeaderHeight * 0.55);
+  const navigationHeight = insets.top + layout.touchTarget.minimum + spacing.md * 2;
+  const compactHeaderStart = Math.max(0, maxHeaderHeight - 28 - navigationHeight - spacing.md);
+  const compactHeaderEnd = compactHeaderStart + spacing.lg;
   const detailsSurfaceWidth = Math.min(
     width - gutter * 2,
     layout.contentMaxWidth.readable,
@@ -100,6 +107,24 @@ export default function MainContainer({
       scrollY.value = event.contentOffset.y;
     },
   });
+
+  useAnimatedReaction(
+    () => scrollY.value >= compactHeaderEnd,
+    (compact, previous) => {
+      if (compact !== previous) {
+        runOnJS(setIsCompactHeader)(compact);
+      }
+    },
+  );
+
+  const compactHeaderStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(
+      scrollY.value,
+      [compactHeaderStart, compactHeaderEnd],
+      [0, 1],
+      Extrapolation.CLAMP,
+    ),
+  }));
 
   const imageAnimatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -363,7 +388,7 @@ export default function MainContainer({
       <StatusBar
         translucent
         backgroundColor="transparent"
-        barStyle="light-content"
+        barStyle={isCompactHeader && !isDark ? "dark-content" : "light-content"}
       />
       <LinearGradient
         colors={[colors.primarySoft, colors.canvas, colors.canvas]}
@@ -483,17 +508,35 @@ export default function MainContainer({
         style={[
           styles.mediaActions,
           {
-            left: gutter,
-            right: gutter,
-            top: insets.top + spacing.sm,
+            height: navigationHeight,
+            paddingHorizontal: gutter,
+            paddingTop: insets.top,
+            paddingBottom: spacing.md,
           },
         ]}
       >
+        <Animated.View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFill, { backgroundColor: colors.surface }, compactHeaderStyle]}
+        />
         <ProductMediaActionButton
           accessibilityLabel={t("product_info_back")}
           iconName="arrow-back"
           onPress={() => navigation.goBack()}
         />
+        <Animated.View
+          accessibilityElementsHidden={!isCompactHeader}
+          importantForAccessibility={isCompactHeader ? "auto" : "no-hide-descendants"}
+          pointerEvents="none"
+          style={[styles.compactHeaderText, compactHeaderStyle]}
+        >
+          <Text color={colors.textStrong} numberOfLines={2} variant="body" weight="bold">
+            {productInfoData.name}
+          </Text>
+          <Text color={colors.textSubtle} numberOfLines={1} variant="caption" weight="semiBold">
+            {formatPrice(configuredUnitPrice)}
+          </Text>
+        </Animated.View>
         <ProductMediaActionButton
           accessibilityLabel={t("product_info_share")}
           iconName="share-2"
@@ -570,9 +613,19 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   mediaActions: {
+    alignItems: "center",
     flexDirection: "row",
     justifyContent: "space-between",
+    left: 0,
     position: "absolute",
+    right: 0,
+    top: 0,
     zIndex: 20,
+  },
+  compactHeaderText: {
+    alignItems: "center",
+    flex: 1,
+    minWidth: 0,
+    paddingHorizontal: 8,
   },
 });

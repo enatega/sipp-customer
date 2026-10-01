@@ -27,6 +27,16 @@ const LOGIN_BASE = "/api/v1/auth/shared/login";
 const FORGOT_PASSWORD = "/api/v1/otp";
 
 export const authService = {
+  checkPhoneExists: (phone: string) =>
+    apiClient.get<{ exists: boolean }>(`/api/v1/auth/phone/check/${encodeURIComponent(phone)}`, undefined, {
+      skipAuth: true,
+    }),
+
+  checkEmailExists: (email: string) =>
+    apiClient.get<{ exists: boolean }>(`/api/v1/users/check-email/${encodeURIComponent(email)}`, undefined, {
+      skipAuth: true,
+    }),
+
   sendSignupOtp: (payload: SignupSendOtpPayload) =>
     apiClient.post<SignupSendOtpResponse>(`${SIGNUP_BASE}/send-otp`, payload, {
       skipAuth: true,

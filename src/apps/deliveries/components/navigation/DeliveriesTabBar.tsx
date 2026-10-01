@@ -18,7 +18,7 @@ function DeliveriesTabBar({ descriptors, insets, navigation, state }: BottomTabB
   const { gutter, width } = useWindowClass();
   const onHeightChange = useContext(BottomTabBarHeightCallbackContext);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
-  const safeBottom = Math.max(insets.bottom, DELIVERIES_TAB_BAR_SAFE_PADDING);
+  const safeBottom = Math.max(insets.bottom, DELIVERIES_TAB_BAR_SAFE_PADDING) + spacing.sm;
   const dockWidth = Math.min(width - gutter * 2, layout.contentMaxWidth.readable);
   const dockLeft = Math.max(gutter, (width - dockWidth) / 2);
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { StyleSheet, TouchableWithoutFeedback, Keyboard, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
@@ -29,6 +29,7 @@ type Props = {
   onVerify: (otp: string) => void;
   onResend?: (otp: string) => void;
   defaultSelectedMethod?: string;
+  deferSelectedMethod?: boolean;
   errorMessage?: string;
   isLoading?: boolean;
   hasError: boolean;
@@ -44,6 +45,7 @@ export default function OtpVerificationComponent({
   onVerify,
   onResend,
   defaultSelectedMethod = "sms",
+  deferSelectedMethod = false,
   errorMessage,
   isLoading,
   hasError,
@@ -54,9 +56,17 @@ export default function OtpVerificationComponent({
   const { colors } = useTheme();
 
   const [otp, setOtp] = useState("");
+  const [otpInputVersion, setOtpInputVersion] = useState(0);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState(defaultSelectedMethod);
   const [rateLimitingModal, setRateLimitingModal] = useState(false);
+
+  useEffect(() => {
+    if (deferSelectedMethod) {
+      setOtp('');
+      setHasError(false);
+    }
+  }, [defaultSelectedMethod, deferSelectedMethod, setHasError]);
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -70,12 +80,14 @@ export default function OtpVerificationComponent({
           description={description}
         />
         <OtpCodeInput
+          key={`${deferSelectedMethod ? defaultSelectedMethod : 'otp'}-${otpInputVersion}`}
           onCodeFilled={(code) => {
             setOtp(code);
             setHasError(false);
           }}
           onResend={() => {
             setOtp("");
+            setOtpInputVersion((version) => version + 1);
             setHasError(false);
             onResend?.(otp);
           }}
@@ -104,11 +116,11 @@ export default function OtpVerificationComponent({
           visible={modalVisible}
           onClose={() => setModalVisible(false)}
           options={verificationOptions}
-          selectedOption={selectedMethod}
+          selectedOption={deferSelectedMethod ? defaultSelectedMethod : selectedMethod}
           onSelectOption={(id) => {
             const option = verificationOptions.find((opt) => opt.id === id);
             option?.onSelect?.();
-            setSelectedMethod(id);
+            if (!deferSelectedMethod) setSelectedMethod(id);
             setModalVisible(false);
           }}
           title={t("try_another_way")}

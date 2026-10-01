@@ -3,6 +3,7 @@ import type {
   DeliveryChatBoxesResponse,
   DeliveryChatMessageRecord,
   DeliveryChatMessagesResponse,
+  OrderChatUnreadCounts,
   SendDeliveryChatMessagePayload,
   SendDeliveryChatMessageResponse,
 } from './chatServiceTypes';
@@ -10,6 +11,8 @@ import type {
 const DELIVERIES_CHAT_BASE = '/api/v1/apps/deliveries/chat';
 
 export const chatService = {
+  getOrderUnreadCounts: () =>
+    apiClient.get<OrderChatUnreadCounts>(`${DELIVERIES_CHAT_BASE}/order-unread`),
   getOrderChat: (orderId: string) =>
     apiClient.get<{ chatBoxId: string | null; messages: DeliveryChatMessageRecord[] }>(`${DELIVERIES_CHAT_BASE}/order/${orderId}/customer_rider`),
 

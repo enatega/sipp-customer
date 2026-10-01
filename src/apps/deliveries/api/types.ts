@@ -284,6 +284,7 @@ export interface DeliveryStoreDetailsFilterItem {
 export interface DeliveryStoreDetailsProduct {
     id: string;
     name: string;
+    inStock?: boolean;
     nameTranslations?: Record<string, string>;
     imageUrl?: string | null;
     price?: number | null;

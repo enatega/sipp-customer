@@ -5,8 +5,18 @@ import type {
   DeliveryChatBoxesResponse,
   DeliveryChatMessageRecord,
   DeliveryChatMessagesResponse,
+  OrderChatUnreadCounts,
 } from '../api/chatServiceTypes';
 import { deliveryKeys } from '../api/queryKeys';
+
+export function useOrderChatUnreadCounts(enabled: boolean) {
+  return useQuery<OrderChatUnreadCounts, ApiError>({
+    queryKey: deliveryKeys.orderChatUnread(),
+    queryFn: chatService.getOrderUnreadCounts,
+    enabled,
+    staleTime: 10 * 1000,
+  });
+}
 
 export function useDeliveryChatBoxes(userId?: string) {
   return useQuery<DeliveryChatBoxesResponse, ApiError>({

@@ -13,9 +13,10 @@ export default function StoreDetailMenuCardSkeleton() {
     <View
       style={[
         styles.card,
-        elevation.raised,
+        elevation.subtle,
         {
           backgroundColor: colors.surfaceElevated,
+          borderColor: colors.border,
           borderRadius: shape.radius.surface,
           gap: spacing.md,
           padding: spacing.md,
@@ -23,7 +24,7 @@ export default function StoreDetailMenuCardSkeleton() {
       ]}
     >
       <Skeleton height={imageSize} width={imageSize} borderRadius={shape.radius.control} />
-      <View style={[styles.content, { gap: spacing.sm }]}>
+      <View style={[styles.content, { gap: spacing.xs }]}>
         <Skeleton height={16} width="78%" borderRadius={shape.radius.xs} />
         <Skeleton height={13} width="94%" borderRadius={shape.radius.xs} />
         <Skeleton height={13} width="64%" borderRadius={shape.radius.xs} />
@@ -38,6 +39,7 @@ export default function StoreDetailMenuCardSkeleton() {
 
 const styles = StyleSheet.create({
   card: {
+    borderWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
     width: '100%',
   },

@@ -55,7 +55,7 @@ const es = {
   "delivery_home_greeting_evening": "Buenas noches.",
   "delivery_home_title": "Todo lo que necesitas, entregado.",
   "delivery_home_subtitle": "Explore tiendas cercanas, comidas frescas y elementos esenciales cotidianos.",
-  "delivery_home_search_placeholder": "Tiendas de búsqueda, comidas y esenciales",
+  "delivery_home_search_placeholder": "Buscar tiendas o comida",
   "multi_vendor_tab_home": "Inicio",
   "multi_vendor_tab_search": "Búsqueda",
   "multi_vendor_tab_orders": "Órdenes",

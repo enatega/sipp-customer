@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
-import { useTheme } from "../../../theme/theme";
+import React, { useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import OtpVerificationComponent from "../../../components/auth/OtpVerificationComponent";
-import { useAuthStore } from "../../../stores/useAuthStore";
+import { useAuthStore, type OtpType } from "../../../stores/useAuthStore";
+import { resolveSignupConflictFields } from '../../../utils/signupValidation';
 import {
   useSignupVerifyOtp,
   useSignupSendOtp,
@@ -14,11 +14,10 @@ import { showToast } from "../../../components/AppToast";
 import KeyboardDismissWrapper from "../../../components/KeyboardDismissWrapper";
 
 const EnterEmailOtpSignup = () => {
-  const { colors } = useTheme();
   const navigation = useNavigation();
   const { t } = useTranslation();
 
-  const { formData, setOtpType, otpType, setOtpSent } = useAuthStore();
+  const { formData, setOtpType, otpType, setOtpSent, setSignupConflictFields } = useAuthStore();
   const rateLimitModal = useTooManyRequestsModal();
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [hasError, sethasError] = useState<boolean>(false);
@@ -26,35 +25,58 @@ const EnterEmailOtpSignup = () => {
   const sendOtpMutation = useSignupSendOtp({
     onSuccess: (data) => {
       setOtpSent(true);
+      setErrorMessage('');
       showToast.success("Success!", data?.message);
     },
-    onError: (error) => {
+    onError: async (error) => {
       if (error.status === 429) {
         rateLimitModal.show();
+      } else if (error.status === 409) {
+        const fields = await resolveSignupConflictFields(error, formData.email.trim(), formData.phone.trim());
+        if (fields.length) {
+          setSignupConflictFields(fields);
+          navigation.navigate("signup" as never);
+        } else {
+          setErrorMessage(error.message);
+          showToast.error("Error!", error.message);
+        }
       } else {
         showToast.error("Error!", error?.message);
       }
     },
   });
 
-  useEffect(() => {
+  const requestOtp = (nextType: OtpType, onSent?: () => void) => {
+    if (sendOtpMutation.isPending) return;
     sendOtpMutation.mutate({
-      email: formData.email,
-      otp_type: "email",
+      email: formData.email.trim(),
+      phone: formData.phone.trim(),
+      otp_type: nextType,
+    }, {
+      onSuccess: () => {
+        setOtpType(nextType);
+        onSent?.();
+      },
     });
-  }, []);
+  };
 
   const verifyOtpMutation = useSignupVerifyOtp({
     onSuccess: () => {
       showToast.success("Success!", "Account created successfully.");
       setOtpType("sms");
     },
-    onError: (error) => {
+    onError: async (error) => {
       if (error.status === 429) {
         rateLimitModal.show();
       } else if (error.status === 409) {
-        showToast.error("Error!", error?.message);
-        navigation.navigate("signup" as never);
+        const fields = await resolveSignupConflictFields(error, formData.email.trim(), formData.phone.trim());
+        if (fields.length) {
+          setSignupConflictFields(fields);
+          navigation.navigate("signup" as never);
+        } else {
+          setErrorMessage(error.message);
+          showToast.error("Error!", error.message);
+        }
       } else {
         showToast.error("Error!", error?.message);
         setErrorMessage(error?.message);
@@ -67,27 +89,19 @@ const EnterEmailOtpSignup = () => {
       id: "sms",
       icon: "message-square",
       title: t("sms_verification"),
-      onSelect: () => {
-        setOtpType("sms");
-        navigation.navigate("enterPhoneOtpSignup" as never);
-      },
+      onSelect: () => requestOtp('sms', () => navigation.navigate("enterPhoneOtpSignup" as never)),
     },
     {
       id: "call",
       icon: "phone",
       title: t("call_verification"),
-      onSelect: () => {
-        setOtpType("call");
-        navigation.navigate("enterPhoneOtpSignup" as never);
-      },
+      onSelect: () => requestOtp('call', () => navigation.navigate("enterPhoneOtpSignup" as never)),
     },
     {
       id: "email",
       icon: "mail",
       title: t("email_verification"),
-      onSelect: () => {
-        setOtpType("email");
-      },
+      onSelect: () => { if (otpType !== 'email') requestOtp('email'); },
     },
   ];
 
@@ -103,10 +117,7 @@ const EnterEmailOtpSignup = () => {
   };
 
   const handleResendOtp = () => {
-    sendOtpMutation.mutate({
-      email: formData.email,
-      otp_type: "email",
-    });
+    requestOtp('email');
   };
 
   return (
@@ -117,6 +128,7 @@ const EnterEmailOtpSignup = () => {
         showTryAnotherWay={true}
         verificationOptions={verificationOptions}
         defaultSelectedMethod={otpType}
+        deferSelectedMethod
         onVerify={(otp) => {
           handleVerifyOtp(otp);
         }}
@@ -124,7 +136,7 @@ const EnterEmailOtpSignup = () => {
         errorMessage={errorMessage}
         hasError={hasError}
         setHasError={sethasError}
-        isLoading={verifyOtpMutation.isPending}
+        isLoading={verifyOtpMutation.isPending || sendOtpMutation.isPending}
       />
       <AppPopup
         visible={rateLimitModal.visible}

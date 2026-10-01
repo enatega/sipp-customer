@@ -5,8 +5,9 @@ import type {
   DeliveryOrderTimelineItem,
 } from "../../api/ordersServiceTypes";
 
-export function formatEstimatedArrivalWindow(
+export function getEstimatedArrival(
   eta: DeliveryOrderEta | null | undefined,
+  now = Date.now(),
 ) {
   if (
     typeof eta?.estimatedMinutes !== "number"
@@ -17,18 +18,16 @@ export function formatEstimatedArrivalWindow(
   }
 
   const calculatedAt = new Date(eta.calculatedAt);
-  const baseTime = Number.isNaN(calculatedAt.getTime())
-    ? new Date()
-    : calculatedAt;
-  const targetTime = baseTime.getTime() + eta.estimatedMinutes * 60_000;
-  const startTime = new Date(targetTime - 3 * 60_000);
-  const endTime = new Date(targetTime + 5 * 60_000);
+  if (Number.isNaN(calculatedAt.getTime())) return null;
+  const targetTime = calculatedAt.getTime() + eta.estimatedMinutes * 60_000;
+  const remainingMinutes = Math.ceil((targetTime - now) / 60_000);
+  if (remainingMinutes <= 0) return null;
   const formatter = new Intl.DateTimeFormat(undefined, {
     hour: "numeric",
     minute: "2-digit",
   });
 
-  return `${formatter.format(startTime)}–${formatter.format(endTime)}`;
+  return { remainingMinutes, arrivalTime: formatter.format(new Date(targetTime)) };
 }
 
 export function formatTrackingEta(

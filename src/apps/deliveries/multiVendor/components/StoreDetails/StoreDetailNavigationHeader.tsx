@@ -47,6 +47,7 @@ export default function StoreDetailNavigationHeader({
   storeName,
 }: Props) {
   const { colors, isDark, layout, spacing } = useTheme();
+  const pageBackground = isDark ? colors.canvas : colors.surface;
   const { gutter } = useWindowClass();
   const insets = useSafeAreaInsets();
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -101,7 +102,7 @@ export default function StoreDetailNavigationHeader({
           StyleSheet.absoluteFill,
           materialStyle,
           {
-            backgroundColor: colors.canvas,
+            backgroundColor: pageBackground,
             borderBottomColor: colors.divider,
             borderBottomWidth: StyleSheet.hairlineWidth,
           },

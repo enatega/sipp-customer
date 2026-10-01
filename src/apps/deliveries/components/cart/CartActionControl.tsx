@@ -112,8 +112,8 @@ export default function CartActionControl({
       style={[
         styles.container,
         {
-          backgroundColor: isQuantityMode ? colors.surface : colors.primary,
-          borderColor: isQuantityMode ? colors.border : colors.primary,
+          backgroundColor: disabled ? colors.surfaceSunken : isQuantityMode ? colors.surface : colors.primary,
+          borderColor: disabled ? colors.border : isQuantityMode ? colors.border : colors.primary,
           borderRadius: config.height / 2,
           height: config.height,
           shadowColor: colors.shadowColor,
@@ -144,7 +144,7 @@ export default function CartActionControl({
             },
           ]}
         >
-          <Icon color={colors.onPrimary} name="plus" size={config.actionIcon} type="Feather" />
+          <Icon color={disabled ? colors.textSubtle : colors.onPrimary} name="plus" size={config.actionIcon} type="Feather" />
         </Pressable>
       </Animated.View>
 

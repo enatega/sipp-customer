@@ -33,6 +33,12 @@ export type SendDeliveryChatMessageResponse = {
   detail?: DeliveryChatMessageRecord;
 };
 
+export type OrderChatUnreadCounts = {
+  total: number;
+  byOrderId: Record<string, number>;
+  byOrderAndKind: Record<string, { customer_rider: number; store_rider: number }>;
+};
+
 export type DeliveryChatBoxRecord = {
   id?: string;
   chatBoxId?: string;
