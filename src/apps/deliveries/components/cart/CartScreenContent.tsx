@@ -21,7 +21,7 @@ import CartStatusBanner from './CartStatusBanner';
 import { formatCartPrice } from './cartUtils';
 
 type Props = {
-  cart: CartResponse;
+  cart: CartResponse | null;
   isClearCartVisible: boolean;
   isClearingCart?: boolean;
   isFeeModalVisible: boolean;
@@ -69,7 +69,8 @@ export default function CartScreenContent({
   const handleBack = React.useCallback(() => navigation.goBack(), [navigation]);
 
   const handleStartShopping = React.useCallback(() => {
-    if (!cart.storeId) {
+    const storeId = cart?.storeId;
+    if (!storeId) {
       navigation.navigate('MultiVendor', {
         screen: 'MultiVendorTabs',
         params: { screen: 'MultiVendorTabHome' },
@@ -81,13 +82,13 @@ export default function CartScreenContent({
       screen: 'StoreDetails',
       params: {
         store: {
-          storeId: cart.storeId,
+          storeId,
           vendorId: '',
           name: store?.name ?? '',
         },
       },
     });
-  }, [cart.storeId, navigation, store?.name]);
+  }, [cart?.storeId, navigation, store?.name]);
 
   const handleRecommendationPress = React.useCallback(
     (productId: string) => navigation.navigate('ProductInfo', { productId }),
@@ -98,7 +99,7 @@ export default function CartScreenContent({
     navigation.navigate('Coupons');
   }, [navigation]);
 
-  if (cart.isEmpty) {
+  if (!cart || cart.isEmpty) {
     return (
       <View style={[styles.container, { backgroundColor: colors.canvas }]}>
         <LinearGradient

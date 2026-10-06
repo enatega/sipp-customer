@@ -41,11 +41,6 @@ import {
   type CheckoutMessages,
   type CheckoutMessageTarget,
 } from '../../components/checkout/checkoutMessageUtils';
-import CheckoutScheduleScreen from '../../components/checkout/CheckoutScheduleScreen';
-import {
-  isCheckoutScheduledAtInFuture,
-  type CheckoutDeliveryTimeMode,
-} from '../../components/checkout/checkoutScheduleUtils';
 import CheckoutPaymentMethodBottomSheet from '../../components/checkout/CheckoutPaymentMethodBottomSheet';
 import {
   getCheckoutPaymentMethodSubtitle,
@@ -119,7 +114,6 @@ function getPreviewInput(
   paymentMethod: CheckoutPaymentMethod,
   selectedAddressId?: string,
   couponCode?: string,
-  scheduledAt?: string,
   riderTip?: number,
 ) {
   if (!cart?.bucketId || !cart.storeId) {
@@ -137,7 +131,6 @@ function getPreviewInput(
     paymentMethod,
     addressId: orderType === 'delivery' ? selectedAddressId : undefined,
     couponCode: couponCode ?? undefined,
-    scheduledAt,
     riderTip: riderTip && riderTip > 0 ? riderTip : undefined,
   };
 }
@@ -190,7 +183,6 @@ export default function CheckoutScreen() {
   const [activeMessageTarget, setActiveMessageTarget] = React.useState<CheckoutMessageTarget | null>(null);
   const [isAddressSheetVisible, setIsAddressSheetVisible] = React.useState(false);
   const [isPaymentMethodScreenVisible, setIsPaymentMethodScreenVisible] = React.useState(false);
-  const [isScheduleScreenVisible, setIsScheduleScreenVisible] = React.useState(false);
   const [isCustomTipScreenVisible, setIsCustomTipScreenVisible] = React.useState(false);
   const [stripeCheckout, setStripeCheckout] = React.useState<{
     checkoutUrl: string;
@@ -219,8 +211,6 @@ export default function CheckoutScreen() {
   const { selectSavedAddress, selectingAddressId } = useSelectSavedAddress("deliveries");
   const [orderType, setOrderType] = React.useState<CheckoutOrderType>('delivery');
   const [leaveAtDoor, setLeaveAtDoor] = React.useState(false);
-  const [deliveryTimeMode, setDeliveryTimeMode] = React.useState<CheckoutDeliveryTimeMode>('standard');
-  const [scheduledAt, setScheduledAt] = React.useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = React.useState<CheckoutPaymentMethod>('wallet');
   const [messages, setMessages] = React.useState<CheckoutMessages>({
     restaurant: '',
@@ -242,7 +232,6 @@ export default function CheckoutScreen() {
     error: cartError,
     refetch: refetchCart,
   } = useCart();
-  const previewScheduledAt = deliveryTimeMode === 'schedule' ? scheduledAt ?? undefined : undefined;
   const previewInput = React.useMemo(
     () => getPreviewInput(
       cart,
@@ -250,7 +239,6 @@ export default function CheckoutScreen() {
       paymentMethod,
       resolvedAddressId,
       selectedCoupon?.code,
-      previewScheduledAt,
       selectedTip,
     ),
     [
@@ -259,7 +247,6 @@ export default function CheckoutScreen() {
       paymentMethod,
       resolvedAddressId,
       selectedCoupon?.code,
-      previewScheduledAt,
       selectedTip,
     ],
   );
@@ -292,7 +279,7 @@ export default function CheckoutScreen() {
             snapshot: {
               itemCount: preview?.bucket.itemCount,
               orderType,
-              scheduledAt: deliveryTimeMode === 'schedule' ? scheduledAt : null,
+              scheduledAt: null,
               storeImage: preview?.store.logo ?? preview?.store.image,
               storeName: preview?.store.name,
               totalAmount: preview?.pricing.totalAmount,
@@ -301,7 +288,7 @@ export default function CheckoutScreen() {
         },
       ],
     } as never);
-  }, [deliveryTimeMode, navigation, orderType, preview, scheduledAt]);
+  }, [navigation, orderType, preview]);
 
   const completePlacedOrder = React.useCallback((orderId: string) => {
     clearCheckoutCoupon();
@@ -445,27 +432,6 @@ export default function CheckoutScreen() {
     });
   }, [orderType]);
 
-  React.useEffect(() => {
-    if (preview?.schedule.scheduleAllowed === false && deliveryTimeMode === 'schedule') {
-      setDeliveryTimeMode('standard');
-      setScheduledAt(null);
-    }
-  }, [deliveryTimeMode, preview?.schedule.scheduleAllowed]);
-
-  React.useEffect(() => {
-    if (
-      deliveryTimeMode !== 'schedule' ||
-      !scheduledAt ||
-      !previewError?.message?.toLowerCase().includes('scheduledat must be in the future')
-    ) {
-      return;
-    }
-
-    setDeliveryTimeMode('standard');
-    setScheduledAt(null);
-    showToast.info(t('checkout_schedule_slot_expired'));
-  }, [deliveryTimeMode, previewError?.message, scheduledAt, t]);
-
   const handleBackPress = React.useCallback(() => {
     navigation.goBack();
   }, [navigation]);
@@ -551,7 +517,6 @@ export default function CheckoutScreen() {
       }),
       couponCode: selectedCoupon?.code,
       riderTip: orderType === 'delivery' && selectedTip > 0 ? selectedTip : undefined,
-      scheduledAt: deliveryTimeMode === 'schedule' ? scheduledAt ?? undefined : undefined,
       successUrl: paymentMethod === 'stripe' && !selectedStripeCardId
         ? CHECKOUT_STRIPE_SUCCESS_URL
         : undefined,
@@ -572,10 +537,8 @@ export default function CheckoutScreen() {
     resolvedAddressId,
     selectedCoupon?.code,
     messages,
-    deliveryTimeMode,
     leaveAtDoor,
     preview?.store?.stripeAllowed,
-    scheduledAt,
     selectedTip,
     savedCardsQuery.data?.cards,
     selectedStripeCardId,
@@ -673,15 +636,6 @@ export default function CheckoutScreen() {
     }
   }, [setDefaultCardMutation, t]);
 
-  const handleDeliveryTimeModeChange = React.useCallback((mode: CheckoutDeliveryTimeMode) => {
-    if (mode === 'schedule') {
-      setIsScheduleScreenVisible(true);
-      return;
-    }
-
-    setDeliveryTimeMode('standard');
-  }, []);
-
   const handleLeaveAtDoorChange = React.useCallback((nextValue: boolean) => {
     if (!nextValue) {
       setLeaveAtDoor(false);
@@ -695,17 +649,6 @@ export default function CheckoutScreen() {
 
     setLeaveAtDoor(true);
   }, [preview?.store?.stripeAllowed, t]);
-
-  const handleScheduleConfirm = React.useCallback((nextScheduledAt: string) => {
-    if (!isCheckoutScheduledAtInFuture(nextScheduledAt)) {
-      showToast.info(t('checkout_schedule_slot_expired'));
-      return;
-    }
-
-    setScheduledAt(nextScheduledAt);
-    setDeliveryTimeMode('schedule');
-    setIsScheduleScreenVisible(false);
-  }, [t]);
 
   const handleMessagePress = React.useCallback((target: CheckoutMessageTarget) => {
     setActiveMessageTarget(target);
@@ -908,19 +851,6 @@ export default function CheckoutScreen() {
     );
   }
 
-  if (isScheduleScreenVisible) {
-    return (
-      <CheckoutScheduleScreen
-        onBackPress={() => {
-          setIsScheduleScreenVisible(false);
-        }}
-        onConfirm={handleScheduleConfirm}
-        selectedScheduledAt={scheduledAt}
-        storeId={cart.storeId}
-      />
-    );
-  }
-
   if (isCustomTipScreenVisible) {
     return (
       <CheckoutCustomTipScreen
@@ -961,7 +891,6 @@ export default function CheckoutScreen() {
     <View style={{ backgroundColor: colors.canvas, flex: 1 }}>
       <CheckoutScreenContent
         courierMessage={messages.courier}
-        deliveryTimeMode={deliveryTimeMode}
         hasAddressRequirement={orderType === 'delivery' && !resolvedAddressId}
         isPickupEnabled={adjustedPreview?.store.pickupAllowed ?? true}
         isPromoApplied={isPromoApplied}
@@ -979,7 +908,6 @@ export default function CheckoutScreen() {
         onCourierMessagePress={() => {
           handleMessagePress('courier');
         }}
-        onDeliveryTimeModeChange={handleDeliveryTimeModeChange}
         onLeaveAtDoorChange={handleLeaveAtDoorChange}
         onOrderTypeChange={setOrderType}
         onPlaceOrderPress={handlePlaceOrderPress}
@@ -988,9 +916,6 @@ export default function CheckoutScreen() {
         onPromoRemove={handlePromoRemove}
         onRestaurantMessagePress={() => {
           handleMessagePress('restaurant');
-        }}
-        onSchedulePress={() => {
-          setIsScheduleScreenVisible(true);
         }}
         onRetryPreview={() => {
           void refetchPreview();
@@ -1007,7 +932,6 @@ export default function CheckoutScreen() {
         promoSubtitle={promoSubtitle}
         preview={adjustedPreview ?? null}
         restaurantMessage={messages.restaurant}
-        scheduledAt={scheduledAt}
         selectedAddressLabel={selectedAddressLabel}
         selectedTip={selectedTip}
         totalLabel={formatCartPrice(previewTotal)}

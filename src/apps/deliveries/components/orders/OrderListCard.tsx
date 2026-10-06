@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import PressableScale from "../../../../general/components/PressableScale";
 import Text from "../../../../general/components/Text";
 import { useReducedMotion } from "../../../../general/hooks/useReducedMotion";
-import { useDeliveriesCurrencyCode } from "../../../../general/stores/useAppConfigStore";
+import { useDeliveriesCurrencyCode, useDeliveriesCurrencyLabel } from "../../../../general/stores/useAppConfigStore";
 import { useTheme } from "../../../../general/theme/theme";
 import type { DeliveryOrderListItem } from "../../api/ordersServiceTypes";
 import { getOrderStatusPresentation } from "./orderPresentation";
@@ -33,11 +33,13 @@ function formatOrderDate(dateString: string) {
   }).format(date);
 }
 
-function formatOrderPrice(amount: number, currencyCode: string) {
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency: currencyCode,
-  }).format(amount);
+function formatOrderPrice(amount: number, currencyCode: string, symbol: string) {
+  const digits = new Intl.NumberFormat(undefined, {
+    style: "currency", currency: currencyCode,
+  }).resolvedOptions().maximumFractionDigits;
+  return `${symbol} ${new Intl.NumberFormat(undefined, {
+    minimumFractionDigits: digits, maximumFractionDigits: digits,
+  }).format(amount)}`;
 }
 
 const OrderListCard = ({ order, onPress, title }: Props) => {
@@ -45,6 +47,7 @@ const OrderListCard = ({ order, onPress, title }: Props) => {
   const { colors, elevation, motion, shape, spacing } = useTheme();
   const isReducedMotionEnabled = useReducedMotion();
   const currencyCode = useDeliveriesCurrencyCode();
+  const currencySymbol = useDeliveriesCurrencyLabel();
   const imageUri = order.storeImage ?? order.storeLogo ?? undefined;
   const status = getOrderStatusPresentation(order.orderStatus, t);
   const statusOpacity = useRef(new Animated.Value(1)).current;
@@ -139,7 +142,7 @@ const OrderListCard = ({ order, onPress, title }: Props) => {
               style={styles.price}
               weight="bold"
             >
-              {formatOrderPrice(order.orderPrice, currencyCode)}
+              {formatOrderPrice(order.orderPrice, currencyCode, currencySymbol)}
             </Text>
           </View>
 

@@ -1,4 +1,4 @@
-import { getDeliveriesCurrencyCode } from '../../../../general/stores/useAppConfigStore';
+import { getDeliveriesCurrencyCode, getDeliveriesCurrencyLabel } from '../../../../general/stores/useAppConfigStore';
 
 export const TERMINAL_STATUSES = new Set([
   "delivered",
@@ -9,10 +9,13 @@ export const TERMINAL_STATUSES = new Set([
 ]);
 
 export function formatCurrency(amount: number | null | undefined) {
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency: getDeliveriesCurrencyCode(),
-  }).format(amount ?? 0);
+  const fractionDigits = new Intl.NumberFormat(undefined, {
+    style: 'currency', currency: getDeliveriesCurrencyCode(),
+  }).resolvedOptions().maximumFractionDigits;
+  return `${getDeliveriesCurrencyLabel()} ${new Intl.NumberFormat(undefined, {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  }).format(amount ?? 0)}`;
 }
 
 export function formatOrderDateTime(dateString: string) {

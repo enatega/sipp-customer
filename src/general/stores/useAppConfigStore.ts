@@ -155,7 +155,20 @@ export const useAppConfigStore = create<AppConfigState>((set) => ({
 }));
 
 function resolveCurrencyDisplayValue(currency: AppCurrency | null) {
-  return currency?.symbol?.trim() || currency?.code || '₡';
+  const configured = currency?.symbol?.trim();
+  if (configured && configured !== currency?.code && !/^[A-Z]{3}$/i.test(configured)) {
+    return configured === '¡' ? '₡' : configured;
+  }
+  const code = currency?.code || configured || 'CRC';
+  if (code.toUpperCase() === 'CRC') return '₡';
+  try {
+    const symbol = new Intl.NumberFormat('en', {
+      style: 'currency', currency: code, currencyDisplay: 'narrowSymbol',
+    }).formatToParts(0).find((part) => part.type === 'currency')?.value;
+    return symbol && symbol.toUpperCase() !== code.toUpperCase() ? symbol : '¤';
+  } catch {
+    return '¤';
+  }
 }
 
 function resolveCurrencyCodeValue(currency: AppCurrency | null) {

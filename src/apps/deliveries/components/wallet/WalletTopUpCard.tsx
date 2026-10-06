@@ -24,11 +24,12 @@ export default function WalletTopUpCard({ cardLabel, cardExpiry, currency, curre
   const { t, i18n } = useTranslation('deliveries');
   const { colors } = useTheme();
   const amount = Number(value);
-  const minimumAmount = currencyCode.toUpperCase() === 'CRC' ? 500 : 0.01;
+  const isWholeUnitCurrency = currencyCode.toUpperCase() === 'JPY';
+  const minimumAmount = currencyCode.toUpperCase() === 'CRC' ? 500 : isWholeUnitCurrency ? 1 : 0.01;
   const suggestedAmount = initialAmount ? Math.max(initialAmount, minimumAmount) : undefined;
-  const isValid = Number.isFinite(amount) && amount >= minimumAmount && /^\d+(?:\.\d{1,2})?$/.test(value);
+  const isValid = Number.isFinite(amount) && amount >= minimumAmount && (isWholeUnitCurrency ? /^\d+$/ : /^\d+(?:\.\d{1,2})?$/).test(value);
   const quickAmounts = currencyCode.toUpperCase() === 'CRC' ? [500, 1000, 2500, 5000] : [10, 25, 50, 100];
-  const minimumLabel = `${currency} ${minimumAmount.toLocaleString(i18n.language, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const minimumLabel = `${currency} ${minimumAmount.toLocaleString(i18n.language, { minimumFractionDigits: isWholeUnitCurrency ? 0 : 2, maximumFractionDigits: isWholeUnitCurrency ? 0 : 2 })}`;
   const formattedAmount = `${currency} ${amount.toLocaleString(i18n.language, { maximumFractionDigits: 2 })}`;
   const cardBrand = cardLabel?.split(' ')[0];
   const ctaColors: [string, string] = isValid && cardLabel
@@ -37,6 +38,10 @@ export default function WalletTopUpCard({ cardLabel, cardExpiry, currency, curre
 
   const handleValueChange = (next: string) => {
     const normalized = next.replace(',', '.').replace(/[^0-9.]/g, '');
+    if (isWholeUnitCurrency) {
+      onValueChange(normalized.split('.')[0]);
+      return;
+    }
     const [whole = '', ...fractions] = normalized.split('.');
     onValueChange(fractions.length ? `${whole}.${fractions.join('').slice(0, 2)}` : whole);
   };
@@ -67,7 +72,7 @@ export default function WalletTopUpCard({ cardLabel, cardExpiry, currency, curre
         <TextInput
           accessibilityLabel={t('wallet_topup_amount')}
           editable={!isLoading}
-          keyboardType="decimal-pad"
+          keyboardType={isWholeUnitCurrency ? 'number-pad' : 'decimal-pad'}
           onChangeText={handleValueChange}
           placeholder="0"
           placeholderTextColor={colors.walletTextMuted}

@@ -6,6 +6,7 @@ import { useTheme } from '../../../../../general/theme/theme';
 import { useTranslation } from 'react-i18next';
 import { useNearbyStores } from '../../../hooks';
 import { translateShopTypeName } from '../../../utils/shopTypeLocalization';
+import { useDeliveriesCurrencyLabel } from '../../../../../general/stores/useAppConfigStore';
 
 function formatTime(value?: number | string | null) {
   if (value == null) {
@@ -27,17 +28,18 @@ function formatDistance(value?: number | null) {
   return `${value.toFixed(1)} km`;
 }
 
-function formatFee(value?: number | null) {
+function formatFee(value: number | null | undefined, symbol: string) {
   if (value == null) {
-    return '$2';
+    return '—';
   }
 
-  return `$${Math.round(value)}`;
+  return `${symbol} ${Math.round(value)}`;
 }
 
 export default function AllInOneRecommendedRestaurants() {
   const { t } = useTranslation('deliveries');
   const { colors } = useTheme();
+  const currencySymbol = useDeliveriesCurrencyLabel();
   const { data: stores = [] } = useNearbyStores();
   const displayStores = stores.slice(0, 4);
 
@@ -100,7 +102,7 @@ export default function AllInOneRecommendedRestaurants() {
                 <View style={styles.infoRow}>
                   <View style={styles.infoItem}>
                     <Ionicons name="bicycle-outline" size={14} color={colors.iconMuted} />
-                    <Text style={[styles.infoText, { color: colors.iconMuted }]}>{formatFee(store.baseFee)}</Text>
+                    <Text style={[styles.infoText, { color: colors.iconMuted }]}>{formatFee(store.baseFee, currencySymbol)}</Text>
                   </View>
                   <View style={[styles.dot, { backgroundColor: colors.border }]} />
                   <View style={styles.infoItem}>

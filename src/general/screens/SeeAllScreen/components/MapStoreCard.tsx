@@ -8,7 +8,7 @@ import type { SeeAllMapStore } from './mapStoreUtils';
 
 type Props = {
   store: SeeAllMapStore;
-  currencyLabel?: string;
+  currencyLabel: string;
 };
 
 function formatDeliveryTime(value?: number | string) {
@@ -35,7 +35,7 @@ function formatDistance(value?: number) {
   return `${value} km`;
 }
 
-export default function MapStoreCard({ store, currencyLabel = '$' }: Props) {
+export default function MapStoreCard({ store, currencyLabel }: Props) {
   const { colors, typography } = useTheme();
   const metaItems = [
     {

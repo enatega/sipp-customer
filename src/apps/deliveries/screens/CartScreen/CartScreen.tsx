@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
 import { useTheme } from '../../../../general/theme/theme';
+import { useAuthSessionQuery } from '../../../../general/hooks/useAuthQueries';
 import CartScreenContent from '../../components/cart/CartScreenContent';
 import CartScreenErrorState from '../../components/cart/CartScreenErrorState';
 import CartScreenSkeleton from '../../components/cart/CartScreenSkeleton';
@@ -17,6 +18,7 @@ import { useStoreRecommendedProducts, useStoreView } from '../../hooks';
 
 export default function CartScreen() {
   const { colors } = useTheme();
+  const sessionQuery = useAuthSessionQuery();
   const { showMutationError, showMutationSuccess } = useCartMutationFeedback();
   const navigation = useNavigation<NavigationProp<Record<string, object | undefined>>>();
   const [isClearCartVisible, setIsClearCartVisible] = React.useState(false);
@@ -136,7 +138,7 @@ export default function CartScreen() {
     void clearCart();
   }, [clearCart]);
 
-  if (isCartPending && !cart) {
+  if (sessionQuery.isPending || (sessionQuery.data?.token && isCartPending && !cart)) {
     return (
       <View style={{ backgroundColor: colors.canvas, flex: 1 }}>
         <CartScreenSkeleton />
@@ -144,7 +146,7 @@ export default function CartScreen() {
     );
   }
 
-  if (!cart || cartError) {
+  if (sessionQuery.data?.token && (!cart || cartError)) {
     return (
       <View style={{ backgroundColor: colors.canvas, flex: 1 }}>
         <CartScreenErrorState
@@ -159,7 +161,7 @@ export default function CartScreen() {
   return (
     <View style={{ backgroundColor: colors.canvas, flex: 1 }}>
       <CartScreenContent
-        cart={cart}
+        cart={sessionQuery.data?.token ? cart ?? null : null}
         isClearCartVisible={isClearCartVisible}
         isClearingCart={isClearing}
         isFeeModalVisible={isFeeModalVisible}

@@ -75,7 +75,8 @@ export default function WalletScreen() {
   useEffect(() => {
     if (route.params?.suggestedTopUpAmount && !didOpenSuggestedAmount.current) {
       didOpenSuggestedAmount.current = true;
-      setTopUpValue(Math.max(route.params.suggestedTopUpAmount, currencyCode.toUpperCase() === 'CRC' ? 500 : 0.01).toFixed(2));
+      const minimum = currencyCode.toUpperCase() === 'CRC' ? 500 : currencyCode.toUpperCase() === 'JPY' ? 1 : 0.01;
+      setTopUpValue(Math.max(route.params.suggestedTopUpAmount, minimum).toFixed(currencyCode.toUpperCase() === 'JPY' ? 0 : 2));
       setActiveSheet('add');
     }
   }, [currencyCode, route.params?.suggestedTopUpAmount]);

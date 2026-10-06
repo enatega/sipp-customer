@@ -10,7 +10,6 @@ import type {
   CheckoutOrderType,
   CheckoutPreviewResponse,
 } from '../../api/orderServiceTypes';
-import CheckoutDeliveryTimeSection from './CheckoutDeliveryTimeSection';
 import CheckoutHeader from './CheckoutHeader';
 import CheckoutInfoRow from './CheckoutInfoRow';
 import CheckoutMerchantSummary from './CheckoutMerchantSummary';
@@ -20,11 +19,9 @@ import CheckoutSummaryDetails from './CheckoutSummaryDetails';
 import CheckoutSummaryFooter from './CheckoutSummaryFooter';
 import CheckoutTipSection from './CheckoutTipSection';
 import { getCheckoutMessagePreview } from './checkoutMessageUtils';
-import { formatCheckoutScheduledAt, type CheckoutDeliveryTimeMode } from './checkoutScheduleUtils';
 
 type Props = {
   canShowLeaveAtDoor?: boolean;
-  deliveryTimeMode: CheckoutDeliveryTimeMode;
   hasAddressRequirement: boolean;
   isPickupEnabled: boolean;
   isPromoApplied?: boolean;
@@ -39,7 +36,6 @@ type Props = {
   onAddressPress: () => void;
   onBackPress: () => void;
   onCourierMessagePress: () => void;
-  onDeliveryTimeModeChange: (mode: CheckoutDeliveryTimeMode) => void;
   onLeaveAtDoorChange: (value: boolean) => void;
   onOrderTypeChange: (mode: CheckoutOrderType) => void;
   onPlaceOrderPress: () => void;
@@ -47,7 +43,6 @@ type Props = {
   onPromoPress: () => void;
   onPromoRemove?: () => void;
   onRestaurantMessagePress: () => void;
-  onSchedulePress: () => void;
   onRetryPreview: () => void;
   onCustomTipPress: () => void;
   onTipChange: (amount: number) => void;
@@ -62,7 +57,6 @@ type Props = {
   preview: CheckoutPreviewResponse | null;
   courierMessage: string;
   restaurantMessage: string;
-  scheduledAt?: string | null;
   selectedAddressLabel?: string | null;
   selectedTip: number;
   totalLabel: string;
@@ -70,7 +64,6 @@ type Props = {
 
 export default function CheckoutScreenContent({
   canShowLeaveAtDoor = true,
-  deliveryTimeMode,
   hasAddressRequirement,
   isPickupEnabled,
   isPromoApplied = false,
@@ -85,7 +78,6 @@ export default function CheckoutScreenContent({
   onAddressPress,
   onBackPress,
   onCourierMessagePress,
-  onDeliveryTimeModeChange,
   onLeaveAtDoorChange,
   onOrderTypeChange,
   onPlaceOrderPress,
@@ -93,7 +85,6 @@ export default function CheckoutScreenContent({
   onPromoPress,
   onPromoRemove,
   onRestaurantMessagePress,
-  onSchedulePress,
   onRetryPreview,
   onCustomTipPress,
   onTipChange,
@@ -108,7 +99,6 @@ export default function CheckoutScreenContent({
   preview,
   courierMessage,
   restaurantMessage,
-  scheduledAt,
   selectedAddressLabel,
   selectedTip,
   totalLabel,
@@ -138,7 +128,6 @@ export default function CheckoutScreenContent({
     courierMessage,
     t('checkout_message_courier_subtitle'),
   );
-  const scheduledLabel = scheduledAt ? formatCheckoutScheduledAt(scheduledAt) : null;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.canvas }]}>
@@ -210,15 +199,6 @@ export default function CheckoutScreenContent({
               ) : null}
             </Surface>
           </View>
-
-          <CheckoutDeliveryTimeSection
-            isScheduleEnabled={preview?.schedule.scheduleAllowed ?? false}
-            onSchedulePress={onSchedulePress}
-            orderType={orderType}
-            scheduledLabel={scheduledLabel}
-            selectedMode={deliveryTimeMode}
-            onSelectMode={onDeliveryTimeModeChange}
-          />
 
           <View style={[styles.section, { gap: spacing.md }]}>
             <Text accessibilityRole="header" variant="sectionTitle" weight="bold">
