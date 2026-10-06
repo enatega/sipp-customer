@@ -1276,7 +1276,13 @@ const fr = {
   wallet_card_incomplete: 'Veuillez compléter les détails de la carte.',
   wallet_card_saved_success_title: 'Carte enregistrée',
   wallet_card_saved_success_message: 'Votre carte a été ajoutée avec succès.',
-  off: 'désactivé'
+  off: 'désactivé',
+  favourite_foods_browse: 'Parcourir les plats favoris',
+  favourite_foods_loading: 'Chargement des plats favoris',
+  favourite_foods_retry: 'Impossible de charger les plats favoris. Touchez pour réessayer.',
+  favourite_foods_open: 'Explorer les produits {{name}}',
+  favourite_foods_empty_title: 'Aucun produit pour le moment',
+  favourite_foods_empty_description: 'Essayez un autre plat favori ou un autre emplacement.',
 };
 
 export default fr;

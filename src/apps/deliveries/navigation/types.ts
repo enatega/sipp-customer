@@ -12,6 +12,7 @@ import { ProductCardVariant } from "../components/productCard/types";
 export type SeeAllListingType =
   | "nearby-stores"
   | "shop-type-products"
+  | "favourite-food-products"
   | "shop-type-stores"
   | "top-brand-stores"
   | "single-vendor-category-products"
@@ -98,6 +99,7 @@ export type DeliveriesStackParamList = DeliveriesAccountNavigationParamList & {
     title: string;
     cardType: SupportedCardType;
     shopTypeId?: string;
+    foodId?: string;
     vendorId?: string;
     categoryId?: string;
     cardVariant?: ProductCardVariant;

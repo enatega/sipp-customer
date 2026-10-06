@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { CompositeNavigationProp, RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../../general/theme/theme';
@@ -21,14 +21,21 @@ import { MainSeeAllCategoriesSection, MainSeeAllShopTypeTabs } from '../componen
 import type { MultiVendorStackParamList } from '../navigation/types';
 import { pushStoreDetails } from '../../navigation/storeDetailsNavigation';
 import { translateShopTypeName } from '../../utils/shopTypeLocalization';
+import type { DeliveriesStackParamList } from '../../navigation/types';
+import type { DeliveryFavouriteFood } from '../../api/types';
+import FavouriteFoodsCarousel from '../components/favouriteFoods/FavouriteFoodsCarousel';
+import { getLocalizedProductName } from '../../utils/productTranslation';
 
-type NavigationProp = NativeStackNavigationProp<MultiVendorStackParamList, 'MainSeeAllScreen'>;
+type NavigationProp = CompositeNavigationProp<
+  NativeStackNavigationProp<MultiVendorStackParamList, 'MainSeeAllScreen'>,
+  NativeStackNavigationProp<DeliveriesStackParamList>
+>;
 type MainSeeAllRouteProp = RouteProp<MultiVendorStackParamList, 'MainSeeAllScreen'>;
 
 export default function MainSeeAllScreen() {
   const { colors, layout, spacing } = useTheme();
   const { gutter } = useWindowClass();
-  const { t } = useTranslation('deliveries');
+  const { t, i18n } = useTranslation('deliveries');
   const { t: tGeneral } = useTranslation('general');
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<MainSeeAllRouteProp>();
@@ -88,6 +95,16 @@ export default function MainSeeAllScreen() {
       )
     : t('home_all_stores');
 
+  const openFavouriteFood = useCallback((food: DeliveryFavouriteFood) => {
+    navigation.navigate('SeeAllScreen', {
+      queryType: 'favourite-food-products',
+      foodId: food.id,
+      shopTypeId: selectedShopTypeId ?? undefined,
+      title: getLocalizedProductName(food, i18n.language),
+      cardType: 'product',
+    });
+  }, [i18n.language, navigation, selectedShopTypeId]);
+
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <DiscoveryListingHeader
@@ -113,6 +130,9 @@ export default function MainSeeAllScreen() {
         refreshControl={<RefreshControl refreshing={isRefetching && !isFetchingNextPage} onRefresh={refresh} tintColor={colors.primary} />}
         ListHeaderComponent={(
           <View style={styles.listHeader}>
+            <View style={{ marginHorizontal: -gutter }}>
+              <FavouriteFoodsCarousel shopTypeId={selectedShopTypeId} onFoodPress={openFavouriteFood} />
+            </View>
             <SelectedFilterChips
               chips={filterState.chips}
               clearAllLabel={tGeneral('clear_all')}

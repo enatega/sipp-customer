@@ -16,6 +16,7 @@ import useDeliveriesSeeAllScreenState from './useDeliveriesSeeAllScreenState';
 import type { DeliveryNearbyStore } from '../../api/types';
 import AppPopup from '../../../../general/components/AppPopup';
 import { pushStoreDetails } from '../../navigation/storeDetailsNavigation';
+import FavouriteFoodResultCard from '../../components/discovery/FavouriteFoodResultCard';
 
 type NavigationProp = NativeStackNavigationProp<DeliveriesStackParamList>;
 type SeeAllRouteProp = RouteProp<DeliveriesSeeAllParamList, 'SeeAllScreen'>;
@@ -24,7 +25,7 @@ export default function DeliveriesSeeAllScreen() {
   const { t } = useTranslation('general');
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<SeeAllRouteProp>();
-  const { queryType, title, shopTypeId, vendorId, categoryId, cardType, cardVariant } =
+  const { queryType, title, shopTypeId, vendorId, categoryId, foodId, cardType, cardVariant } =
     route.params;
 
   const {
@@ -65,6 +66,7 @@ export default function DeliveriesSeeAllScreen() {
     shopTypeId,
     vendorId,
     categoryId,
+    foodId,
   });
 
   const items = listQuery.data ?? [];
@@ -89,8 +91,16 @@ export default function DeliveriesSeeAllScreen() {
   }, [items, navigation, title]);
 
   const renderItemCard = useCallback(
-    (item: SeeAllItem) =>
-      renderSeeAllItemCard(
+    (item: SeeAllItem) => {
+      if (queryType === 'favourite-food-products' && 'productId' in item) {
+        return (
+          <FavouriteFoodResultCard
+            product={item}
+            onPress={() => navigation.navigate('ProductInfo', { productId: item.productId })}
+          />
+        );
+      }
+      return renderSeeAllItemCard(
         cardType as SupportedCardType,
         item,
         undefined,
@@ -102,8 +112,9 @@ export default function DeliveriesSeeAllScreen() {
             setSelectedClosedStore(store);
           },
         },
-      ),
-    [cardType, cardVariant],
+      );
+    },
+    [cardType, cardVariant, navigation, queryType],
   );
 
   return (
@@ -143,7 +154,7 @@ export default function DeliveriesSeeAllScreen() {
             onOpenFilters={openFilters}
             onMapPress={handleMapPress}
             isSearchVisible
-            isFilterVisible
+            isFilterVisible={queryType !== 'favourite-food-products'}
             isMapVisible={isMapVisible}
           />
         }
@@ -163,8 +174,10 @@ export default function DeliveriesSeeAllScreen() {
             filters={filterValues?.filters}
           />
         }
-        emptyTitle={t('generic_list_empty_title')}
-        emptyDescription={t('generic_list_empty_description')}
+        emptyTitle={queryType === 'favourite-food-products'
+          ? t('favourite_foods_empty_title', { ns: 'deliveries' }) : t('generic_list_empty_title')}
+        emptyDescription={queryType === 'favourite-food-products'
+          ? t('favourite_foods_empty_description', { ns: 'deliveries' }) : t('generic_list_empty_description')}
         loadingComponent={loadingComponent}
         paginationLoadingComponent={paginationLoadingComponent}
       />
