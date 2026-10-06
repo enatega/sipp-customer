@@ -1280,6 +1280,12 @@ const en = {
   wallet_card_saved_success_title: 'Card saved',
   wallet_card_saved_success_message: 'Your card was added successfully.',
   off: 'off',
+  favourite_foods_browse: 'Browse favourite foods',
+  favourite_foods_loading: 'Loading favourite foods',
+  favourite_foods_retry: 'Could not load favourite foods. Tap to try again.',
+  favourite_foods_open: 'Explore {{name}} products',
+  favourite_foods_empty_title: 'No products here yet',
+  favourite_foods_empty_description: 'Try another favourite food or location.',
 };
 
 export default en;

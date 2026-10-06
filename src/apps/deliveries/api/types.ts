@@ -23,6 +23,14 @@ export interface DeliveryShopType {
     [key: string]: unknown;
 }
 
+export interface DeliveryFavouriteFood {
+    id: string;
+    name: string;
+    nameTranslations?: Record<string, string>;
+    imageUrl?: string | null;
+    shopTypeIds: string[];
+}
+
 export interface PaginatedDeliveryResponse<T> {
     items: T[];
     offset: number;

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { RefreshControl } from 'react-native';
+import { RefreshControl, View } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Location from 'expo-location';
 import { CompositeNavigationProp, useNavigation } from '@react-navigation/native';
@@ -43,6 +43,9 @@ import type {
 import useDeliveriesTabSheetOffset from '../../../hooks/useDeliveriesTabSheetOffset';
 import useCompleteBrowseAddressFlow from '../../../hooks/useCompleteBrowseAddressFlow';
 import apiClient from '../../../../../general/api/apiClient';
+import FavouriteFoodsCarousel from '../../components/favouriteFoods/FavouriteFoodsCarousel';
+import type { DeliveryFavouriteFood } from '../../../api/types';
+import { getLocalizedProductName } from '../../../utils/productTranslation';
 
 type HomeSection = { key: string; kind: string; title: string };
 type HomeLayout = { revision: number; sections: HomeSection[] };
@@ -69,7 +72,7 @@ type NavProp = CompositeNavigationProp<
 export default function HomeTab() {
   useCompleteBrowseAddressFlow();
   const { colors, spacing } = useTheme();
-  const { t } = useTranslation('deliveries');
+  const { t, i18n } = useTranslation('deliveries');
   const navigation = useNavigation<NavProp>();
   const addressSheetBottomOffset = useDeliveriesTabSheetOffset();
   const queryClient = useQueryClient();
@@ -141,6 +144,15 @@ export default function HomeTab() {
       autoFocusRequestId: Date.now(),
     });
   }, [navigation]);
+
+  const handleFavouriteFoodPress = useCallback((food: DeliveryFavouriteFood) => {
+    navigation.navigate('SeeAllScreen', {
+      queryType: 'favourite-food-products',
+      foodId: food.id,
+      title: getLocalizedProductName(food, i18n.language),
+      cardType: 'product',
+    });
+  }, [i18n.language, navigation]);
 
   const handleQuickActionPress = useCallback((actionId: HomeQuickActionId) => {
     switch (actionId) {
@@ -322,7 +334,12 @@ export default function HomeTab() {
       >
         {(homeLayout.data?.sections ?? fallbackSections).map((section, index) => (
           <HomeEntrance key={section.key} index={index + 1} style={[styles.sectionGroup, { marginBottom: spacing.section.default }]}>
-            {section.kind === 'shop-types' && <ShopTypeList />}
+            {section.kind === 'shop-types' && <>
+              <ShopTypeList />
+              <View style={{ marginTop: spacing.lg }}>
+                <FavouriteFoodsCarousel onFoodPress={handleFavouriteFoodPress} />
+              </View>
+            </>}
             {section.kind === 'banners' && <MultiVendorSpecialOffers />}
             {section.kind === 'quick-actions' && <AllInOneQuickActions onActionPress={handleQuickActionPress} />}
             {section.kind === 'top-brands' && <TopBrandsList onClosedStorePress={handleClosedStorePress} />}

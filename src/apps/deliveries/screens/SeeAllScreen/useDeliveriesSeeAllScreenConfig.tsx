@@ -10,6 +10,8 @@ import {
 import useChainCategoryProducts from '../../chain/hooks/useChainCategoryProducts';
 import useSingleVendorCategoryProducts from '../../singleVendor/hooks/useSingleVendorCategoryProducts';
 import VerticalStoreListSkeleton from '../../components/VerticalStoreListSkeleton';
+import { useFavouriteFoodProducts } from '../../hooks/useFavouriteFoods';
+import FavouriteFoodProductsSkeleton from '../../components/discovery/FavouriteFoodProductsSkeleton';
 import type {
   DeliveriesSeeAllParamList,
   SeeAllItem,
@@ -44,6 +46,7 @@ type UseDeliveriesSeeAllScreenConfigParams = {
   shopTypeId?: string;
   vendorId?: string;
   categoryId?: string;
+  foodId?: string;
 };
 
 type UseDeliveriesSeeAllScreenConfigResult = {
@@ -79,6 +82,7 @@ export default function useDeliveriesSeeAllScreenConfig({
   shopTypeId,
   vendorId,
   categoryId,
+  foodId,
 }: UseDeliveriesSeeAllScreenConfigParams): UseDeliveriesSeeAllScreenConfigResult {
   const nearbyStoresQuery = useNearbyStores({
     mode: 'paginated',
@@ -125,6 +129,33 @@ export default function useDeliveriesSeeAllScreenConfig({
     filters,
     search,
   });
+
+  const favouriteFoodProductsQuery = useFavouriteFoodProducts(
+    enabled && queryType === 'favourite-food-products' ? foodId ?? '' : '',
+    shopTypeId,
+    search,
+  );
+
+  if (queryType === 'favourite-food-products') {
+    return {
+      itemKeyExtractor: (item, index) => 'productId' in item
+        ? `${item.productId}-${item.storeId}-${index}` : `${item.storeId}-${index}`,
+      listQuery: {
+        data: favouriteFoodProductsQuery.products,
+        totalCount: favouriteFoodProductsQuery.total,
+        isPending: favouriteFoodProductsQuery.isPending,
+        isError: favouriteFoodProductsQuery.isError,
+        error: favouriteFoodProductsQuery.error,
+        refetch: favouriteFoodProductsQuery.refetch,
+        hasNextPage: favouriteFoodProductsQuery.hasNextPage,
+        isFetchingNextPage: favouriteFoodProductsQuery.isFetchingNextPage,
+        fetchNextPage: favouriteFoodProductsQuery.fetchNextPage,
+        isRefetching: favouriteFoodProductsQuery.isRefetching,
+      },
+      loadingComponent: React.createElement(FavouriteFoodProductsSkeleton),
+      paginationLoadingComponent: React.createElement(FavouriteFoodProductsSkeleton),
+    };
+  }
 
   if (queryType === 'shop-type-stores') {
     return {
