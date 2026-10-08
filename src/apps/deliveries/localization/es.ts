@@ -1,6 +1,8 @@
 const es = {
   "shop_type_grocery": "Supermercado",
   "shop_type_restaurant": "Restaurante",
+  "shop_type_browse_action": "Explorar",
+  "shop_type_browse_accessibility": "Explorar {{name}}",
   "promotional_banner": "banner promocional",
   "store_menu_all_categories": "Todas las categorías",
   "store_menu_page_error": "No podía cargar estos elementos. Revise su conexión e intente de nuevo.",

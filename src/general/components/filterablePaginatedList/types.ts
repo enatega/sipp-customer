@@ -91,6 +91,7 @@ export type GenericFilterablePaginatedListScreenProps<
   TChip extends FilterChip = FilterChip,
 > = {
   title: string;
+  screenBackgroundColor?: string;
   data: TItem[];
   totalCount?: number;
   isPending: boolean;

@@ -1,6 +1,8 @@
 const en = {
   shop_type_grocery: 'Grocery',
   shop_type_restaurant: 'Restaurant',
+  shop_type_browse_action: 'Browse',
+  shop_type_browse_accessibility: 'Browse {{name}}',
   promotional_banner: 'Promotional banner',
   store_menu_all_categories: "All categories",
   store_menu_page_error: "Could not load these items. Check your connection and try again.",

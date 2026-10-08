@@ -17,12 +17,14 @@ import type { DeliveryNearbyStore } from '../../api/types';
 import AppPopup from '../../../../general/components/AppPopup';
 import { pushStoreDetails } from '../../navigation/storeDetailsNavigation';
 import FavouriteFoodResultCard from '../../components/discovery/FavouriteFoodResultCard';
+import { useTheme } from '../../../../general/theme/theme';
 
 type NavigationProp = NativeStackNavigationProp<DeliveriesStackParamList>;
 type SeeAllRouteProp = RouteProp<DeliveriesSeeAllParamList, 'SeeAllScreen'>;
 
 export default function DeliveriesSeeAllScreen() {
   const { t } = useTranslation('general');
+  const { colors, isDark } = useTheme();
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<SeeAllRouteProp>();
   const { queryType, title, shopTypeId, vendorId, categoryId, foodId, cardType, cardVariant } =
@@ -121,6 +123,7 @@ export default function DeliveriesSeeAllScreen() {
     <>
       <SeeAllScreen<SeeAllItem, GenericFilterChip>
         title={title}
+        screenBackgroundColor={queryType === 'favourite-food-products' && !isDark ? colors.white : undefined}
         data={items}
         totalCount={listQuery.totalCount}
         isPending={listQuery.isPending}

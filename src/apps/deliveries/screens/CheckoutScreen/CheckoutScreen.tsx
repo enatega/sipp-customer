@@ -609,7 +609,10 @@ export default function CheckoutScreen() {
 
   const handlePaymentMethodPress = React.useCallback(() => {
     setIsPaymentMethodScreenVisible(true);
-  }, []);
+    if (previewInput) {
+      void refetchPreview();
+    }
+  }, [previewInput, refetchPreview]);
 
   const handlePaymentMethodConfirm = React.useCallback((nextPaymentMethod: CheckoutPaymentMethod) => {
     wantsWalletAfterTopUpRef.current = false;
@@ -950,7 +953,12 @@ export default function CheckoutScreen() {
       />
 
       <CheckoutPaymentMethodBottomSheet
-        isCardEnabled={adjustedPreview?.store.stripeAllowed ?? false}
+        isCardEnabled={Boolean(adjustedPreview?.store.stripeAllowed)
+          && !isPreviewPending
+          && !isPreviewError}
+        isCardAvailabilityKnown={Boolean(adjustedPreview?.store)
+          && !isPreviewPending
+          && !isPreviewError}
         isWalletEnabled={isWalletEnabled}
         walletBalance={walletBalance}
         currencyLabel={currencyLabel}

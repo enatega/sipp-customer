@@ -1,6 +1,8 @@
 const ar = {
   "shop_type_grocery": "بقالة",
   "shop_type_restaurant": "مطعم",
+  "shop_type_browse_action": "تصفح",
+  "shop_type_browse_accessibility": "تصفح {{name}}",
   "promotional_banner": "الدعاية",
   "store_menu_all_categories": "جميع الفئات",
   "store_menu_page_error": "لا يمكن تحميل هذه المواد. تحقق من اتصالك وحاول مرة أخرى",

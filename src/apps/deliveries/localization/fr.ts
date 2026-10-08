@@ -1,6 +1,8 @@
 const fr = {
   shop_type_grocery: 'Épicerie',
   shop_type_restaurant: 'Restaurant',
+  shop_type_browse_action: 'Explorer',
+  shop_type_browse_accessibility: 'Explorer {{name}}',
   promotional_banner: 'Bannière promotionnelle',
   store_menu_all_categories: "Toutes les catégories",
   store_menu_page_error: "Impossible de charger ces articles. Vérifiez votre connexion et réessayez.",

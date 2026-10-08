@@ -13,6 +13,7 @@ export default function GenericFilterablePaginatedListScreen<
   TChip extends FilterChip = FilterChip,
 >({
   title,
+  screenBackgroundColor,
   data,
   totalCount,
   isPending,
@@ -72,7 +73,7 @@ export default function GenericFilterablePaginatedListScreen<
   const canRenderChips = chips.length > 0 && onRemoveChip && onClearAll;
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.canvas }]}>
+    <View style={[styles.screen, { backgroundColor: screenBackgroundColor ?? colors.canvas }]}>
       {header}
       <View
         style={[

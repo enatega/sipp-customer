@@ -18,6 +18,7 @@ import {
 
 type Props = {
   isCardEnabled: boolean;
+  isCardAvailabilityKnown: boolean;
   isWalletEnabled: boolean;
   walletBalance: number;
   currencyLabel: string;
@@ -99,6 +100,7 @@ function PaymentOption({
 
 export default function CheckoutPaymentMethodBottomSheet({
   isCardEnabled,
+  isCardAvailabilityKnown,
   isWalletEnabled,
   walletBalance,
   currencyLabel,
@@ -204,11 +206,13 @@ export default function CheckoutPaymentMethodBottomSheet({
           showsVerticalScrollIndicator={false}
         >
           <PaymentOption
-            description={isCardEnabled
-              ? hasSavedCards
-                ? getCheckoutPaymentMethodSubtitle('stripe', t)
-                : t('checkout_payment_add_card_required')
-              : t('checkout_payment_card_unavailable')}
+            description={!isCardAvailabilityKnown
+              ? t('checkout_payment_option_card_description')
+              : isCardEnabled
+                ? hasSavedCards
+                  ? getCheckoutPaymentMethodSubtitle('stripe', t)
+                  : t('checkout_payment_add_card_required')
+                : t('checkout_payment_card_unavailable')}
             disabled={!isCardEnabled}
             icon="card-outline"
             isSelected={draftMethod === 'stripe'}

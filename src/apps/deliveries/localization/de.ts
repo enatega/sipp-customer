@@ -1,6 +1,8 @@
 const de = {
   "shop_type_grocery": "Lebensmittelgeschäft",
   "shop_type_restaurant": "Restaurant",
+  "shop_type_browse_action": "Entdecken",
+  "shop_type_browse_accessibility": "{{name}} entdecken",
   "promotional_banner": "Werbebanner",
   "store_menu_all_categories": "Alle Kategorien",
   "store_menu_page_error": "Konnte diese Gegenstände nicht laden. Überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",

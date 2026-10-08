@@ -1,12 +1,8 @@
 import React, { useCallback } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { CompositeNavigationProp, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import PressableScale from '../../../../../general/components/PressableScale';
-import Image from '../../../../../general/components/Image';
-import Text from '../../../../../general/components/Text';
 import { useWindowClass } from '../../../../../general/hooks/useWindowClass';
 import { useTheme } from '../../../../../general/theme/theme';
 import { useShopTypes } from '../../../hooks';
@@ -15,7 +11,8 @@ import DeliveriesSectionEmptyState from '../../../components/home/DeliveriesSect
 import SectionActionHeader from '../../../../../general/components/SectionActionHeader';
 import { DeliveriesStackParamList } from '../../../navigation/types';
 import { MultiVendorStackParamList } from '../../navigation/types';
-import { decodeShopTypeName, translateShopTypeName } from '../../../utils/shopTypeLocalization';
+import { translateShopTypeName } from '../../../utils/shopTypeLocalization';
+import ShopTypeFeatureCard from './ShopTypeFeatureCard';
 
 type NavProp = CompositeNavigationProp<
   NativeStackNavigationProp<MultiVendorStackParamList>,
@@ -24,10 +21,14 @@ type NavProp = CompositeNavigationProp<
 
 export default function ShopTypeList() {
   const { t } = useTranslation('deliveries');
-  const { colors, layout, shape, spacing } = useTheme();
-  const { gutter, isCompact } = useWindowClass();
+  const { colors, layout, spacing } = useTheme();
+  const { gutter, width, fontScale } = useWindowClass();
   const navigation = useNavigation<NavProp>();
   const { data: shopTypes = [], isPending } = useShopTypes({ home: true });
+  const contentWidth = Math.min(width, layout.contentMaxWidth.commerce) - gutter * 2;
+  const isTwoColumn = contentWidth >= 280 && fontScale < 1.6;
+  const cardWidth = isTwoColumn ? (contentWidth - spacing.md) / 2 : contentWidth;
+  const compactCard = isTwoColumn && cardWidth < 270;
 
   const handleSeeAll = useCallback(() => navigation.navigate('MainSeeAllScreen', { initialShopTypeId: undefined }), [navigation]);
   const handleShopType = useCallback((id: string) => {
@@ -42,7 +43,7 @@ export default function ShopTypeList() {
     <DeliveriesSectionEmptyState title={t('multi_vendor_shop_types_title')} message={t('multi_vendor_shop_types_empty')} />
   </View>;
 
-  if (shopTypes.length === 0 || shopTypes.length > 2) {
+  if (shopTypes.length !== 2) {
     return (
       <DiscoveryCategorySection
         actionLabel={t('multi_vendor_see_all')}
@@ -57,37 +58,19 @@ export default function ShopTypeList() {
   }
 
   return (
-    <View style={[styles.section, { maxWidth: layout.contentMaxWidth.commerce, paddingHorizontal: gutter, gap: spacing.md }]}>
-      <View style={styles.cards}>
-        {shopTypes.map((shopType, index) => {
-          const rawName = decodeShopTypeName(shopType.name);
-          const name = translateShopTypeName(shopType.name, t);
-          const icon: keyof typeof Ionicons.glyphMap = /grocer|market|épicer|super/i.test(rawName) ? 'basket-outline' : /restaur|food|repas/i.test(rawName) ? 'restaurant-outline' : 'storefront-outline';
-          const tint = index === 0 ? colors.cardMint : colors.cardPeach;
-          const ink = index === 0 ? colors.quickActionOrdersForeground : colors.quickActionDealsForeground;
-          const imageUri = shopType.image?.trim();
-          return (
-            <PressableScale
-              key={shopType.id}
-              accessibilityRole="button"
-              accessibilityLabel={name}
-              onPress={() => handleShopType(shopType.id)}
-              pressedScale={0.97}
-              style={[styles.card, { backgroundColor: tint, borderColor: colors.border, borderRadius: shape.radius.surface }]}
-            >
-              <Text color={colors.textStrong} weight="bold" variant="cardTitle" numberOfLines={1}
-                adjustsFontSizeToFit minimumFontScale={0.82}
-                style={[styles.cardTitle, isCompact && styles.compactCardTitle]}>{name}</Text>
-              <View style={[styles.imageFrame, isCompact && styles.compactImageFrame, { backgroundColor: colors.surfaceElevated }]}>
-                {imageUri ? (
-                  <Image source={{ uri: imageUri }} resizeMode="cover" style={styles.image} />
-                ) : (
-                  <Ionicons name={icon} size={30} color={ink} />
-                )}
-              </View>
-            </PressableScale>
-          );
-        })}
+    <View style={[styles.section, { maxWidth: layout.contentMaxWidth.commerce, paddingHorizontal: gutter }]}>
+      <View style={[styles.cards, { flexDirection: isTwoColumn ? 'row' : 'column', gap: spacing.md }]}>
+        {shopTypes.map((shopType, index) => (
+          <ShopTypeFeatureCard
+            key={shopType.id}
+            shopType={shopType}
+            fallbackTone={index === 0 ? 'grocery' : 'restaurant'}
+            isTwoColumn={isTwoColumn}
+            compactCard={compactCard}
+            cardWidth={cardWidth}
+            onPress={() => handleShopType(shopType.id)}
+          />
+        ))}
       </View>
     </View>
   );
@@ -95,12 +78,6 @@ export default function ShopTypeList() {
 
 const styles = StyleSheet.create({
   section: { alignSelf: 'center', width: '100%' },
-  cards: { flexDirection: 'row', gap: 10 },
-  card: { alignItems: 'center', borderWidth: StyleSheet.hairlineWidth, flex: 1, flexDirection: 'row', gap: 4, minHeight: 96, minWidth: 0, paddingLeft: 10, paddingRight: 8 },
-  cardTitle: { flex: 1, fontSize: 15, lineHeight: 20, minWidth: 0 },
-  compactCardTitle: { fontSize: 14 },
-  imageFrame: { alignItems: 'center', borderRadius: 30, height: 60, justifyContent: 'center', overflow: 'hidden', width: 60 },
-  compactImageFrame: { height: 52, width: 52 },
-  image: { height: '100%', width: '100%' },
+  cards: { width: '100%' },
   loading: { minHeight: 96, justifyContent: 'center' },
 });
