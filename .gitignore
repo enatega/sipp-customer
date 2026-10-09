@@ -47,3 +47,7 @@ yarn-error.*
 .idea/
 .vscode/
 graphify-out/
+
+# editor swap files
+*.swp
+*.swo
