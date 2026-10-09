@@ -1,5 +1,5 @@
 const de = {
-  "app_name": "Super Customer App App",
+  "app_name": "Sipp",
   "greeting": "Guten Morgen 👋",
   "greeting_morning": "Guten Morgen 👋",
   "greeting_afternoon": "Guten Nachmittag 👋",

@@ -1,5 +1,5 @@
 const es = {
-  "app_name": "Aplicación Super Customer",
+  "app_name": "Sipp",
   "greeting": "Buenos días ‹",
   "greeting_morning": "Buenos días ‹",
   "greeting_afternoon": "Buenas tardes ‹",

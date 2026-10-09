@@ -1,5 +1,5 @@
 const ar = {
-  "app_name": "الزبون الخارق",
+  "app_name": "Sipp",
   "greeting": "صباح الخير",
   "greeting_morning": "صباح الخير",
   "greeting_afternoon": "مساء الخير",
