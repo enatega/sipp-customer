@@ -757,7 +757,24 @@ const es = {
   "contact_support_cta": "Crear un billete",
   "contact_address": "Santa Teresa, Provincia de Puntarenas, Puntarenas, Costa Rica",
   "contact_social_title": "Síguenos",
-  "contact_error_generic": "No podríamos completar esa acción. Por favor, inténtalo de nuevo."
+  "contact_error_generic": "No podríamos completar esa acción. Por favor, inténtalo de nuevo.",
+  "google_phone_title": "Verifica tu número de móvil",
+  "google_phone_description": "Añade un número de móvil para terminar de crear tu cuenta de SIPP.",
+  "google_phone_code_sent": "Introduce el código de cuatro dígitos enviado a {{phone}}.",
+  "google_phone_code_error": "Revisa el código e inténtalo de nuevo.",
+  "google_phone_send": "Enviar código de verificación",
+  "google_phone_change": "Cambiar número",
+  "google_phone_verified": "Tu teléfono está verificado.",
+  "google_login_success": "Sesión iniciada correctamente.",
+  "google_phone_error_title": "No se pudo verificar el teléfono",
+  "signup_heading": "Crea tu cuenta",
+  "signup_description": "Regístrate para guardar tus datos de entrega y disfrutar de un pago rápido y seguro.",
+  "signup_email_exists": "Ya existe una cuenta con este correo electrónico.",
+  "signup_phone_exists": "Este número de teléfono ya está registrado.",
+  "signup_request_error_title": "No se pudo enviar el código de verificación",
+  "signup_password_requirements": "Usa al menos 10 caracteres con mayúsculas, minúsculas y un número.",
+  "profile_verified": "Verificado",
+  "profile_not_verified": "No verificado"
 };
 
 export default es;
