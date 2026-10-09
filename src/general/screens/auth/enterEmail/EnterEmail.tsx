@@ -1,14 +1,15 @@
 import React from "react";
 import { useTheme } from "../../../theme/theme";
 import { useNavigation } from "@react-navigation/native";
+import type { AuthNavigationProp, AuthScreenProps } from "../../../navigation/authTypes";
 import useStyles from "./styles";
 import EmailInputComponent from "../../../components/auth/EmailInputComponent";
 import { rememberedCredentials } from "../../../auth/rememberedCredentials";
 
-const EnterEmail = ({ route }) => {
+const EnterEmail = ({ route }: AuthScreenProps<"enterEmail">) => {
   const emailId = route?.params?.emailId ?? "";
   const { colors } = useTheme();
-  const navigation = useNavigation();
+  const navigation = useNavigation<AuthNavigationProp>();
   const styles = useStyles(colors);
   return (
     <EmailInputComponent

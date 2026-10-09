@@ -81,7 +81,7 @@ export default function MapStoreBottomSheet({
           </Pressable>
         </View>
 
-        <MapStoreCard store={store} currencyLabel={currencyLabel} />
+        <MapStoreCard store={store} currencyLabel={currencyLabel ?? ''} />
 
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
 

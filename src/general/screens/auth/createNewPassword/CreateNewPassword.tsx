@@ -3,6 +3,7 @@ import { View, StyleSheet } from "react-native";
 import { useTheme } from "../../../theme/theme";
 import ScreenHeader from "../../../components/ScreenHeader";
 import { useNavigation } from "@react-navigation/native";
+import type { AuthNavigationProp, AuthScreenProps } from "../../../navigation/authTypes";
 import SvgAndTextWrapper from "../../../components/auth/general/SvgAndTextWrapper";
 import useStyles from "./styles";
 import Footer from "../../../components/Footer";
@@ -16,10 +17,10 @@ import { showToast } from "../../../components/AppToast";
 import { useAuthStore } from "../../../stores/useAuthStore";
 import KeyboardDismissWrapper from "../../../components/KeyboardDismissWrapper";
 
-const CreateNewPassword = ({ route }) => {
+const CreateNewPassword = ({ route }: AuthScreenProps<"createNewPassword">) => {
   const { userId, emailId } = route.params;
   const { colors } = useTheme();
-  const navigation = useNavigation();
+  const navigation = useNavigation<AuthNavigationProp>();
   const styles = useStyles(colors);
   const { t } = useTranslation();
   const [password, setPassword] = useState("");

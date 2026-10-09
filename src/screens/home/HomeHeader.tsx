@@ -70,7 +70,6 @@ export default function HomeHeader({ backgroundVariant = 'gradient' }: Props) {
           source={homePatterns.header}
           style={styles.heroBackgroundImage}
           resizeMode="stretch"
-          pointerEvents="none"
         />
       </View>
       <View style={styles.heroContent}>
@@ -104,7 +103,6 @@ export default function HomeHeader({ backgroundVariant = 'gradient' }: Props) {
                   source={homePatterns.banner}
                   style={styles.bannerDoodles}
                   resizeMode="stretch"
-                  pointerEvents="none"
                 />
                
                 <View style={styles.bannerContent}>
@@ -187,6 +185,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   heroBackgroundImage: {
+    pointerEvents: 'none',
     width: '100%',
     height: '100%',
   },
@@ -210,6 +209,7 @@ const styles = StyleSheet.create({
     zIndex: 0,
   },
   bannerDoodles: {
+    pointerEvents: 'none',
     ...StyleSheet.absoluteFillObject,
     width: '100%',
     height: '100%',

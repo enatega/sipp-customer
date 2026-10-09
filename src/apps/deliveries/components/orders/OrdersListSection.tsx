@@ -63,7 +63,7 @@ const OrdersListSection = ({
   refreshing = false,
   onRefresh,
   showEndLabel = true,
-  emptySvgName = "noResultsFound",
+  emptySvgName = "emptyCart",
   titleWeight = "extraBold",
 }: Props) => {
   const { t } = useTranslation("deliveries");

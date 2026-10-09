@@ -31,7 +31,8 @@ export interface DeliveryDealsListingParams {
   tab?: DeliveryDealsTabType;
   category_ids?: string[];
   subcategory_id?: string;
-  price_tiers?: string;
+  // Hooks send a single-item array (serialised as price_tiers[]=x).
+  price_tiers?: string | string[];
   latitude?: number;
   longitude?: number;
   sort_by?: string;

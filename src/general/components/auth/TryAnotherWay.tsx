@@ -3,6 +3,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import Text from "../Text";
 import { useTheme } from "../../theme/theme";
+import type { ThemeColors } from "../../theme/colors";
 
 type Props = {
   onPress: () => void;
@@ -20,7 +21,7 @@ const TryAnotherWay = ({ onPress }: Props) => {
 
 export default TryAnotherWay;
 
-const styles = (colors) =>
+const styles = (colors: ThemeColors) =>
   StyleSheet.create({
     container: {
       padding: 8,

@@ -145,7 +145,7 @@ export default function WalletScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.walletBackground }]}>
-      {isDark ? <Image source={require('../../../assets/wallet/ambient_blue.png')} resizeMode="cover" style={styles.ambient} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" /> : null}
+      {isDark ? <Image source={require('../../../assets/wallet/ambient_blue.png')} resizeMode="cover" style={styles.ambient} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" /> : null}
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <WalletBalanceHeader balanceLabel={t('wallet_balance_label')} balance={wallet?.wallet_balance ?? 0} currency={currencyLabel} isLoading={isProfileLoading} isError={Boolean(profileError)} onViewDetails={handleSeeAll} onOpenSettings={() => navigation.navigate('Settings')} />
         {profileError ? (
@@ -219,7 +219,7 @@ export default function WalletScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  ambient: { height: 560, left: 0, opacity: 0.26, position: 'absolute', right: 0, top: 0, width: '100%' },
+  ambient: { pointerEvents: 'none', height: 560, left: 0, opacity: 0.26, position: 'absolute', right: 0, top: 0, width: '100%' },
   content: { alignSelf: 'center', maxWidth: 480, paddingBottom: 32, width: '100%' },
   transactionsHeading: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: 16, marginTop: 20, minHeight: 36 },
   sectionTitle: { fontSize: 18, lineHeight: 24 },

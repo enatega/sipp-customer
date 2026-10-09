@@ -66,7 +66,8 @@ const STORE_LIST_SKELETON: React.ReactNode =
 function normalizeListQuery(query: SeeAllRawQueryResult): SeeAllListQueryResult {
   return {
     data: (query.data ?? []) as SeeAllItem[],
-    totalCount: query.totalCount,
+    // Not every listing hook reports a total.
+    totalCount: 'totalCount' in query ? query.totalCount : undefined,
     isPending: query.isPending,
     isError: query.isError,
     error: query.error,

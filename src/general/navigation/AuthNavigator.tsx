@@ -11,8 +11,9 @@ import ForgetPasswordEnterOtp from "../screens/auth/forgetPasswordEnterOtp/Forge
 import EnterPhoneOtpLogin from "../screens/auth/enterPhoneOtpLogin/EnterPhoneOtpLogin";
 import EnterPhoneOtpSignup from "../screens/auth/enterPhoneOtpSignup/EnterPhoneOtpSignup";
 import EnterEmailOtpSignup from "../screens/auth/enterEmailOtpSignup/EnterEmailOtpSignup";
+import type { AuthStackParamList } from "./authTypes";
 
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 export default function AuthNavigator() {
   return (

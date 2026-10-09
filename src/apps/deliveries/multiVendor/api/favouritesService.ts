@@ -76,11 +76,12 @@ function isSuccessfulStreamResetError(error: ApiError): error is ApiError & {
         return false;
     }
 
-    const requestStatus = typeof error.data.requestStatus === 'number'
-        ? error.data.requestStatus
-        : Number(error.data.requestStatus);
-    const rawResponse = typeof error.data.rawResponse === 'string'
-        ? error.data.rawResponse.toLowerCase()
+    const details = error.data as Partial<ApiNetworkFailureDetails>;
+    const requestStatus = typeof details.requestStatus === 'number'
+        ? details.requestStatus
+        : Number(details.requestStatus);
+    const rawResponse = typeof details.rawResponse === 'string'
+        ? details.rawResponse.toLowerCase()
         : '';
 
     return requestStatus >= 200

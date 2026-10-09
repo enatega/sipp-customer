@@ -10,16 +10,17 @@ import { useTooManyRequestsModal } from "../../../hooks/useTooManyRequestsModal"
 import { useAuthStore } from "../../../stores/useAuthStore";
 import AppPopup from "../../../components/AppPopup";
 import { useNavigation } from "@react-navigation/native";
+import type { AuthNavigationProp, AuthScreenProps } from "../../../navigation/authTypes";
 import KeyboardDismissWrapper from "../../../components/KeyboardDismissWrapper";
 
-const ForgetPasswordEnterOtp = ({ route }) => {
+const ForgetPasswordEnterOtp = ({ route }: AuthScreenProps<"forgetPasswordEnterOtp">) => {
   const { emailId } = route.params;
   const { t } = useTranslation();
   const { setOtpSent, setOtpType } = useAuthStore();
   const rateLimitModal = useTooManyRequestsModal();
   const [hasError, sethasError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
-  const navigation = useNavigation();
+  const navigation = useNavigation<AuthNavigationProp>();
 
   const sendOtpMutation = useForgotPasswordSendOtp({
     onSuccess: (data) => {

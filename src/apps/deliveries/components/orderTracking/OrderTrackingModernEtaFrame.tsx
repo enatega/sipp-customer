@@ -175,7 +175,6 @@ export default function OrderTrackingModernEtaFrame({
 
       {!showDeliveredTitle && !isTerminalFailure ? (
         <Image
-          pointerEvents="none"
           resizeMode="contain"
           source={require("../../assets/images/tracking-bag.png")}
           style={styles.deliveryAccent}
@@ -245,6 +244,7 @@ const styles = StyleSheet.create({
     top: -10,
   },
   deliveryAccent: {
+    pointerEvents: 'none',
     height: 50,
     opacity: 0.96,
     position: "absolute",

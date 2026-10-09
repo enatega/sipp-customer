@@ -56,14 +56,14 @@ export default function OtpCodeInput({
         onFilled={onCodeFilled}
         theme={{
           containerStyle: styles.otpContainer,
-          pinCodeContainerStyle: [
+          pinCodeContainerStyle: StyleSheet.flatten([
             styles.pinCodeContainer,
             { borderColor: hasError ? colors.danger : colors.border },
-          ],
+          ]),
           focusedPinCodeContainerStyle: {
             borderColor: hasError ? colors.danger : colors.primary,
           },
-          pinCodeTextStyle: [styles.pinCodeText, { color: colors.text }],
+          pinCodeTextStyle: StyleSheet.flatten([styles.pinCodeText, { color: colors.text }]),
           focusStickStyle: {
             backgroundColor: hasError ? colors.danger : colors.primary,
           },

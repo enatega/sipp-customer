@@ -47,6 +47,7 @@ type Props = {
 };
 
 const AnimatedImage = Animated.createAnimatedComponent(RNImage);
+const HERO_IMAGE_ANDROID_PROPS = { renderToHardwareTextureAndroid: Platform.OS === 'android' };
 
 export default function StoreDetailListHeader({
   coverImageUrl,
@@ -152,7 +153,8 @@ export default function StoreDetailListHeader({
         <AnimatedImage
           accessibilityIgnoresInvertColors
           accessible={false}
-          renderToHardwareTextureAndroid={Platform.OS === 'android'}
+          // A View prop missing from ImageProps' types; Fabric still forwards it.
+          {...(HERO_IMAGE_ANDROID_PROPS as Record<string, unknown>)}
           resizeMode="cover"
           source={{ uri: coverImageUrl }}
           style={[styles.heroImage, heroImageStyle]}

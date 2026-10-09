@@ -34,7 +34,6 @@ export default function WalletLoyaltyStrip({ label, points, isLoading = false }:
       <Image
         source={require('../../assets/wallet/loyalty_gift.png')}
         resizeMode="contain"
-        pointerEvents="none"
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
         style={styles.art}
@@ -49,5 +48,5 @@ const styles = StyleSheet.create({
   copy: { gap: 1, marginLeft: 10, zIndex: 1 },
   label: { fontSize: 12, lineHeight: 16 },
   points: { fontSize: 18, fontVariant: ['tabular-nums'], lineHeight: 23 },
-  art: { bottom: -13, height: 98, position: 'absolute', right: 3, width: 98 },
+  art: { pointerEvents: 'none', bottom: -13, height: 98, position: 'absolute', right: 3, width: 98 },
 });

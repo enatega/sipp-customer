@@ -40,7 +40,6 @@ export default function WalletSheet({ visible, title, description, closeLabel, o
               source={decorativeImage}
               resizeMode="contain"
               style={styles.decorative}
-              pointerEvents="none"
               accessibilityElementsHidden
               importantForAccessibility="no-hide-descendants"
             />
@@ -63,7 +62,7 @@ export default function WalletSheet({ visible, title, description, closeLabel, o
 const styles = StyleSheet.create({
   overlay: { flex: 1, justifyContent: 'flex-end' },
   sheet: { borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingHorizontal: 20, paddingTop: 54 },
-  decorative: { height: 165, position: 'absolute', right: 40, top: -100, width: 178, zIndex: 2 },
+  decorative: { pointerEvents: 'none', height: 165, position: 'absolute', right: 40, top: -100, width: 178, zIndex: 2 },
   handle: { alignSelf: 'center', borderRadius: 3, height: 5, opacity: 0.55, position: 'absolute', top: 12, width: 36 },
   close: { alignItems: 'center', borderRadius: 22, height: 44, justifyContent: 'center', position: 'absolute', right: 16, top: 30, width: 44, zIndex: 3 },
   title: { fontSize: 22, lineHeight: 28, marginRight: 48 },

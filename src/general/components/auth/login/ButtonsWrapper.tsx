@@ -6,6 +6,7 @@ import OrDivider from "../OrDivider";
 import { useTheme } from "../../../theme/theme";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "@react-navigation/native";
+import type { AuthNavigationProp } from "../../../navigation/authTypes";
 import { useAuthStore } from "../../../stores/useAuthStore";
 import AppleLogin from "../AppleLogin";
 import GoogleLogin from "../GoogleLogin";
@@ -13,7 +14,7 @@ import GoogleLogin from "../GoogleLogin";
 const ButtonsWrapper = () => {
   const { colors } = useTheme();
   const { t } = useTranslation("general");
-  const navigation = useNavigation();
+  const navigation = useNavigation<AuthNavigationProp>();
   const { setFlowType } = useAuthStore();
   return (
     <View>
