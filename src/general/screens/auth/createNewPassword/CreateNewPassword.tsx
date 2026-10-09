@@ -16,6 +16,7 @@ import { useResetPassword } from "../../../hooks/useAuthMutations";
 import { showToast } from "../../../components/AppToast";
 import { useAuthStore } from "../../../stores/useAuthStore";
 import KeyboardDismissWrapper from "../../../components/KeyboardDismissWrapper";
+import { useShallow } from "zustand/react/shallow";
 
 const CreateNewPassword = ({ route }: AuthScreenProps<"createNewPassword">) => {
   const { userId, emailId } = route.params;
@@ -28,7 +29,7 @@ const CreateNewPassword = ({ route }: AuthScreenProps<"createNewPassword">) => {
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [hasError, setHasError] = useState(false);
   const [errorMeessage, seterrorMeessage] = useState<string>("");
-  const { setFlowType } = useAuthStore();
+  const { setFlowType } = useAuthStore(useShallow((state) => ({ setFlowType: state.setFlowType })));
 
   const resetPasswordMutation = useResetPassword({
     onSuccess: (data) => {

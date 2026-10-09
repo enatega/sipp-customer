@@ -12,11 +12,12 @@ import AppPopup from "../../../components/AppPopup";
 import { useNavigation } from "@react-navigation/native";
 import type { AuthNavigationProp, AuthScreenProps } from "../../../navigation/authTypes";
 import KeyboardDismissWrapper from "../../../components/KeyboardDismissWrapper";
+import { useShallow } from "zustand/react/shallow";
 
 const ForgetPasswordEnterOtp = ({ route }: AuthScreenProps<"forgetPasswordEnterOtp">) => {
   const { emailId } = route.params;
   const { t } = useTranslation();
-  const { setOtpSent, setOtpType } = useAuthStore();
+  const { setOtpSent, setOtpType } = useAuthStore(useShallow((state) => ({ setOtpSent: state.setOtpSent, setOtpType: state.setOtpType })));
   const rateLimitModal = useTooManyRequestsModal();
   const [hasError, sethasError] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");

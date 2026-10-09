@@ -10,12 +10,13 @@ import type { AuthNavigationProp } from "../../../navigation/authTypes";
 import { useAuthStore } from "../../../stores/useAuthStore";
 import AppleLogin from "../AppleLogin";
 import GoogleLogin from "../GoogleLogin";
+import { useShallow } from "zustand/react/shallow";
 
 const ButtonsWrapper = () => {
   const { colors } = useTheme();
   const { t } = useTranslation("general");
   const navigation = useNavigation<AuthNavigationProp>();
-  const { setFlowType } = useAuthStore();
+  const { setFlowType } = useAuthStore(useShallow((state) => ({ setFlowType: state.setFlowType })));
   return (
     <View>
       <View style={{ gap: 12 }}>

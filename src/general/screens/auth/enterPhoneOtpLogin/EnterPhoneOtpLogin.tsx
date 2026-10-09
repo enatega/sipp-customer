@@ -12,13 +12,14 @@ import { showToast } from "../../../components/AppToast";
 import { useAuthStore } from "../../../stores/useAuthStore";
 import KeyboardDismissWrapper from "../../../components/KeyboardDismissWrapper";
 import { getExpoPushTokenForAuth } from "../../../services/notifications/expoPushTokenService";
+import { useShallow } from "zustand/react/shallow";
 
 const EnterPhoneOtpLogin = () => {
   const navigation = useNavigation();
   const route = useRoute();
   const { phone } = route.params as { phone: string };
   const { t } = useTranslation();
-  const { otpType, setOtpType } = useAuthStore();
+  const { otpType, setOtpType } = useAuthStore(useShallow((state) => ({ otpType: state.otpType, setOtpType: state.setOtpType })));
   const rateLimitModal = useTooManyRequestsModal();
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [hasError, sethasError] = useState<boolean>(false);

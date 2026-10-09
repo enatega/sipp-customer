@@ -17,6 +17,7 @@ import { useTooManyRequestsModal } from '../../../hooks/useTooManyRequestsModal'
 import AppPopup from '../../../components/AppPopup';
 import { showToast } from '../../../components/AppToast';
 import KeyboardDismissWrapper from "../../../components/KeyboardDismissWrapper";
+import { useShallow } from "zustand/react/shallow";
 
 const Signup = () => {
   const { colors } = useTheme();
@@ -24,7 +25,7 @@ const Signup = () => {
   const { t } = useTranslation();
   const navigation = useNavigation();
 
-  const { formData, signupPhoneInput, setOtpType, setOtpSent, setSignupConflictFields } = useAuthStore();
+  const { formData, signupPhoneInput, setOtpType, setOtpSent, setSignupConflictFields } = useAuthStore(useShallow((state) => ({ formData: state.formData, signupPhoneInput: state.signupPhoneInput, setOtpType: state.setOtpType, setOtpSent: state.setOtpSent, setSignupConflictFields: state.setSignupConflictFields })));
   const rateLimitModal = useTooManyRequestsModal();
   const sendOtpMutation = useSignupSendOtp({
     onSuccess: () => {
