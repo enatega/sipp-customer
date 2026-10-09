@@ -76,11 +76,12 @@ function isSuccessfulStreamResetError(error: ApiError): error is ApiError & {
         return false;
     }
 
-    const requestStatus = typeof error.data.requestStatus === 'number'
-        ? error.data.requestStatus
-        : Number(error.data.requestStatus);
-    const rawResponse = typeof error.data.rawResponse === 'string'
-        ? error.data.rawResponse.toLowerCase()
+    const details = error.data as Partial<ApiNetworkFailureDetails>;
+    const requestStatus = typeof details.requestStatus === 'number'
+        ? details.requestStatus
+        : Number(details.requestStatus);
+    const rawResponse = typeof details.rawResponse === 'string'
+        ? details.rawResponse.toLowerCase()
         : '';
 
     return requestStatus >= 200
@@ -100,7 +101,7 @@ export const favouritesService = {
     },
 
     toggleFavourite: async (params: ToggleFavouriteParams): Promise<ToggleFavouriteResponse> => {
-        console.log('[Deliveries][Favourites] toggle request', params);
+        if (__DEV__) console.log('[Deliveries][Favourites] toggle request', params);
         const { storeId, nextIsFavorite } = params;
 
         try {
@@ -110,8 +111,8 @@ export const favouritesService = {
             );
             const normalizedResponse = normalizeToggleFavouriteResponse(response);
 
-            console.log('[Deliveries][Favourites] toggle raw response', response);
-            console.log('[Deliveries][Favourites] toggle normalized response', normalizedResponse);
+            if (__DEV__) console.log('[Deliveries][Favourites] toggle raw response', response);
+            if (__DEV__) console.log('[Deliveries][Favourites] toggle normalized response', normalizedResponse);
 
             return normalizedResponse;
         } catch (error) {
@@ -127,7 +128,7 @@ export const favouritesService = {
                     isFavorite: nextIsFavorite,
                 };
 
-                console.log('[Deliveries][Favourites] toggle fallback success', {
+                if (__DEV__) console.log('[Deliveries][Favourites] toggle fallback success', {
                     storeId,
                     nextIsFavorite,
                     errorData: error.data,

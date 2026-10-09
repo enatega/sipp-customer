@@ -4,7 +4,9 @@ import { useTheme } from "../../../theme/theme";
 import Text from "../../Text";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "@react-navigation/native";
+import type { AuthNavigationProp } from "../../../navigation/authTypes";
 import { useAuthStore } from "../../../stores/useAuthStore";
+import { useShallow } from "zustand/react/shallow";
 
 interface LoginFooterContentProps {
   leftText?: string;
@@ -17,8 +19,8 @@ const LoginFooterContent: React.FC<LoginFooterContentProps> = ({
 }) => {
   const { colors } = useTheme();
   const { t } = useTranslation("general");
-  const navigation = useNavigation();
-  const { setFlowType, resetSignup } = useAuthStore();
+  const navigation = useNavigation<AuthNavigationProp>();
+  const { setFlowType, resetSignup } = useAuthStore(useShallow((state) => ({ setFlowType: state.setFlowType, resetSignup: state.resetSignup })));
 
   const handleSignUpPress = () => {
     resetSignup();

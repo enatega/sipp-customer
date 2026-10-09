@@ -7,9 +7,10 @@ import Text from '../../Text';
 import { useAuthStore } from "../../../stores/useAuthStore";
 import { useTheme } from '../../../theme/theme';
 import { isValidSignupPassword } from '../../../utils/signupValidation';
+import { useShallow } from "zustand/react/shallow";
 
 export default function FieldsWrapper({ disabled = false }: { disabled?: boolean }) {
-  const { formData, setFormData, signupConflictFields, signupCountryCode, setSignupCountryCode, signupPhoneInput, setSignupPhoneInput } = useAuthStore();
+  const { formData, setFormData, signupConflictFields, signupCountryCode, setSignupCountryCode, signupPhoneInput, setSignupPhoneInput } = useAuthStore(useShallow((state) => ({ formData: state.formData, setFormData: state.setFormData, signupConflictFields: state.signupConflictFields, signupCountryCode: state.signupCountryCode, setSignupCountryCode: state.setSignupCountryCode, signupPhoneInput: state.signupPhoneInput, setSignupPhoneInput: state.setSignupPhoneInput })));
   const { colors } = useTheme();
   const { t } = useTranslation();
   const [focusedField, setFocusedField] = useState<string | null>(null);

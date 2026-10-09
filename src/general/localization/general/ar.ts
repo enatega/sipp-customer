@@ -1,5 +1,5 @@
 const ar = {
-  "app_name": "الزبون الخارق",
+  "app_name": "Sipp",
   "greeting": "صباح الخير",
   "greeting_morning": "صباح الخير",
   "greeting_afternoon": "مساء الخير",
@@ -757,7 +757,24 @@ const ar = {
   "contact_support_cta": "إنشاء تذكرة",
   "contact_address": "Santa Teresa, Provincia de Puntarenas, Puntarenas, Costa Rica",
   "contact_social_title": "اتبعونا",
-  "contact_error_generic": "ولم نتمكن من إكمال هذا العمل. حاول مرة أخرى"
+  "contact_error_generic": "ولم نتمكن من إكمال هذا العمل. حاول مرة أخرى",
+  "google_phone_title": "تحقّق من رقم جوالك",
+  "google_phone_description": "أضف رقم جوال لإكمال إنشاء حسابك في SIPP.",
+  "google_phone_code_sent": "أدخل الرمز المكوّن من أربعة أرقام المُرسَل إلى {{phone}}.",
+  "google_phone_code_error": "تحقّق من الرمز وحاول مرة أخرى.",
+  "google_phone_send": "إرسال رمز التحقق",
+  "google_phone_change": "تغيير الرقم",
+  "google_phone_verified": "تم التحقق من هاتفك.",
+  "google_login_success": "تم تسجيل الدخول بنجاح.",
+  "google_phone_error_title": "تعذّر التحقق من الهاتف",
+  "signup_heading": "أنشئ حسابك",
+  "signup_description": "سجّل لحفظ بيانات التوصيل والاستمتاع بدفع سلس وآمن.",
+  "signup_email_exists": "يوجد حساب مسجّل بهذا البريد الإلكتروني بالفعل.",
+  "signup_phone_exists": "رقم الهاتف هذا مسجّل بالفعل.",
+  "signup_request_error_title": "تعذّر إرسال رمز التحقق",
+  "signup_password_requirements": "استخدم 10 أحرف على الأقل تتضمن أحرفًا كبيرة وصغيرة ورقمًا.",
+  "profile_verified": "موثّق",
+  "profile_not_verified": "غير موثّق"
 };
 
 export default ar;

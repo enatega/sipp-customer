@@ -102,7 +102,7 @@ class SocketClient {
     });
 
     socket.onAny((event, ...args) => {
-      console.log('[socket] incoming event:', event, args);
+      if (__DEV__) console.log('[socket] incoming event:', event, args);
       socketLogger.info('Incoming socket event', {
         event,
         args,
@@ -228,7 +228,7 @@ class SocketClient {
     handler: (message: SocketReceivedMessage) => void,
   ): SocketSubscriptionCleanup {
     return this.subscribe<[SocketReceivedMessage]>('receive-message', (message) => {
-      console.log('Received socket message:', message);
+      if (__DEV__) console.log('Received socket message:', message);
       handler(message);
     });
   }
@@ -254,7 +254,7 @@ class SocketClient {
 
     existingHandlers.set(baseHandler, wrappedHandler);
     this.listenerRegistry.set(event, existingHandlers);
-    console.log('[socket] subscribing to event:', event, {
+    if (__DEV__) console.log('[socket] subscribing to event:', event, {
       connected: socket.connected,
       lifecycleState: this.lifecycleState,
       socketId: socket.id,
@@ -273,7 +273,7 @@ class SocketClient {
         return;
       }
 
-      console.log('[socket] unsubscribing from event:', event, {
+      if (__DEV__) console.log('[socket] unsubscribing from event:', event, {
         connected: socket.connected,
         lifecycleState: this.lifecycleState,
         socketId: socket.id,

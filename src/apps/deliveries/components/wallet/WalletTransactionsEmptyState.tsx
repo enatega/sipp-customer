@@ -15,7 +15,6 @@ export default function WalletTransactionsEmptyState({ compact = false }: Props)
         source={require('../../assets/wallet/empty_receipt.png')}
         resizeMode="contain"
         style={compact ? styles.artCompact : styles.art}
-        pointerEvents="none"
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
       />
@@ -29,8 +28,8 @@ const styles = StyleSheet.create({
   container: { alignItems: 'center', borderRadius: 18, borderWidth: 1, marginHorizontal: 16, paddingHorizontal: 24 },
   compact: { minHeight: 190, paddingBottom: 20, paddingTop: 12 },
   full: { flex: 1, marginTop: 20, paddingBottom: 30, paddingTop: 24 },
-  art: { height: 132, width: 132 },
-  artCompact: { height: 74, width: 74 },
+  art: { pointerEvents: 'none', height: 132, width: 132 },
+  artCompact: { pointerEvents: 'none', height: 74, width: 74 },
   title: { fontSize: 17, lineHeight: 23, marginTop: 4, textAlign: 'center' },
   description: { fontSize: 13, lineHeight: 19, marginTop: 4, textAlign: 'center' },
 });

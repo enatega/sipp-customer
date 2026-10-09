@@ -21,7 +21,7 @@ export function useToggleFavouriteMutation(options?: Options) {
         mutationFn: favouritesService.toggleFavourite,
         retry: false,
         onSuccess: (data, variables) => {
-            console.log('[Deliveries][Favourites] mutation success', {
+            if (__DEV__) console.log('[Deliveries][Favourites] mutation success', {
                 data,
                 variables,
             });

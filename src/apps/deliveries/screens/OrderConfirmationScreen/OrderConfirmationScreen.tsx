@@ -272,7 +272,7 @@ export default function OrderConfirmationScreen({ navigation, route }: Props) {
           ]}
         >
           <View style={[styles.heroCopy, { gap: spacing.sm }]}>
-            <Text accessibilityRole="header" style={styles.centeredText} variant="screenTitle" weight="bold">
+            <Text accessibilityRole="header" style={styles.centeredText} variant="title" weight="bold">
               {t(isStoreConfirmed ? 'order_confirmation_title' : 'order_confirmation_placed_title')}
             </Text>
             {orderReference ? (

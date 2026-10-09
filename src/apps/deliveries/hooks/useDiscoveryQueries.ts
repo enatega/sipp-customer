@@ -639,7 +639,7 @@ export function useNearbyStores(options?: UseNearbyStoresOptions) {
         search: options?.search?.trim() || undefined,
         ...nearbyStoreParams,
       } satisfies DeliveryNearbyStoresParams;
-      console.log('[deliveries-filters] nearby-request', requestPayload);
+      if (__DEV__) console.log('[deliveries-filters] nearby-request', requestPayload);
       return discoveryService.getNearbyStoresPage(requestPayload, options?.home ?? false);
     },
     initialPageParam: 0,

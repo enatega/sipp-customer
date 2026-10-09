@@ -20,6 +20,7 @@ import {
 } from '../storage/deliveriesBootstrapConfigStorage';
 import { getDeliveryModePreference } from '../navigation/deliveryModePreference';
 import { isDeliveriesDemoModeEnabled } from '../navigation/deliveryDemoMode';
+import { useShallow } from 'zustand/react/shallow';
 
 type DeliveriesBootstrapConfig = DeliveriesBootstrapConfigCache;
 
@@ -72,7 +73,18 @@ export function useInitializeDeliveriesConfig() {
     setDeliveriesConfigLoading,
     setDeliveriesConfigError,
     markDeliveriesConfigLoaded,
-  } = useAppConfigStore();
+  } = useAppConfigStore(
+    useShallow((state) => ({
+      deliveries: state.deliveries,
+      setDeliveriesPlatformConfiguration: state.setDeliveriesPlatformConfiguration,
+      setDeliveriesAppSettings: state.setDeliveriesAppSettings,
+      setDeliveriesDeliveryMode: state.setDeliveriesDeliveryMode,
+      setDeliveriesCurrency: state.setDeliveriesCurrency,
+      setDeliveriesConfigLoading: state.setDeliveriesConfigLoading,
+      setDeliveriesConfigError: state.setDeliveriesConfigError,
+      markDeliveriesConfigLoaded: state.markDeliveriesConfigLoaded,
+    })),
+  );
   const [isHydratingCache, setIsHydratingCache] = useState(true);
   const [hasCachedConfig, setHasCachedConfig] = useState(false);
 

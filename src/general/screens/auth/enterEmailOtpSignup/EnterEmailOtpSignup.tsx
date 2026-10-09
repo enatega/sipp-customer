@@ -12,12 +12,13 @@ import { useTooManyRequestsModal } from "../../../hooks/useTooManyRequestsModal"
 import AppPopup from "../../../components/AppPopup";
 import { showToast } from "../../../components/AppToast";
 import KeyboardDismissWrapper from "../../../components/KeyboardDismissWrapper";
+import { useShallow } from "zustand/react/shallow";
 
 const EnterEmailOtpSignup = () => {
   const navigation = useNavigation();
   const { t } = useTranslation();
 
-  const { formData, setOtpType, otpType, setOtpSent, setSignupConflictFields } = useAuthStore();
+  const { formData, setOtpType, otpType, setOtpSent, setSignupConflictFields } = useAuthStore(useShallow((state) => ({ formData: state.formData, setOtpType: state.setOtpType, otpType: state.otpType, setOtpSent: state.setOtpSent, setSignupConflictFields: state.setSignupConflictFields })));
   const rateLimitModal = useTooManyRequestsModal();
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [hasError, sethasError] = useState<boolean>(false);

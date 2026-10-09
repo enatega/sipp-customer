@@ -6,15 +6,17 @@ import OrDivider from "../OrDivider";
 import { useTheme } from "../../../theme/theme";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "@react-navigation/native";
+import type { AuthNavigationProp } from "../../../navigation/authTypes";
 import { useAuthStore } from "../../../stores/useAuthStore";
 import AppleLogin from "../AppleLogin";
 import GoogleLogin from "../GoogleLogin";
+import { useShallow } from "zustand/react/shallow";
 
 const ButtonsWrapper = () => {
   const { colors } = useTheme();
   const { t } = useTranslation("general");
-  const navigation = useNavigation();
-  const { setFlowType } = useAuthStore();
+  const navigation = useNavigation<AuthNavigationProp>();
+  const { setFlowType } = useAuthStore(useShallow((state) => ({ setFlowType: state.setFlowType })));
   return (
     <View>
       <View style={{ gap: 12 }}>

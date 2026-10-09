@@ -3,6 +3,7 @@ import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { useTheme } from "../../../theme/theme";
 import ScreenHeader from "../../../components/ScreenHeader";
 import { useNavigation } from "@react-navigation/native";
+import type { AuthNavigationProp, AuthScreenProps } from "../../../navigation/authTypes";
 import SvgAndTextWrapper from "../../../components/auth/general/SvgAndTextWrapper";
 import useStyles from "./styles";
 import Footer from "../../../components/Footer";
@@ -34,14 +35,14 @@ const resolveLoginErrorMessage = (
   return message;
 };
 
-const EnterPassword = ({ route }) => {
+const EnterPassword = ({ route }: AuthScreenProps<"enterPassword">) => {
   const {
     emailId = "",
     prefilledPassword = "",
     rememberedFromStore = false,
   } = route.params ?? {};
   const { colors } = useTheme();
-  const navigation = useNavigation();
+  const navigation = useNavigation<AuthNavigationProp>();
   const styles = useStyles(colors);
   const { t } = useTranslation();
   const [password, setPassword] = useState(prefilledPassword);

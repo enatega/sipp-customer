@@ -9,6 +9,14 @@ import { resetToAuth } from '../navigation/rootNavigation';
 const TOKEN_KEY = 'super_app_auth_token';
 const REFRESH_TOKEN_KEY = 'super_app_refresh_token';
 let isHandlingSessionExpiry = false;
+let sessionExpiredHandler: (() => Promise<void>) | null = null;
+
+// Registered at app start so an expired session gets the same full cleanup as
+// a manual logout (socket, stored user, query cache) without this module
+// importing the auth layer, which itself depends on apiClient.
+export function setSessionExpiredHandler(handler: (() => Promise<void>) | null) {
+  sessionExpiredHandler = handler;
+}
 
 function redirectToAuthWithRetry() {
   const navigated = resetToAuth();
@@ -54,6 +62,7 @@ type ApiErrorResponseData = {
 type ExtendedAxiosRequestConfig = AxiosRequestConfig & {
   skipSessionExpiryHandling?: boolean;
   suppressTransientSuccessStreamWarning?: boolean;
+  silentStatuses?: number[];
 };
 
 function sanitizeHeaders(headers: unknown): Record<string, unknown> | undefined {
@@ -74,6 +83,64 @@ function sanitizeHeaders(headers: unknown): Record<string, unknown> | undefined 
       return [key, value];
     }),
   );
+}
+
+const SENSITIVE_BODY_KEYS = new Set([
+  'password',
+  'newpassword',
+  'oldpassword',
+  'currentpassword',
+  'confirmpassword',
+  'otp',
+  'code',
+  'token',
+  'accesstoken',
+  'refreshtoken',
+  'idtoken',
+  'identitytoken',
+  'authorizationcode',
+  'cardnumber',
+  'cvc',
+  'cvv',
+]);
+
+function redactSensitiveValues(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(redactSensitiveValues);
+  }
+
+  if (!value || typeof value !== 'object') {
+    return value;
+  }
+
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>).map(([key, entryValue]) => [
+      key,
+      SENSITIVE_BODY_KEYS.has(key.toLowerCase()) ? '[redacted]' : redactSensitiveValues(entryValue),
+    ]),
+  );
+}
+
+// Request bodies are logged and attached to ApiError on failure; never let
+// passwords, OTPs or tokens leave this module in plain text.
+function sanitizeRequestBody(data: unknown): unknown {
+  if (data === undefined || data === null) {
+    return data;
+  }
+
+  if (typeof data === 'string') {
+    try {
+      return redactSensitiveValues(JSON.parse(data) as unknown);
+    } catch {
+      return '[unparsed body]';
+    }
+  }
+
+  if (typeof FormData !== 'undefined' && data instanceof FormData) {
+    return '[form-data]';
+  }
+
+  return redactSensitiveValues(data);
 }
 
 function isLikelyAuthExpiry(status: number, responseData?: ApiErrorResponseData): boolean {
@@ -329,7 +396,11 @@ httpClient.interceptors.response.use(
       isHandlingSessionExpiry = true;
 
       try {
-        await tokenManager.clearAll();
+        if (sessionExpiredHandler) {
+          await sessionExpiredHandler();
+        } else {
+          await tokenManager.clearAll();
+        }
         redirectToAuthWithRetry();
       } finally {
         isHandlingSessionExpiry = false;
@@ -357,7 +428,7 @@ function toApiError(error: unknown): ApiError {
       baseURL: axiosError.config?.baseURL,
       timeout: axiosError.config?.timeout,
       params: axiosError.config?.params,
-      data: axiosError.config?.data,
+      data: sanitizeRequestBody(axiosError.config?.data),
       headers: sanitizeHeaders(axiosError.config?.headers),
     };
 
@@ -419,7 +490,9 @@ function toApiError(error: unknown): ApiError {
             : 'NETWORK_ERROR'),
         networkFailureDetails,
       );
-    } else if (!(status === 400 && axiosError.config?.url === '/api/v1/apps/deliveries/wallet/topup')) {
+    } else if (
+      !(axiosError.config as ExtendedAxiosRequestConfig | undefined)?.silentStatuses?.includes(status)
+    ) {
       console.error('[API] request failed with response', {
         ...requestDetails,
         message: axiosError.message,
@@ -448,6 +521,8 @@ export type ApiRequestOptions = {
   skipSessionExpiryHandling?: boolean;
   skipAuth?: boolean;
   suppressTransientSuccessStreamWarning?: boolean;
+  /** Expected error statuses the caller handles itself; not logged. */
+  silentStatuses?: number[];
   headers?: Record<string, string>;
   signal?: AbortSignal;
 };
@@ -462,6 +537,7 @@ async function request<T>(
       signal: options.signal ?? config.signal,
       skipSessionExpiryHandling: options.skipSessionExpiryHandling,
       suppressTransientSuccessStreamWarning: options.suppressTransientSuccessStreamWarning,
+      silentStatuses: options.silentStatuses,
       headers: options.skipAuth
         ? { ...config.headers, ...options.headers, 'x-skip-auth': '1' }
         : { ...config.headers, ...options.headers },

@@ -1,5 +1,5 @@
 const fr = {
-  app_name: 'Application Super Client',
+  app_name: 'Sipp',
   google_phone_title: 'Vérifiez votre numéro de mobile',
   google_phone_description: 'Ajoutez un numéro pour terminer la création de votre compte SIPP.',
   google_phone_code_sent: 'Saisissez le code à quatre chiffres envoyé au {{phone}}.',

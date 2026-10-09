@@ -20,7 +20,8 @@ import FavouriteFoodResultCard from '../../components/discovery/FavouriteFoodRes
 import { useTheme } from '../../../../general/theme/theme';
 import { searchService } from '../../api/searchService';
 
-type NavigationProp = NativeStackNavigationProp<DeliveriesStackParamList>;
+// Rendered inside stacks that also register the See All routes (e.g. SeeAllMapView).
+type NavigationProp = NativeStackNavigationProp<DeliveriesStackParamList & DeliveriesSeeAllParamList>;
 type SeeAllRouteProp = RouteProp<DeliveriesSeeAllParamList, 'SeeAllScreen'>;
 
 export default function DeliveriesSeeAllScreen() {

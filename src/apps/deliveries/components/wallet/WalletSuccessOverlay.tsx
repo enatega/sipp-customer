@@ -31,7 +31,6 @@ export default function WalletSuccessOverlay({ visible, kind, amount, currency, 
             source={kind === 'topup' ? require('../../assets/wallet/success_wallet.png') : require('../../assets/wallet/success_check.png')}
             resizeMode="contain"
             style={styles.art}
-            pointerEvents="none"
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
           />
@@ -70,7 +69,7 @@ export default function WalletSuccessOverlay({ visible, kind, amount, currency, 
 const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: 18 },
   center: { alignItems: 'center', flex: 1, justifyContent: 'center' },
-  art: { height: 245, width: 245 },
+  art: { pointerEvents: 'none', height: 245, width: 245 },
   title: { fontSize: 28, lineHeight: 34, marginTop: 10, textAlign: 'center' },
   description: { fontSize: 14, lineHeight: 20, marginTop: 10, opacity: 0.86, textAlign: 'center' },
   balanceCard: { alignSelf: 'stretch', borderRadius: 18, borderWidth: 1, marginTop: 28, padding: 18 },

@@ -1,5 +1,5 @@
 const de = {
-  "app_name": "Super Customer App App",
+  "app_name": "Sipp",
   "greeting": "Guten Morgen 👋",
   "greeting_morning": "Guten Morgen 👋",
   "greeting_afternoon": "Guten Nachmittag 👋",
@@ -757,7 +757,24 @@ const de = {
   "contact_support_cta": "Erstellen Sie ein Ticket",
   "contact_address": "Santa Teresa, Provincia de Puntarenas, Puntarenas, Costa Rica",
   "contact_social_title": "Folgen Sie uns",
-  "contact_error_generic": "Wir konnten diese Aktion nicht abschließen. Bitte versuchen Sie es noch einmal."
+  "contact_error_generic": "Wir konnten diese Aktion nicht abschließen. Bitte versuchen Sie es noch einmal.",
+  "google_phone_title": "Bestätige deine Handynummer",
+  "google_phone_description": "Füge eine Handynummer hinzu, um dein SIPP-Konto fertig zu erstellen.",
+  "google_phone_code_sent": "Gib den vierstelligen Code ein, der an {{phone}} gesendet wurde.",
+  "google_phone_code_error": "Prüfe den Code und versuche es erneut.",
+  "google_phone_send": "Bestätigungscode senden",
+  "google_phone_change": "Nummer ändern",
+  "google_phone_verified": "Deine Telefonnummer ist bestätigt.",
+  "google_login_success": "Erfolgreich angemeldet.",
+  "google_phone_error_title": "Telefon konnte nicht bestätigt werden",
+  "signup_heading": "Konto erstellen",
+  "signup_description": "Registriere dich, um deine Lieferdaten zu speichern und schnell und sicher zu bezahlen.",
+  "signup_email_exists": "Es gibt bereits ein Konto mit dieser E-Mail-Adresse.",
+  "signup_phone_exists": "Diese Telefonnummer ist bereits registriert.",
+  "signup_request_error_title": "Bestätigungscode konnte nicht gesendet werden",
+  "signup_password_requirements": "Verwende mindestens 10 Zeichen mit Groß- und Kleinbuchstaben und einer Zahl.",
+  "profile_verified": "Bestätigt",
+  "profile_not_verified": "Nicht bestätigt"
 };
 
 export default de;

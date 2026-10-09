@@ -255,7 +255,8 @@ export default function MainContainer({
 
     if (
       discountedPrice === null &&
-      hasNumericDiscount
+      hasNumericDiscount &&
+      dealAmount !== null
     ) {
       if (normalizedDealType === "percentage") {
         discountedPrice = Math.max(

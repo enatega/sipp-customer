@@ -24,7 +24,7 @@ function formatFee(value: number | undefined, currencyLabel: string) {
     return null;
   }
 
-  return `${currencyLabel} ${value}`;
+  return `${currencyLabel} ${value}`.trim();
 }
 
 function formatDistance(value?: number) {

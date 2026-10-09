@@ -8,7 +8,7 @@ export type CurrentCoordinates = {
   longitude: number;
 };
 
-function toCoordinates(position: Location.LocationObject | Location.LocationLastKnownObject): CurrentCoordinates {
+function toCoordinates(position: Location.LocationObject): CurrentCoordinates {
   return {
     latitude: position.coords.latitude,
     longitude: position.coords.longitude,

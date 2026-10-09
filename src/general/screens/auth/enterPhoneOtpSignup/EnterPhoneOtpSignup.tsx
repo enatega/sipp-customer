@@ -12,12 +12,13 @@ import { showToast } from "../../../components/AppToast";
 import { useAuthStore, type OtpType } from "../../../stores/useAuthStore";
 import { resolveSignupConflictFields } from '../../../utils/signupValidation';
 import KeyboardDismissWrapper from "../../../components/KeyboardDismissWrapper";
+import { useShallow } from "zustand/react/shallow";
 
 const EnterPhoneOtpSignup = () => {
   const navigation = useNavigation();
   const { t } = useTranslation();
 
-  const { formData, setOtpType, otpType, setOtpSent, setSignupConflictFields } = useAuthStore();
+  const { formData, setOtpType, otpType, setOtpSent, setSignupConflictFields } = useAuthStore(useShallow((state) => ({ formData: state.formData, setOtpType: state.setOtpType, otpType: state.otpType, setOtpSent: state.setOtpSent, setSignupConflictFields: state.setSignupConflictFields })));
   const rateLimitModal = useTooManyRequestsModal();
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [hasError, sethasError] = useState<boolean>(false);

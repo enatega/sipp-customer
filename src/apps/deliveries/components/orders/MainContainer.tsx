@@ -27,7 +27,7 @@ const MainOrdersContainer = () => {
     >
       <View style={[styles.content, { paddingHorizontal: gutter }]}> 
         <View style={[styles.intro, { marginBottom: spacing.xl }]}> 
-          <Text color={colors.textStrong} variant="screenTitle" weight="extraBold">
+          <Text color={colors.textStrong} variant="title" weight="extraBold">
             {t("orders_screen_title")}
           </Text>
           <Text color={colors.textSubtle} variant="supporting" weight="medium">

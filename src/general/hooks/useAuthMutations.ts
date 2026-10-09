@@ -34,6 +34,7 @@ import { redirectToPendingAppIfNeeded } from "../navigation/rootNavigation";
 import { clearActiveAppRoute } from "../navigation/pendingAppRedirect";
 import { socketClient } from "../services/socket";
 import { useAuthStore } from "../stores/useAuthStore";
+import { queryClient } from "../providers/QueryProvider";
 
 async function finalizeAuthSession(
   queryClient: ReturnType<typeof useQueryClient>,
@@ -59,6 +60,21 @@ export async function clearStoredAuthSession() {
   await authSession.clearSession();
   useAuthStore.getState().resetSignup();
   await clearActiveAppRoute();
+}
+
+// Full local sign-out: stored session plus every cached query, so the next
+// person to sign in on this device never sees the previous user's orders,
+// wallet, cards or addresses while refetches are in flight.
+export async function signOutLocally() {
+  await clearStoredAuthSession();
+  // Queries only: clearing the mutation cache would drop the in-flight logout
+  // mutation and skip its callbacks.
+  queryClient.getQueryCache().clear();
+  queryClient.setQueryData(authKeys.session(), {
+    token: null,
+    user: null,
+    profiles: null,
+  });
 }
 
 export function useSignupSendOtp(
@@ -150,7 +166,7 @@ export function useLogout(options?: UseMutationOptions<void, ApiError, void>) {
   const queryClient = useQueryClient();
 
   return useMutation<void, ApiError, void>({
-    mutationFn: clearStoredAuthSession,
+    mutationFn: signOutLocally,
     ...options,
     onSuccess: async (_data, variables, onMutateResult, context) => {
       queryClient.setQueryData(authKeys.session(), {

@@ -281,8 +281,6 @@ const styles = StyleSheet.create({
   addressChip: {
     borderRadius: 16,
     maxWidth: 300,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
     paddingHorizontal: 14,
     paddingVertical: 10,
   },

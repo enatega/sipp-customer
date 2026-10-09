@@ -12,7 +12,7 @@ type Options = {
   onSuccess?: (data: PlaceOrderResponse) => void | Promise<void>;
 };
 
-const ENABLE_PLACE_ORDER_DEBUG_LOGS = true;
+const ENABLE_PLACE_ORDER_DEBUG_LOGS = __DEV__;
 
 export function usePlaceOrder(options?: Options) {
   const queryClient = useQueryClient();

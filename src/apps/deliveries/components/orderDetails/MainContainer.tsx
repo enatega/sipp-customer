@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import ScreenHeader from "../../../../general/components/ScreenHeader";
@@ -126,7 +126,7 @@ export default function MainContainer({ navigation, orderId }: Props) {
         ? "danger"
         : "warning";
 
-  const cardStyle = [
+  const cardStyle: StyleProp<ViewStyle> = [
     styles.card,
     elevation.subtle,
     {
@@ -135,7 +135,7 @@ export default function MainContainer({ navigation, orderId }: Props) {
       borderRadius: shape.radius.hero,
       padding: spacing.lg,
     },
-  ] as const;
+  ];
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.canvas }]}> 

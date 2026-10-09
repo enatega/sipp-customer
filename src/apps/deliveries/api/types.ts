@@ -263,6 +263,7 @@ export interface DeliveryStoreDetailsStore {
     deliveryTime?: number | string | null;
     minimumOrder?: number | null;
     baseFee?: number | null;
+    distanceKm?: number | null;
     shopTypeId?: string | null;
     shopTypeName?: string | null;
     deal?: string | null;

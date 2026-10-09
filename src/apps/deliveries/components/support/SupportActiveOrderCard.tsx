@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import Image from '../../../../general/components/Image';
 import Button from '../../../../general/components/Button';
 import Text from '../../../../general/components/Text';
 import { useTheme } from '../../../../general/theme/theme';

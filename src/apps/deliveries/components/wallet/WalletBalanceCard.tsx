@@ -40,7 +40,6 @@ export default function WalletBalanceCard({ balance, balanceLabel, currency, act
         source={require('../../assets/wallet/hero_wallet_stack.png')}
         resizeMode="contain"
         style={styles.illustration}
-        pointerEvents="none"
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
       />
@@ -74,7 +73,7 @@ export default function WalletBalanceCard({ balance, balanceLabel, currency, act
 
 const styles = StyleSheet.create({
   hero: { borderRadius: 28, height: 164, marginHorizontal: 16, marginTop: 4, overflow: 'hidden', padding: 20 },
-  illustration: { height: 198, position: 'absolute', right: -20, top: -13, width: 270 },
+  illustration: { pointerEvents: 'none', height: 198, position: 'absolute', right: -20, top: -13, width: 270 },
   label: { fontSize: 14, lineHeight: 19, zIndex: 1 },
   balanceRow: { alignItems: 'center', flexDirection: 'row', gap: 8, marginTop: 9, zIndex: 1 },
   balance: { flexShrink: 1, fontSize: 36, fontVariant: ['tabular-nums'], letterSpacing: -0.7, lineHeight: 42, textShadowRadius: 6 },

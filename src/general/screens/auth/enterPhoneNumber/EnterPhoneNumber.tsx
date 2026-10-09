@@ -3,6 +3,7 @@ import { View } from "react-native";
 import { useTheme } from "../../../theme/theme";
 import ScreenHeader from "../../../components/ScreenHeader";
 import { useNavigation } from "@react-navigation/native";
+import type { AuthNavigationProp } from "../../../navigation/authTypes";
 import SvgAndTextWrapper from "../../../components/auth/general/SvgAndTextWrapper";
 import useStyles from "./styles";
 import Footer from "../../../components/Footer";
@@ -13,7 +14,7 @@ import KeyboardDismissWrapper from "../../../components/KeyboardDismissWrapper";
 
 const EnterPhoneNumber = () => {
   const { colors } = useTheme();
-  const navigation = useNavigation();
+  const navigation = useNavigation<AuthNavigationProp>();
   const styles = useStyles(colors);
   const { t } = useTranslation();
   const [phoneNumber, setPhoneNumber] = useState("");
