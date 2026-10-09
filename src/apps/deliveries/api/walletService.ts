@@ -62,7 +62,8 @@ export function useWalletTopUp() {
 
   return useMutation({
     mutationFn: (input: { amount: number; currency: string; paymentMethodId: string }) =>
-      apiClient.post<WalletTopUpResponse>('/api/v1/apps/deliveries/wallet/topup', input),
+      // A 400 here is an expected business error shown to the user, not a fault.
+      apiClient.post<WalletTopUpResponse>('/api/v1/apps/deliveries/wallet/topup', input, { silentStatuses: [400] }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: walletSavedCardsKeys.all });
     },

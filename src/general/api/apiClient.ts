@@ -62,6 +62,7 @@ type ApiErrorResponseData = {
 type ExtendedAxiosRequestConfig = AxiosRequestConfig & {
   skipSessionExpiryHandling?: boolean;
   suppressTransientSuccessStreamWarning?: boolean;
+  silentStatuses?: number[];
 };
 
 function sanitizeHeaders(headers: unknown): Record<string, unknown> | undefined {
@@ -489,7 +490,9 @@ function toApiError(error: unknown): ApiError {
             : 'NETWORK_ERROR'),
         networkFailureDetails,
       );
-    } else if (!(status === 400 && axiosError.config?.url === '/api/v1/apps/deliveries/wallet/topup')) {
+    } else if (
+      !(axiosError.config as ExtendedAxiosRequestConfig | undefined)?.silentStatuses?.includes(status)
+    ) {
       console.error('[API] request failed with response', {
         ...requestDetails,
         message: axiosError.message,
@@ -518,6 +521,8 @@ export type ApiRequestOptions = {
   skipSessionExpiryHandling?: boolean;
   skipAuth?: boolean;
   suppressTransientSuccessStreamWarning?: boolean;
+  /** Expected error statuses the caller handles itself; not logged. */
+  silentStatuses?: number[];
   headers?: Record<string, string>;
   signal?: AbortSignal;
 };
@@ -532,6 +537,7 @@ async function request<T>(
       signal: options.signal ?? config.signal,
       skipSessionExpiryHandling: options.skipSessionExpiryHandling,
       suppressTransientSuccessStreamWarning: options.suppressTransientSuccessStreamWarning,
+      silentStatuses: options.silentStatuses,
       headers: options.skipAuth
         ? { ...config.headers, ...options.headers, 'x-skip-auth': '1' }
         : { ...config.headers, ...options.headers },
