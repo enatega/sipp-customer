@@ -24,6 +24,12 @@ type Props = {
 
 type BannerActionHandler = (banner: DeliveryBanner) => void;
 
+function resolveBannerHeight(banner: DeliveryBanner, width: number, isHomeVariant: boolean): number {
+  if (isHomeVariant) return Math.max(120, width / 3);
+  if (banner.bannerImageLink && !banner.title?.trim() && !banner.description?.trim()) return width / 3;
+  return 176;
+}
+
 function hasBannerDestination(banner: DeliveryBanner): boolean {
   switch (banner.actionType) {
     case 'store':
@@ -190,11 +196,9 @@ export default function SpecialOffersBanner({
         renderItem={({ item }) => (
           <SpecialOffersBannerCard
             banner={item}
-            height={
-              item.bannerImageLink && !item.title?.trim() && !item.description?.trim()
-                ? bannerWidth / 3
-                : isHomeVariant ? 164 : 176
-            }
+            height={resolveBannerHeight(item, bannerWidth, isHomeVariant)}
+            isCompact={isHomeVariant}
+            hasPagination={banners.length > 1}
             onPress={hasBannerDestination(item) ? () => handleBannerPress(item) : undefined}
             sidePadding={bannerSidePadding}
             width={bannerWidth}
@@ -204,29 +208,29 @@ export default function SpecialOffersBanner({
 
       {banners.length > 1 ? (
         <View
+          pointerEvents="none"
           style={[
             styles.bannerDots,
-            { gap: spacing.xs, marginTop: isHomeVariant ? spacing.xs : spacing.sm },
+            { bottom: spacing.sm, left: bannerSidePadding, right: bannerSidePadding },
           ]}
         >
-          {banners.map((item, index) => (
-            <View
-              key={item.id}
-              style={[
-                styles.bannerDot,
-                index === activeBannerIndex
-                  ? styles.bannerDotActive
-                  : styles.bannerDotInactive,
-                {
-                  backgroundColor:
-                    index === activeBannerIndex
-                      ? colors.primary
-                      : colors.iconDisabled,
-                  borderRadius: shape.radius.pill,
-                },
-              ]}
-            />
-          ))}
+          <View style={[styles.dotTrack, { backgroundColor: colors.surfaceElevated, borderRadius: shape.radius.pill, gap: spacing.xs, paddingHorizontal: spacing.sm, paddingVertical: spacing.xs }]}>
+            {banners.map((item, index) => (
+              <View
+                key={item.id}
+                style={[
+                  styles.bannerDot,
+                  index === activeBannerIndex
+                    ? styles.bannerDotActive
+                    : styles.bannerDotInactive,
+                  {
+                    backgroundColor: index === activeBannerIndex ? colors.primary : colors.iconDisabled,
+                    borderRadius: shape.radius.pill,
+                  },
+                ]}
+              />
+            ))}
+          </View>
         </View>
       ) : null}
     </View>
@@ -238,8 +242,14 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   bannerDots: {
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',
+    position: 'absolute',
+  },
+  dotTrack: {
+    alignItems: 'center',
+    flexDirection: 'row',
   },
   bannerDot: {
     height: 6,

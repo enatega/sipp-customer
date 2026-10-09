@@ -24,6 +24,7 @@ import { useDeliveriesCurrencyLabel } from "../../../../general/stores/useAppCon
 import { useWindowClass } from "../../../../general/hooks/useWindowClass";
 import { useTheme } from "../../../../general/theme/theme";
 import Text from "../../../../general/components/Text";
+import { showToast } from "../../../../general/components/AppToast";
 import type { DeliveriesStackParamList } from "../../navigation/types";
 import type {
   ProductInfoCustomizationsResponse,
@@ -38,7 +39,6 @@ import ItemInfo from "./ItemInfo";
 import ItemNutritions from "./ItemNutritions";
 import ItemSizes from "./ItemSizes";
 import ProductInfoCustomizationsLoadingSkeleton from "./ProductInfoCustomizationsLoadingSkeleton";
-import ProductAddedToCartModal from "./ProductAddedToCartModal";
 import ProductMediaActionButton from "./ProductMediaActionButton";
 import useProductSelectionState from "./useProductSelectionState";
 import useProductInfoCartFlow from "./useProductInfoCartFlow";
@@ -79,7 +79,6 @@ export default function MainContainer({
   const { width } = useWindowDimensions();
   const { gutter } = useWindowClass();
   const [quantity, setQuantity] = useState(1);
-  const [isAddedToCartVisible, setIsAddedToCartVisible] = useState(false);
   const [showSelectionErrors, setShowSelectionErrors] = useState(false);
   const [isCompactHeader, setIsCompactHeader] = useState(false);
   const scrollY = useSharedValue(0);
@@ -94,13 +93,13 @@ export default function MainContainer({
     width - gutter * 2,
     layout.contentMaxWidth.readable,
   );
-  const handleViewCart = useCallback(() => {
-    setIsAddedToCartVisible(false);
-    navigation.navigate("Cart");
-  }, [navigation]);
   const handleAddedToCart = useCallback(() => {
-    setIsAddedToCartVisible(true);
-  }, []);
+    showToast.success(
+      t("cart_add_success_title"),
+      t("cart_add_success_message", { product: productInfoData.name, quantity }),
+    );
+    if (navigation.canGoBack()) navigation.goBack();
+  }, [navigation, productInfoData.name, quantity, t]);
 
   const handleScroll = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -554,19 +553,6 @@ export default function MainContainer({
         onIncrement={() => setQuantity((current) => current + 1)}
         quantity={quantity}
         totalPriceLabel={formatPrice(totalPrice)}
-      />
-
-      <ProductAddedToCartModal
-        continueLabel={t("cart_add_success_continue_shopping")}
-        goToCartLabel={t("cart_add_success_go_to_cart")}
-        message={t("cart_add_success_message", {
-          product: productInfoData.name,
-          quantity,
-        })}
-        onContinueShopping={() => setIsAddedToCartVisible(false)}
-        onGoToCart={handleViewCart}
-        title={t("cart_add_success_title")}
-        visible={isAddedToCartVisible}
       />
 
       <CartStoreConflictModal

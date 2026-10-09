@@ -68,6 +68,8 @@ export interface DeliveryShopTypeProduct {
     deal?: string | null;
     dealType?: string | null;
     dealAmount?: number | null;
+    searchQueryId?: string;
+    searchPosition?: number;
 }
 
 export interface DeliveryShopTypeProductsParams {

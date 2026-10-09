@@ -50,7 +50,7 @@ export default function HomeShopTypeStoreSection({ shopTypeId, title, onClosedSt
     /> : <HorizontalList
       data={data}
       keyExtractor={(item) => item.storeId}
-      contentContainerStyle={{ paddingBottom: spacing.lg, paddingRight: gutter, paddingTop: spacing.xs }}
+      contentContainerStyle={{ paddingBottom: spacing.xs, paddingRight: gutter, paddingTop: spacing.xs }}
       ItemSeparatorComponent={() => <View style={{ width: spacing.md }} />}
       renderItem={({ item }) => <StoreCard
         store={item}

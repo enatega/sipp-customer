@@ -11,13 +11,12 @@ import DiscoveryListingHeader from '../../components/discovery/DiscoveryListingH
 import DeliveriesSeeAllFilterSheet from '../../screens/SeeAllScreen/components/DeliveriesSeeAllFilterSheet';
 import SelectedFilterChips from '../../components/filters/SelectedFilterChips';
 import DeliveriesSectionEmptyState from '../../components/home/DeliveriesSectionEmptyState';
-import VerticalStoreListSkeleton from '../../components/VerticalStoreListSkeleton';
 import StoreCard from '../../components/storeCard/StoreCard';
 import ClosedStoreMenuPopup from '../../components/storeCard/ClosedStoreMenuPopup';
 import type { DeliveryNearbyStore } from '../../api/types';
 import useGenericListFilters from '../../hooks/filterablePaginatedList/useGenericListFilters';
-import { useFilterValues, useNearbyStores, useShopTypeCategories, useShopTypes } from '../../hooks';
-import { MainSeeAllCategoriesSection, MainSeeAllShopTypeTabs } from '../components/MainSeeAll';
+import { useFilterValues, useNearbyStores, useShopTypes } from '../../hooks';
+import { MainSeeAllShopTypeTabs, MainSeeAllStoreListSkeleton } from '../components/MainSeeAll';
 import type { MultiVendorStackParamList } from '../navigation/types';
 import { pushStoreDetails } from '../../navigation/storeDetailsNavigation';
 import { translateShopTypeName } from '../../utils/shopTypeLocalization';
@@ -25,6 +24,9 @@ import type { DeliveriesStackParamList } from '../../navigation/types';
 import type { DeliveryFavouriteFood } from '../../api/types';
 import FavouriteFoodsCarousel from '../components/favouriteFoods/FavouriteFoodsCarousel';
 import { getLocalizedProductName } from '../../utils/productTranslation';
+import { useStoreSearch } from '../../hooks/useSearchQueries';
+import { useBrowseCity } from '../../stores/useBrowseCityStore';
+import { searchService } from '../../api/searchService';
 
 type NavigationProp = CompositeNavigationProp<
   NativeStackNavigationProp<MultiVendorStackParamList, 'MainSeeAllScreen'>,
@@ -41,52 +43,80 @@ export default function MainSeeAllScreen() {
   const route = useRoute<MainSeeAllRouteProp>();
   const [searchValue, setSearchValue] = useState('');
   const [selectedShopTypeId, setSelectedShopTypeId] = useState<string | null>(route.params?.initialShopTypeId ?? null);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [selectedClosedStore, setSelectedClosedStore] = useState<DeliveryNearbyStore | null>(null);
   const debouncedSearch = useDebouncedValue(searchValue.trim(), 450);
+  const city = useBrowseCity();
+  const isSearching = searchValue.trim().length > 0;
+  const isSearchReady = isSearching && searchValue.trim() === debouncedSearch;
   const { data: shopTypes = [] } = useShopTypes();
   const { data: filterValues } = useFilterValues();
   const filterState = useGenericListFilters({ filterData: filterValues?.filters });
 
   useEffect(() => {
     setSelectedShopTypeId(route.params?.initialShopTypeId ?? null);
-    setSelectedCategoryId(null);
   }, [route.params?.initialShopTypeId]);
-
-  const { data: categories = [], isPending: isCategoriesPending, isError: hasCategoriesError } =
-    useShopTypeCategories(selectedShopTypeId ?? '', {
-      mode: 'preview',
-      enabled: Boolean(selectedShopTypeId),
-    });
 
   const listQuery = useNearbyStores({
     mode: 'paginated',
-    search: debouncedSearch,
-    filters: {
-      ...filterState.appliedFilters,
-      category_ids: selectedCategoryId ? [selectedCategoryId] : filterState.appliedFilters.category_ids,
-    },
+    enabled: !isSearching,
+    filters: filterState.appliedFilters,
     requestParams: {
       shop_type_id: selectedShopTypeId ?? undefined,
-      category_id: selectedCategoryId ?? undefined,
     },
   });
+  const searchQuery = useStoreSearch(debouncedSearch, {
+    latitude: city?.latitude,
+    longitude: city?.longitude,
+    shopTypeId: selectedShopTypeId ?? undefined,
+  }, { enabled: isSearchReady });
   const {
-    data: stores = [], totalCount, isPending, isError, isRefetching,
-    isFetchingNextPage, hasNextPage, refetch, fetchNextPage,
+    data: browseStores = [], totalCount: browseTotalCount,
   } = listQuery;
+  const searchStores = searchQuery.data?.pages.flatMap((page) =>
+    page.items.map((item, index) => ({
+      ...item,
+      searchQueryId: page.searchMeta?.queryId,
+      searchPosition: page.offset + index + 1,
+    })),
+  ) ?? [];
+  const stores = isSearching ? (isSearchReady ? searchStores : []) : browseStores;
+  const totalCount = isSearching ? (isSearchReady ? searchQuery.data?.pages[0]?.total : undefined) : browseTotalCount;
+  const isPending = isSearching ? !isSearchReady || searchQuery.isPending : listQuery.isPending;
+  const isError = isSearching ? isSearchReady && searchQuery.isError : listQuery.isError;
+  const isRefetching = isSearching ? searchQuery.isRefetching : listQuery.isRefetching;
+  const isFetchingNextPage = isSearching ? searchQuery.isFetchingNextPage : listQuery.isFetchingNextPage;
 
   const selectShopType = useCallback((id: string | null) => {
     setSelectedShopTypeId(id);
-    setSelectedCategoryId(null);
   }, []);
-  const selectCategory = useCallback((id: string) => {
-    setSelectedCategoryId((previous) => previous === id ? null : id);
-  }, []);
-  const refresh = useCallback(() => { void refetch(); }, [refetch]);
+  const refresh = useCallback(() => {
+    if (isSearching) {
+      if (isSearchReady) void searchQuery.refetch();
+    } else {
+      void listQuery.refetch();
+    }
+  }, [isSearchReady, isSearching, listQuery, searchQuery]);
   const loadMore = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+    if (isSearching) {
+      if (searchQuery.hasNextPage && !searchQuery.isFetchingNextPage) void searchQuery.fetchNextPage();
+    } else if (listQuery.hasNextPage && !listQuery.isFetchingNextPage) {
+      void listQuery.fetchNextPage();
+    }
+  }, [isSearching, listQuery, searchQuery]);
+
+  const openStore = useCallback((store: DeliveryNearbyStore & { searchQueryId?: string; searchPosition?: number }) => {
+    if (store.searchQueryId) {
+      void searchService.trackEvent({
+        eventType: 'click',
+        resourceType: 'store',
+        eventName: 'Store Opened',
+        queryId: store.searchQueryId,
+        objectId: store.storeId,
+        position: store.searchPosition,
+      }).catch(() => undefined);
+    }
+    pushStoreDetails(navigation, store);
+  }, [navigation]);
 
   const selectedShopTypeName = selectedShopTypeId
     ? translateShopTypeName(
@@ -112,6 +142,7 @@ export default function MainSeeAllScreen() {
         searchValue={searchValue}
         onSearchChangeText={setSearchValue}
         onOpenFilters={filterState.openFilters}
+        showFilters={!isSearching}
       />
       <MainSeeAllShopTypeTabs
         items={shopTypes}
@@ -133,12 +164,12 @@ export default function MainSeeAllScreen() {
             <View style={{ marginHorizontal: -gutter }}>
               <FavouriteFoodsCarousel shopTypeId={selectedShopTypeId} onFoodPress={openFavouriteFood} />
             </View>
-            <SelectedFilterChips
+            {!isSearching ? <SelectedFilterChips
               chips={filterState.chips}
               clearAllLabel={tGeneral('clear_all')}
               onRemoveChip={filterState.removeChip}
               onClearAll={filterState.clearAllFilters}
-            />
+            /> : null}
             <View style={styles.intro}>
               <Text color={colors.textSubtle} variant="supporting">
                 {typeof totalCount === 'number'
@@ -146,27 +177,10 @@ export default function MainSeeAllScreen() {
                   : t('home_store_list_subtitle')}
               </Text>
             </View>
-            {selectedShopTypeId ? (
-              <View style={{ marginHorizontal: -gutter }}>
-              <MainSeeAllCategoriesSection
-                categories={categories}
-                isPending={isCategoriesPending}
-                isError={hasCategoriesError}
-                selectedCategoryId={selectedCategoryId}
-                onSelectCategory={selectCategory}
-                onSeeAllPress={() => navigation.navigate('CategoriesSeeAll', {
-                  shopTypeId: selectedShopTypeId,
-                  title: t('multi_vendor_categories_title'),
-                })}
-                sectionTitle={t('multi_vendor_main_shop_types_title')}
-                actionLabel={t('multi_vendor_see_all')}
-              />
-              </View>
-            ) : null}
           </View>
         )}
         ListEmptyComponent={isPending ? (
-          <VerticalStoreListSkeleton />
+          <MainSeeAllStoreListSkeleton />
         ) : isError ? (
           <DeliveriesSectionEmptyState
             title={t('generic_list_error_title')}
@@ -188,6 +202,7 @@ export default function MainSeeAllScreen() {
             layout="resultRow"
             showClosedOverlay={item.isAvailable === false || ('isClosed' in item && item.isClosed === true)}
             onClosedPress={() => setSelectedClosedStore(item)}
+            onPress={isSearching ? () => openStore(item) : undefined}
           />
         )}
       />

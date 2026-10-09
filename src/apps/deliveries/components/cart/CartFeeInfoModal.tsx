@@ -3,7 +3,6 @@ import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Button from '../../../../general/components/Button';
 import BottomSheetHandle from '../../../../general/components/BottomSheetHandle';
 import PressableScale from '../../../../general/components/PressableScale';
 import SwipeableBottomSheet from '../../../../general/components/SwipeableBottomSheet';
@@ -30,7 +29,7 @@ export default function CartFeeInfoModal({
   const { t } = useTranslation('deliveries');
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
-  const expandedHeight = Math.min(height * 0.54, 480) + insets.bottom;
+  const expandedHeight = Math.min(height * 0.46, 410) + insets.bottom;
 
   if (!visible) return null;
 
@@ -99,8 +98,8 @@ export default function CartFeeInfoModal({
           ]}
         >
           <View style={styles.headerRow}>
-            <View style={{ width: layout.touchTarget.minimum }} />
-            <Text numberOfLines={1} style={styles.headerTitle} variant="sectionTitle" weight="bold">
+            <View style={styles.headerSpacer} />
+            <Text numberOfLines={2} style={styles.headerTitle} variant="sectionTitle" weight="bold">
               {t('cart_fee_modal_title')}
             </Text>
             <PressableScale
@@ -112,8 +111,8 @@ export default function CartFeeInfoModal({
                 {
                   backgroundColor: colors.surfaceSunken,
                   borderRadius: shape.radius.pill,
-                  height: layout.touchTarget.minimum,
-                  width: layout.touchTarget.minimum,
+                  height: 36,
+                  width: 36,
                 },
               ]}
             >
@@ -154,7 +153,6 @@ export default function CartFeeInfoModal({
             </Text>
           </View>
 
-          <Button fullWidth label={t('store_details_close')} onPress={onClose} />
         </View>
       </SwipeableBottomSheet>
     </View>
@@ -185,6 +183,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
   },
+  headerSpacer: {
+    width: 36,
+  },
   headerTitle: {
     flex: 1,
     textAlign: 'center',
@@ -194,7 +195,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   notice: {
-    alignItems: 'flex-start',
+    alignItems: 'center',
     flexDirection: 'row',
   },
   noticeCopy: {

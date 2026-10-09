@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import Text from '../Text';
 import PressableScale from '../PressableScale';
 import { useTheme } from '../../theme/theme';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
   label: string;
@@ -10,6 +11,7 @@ type Props = {
   isEditable?: boolean;
   editLabel?: string;
   onEdit?: () => void;
+  verificationStatus?: boolean;
 };
 
 export default function MyProfileInfoRow({
@@ -18,8 +20,10 @@ export default function MyProfileInfoRow({
   isEditable = false,
   editLabel,
   onEdit,
+  verificationStatus,
 }: Props) {
   const { colors } = useTheme();
+  const { t } = useTranslation('general');
 
   return (
     <View style={styles.infoRow}>
@@ -27,6 +31,15 @@ export default function MyProfileInfoRow({
         <Text weight="bold" style={styles.infoLabel}>
           {label}
         </Text>
+        {value && typeof verificationStatus === 'boolean' ? (
+          <View style={[styles.verificationBadge, {
+            backgroundColor: verificationStatus ? colors.successSoft : colors.backgroundTertiary,
+          }]}>
+            <Text color={verificationStatus ? colors.successText : colors.mutedText} variant="caption" weight="semiBold">
+              {t(verificationStatus ? 'profile_verified' : 'profile_not_verified')}
+            </Text>
+          </View>
+        ) : null}
         {isEditable && editLabel ? (
           <PressableScale
             onPress={onEdit}
@@ -74,5 +87,11 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: 12,
     lineHeight: 18,
+  },
+  verificationBadge: {
+    borderRadius: 12,
+    marginLeft: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
   },
 });

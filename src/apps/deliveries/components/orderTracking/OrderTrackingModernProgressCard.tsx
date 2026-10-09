@@ -34,7 +34,7 @@ export default function OrderTrackingModernProgressCard({
         ? colors.warning
         : colors.primary;
   const stageLabels = [
-    t("orders_status_confirmed"),
+    t(status === "pending" ? "orders_status_received" : status === "scheduled" ? "orders_status_scheduled" : "orders_status_confirmed"),
     t("orders_status_preparing"),
     t("orders_status_on_the_way"),
     t("orders_status_delivered"),

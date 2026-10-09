@@ -13,6 +13,7 @@ import type {
   EmailLoginRespoce,
   GoogleLoginPayload,
   GoogleLoginResponse,
+  GoogleAuthenticatedResponse,
   LoginSendOtpPayload,
   LoginSendOtpResponse,
   LoginVerifyOtpPayload,
@@ -40,7 +41,7 @@ async function finalizeAuthSession(
     | SignupVerifyOtpResponse
     | LoginVerifyOtpResponse
     | EmailLoginRespoce
-    | GoogleLoginResponse
+    | GoogleAuthenticatedResponse
     | AppleLoginResponse,
 ) {
   await authSession.setSession(data);
@@ -133,6 +134,18 @@ export function useLoginVerifyOtp(
   });
 }
 
+export function useGooglePhoneVerify() {
+  const queryClient = useQueryClient();
+  return useMutation<GoogleAuthenticatedResponse, ApiError, { idToken: string; phone: string; otp: string; device_push_token?: string }>({
+    mutationFn: authService.verifyGooglePhoneOtp,
+    retry: false,
+    onSuccess: async (data) => {
+      await finalizeAuthSession(queryClient, data);
+      await redirectToPendingAppIfNeeded();
+    },
+  });
+}
+
 export function useLogout(options?: UseMutationOptions<void, ApiError, void>) {
   const queryClient = useQueryClient();
 
@@ -180,6 +193,10 @@ export function useGoogleLogin(
     mutationFn: authService.googleLogin,
     ...options,
     onSuccess: async (data, variables, onMutateResult, context) => {
+      if ('phoneVerificationRequired' in data) {
+        options?.onSuccess?.(data, variables, onMutateResult, context);
+        return;
+      }
       await finalizeAuthSession(queryClient, data);
       options?.onSuccess?.(data, variables, onMutateResult, context);
       await redirectToPendingAppIfNeeded();

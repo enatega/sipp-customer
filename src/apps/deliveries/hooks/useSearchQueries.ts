@@ -57,6 +57,9 @@ export function useProductSearch(
       keyword,
       params?.latitude,
       params?.longitude,
+      params?.categoryId,
+      params?.shopTypeId,
+      params?.favouriteFoodId,
     ),
     queryFn: ({ pageParam, signal }) =>
       searchService.searchProducts({
@@ -65,6 +68,9 @@ export function useProductSearch(
         limit: SEARCH_LIMIT,
         latitude: params?.latitude,
         longitude: params?.longitude,
+        categoryId: params?.categoryId,
+        shopTypeId: params?.shopTypeId,
+        favouriteFoodId: params?.favouriteFoodId,
       }, signal),
     initialPageParam: 0,
     getNextPageParam: (lastPage) =>
@@ -90,6 +96,8 @@ export function useStoreSearch(
       keyword,
       params?.latitude,
       params?.longitude,
+      params?.categoryId,
+      params?.shopTypeId,
     ),
     queryFn: ({ pageParam, signal }) =>
       searchService.searchStores({
@@ -98,6 +106,8 @@ export function useStoreSearch(
         limit: SEARCH_LIMIT,
         latitude: params?.latitude,
         longitude: params?.longitude,
+        categoryId: params?.categoryId,
+        shopTypeId: params?.shopTypeId,
       }, signal),
     initialPageParam: 0,
     getNextPageParam: (lastPage) =>

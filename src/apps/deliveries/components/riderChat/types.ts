@@ -4,5 +4,6 @@ export type RiderChatMessage = {
   id: string;
   sender: RiderChatSender;
   text: string;
+  attachmentUrls?: string[];
   timeLabel?: string;
 };

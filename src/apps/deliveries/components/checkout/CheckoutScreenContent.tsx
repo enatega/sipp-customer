@@ -319,7 +319,6 @@ export default function CheckoutScreenContent({
         isDisabled={!canPlaceOrder}
         isLoading={isPlacingOrder}
         onPlaceOrderPress={onPlaceOrderPress}
-        totalLabel={totalLabel}
       />
     </View>
   );

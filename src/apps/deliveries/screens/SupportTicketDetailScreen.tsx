@@ -32,6 +32,8 @@ import type {
 } from '../api/supportChatTypes';
 import type { SupportNavigationParamList } from '../navigation/supportNavigationTypes';
 import { subscribeDeliveriesEvent } from '../socket/deliveriesSocket';
+import { supportTicketService } from '../api/supportTicketService';
+import { pickChatPhoto } from '../utils/pickChatPhoto';
 import {
   formatSupportChatTimeLabel,
   getSupportChatBox,
@@ -47,6 +49,7 @@ type TicketChatMessage = {
   id: string;
   isCurrentUser: boolean;
   text: string;
+  attachmentUrls?: string[];
   timeLabel: string;
 };
 
@@ -63,6 +66,7 @@ export default function SupportTicketDetailScreen() {
   useDeliveriesSocketSession();
   const [chatBoxId, setChatBoxId] = useState(lockedTicketChatBoxId);
   const [draftMessage, setDraftMessage] = useState('');
+  const [isPhotoSending, setIsPhotoSending] = useState(false);
   const [pendingMessages, setPendingMessages] = useState<TicketChatMessage[]>([]);
   const [realtimeMessages, setRealtimeMessages] = useState<TicketChatMessage[]>([]);
   const isTicketClosed = ticket.statusTone === 'info';
@@ -124,6 +128,7 @@ export default function SupportTicketDetailScreen() {
         (message.senderId ?? message.sender_id ?? getSupportChatParticipantId(message.sender)) ===
         currentUserId,
       text: message.text ?? message.message ?? '',
+      attachmentUrls: message.attachmentUrls ?? [],
       timeLabel: formatSupportChatTimeLabel(message.createdAt ?? message.created_at),
     }));
     const acknowledgedCurrentUserMessages = new Set(
@@ -178,7 +183,8 @@ export default function SupportTicketDetailScreen() {
         (serverMessage) =>
           serverMessage.id !== item.id
           && serverMessage.isCurrentUser === item.isCurrentUser
-          && serverMessage.text === item.text,
+          && serverMessage.text === item.text
+          && serverMessage.attachmentUrls?.join(',') === item.attachmentUrls?.join(','),
       ));
 
       return nextMessages.length === current.length ? current : nextMessages;
@@ -210,8 +216,8 @@ export default function SupportTicketDetailScreen() {
           (message) =>
             getSupportChatMessageId(message) === getSupportChatMessageId(nextMessage)
             || (
-              (message.text ?? message.message ?? '').trim() ===
-                (nextMessage.text ?? nextMessage.message ?? '').trim()
+              ((message.text ?? message.message ?? '').trim() || message.attachmentUrls?.join(',')) ===
+                ((nextMessage.text ?? nextMessage.message ?? '').trim() || nextMessage.attachmentUrls?.join(','))
               && (message.senderId ?? message.sender_id) ===
                 (nextMessage.senderId ?? nextMessage.sender_id)
             ),
@@ -281,8 +287,8 @@ export default function SupportTicketDetailScreen() {
           (message) =>
             getSupportChatMessageId(message) === getSupportChatMessageId(nextMessage)
             || (
-              (message.text ?? message.message ?? '').trim() ===
-                (nextMessage.text ?? nextMessage.message ?? '').trim()
+              ((message.text ?? message.message ?? '').trim() || message.attachmentUrls?.join(',')) ===
+                ((nextMessage.text ?? nextMessage.message ?? '').trim() || nextMessage.attachmentUrls?.join(','))
               && (message.senderId ?? message.sender_id) ===
                 (nextMessage.senderId ?? nextMessage.sender_id)
             ),
@@ -363,7 +369,8 @@ export default function SupportTicketDetailScreen() {
 
       setRealtimeMessages((current) => {
         const alreadyExists = current.some(
-          (item) => !item.isCurrentUser && item.text === message.text,
+          (item) => !item.isCurrentUser && item.text === message.text
+            && item.attachmentUrls?.join(',') === message.attachmentUrls?.join(','),
         );
 
         if (alreadyExists) {
@@ -376,6 +383,7 @@ export default function SupportTicketDetailScreen() {
             id: `realtime-${Date.now()}`,
             isCurrentUser: false,
             text: message.text,
+            attachmentUrls: message.attachmentUrls ?? [],
             timeLabel: formatSupportChatTimeLabel(new Date().toISOString()),
           },
         ];
@@ -408,8 +416,8 @@ export default function SupportTicketDetailScreen() {
       return;
     }
 
-    if (!receiverId) {
-      showToast.error(t('support_chat_send_error_title'), t('support_chat_missing_receiver_error'));
+    if (!resolvedChatBoxId) {
+      showToast.error(t('support_chat_send_error_title'), t('support_chat_missing_conversation'));
       return;
     }
 
@@ -436,8 +444,6 @@ export default function SupportTicketDetailScreen() {
 
     supportChatSendMutation.mutate(
       {
-        senderId,
-        receiverId,
         text: trimmedValue,
         chatBoxId: resolvedChatBoxId,
       },
@@ -480,6 +486,38 @@ export default function SupportTicketDetailScreen() {
     requestAnimationFrame(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
     });
+  };
+
+  const handleAttachmentPress = async () => {
+    if (isTicketClosed || !resolvedChatBoxId || isPhotoSending || supportChatSendMutation.isPending) return;
+    try {
+      const selection = await pickChatPhoto();
+      if (selection.kind === 'cancelled') return;
+      if (selection.kind !== 'photo') {
+        showToast.error(t('support_chat_send_error_title'), t(`chat_photo_${selection.kind}`));
+        return;
+      }
+      setIsPhotoSending(true);
+      const uploaded = await supportTicketService.uploadAttachment(selection.photo);
+      const response = await supportChatSendMutation.mutateAsync({
+        chatBoxId: resolvedChatBoxId,
+        attachmentUrls: [uploaded.url],
+      });
+      appendMessageToChatBoxCache(resolvedChatBoxId, {
+        id: response.data?.id ?? response.detail?.id ?? `photo-${Date.now()}`,
+        senderId: sessionQuery.data?.user?.id,
+        receiverId,
+        text: '',
+        attachmentUrls: [uploaded.url],
+        chatBoxId: resolvedChatBoxId,
+        createdAt: response.detail?.createdAt ?? new Date().toISOString(),
+      });
+      void refetchSupportChatMessages();
+    } catch (error) {
+      showToast.error(t('support_chat_send_error_title'), error instanceof Error ? error.message : t('chat_photo_upload_failed'));
+    } finally {
+      setIsPhotoSending(false);
+    }
   };
 
   return (
@@ -562,6 +600,13 @@ export default function SupportTicketDetailScreen() {
               title={t('support_error_title')}
               tone="danger"
             />
+          ) : !resolvedChatBoxId ? (
+            <SupportStatePanel
+              description={t('support_chat_missing_conversation')}
+              iconName="cloud-offline-outline"
+              title={t('support_error_title')}
+              tone="danger"
+            />
           ) : (
             <View style={styles.messageSection}>
               {messages.map((message) => (
@@ -569,6 +614,8 @@ export default function SupportTicketDetailScreen() {
                   key={message.id}
                   isCurrentUser={message.isCurrentUser}
                   text={message.text}
+                  attachmentUrls={message.attachmentUrls}
+                  photoAccessibilityLabel={t('chat_photo_accessibility')}
                   timeLabel={message.timeLabel}
                 />
               ))}
@@ -583,7 +630,7 @@ export default function SupportTicketDetailScreen() {
           )}
         </ScrollView>
 
-        {!isTicketClosed && !supportChatBoxQuery.isError && !supportChatMessagesQuery.isError ? (
+        {!isTicketClosed && resolvedChatBoxId && !supportChatBoxQuery.isError && !supportChatMessagesQuery.isError ? (
           <View style={[styles.quickReplyRail, { borderTopColor: colors.border }]}> 
             <ScrollView
               horizontal
@@ -594,7 +641,7 @@ export default function SupportTicketDetailScreen() {
               {quickReplies.map((reply) => (
                 <ChatQuickReplyChip
                   key={reply}
-                  disabled={supportChatSendMutation.isPending}
+                  disabled={supportChatSendMutation.isPending || isPhotoSending}
                   label={reply}
                   onPress={() => handleAppendMessage(reply)}
                 />
@@ -615,13 +662,14 @@ export default function SupportTicketDetailScreen() {
         >
           <ChatComposer
             attachmentAccessibilityLabel={t('support_chat_add_attachment')}
-            disabled={isTicketClosed || supportChatBoxQuery.isError || supportChatMessagesQuery.isError}
-            isSending={supportChatSendMutation.isPending}
+            disabled={isTicketClosed || !resolvedChatBoxId || supportChatBoxQuery.isError || supportChatMessagesQuery.isError}
+            isSending={supportChatSendMutation.isPending || isPhotoSending}
             messageAccessibilityLabel={t('support_chat_send_message')}
             onChangeText={setDraftMessage}
             onSend={() => handleAppendMessage(draftMessage)}
             placeholder={t('support_chat_input_placeholder')}
-            showAttachment={false}
+            showAttachment
+            onAttachmentPress={() => void handleAttachmentPress()}
             value={draftMessage}
           />
         </View>

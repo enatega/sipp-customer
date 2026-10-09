@@ -1,8 +1,7 @@
 import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import type { NavigationProp } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { DeliveryOrderAgainItem, DeliveryStoreViewApiResponse } from '../../api/types';
 import type { CartResponse } from '../../api/cartServiceTypes';
 import { useCheckoutCouponStore } from '../../stores/useCheckoutCouponStore';
@@ -63,7 +62,7 @@ export default function CartScreenContent({
 }: Props) {
   const { colors, layout, spacing } = useTheme();
   const { gutter } = useWindowClass();
-  const insets = useSafeAreaInsets();
+  const [footerHeight, setFooterHeight] = React.useState(96);
   const selectedCoupon = useCheckoutCouponStore((state) => state.selectedCoupon);
 
   const handleBack = React.useCallback(() => navigation.goBack(), [navigation]);
@@ -98,6 +97,11 @@ export default function CartScreenContent({
   const handlePromoPress = React.useCallback(() => {
     navigation.navigate('Coupons');
   }, [navigation]);
+
+  const handleFooterLayout = React.useCallback((event: LayoutChangeEvent) => {
+    const nextHeight = Math.ceil(event.nativeEvent.layout.height);
+    setFooterHeight((height) => height === nextHeight ? height : nextHeight);
+  }, []);
 
   if (!cart || cart.isEmpty) {
     return (
@@ -136,7 +140,7 @@ export default function CartScreenContent({
           {
             gap: spacing.section.default,
             maxWidth: layout.contentMaxWidth.readable,
-            paddingBottom: insets.bottom + 132,
+            paddingBottom: footerHeight + spacing.lg,
             paddingHorizontal: gutter,
             paddingTop: spacing.sm,
           },
@@ -183,7 +187,7 @@ export default function CartScreenContent({
       <CartFooter
         amountLabel={formatCartPrice(cart.finalPrice)}
         disabled={cart.isEmpty || isMutatingCart}
-        itemCount={cart.totalItems}
+        onLayout={handleFooterLayout}
         onCheckoutPress={onCheckoutPress}
       />
 

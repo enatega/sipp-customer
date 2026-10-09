@@ -79,6 +79,12 @@ export const authService = {
       skipAuth: true,
     }),
 
+  sendGooglePhoneOtp: (payload: { idToken: string; phone: string }) =>
+    apiClient.post<{ message: string }>(`/api/v1/auth/login/google/phone/send-otp`, payload, { skipAuth: true }),
+
+  verifyGooglePhoneOtp: (payload: { idToken: string; phone: string; otp: string; device_push_token?: string }) =>
+    apiClient.post<import('./authTypes').GoogleAuthenticatedResponse>(`/api/v1/auth/login/google/phone/verify-otp`, payload, { skipAuth: true }),
+
   appleLogin: (payload: AppleLoginPayload) =>
     apiClient.post<AppleLoginResponse>(`/api/v1/auth/login/apple`, payload, {
       skipAuth: true,

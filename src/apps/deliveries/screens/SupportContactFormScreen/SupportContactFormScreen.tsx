@@ -24,7 +24,7 @@ import { mapSupportTicketToListItem } from '../../utils/supportTicketMappers';
 
 type SupportContactFormRouteProp = RouteProp<SupportNavigationParamList, 'SupportContactForm'>;
 const BUSINESS_JOINING_ISSUE = 'joining_as_a_business';
-const MAX_SUPPORT_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+const MAX_SUPPORT_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 const FALLBACK_CATEGORY_KEYS = [
   'business_support',
   'joining_as_a_business',

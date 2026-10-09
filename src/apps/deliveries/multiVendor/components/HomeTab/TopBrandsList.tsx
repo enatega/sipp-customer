@@ -51,7 +51,7 @@ export default function TopBrandsList({ onClosedStorePress }: Props) {
           data={topBrands}
           keyExtractor={(item, index) => `${item.name}-${index}`}
           contentContainerStyle={{
-            paddingBottom: spacing.sm,
+            paddingBottom: spacing.xs,
             paddingRight: gutter,
             paddingTop: spacing.xs,
           }}

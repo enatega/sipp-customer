@@ -180,7 +180,7 @@ export default function Button({
             variant="button"
             weight="semiBold"
             color={contentColor}
-            style={[{ fontFamily: typography.fontFamily.semiBold }, labelStyle]}
+            style={[styles.label, { fontFamily: typography.fontFamily.semiBold }, labelStyle]}
           >
             {label}
           </Text>
@@ -199,6 +199,13 @@ const styles = StyleSheet.create({
   content: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexShrink: 1,
+    justifyContent: 'center',
+    maxWidth: '100%',
+  },
+  label: {
+    flexShrink: 1,
+    textAlign: 'center',
   },
   pressable: {
     overflow: 'hidden',

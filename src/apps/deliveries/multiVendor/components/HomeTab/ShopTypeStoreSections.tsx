@@ -57,7 +57,7 @@ export default function ShopTypeStoreSections({ onClosedStorePress }: Props) {
   }, [navigation]);
 
   return (
-    <View style={[styles.container, { gap: spacing.section.default }]}>
+    <View style={[styles.container, { gap: spacing.lg }]}>
       {shopTypeStoreSections.map(
         ({ shopType, data = [], error, isPending: isStoresPending }) => {
           const resolvedShopTypeName = translateShopTypeName(shopType.name, t);
@@ -109,7 +109,7 @@ export default function ShopTypeStoreSections({ onClosedStorePress }: Props) {
                   data={data}
                   keyExtractor={(item) => item.storeId}
                   contentContainerStyle={{
-                    paddingBottom: spacing.lg,
+                    paddingBottom: spacing.xs,
                     paddingRight: gutter,
                     paddingTop: spacing.xs,
                   }}

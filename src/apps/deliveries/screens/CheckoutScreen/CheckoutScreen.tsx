@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { showToast } from '../../../../general/components/AppToast';
 import FeedbackModal from '../../../../general/components/FeedbackModal';
 import { useTheme } from '../../../../general/theme/theme';
@@ -64,6 +64,11 @@ import {
 } from '../../../../general/api/walletSavedCardsService';
 import { useCustomerWalletBalance } from '../../api/walletService';
 import { useDeliveriesCurrencyLabel } from '../../../../general/stores/useAppConfigStore';
+import { profileService } from '../../../../general/api/profileService';
+import Text from '../../../../general/components/Text';
+import Button from '../../../../general/components/Button';
+import ScreenHeader from '../../../../general/components/ScreenHeader';
+import CheckoutPhoneVerification from '../../components/checkout/CheckoutPhoneVerification';
 
 const DELIVERY_ROOT_ROUTES = ['SingleVendor', 'MultiVendor', 'Chain'] as const;
 
@@ -178,6 +183,11 @@ export default function CheckoutScreen() {
   const currencyLabel = useDeliveriesCurrencyLabel();
   const { t } = useTranslation('deliveries');
   const queryClient = useQueryClient();
+  const phoneProfile = useQuery({
+    queryKey: ['deliveries', 'checkout-phone-profile'],
+    queryFn: () => profileService.getProfile('deliveries'),
+    staleTime: 30_000,
+  });
   const { handleNextAction } = useStripe();
   const navigation = useNavigation<NavigationProp<Record<string, object | undefined>>>();
   const [activeMessageTarget, setActiveMessageTarget] = React.useState<CheckoutMessageTarget | null>(null);
@@ -233,16 +243,18 @@ export default function CheckoutScreen() {
     refetch: refetchCart,
   } = useCart();
   const previewInput = React.useMemo(
-    () => getPreviewInput(
+    () => phoneProfile.data?.data?.user && !phoneProfile.data.data.user.google_phone_verification_required ? getPreviewInput(
       cart,
       orderType,
       paymentMethod,
       resolvedAddressId,
       selectedCoupon?.code,
       selectedTip,
-    ),
+    ) : null,
     [
       cart,
+      phoneProfile.data?.data?.user?.google_phone_verification_required,
+      phoneProfile.data?.data?.user?.id,
       orderType,
       paymentMethod,
       resolvedAddressId,
@@ -836,6 +848,10 @@ export default function CheckoutScreen() {
       </View>
     );
   }
+
+  if (phoneProfile.isPending) return <View style={{ backgroundColor: colors.canvas, flex: 1 }}><CartScreenSkeleton /></View>;
+  if (phoneProfile.isError || !phoneProfile.data?.data?.user) return <View style={{ backgroundColor: colors.canvas, flex: 1 }}><ScreenHeader onBack={handleBackPress} /><View style={{ flex: 1, justifyContent: 'center', padding: 24, gap: 18 }}><Text variant="sectionTitle">{t('checkout_phone_profile_error')}</Text><Button variant="primary" label={t('generic_list_retry')} onPress={() => void phoneProfile.refetch()} /></View></View>;
+  if (phoneProfile.data.data.user.google_phone_verification_required) return <CheckoutPhoneVerification onBack={handleBackPress} onVerified={async () => { await phoneProfile.refetch(); }} />;
 
   if (stripeCheckout) {
     return (

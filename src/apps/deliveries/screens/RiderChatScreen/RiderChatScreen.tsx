@@ -33,6 +33,7 @@ import { useCustomerOrderChat } from '../../hooks/useChatQueries';
 import { chatService } from '../../api/chatService';
 import { deliveryKeys } from '../../api/queryKeys';
 import { subscribeDeliveriesEvent } from '../../socket/deliveriesSocket';
+import { pickChatPhoto } from '../../utils/pickChatPhoto';
 
 export type RiderChatScreenParams = {
   RiderChat: {
@@ -150,6 +151,7 @@ export default function RiderChatScreen() {
   const [activeChatBoxId, setActiveChatBoxId] = useState<string | null>(null);
   const [messages, setMessages] = useState<RiderChatMessage[]>([]);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [isPhotoSending, setIsPhotoSending] = useState(false);
 
   const chatBoxesQuery = useDeliveryChatBoxes(senderId);
   const orderChatQuery = useCustomerOrderChat(orderId);
@@ -210,6 +212,7 @@ export default function RiderChatScreen() {
           id: message.id ?? `${resolveMessageTimestamp(message) ?? 'message'}-${index}`,
           sender: messageSenderId === senderId ? 'user' : 'rider',
           text: resolveMessageText(message),
+          attachmentUrls: message.attachmentUrls ?? [],
           timeLabel: formatMessageTime(resolveMessageTimestamp(message)),
         };
       }),
@@ -263,6 +266,7 @@ export default function RiderChatScreen() {
             id: incomingId,
             sender: 'rider',
             text: message.text,
+            attachmentUrls: message.attachmentUrls ?? [],
             timeLabel: formatMessageTime(message.createdAt ?? new Date().toISOString()),
           },
         ];
@@ -370,6 +374,39 @@ export default function RiderChatScreen() {
     submitMessage(draftMessage, true);
   }, [draftMessage]);
 
+  const handleAttachmentPress = async () => {
+    if (!orderId || !senderId || isPhotoSending || sendMessageMutation.isPending) return;
+    try {
+      const selection = await pickChatPhoto();
+      if (selection.kind === 'cancelled') return;
+      if (selection.kind !== 'photo') {
+        showToast.error(t('rider_chat_send_error'), t(`chat_photo_${selection.kind}`));
+        return;
+      }
+      setIsPhotoSending(true);
+      const uploaded = await chatService.uploadOrderPhoto(orderId, selection.photo);
+      const response = await sendMessageMutation.mutateAsync({
+        orderId,
+        senderId,
+        receiverId: receiverId ?? '',
+        text: '',
+        attachmentUrls: [uploaded.url],
+      });
+      setMessages((current) => [...current, {
+        id: response.detail?.id ?? `photo-${Date.now()}`,
+        sender: 'user',
+        text: '',
+        attachmentUrls: [uploaded.url],
+        timeLabel: formatMessageTime(new Date().toISOString()),
+      }]);
+      void orderChatQuery.refetch();
+    } catch (error) {
+      showToast.error(t('rider_chat_send_error'), error instanceof Error ? error.message : t('chat_photo_upload_failed'));
+    } finally {
+      setIsPhotoSending(false);
+    }
+  };
+
   const handleRefresh = useCallback(async () => {
     if (orderId) { await orderChatQuery.refetch(); return; }
     await chatBoxesQuery.refetch();
@@ -392,7 +429,7 @@ export default function RiderChatScreen() {
 
   const isRefreshing = chatBoxesQuery.isRefetching || chatMessagesQuery.isRefetching;
   const hasRealMessages = useMemo(
-    () => messages.some((message) => message.text.trim().length > 0),
+    () => messages.some((message) => message.text.trim().length > 0 || Boolean(message.attachmentUrls?.length)),
     [messages],
   );
 
@@ -429,9 +466,10 @@ export default function RiderChatScreen() {
         <RiderChatFooter
           bottomInset={insets.bottom}
           isKeyboardVisible={isKeyboardVisible}
-          isSending={sendMessageMutation.isPending}
+          isSending={sendMessageMutation.isPending || isPhotoSending}
           value={draftMessage}
           onChangeText={setDraftMessage}
+          onAttachmentPress={() => void handleAttachmentPress()}
           onSend={handleSend}
           placeholder={t('rider_chat_input_placeholder')}
         />

@@ -51,6 +51,7 @@ export default function CheckoutMessageEditorScreen({
         backIconName="close"
         onBackPress={onBackPress}
         title={title}
+        titleLines={2}
       />
 
       <ScrollView

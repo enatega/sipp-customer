@@ -51,7 +51,7 @@ export const supportChatService = {
     apiClient.get<SupportMyActiveMessagesResponse>(`${SUPPORT_CHAT_BASE}/my-active-messages`),
 
   sendMessage: (payload: SendSupportChatMessagePayload) =>
-    apiClient.post<SendSupportChatMessageResponse>(`${SUPPORT_CHAT_BASE}/send`, payload),
+    apiClient.post<SendSupportChatMessageResponse>(`${SUPPORT_CHAT_BASE}/send-to-chat-box`, payload),
 
   sendMessageToAdmin: (payload: SendSupportChatMessageToAdminPayload) =>
     apiClient.post<SendSupportChatMessageResponse>(`${SUPPORT_CHAT_BASE}/send-to-admin`, payload),

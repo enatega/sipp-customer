@@ -3,7 +3,8 @@ export type SendDeliveryChatMessagePayload = {
   chatBoxId?: string;
   senderId: string;
   receiverId: string;
-  text: string;
+  text?: string;
+  attachmentUrls?: string[];
 };
 
 export type DeliveryChatParticipant = {
@@ -21,6 +22,7 @@ export type DeliveryChatMessageRecord = {
   receiverId?: string;
   receiver_id?: string;
   text?: string;
+  attachmentUrls?: string[];
   createdAt?: string;
   updatedAt?: string;
   sender?: DeliveryChatParticipant;
@@ -32,6 +34,8 @@ export type SendDeliveryChatMessageResponse = {
   chatBoxId?: string;
   detail?: DeliveryChatMessageRecord;
 };
+
+export type UploadDeliveryChatPhotoResponse = { url: string; mimeType: string };
 
 export type OrderChatUnreadCounts = {
   total: number;

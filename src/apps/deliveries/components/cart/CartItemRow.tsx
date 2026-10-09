@@ -157,8 +157,8 @@ export default function CartItemRow({
         {
           borderBottomColor: colors.divider,
           borderBottomWidth: isLast ? 0 : StyleSheet.hairlineWidth,
-          gap: spacing.md,
-          paddingVertical: spacing.lg,
+          gap: spacing.sm,
+          paddingVertical: spacing.md,
         },
       ]}
     >
@@ -184,7 +184,7 @@ export default function CartItemRow({
         </View>
       )}
 
-      <View style={[styles.details, { gap: spacing.md }]}>
+      <View style={[styles.details, { gap: spacing.sm }]}>
         <View style={[styles.copy, { gap: spacing.xs }]}>
           <View style={styles.titleRow}>
             <Text numberOfLines={2} style={styles.title} variant="cardTitle" weight="bold">
@@ -293,14 +293,14 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   image: {
-    height: 88,
-    width: 88,
+    height: 68,
+    width: 68,
   },
   imageFallback: {
     alignItems: 'center',
-    height: 88,
+    height: 68,
     justifyContent: 'center',
-    width: 88,
+    width: 68,
   },
   price: {
     flexShrink: 1,

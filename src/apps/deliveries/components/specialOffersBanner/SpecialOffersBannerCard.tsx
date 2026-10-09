@@ -13,6 +13,8 @@ type Props = {
   banner: DeliveryBanner;
   width: number;
   height: number;
+  isCompact?: boolean;
+  hasPagination?: boolean;
   sidePadding: number;
   onPress?: () => void;
 };
@@ -20,6 +22,8 @@ type Props = {
 export default function SpecialOffersBannerCard({
   banner,
   height,
+  isCompact = false,
+  hasPagination = false,
   width,
   sidePadding,
   onPress,
@@ -62,8 +66,9 @@ export default function SpecialOffersBannerCard({
             {
               borderRadius: shape.radius.hero,
               height,
-              paddingHorizontal: spacing.xl,
-              paddingVertical: spacing.xl,
+              paddingHorizontal: isCompact ? spacing.lg : spacing.xl,
+              paddingTop: isCompact ? spacing.md : spacing.xl,
+              paddingBottom: hasPagination ? spacing.xxl : isCompact ? spacing.md : spacing.xl,
             },
           ]}
         >
@@ -84,7 +89,7 @@ export default function SpecialOffersBannerCard({
             {title ? (
               <Text
                 color={colors.white}
-                numberOfLines={2}
+                numberOfLines={isCompact && description ? 1 : 2}
                 variant="sectionTitle"
                 weight="bold"
               >
@@ -95,7 +100,7 @@ export default function SpecialOffersBannerCard({
             {description ? (
               <Text
                 color={colors.white}
-                numberOfLines={3}
+                numberOfLines={isCompact ? (storeAddress ? 1 : 2) : 3}
                 weight="medium"
                 variant="supporting"
               >

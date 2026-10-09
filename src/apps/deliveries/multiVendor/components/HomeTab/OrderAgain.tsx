@@ -105,7 +105,7 @@ export default function OrderAgain(props: Props) {
           data={orderAgainData}
           keyExtractor={(item) => item.productId}
           contentContainerStyle={{
-            paddingBottom: spacing.lg,
+            paddingBottom: spacing.xs,
             paddingRight: gutter,
             paddingTop: spacing.xs,
           }}

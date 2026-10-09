@@ -11,6 +11,9 @@ export type ProfileUser = {
   name: string | null;
   email: string | null;
   phone: string | null;
+  email_is_verified?: boolean;
+  phone_is_verified?: boolean;
+  google_phone_verification_required?: boolean;
   date_of_birth: string | null;
   gender: string | null;
   image: string | null;
@@ -87,6 +90,10 @@ export function createProfileService(appPrefix: ProfileAppPrefix) {
 
 // Service object that accepts appPrefix as the first argument for each method
 export const profileService = {
+  sendPhoneVerificationOtp: (phone: string) =>
+    apiClient.post<{ message: string }>(`${getProfileBase('deliveries')}/phone/send-otp`, { phone }),
+  verifyPhoneVerificationOtp: (phone: string, otp: string) =>
+    apiClient.post<{ message: string }>(`${getProfileBase('deliveries')}/phone/verify-otp`, { phone, otp }),
   getProfile: (appPrefix: ProfileAppPrefix) =>
     createProfileService(appPrefix).getProfile(),
   getWalletBalance: (appPrefix: ProfileAppPrefix) =>

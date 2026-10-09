@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, TouchableWithoutFeedback, Keyboard, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
@@ -60,10 +60,12 @@ export default function OtpVerificationComponent({
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState(defaultSelectedMethod);
   const [rateLimitingModal, setRateLimitingModal] = useState(false);
+  const autoSubmittedCode = useRef<string | null>(null);
 
   useEffect(() => {
     if (deferSelectedMethod) {
       setOtp('');
+      autoSubmittedCode.current = null;
       setHasError(false);
     }
   }, [defaultSelectedMethod, deferSelectedMethod, setHasError]);
@@ -84,9 +86,14 @@ export default function OtpVerificationComponent({
           onCodeFilled={(code) => {
             setOtp(code);
             setHasError(false);
+            if (code.length === 4 && !isLoading && autoSubmittedCode.current !== code) {
+              autoSubmittedCode.current = code;
+              onVerify(code);
+            }
           }}
           onResend={() => {
             setOtp("");
+            autoSubmittedCode.current = null;
             setOtpInputVersion((version) => version + 1);
             setHasError(false);
             onResend?.(otp);

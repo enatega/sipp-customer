@@ -175,6 +175,8 @@ export default function MyProfileScreen({ profilePrefix }: Props) {
               dateOfBirth={formattedDob}
               phone={user?.phone ? normalizeInternationalPhone(user.phone) : user?.phone}
               email={user?.email}
+              isPhoneVerified={user?.phone_is_verified}
+              isEmailVerified={user?.email_is_verified}
               editLabel={t('my_profile_edit')}
               nameLabel={t('my_profile_full_name')}
               dateOfBirthLabel={t('my_profile_date_of_birth')}

@@ -23,6 +23,9 @@ export type UseRecentSearchesOptions = Omit<
 export type SearchLocationParams = {
   latitude?: number;
   longitude?: number;
+  categoryId?: string;
+  shopTypeId?: string;
+  favouriteFoodId?: string;
 };
 
 export type SearchQueryOptions = {

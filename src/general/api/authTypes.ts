@@ -104,11 +104,13 @@ export type GoogleLoginPayload = {
   device_push_token?: string;
 };
 
-export type GoogleLoginResponse = {
+export type GoogleAuthenticatedResponse = {
   user: User;
   profiles: Profile;
   accessToken: string;
 };
+
+export type GoogleLoginResponse = GoogleAuthenticatedResponse | { phoneVerificationRequired: true };
 
 export type AppleLoginPayload = {
   identityToken: string;

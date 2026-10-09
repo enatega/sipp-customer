@@ -162,6 +162,7 @@ export default function OrderConfirmationScreen({ navigation, route }: Props) {
         : t('order_confirmation_minutes', { estimate })
       : t('order_confirmation_eta_pending');
   const isPickup = orderType === 'pickup';
+  const isStoreConfirmed = Boolean(order?.status && !['pending', 'scheduled'].includes(order.status));
   const preparationStepLabel = scheduledAt
     ? t('order_confirmation_step_scheduled')
     : order?.status === 'accepted' || order?.status === 'preparing' || order?.status === 'ready'
@@ -272,7 +273,7 @@ export default function OrderConfirmationScreen({ navigation, route }: Props) {
         >
           <View style={[styles.heroCopy, { gap: spacing.sm }]}>
             <Text accessibilityRole="header" style={styles.centeredText} variant="screenTitle" weight="bold">
-              {t('order_confirmation_title')}
+              {t(isStoreConfirmed ? 'order_confirmation_title' : 'order_confirmation_placed_title')}
             </Text>
             {orderReference ? (
               <Text color={colors.primary} style={styles.centeredText} variant="label" weight="semiBold">
@@ -280,21 +281,23 @@ export default function OrderConfirmationScreen({ navigation, route }: Props) {
               </Text>
             ) : null}
             <Text color={colors.textSubtle} style={styles.centeredText} variant="body">
-              {order?.statusMessage || t('order_confirmation_message', { store: storeName })}
+              {isStoreConfirmed && order?.statusMessage
+                ? order.statusMessage
+                : t('order_confirmation_message', { store: storeName })}
             </Text>
           </View>
 
           <View style={styles.pathRow}>
             <ConfirmationMilestone
               icon="check"
-              label={t('order_confirmation_step_confirmed')}
-              state="complete"
+              label={t(isStoreConfirmed ? 'order_confirmation_step_confirmed' : 'order_confirmation_step_placed')}
+              state={isStoreConfirmed ? 'complete' : 'active'}
             />
-            <View style={[styles.pathConnector, { backgroundColor: colors.success }]} />
+            <View style={[styles.pathConnector, { backgroundColor: isStoreConfirmed ? colors.success : colors.border }]} />
             <ConfirmationMilestone
               icon="storefront-outline"
               label={preparationStepLabel}
-              state="active"
+              state={isStoreConfirmed ? 'active' : 'upcoming'}
             />
             <View style={[styles.pathConnector, { backgroundColor: colors.border }]} />
             <ConfirmationMilestone

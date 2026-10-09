@@ -21,16 +21,19 @@ type Props = {
 
 export default function FavouriteFoodsCarousel({ shopTypeId, onFoodPress }: Props) {
   const { t, i18n } = useTranslation('deliveries');
-  const { colors, spacing } = useTheme();
-  const { width, gutter } = useWindowClass();
+  const { colors, shape, spacing } = useTheme();
+  const { width, gutter, fontScale } = useWindowClass();
   const isFocused = useIsFocused();
   const isReducedMotion = useReducedMotion();
   const { data = [], isPending, isError, refetch } = useFavouriteFoods();
   const foods = useMemo(() => shopTypeId
     ? data.filter((food) => food.shopTypeIds.includes(shopTypeId))
     : data, [data, shopTypeId]);
-  const gap = spacing.xs;
-  const cardWidth = Math.min(108, (width - gutter * 2 - gap * 3) / 4);
+  const gap = spacing.sm;
+  const cardWidth = Math.round(Math.min(156, Math.max(132, Math.floor((width - gutter * 2 - spacing.md * 1.5) / 2.5))) * 0.66);
+  const footerHeight = Math.max(34, Math.ceil(32 * fontScale));
+  const cardHeight = Math.max(cardWidth + spacing.xxl, footerHeight + Math.round(cardWidth * 0.7));
+  const cardSurface = { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: shape.radius.control };
   const maxOffset = Math.max(0, foods.length * (cardWidth + gap) - gap - (width - gutter * 2));
   const maxIndex = Math.max(0, Math.ceil(
     maxOffset / (cardWidth + gap),
@@ -78,10 +81,12 @@ export default function FavouriteFoodsCarousel({ shopTypeId, onFoodPress }: Prop
   if (isPending) {
     return (
       <View style={[styles.skeletons, { gap, paddingHorizontal: gutter }]} accessibilityLabel={t('favourite_foods_loading')}>
-        {[0, 1, 2, 3].map((key) => (
-          <View key={key} style={[styles.card, { width: cardWidth }]}>
-            <Skeleton width={cardWidth - 4} height={cardWidth - 4} borderRadius={(cardWidth - 4) / 2} />
-            <Skeleton width={cardWidth * 0.7} height={16} borderRadius={8} />
+        {[0, 1, 2, 3, 4, 5, 6, 7].map((key) => (
+          <View key={key} style={[styles.card, cardSurface, { width: cardWidth, height: cardHeight }]}>
+            <Skeleton width={cardWidth} height={cardHeight - footerHeight} borderRadius={0} />
+            <View style={[styles.footer, { height: footerHeight }]}>
+              <Skeleton width={cardWidth * 0.62} height={12} borderRadius={shape.radius.xs} />
+            </View>
           </View>
         ))}
       </View>
@@ -122,12 +127,14 @@ export default function FavouriteFoodsCarousel({ shopTypeId, onFoodPress }: Prop
           const name = getLocalizedProductName({ name: item.name, nameTranslations: item.nameTranslations }, i18n.language);
           return (
             <PressableScale accessibilityRole="button" accessibilityLabel={t('favourite_foods_open', { name })}
-              onPress={() => onFoodPress(item)} pressedScale={0.97} style={[styles.card, { width: cardWidth }]}>
-              <View style={[styles.imageFrame, { width: cardWidth - 4, height: cardWidth - 4, borderRadius: (cardWidth - 4) / 2, backgroundColor: colors.primarySoft }]}>
+              onPress={() => onFoodPress(item)} pressedScale={0.97} style={[styles.card, cardSurface, { width: cardWidth, height: cardHeight }]}>
+              <View style={[styles.imageFrame, { backgroundColor: colors.primarySoft }]}>
                 {item.imageUrl ? <Image source={{ uri: item.imageUrl }} style={styles.image} resizeMode="cover" />
                   : <Ionicons name="restaurant-outline" color={colors.primary} size={Math.min(28, cardWidth * 0.34)} />}
               </View>
-              <Text color={colors.textStrong} variant="label" weight="semiBold" numberOfLines={2} style={styles.name}>{name}</Text>
+              <View style={[styles.footer, { height: footerHeight }]}>
+                <Text color={colors.textStrong} variant="caption" weight="semiBold" numberOfLines={2} style={styles.name}>{name}</Text>
+              </View>
             </PressableScale>
           );
         }}
@@ -138,10 +145,11 @@ export default function FavouriteFoodsCarousel({ shopTypeId, onFoodPress }: Prop
 
 const styles = StyleSheet.create({
   section: { width: '100%' },
-  card: { alignItems: 'center', gap: 6 },
-  imageFrame: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  image: { width: '100%', height: '100%' },
-  name: { textAlign: 'center', width: '100%' },
+  card: { overflow: 'hidden', borderWidth: 1 },
+  imageFrame: { flex: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  image: { width: '100%', height: '100%', transform: [{ scale: 1.3 }] },
+  footer: { justifyContent: 'center', paddingHorizontal: 8 },
+  name: { textAlign: 'left', width: '100%' },
   skeletons: { flexDirection: 'row', overflow: 'hidden', paddingVertical: 4 },
   retry: { alignItems: 'center', borderRadius: 12, justifyContent: 'center', minHeight: 48 },
 });

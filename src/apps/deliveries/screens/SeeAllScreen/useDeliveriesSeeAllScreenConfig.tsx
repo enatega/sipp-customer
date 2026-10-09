@@ -11,6 +11,8 @@ import useChainCategoryProducts from '../../chain/hooks/useChainCategoryProducts
 import useSingleVendorCategoryProducts from '../../singleVendor/hooks/useSingleVendorCategoryProducts';
 import VerticalStoreListSkeleton from '../../components/VerticalStoreListSkeleton';
 import { useFavouriteFoodProducts } from '../../hooks/useFavouriteFoods';
+import { useProductSearch } from '../../hooks/useSearchQueries';
+import { useBrowseCity } from '../../stores/useBrowseCityStore';
 import FavouriteFoodProductsSkeleton from '../../components/discovery/FavouriteFoodProductsSkeleton';
 import type {
   DeliveriesSeeAllParamList,
@@ -22,6 +24,7 @@ type SeeAllRawQueryResult =
   | ReturnType<typeof useChainCategoryProducts>
   | ReturnType<typeof useShopTypeProducts>
   | ReturnType<typeof useShopTypeStores>
+  | ReturnType<typeof useProductSearch>
   | ReturnType<typeof useVendorStores>
   | ReturnType<typeof useSingleVendorCategoryProducts>;
 
@@ -42,6 +45,7 @@ type UseDeliveriesSeeAllScreenConfigParams = {
   enabled: boolean;
   filters: GenericListFilters;
   search: string;
+  searchText: string;
   queryType: DeliveriesSeeAllParamList['SeeAllScreen']['queryType'];
   shopTypeId?: string;
   vendorId?: string;
@@ -78,12 +82,16 @@ export default function useDeliveriesSeeAllScreenConfig({
   enabled,
   filters,
   search,
+  searchText,
   queryType,
   shopTypeId,
   vendorId,
   categoryId,
   foodId,
 }: UseDeliveriesSeeAllScreenConfigParams): UseDeliveriesSeeAllScreenConfigResult {
+  const city = useBrowseCity();
+  const isFavouriteFoodSearch = queryType === 'favourite-food-products' && searchText.trim().length > 0;
+  const isFavouriteFoodSearchReady = isFavouriteFoodSearch && searchText.trim() === search;
   const nearbyStoresQuery = useNearbyStores({
     mode: 'paginated',
     enabled: enabled && queryType === 'nearby-stores',
@@ -131,26 +139,39 @@ export default function useDeliveriesSeeAllScreenConfig({
   });
 
   const favouriteFoodProductsQuery = useFavouriteFoodProducts(
-    enabled && queryType === 'favourite-food-products' ? foodId ?? '' : '',
+    enabled && queryType === 'favourite-food-products' && !isFavouriteFoodSearch ? foodId ?? '' : '',
     shopTypeId,
-    search,
   );
+  const favouriteFoodSearchQuery = useProductSearch(search, {
+    latitude: city?.latitude,
+    longitude: city?.longitude,
+    shopTypeId,
+    favouriteFoodId: foodId,
+  }, { enabled: enabled && isFavouriteFoodSearchReady && Boolean(foodId) });
 
   if (queryType === 'favourite-food-products') {
+    const searchPage = favouriteFoodSearchQuery.data?.pages[0];
+    const searchProducts = favouriteFoodSearchQuery.data?.pages.flatMap((page) =>
+      page.items.map((item, index) => ({
+        ...item,
+        searchQueryId: page.searchMeta?.queryId,
+        searchPosition: page.offset + index + 1,
+      })),
+    ) ?? [];
     return {
       itemKeyExtractor: (item, index) => 'productId' in item
         ? `${item.productId}-${item.storeId}-${index}` : `${item.storeId}-${index}`,
       listQuery: {
-        data: favouriteFoodProductsQuery.products,
-        totalCount: favouriteFoodProductsQuery.total,
-        isPending: favouriteFoodProductsQuery.isPending,
-        isError: favouriteFoodProductsQuery.isError,
-        error: favouriteFoodProductsQuery.error,
-        refetch: favouriteFoodProductsQuery.refetch,
-        hasNextPage: favouriteFoodProductsQuery.hasNextPage,
-        isFetchingNextPage: favouriteFoodProductsQuery.isFetchingNextPage,
-        fetchNextPage: favouriteFoodProductsQuery.fetchNextPage,
-        isRefetching: favouriteFoodProductsQuery.isRefetching,
+        data: isFavouriteFoodSearch ? (isFavouriteFoodSearchReady ? searchProducts : []) : favouriteFoodProductsQuery.products,
+        totalCount: isFavouriteFoodSearch ? (isFavouriteFoodSearchReady ? searchPage?.total : undefined) : favouriteFoodProductsQuery.total,
+        isPending: isFavouriteFoodSearch ? !isFavouriteFoodSearchReady || favouriteFoodSearchQuery.isPending : favouriteFoodProductsQuery.isPending,
+        isError: isFavouriteFoodSearch ? isFavouriteFoodSearchReady && favouriteFoodSearchQuery.isError : favouriteFoodProductsQuery.isError,
+        error: isFavouriteFoodSearch ? favouriteFoodSearchQuery.error : favouriteFoodProductsQuery.error,
+        refetch: isFavouriteFoodSearch ? favouriteFoodSearchQuery.refetch : favouriteFoodProductsQuery.refetch,
+        hasNextPage: isFavouriteFoodSearch ? favouriteFoodSearchQuery.hasNextPage : favouriteFoodProductsQuery.hasNextPage,
+        isFetchingNextPage: isFavouriteFoodSearch ? favouriteFoodSearchQuery.isFetchingNextPage : favouriteFoodProductsQuery.isFetchingNextPage,
+        fetchNextPage: isFavouriteFoodSearch ? favouriteFoodSearchQuery.fetchNextPage : favouriteFoodProductsQuery.fetchNextPage,
+        isRefetching: isFavouriteFoodSearch ? favouriteFoodSearchQuery.isRefetching : favouriteFoodProductsQuery.isRefetching,
       },
       loadingComponent: React.createElement(FavouriteFoodProductsSkeleton),
       paginationLoadingComponent: React.createElement(FavouriteFoodProductsSkeleton),

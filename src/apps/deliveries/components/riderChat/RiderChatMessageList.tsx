@@ -48,6 +48,7 @@ export default function RiderChatMessageList({
             key={message.id}
             sender={message.sender}
             text={message.text}
+            attachmentUrls={message.attachmentUrls}
             timeLabel={message.timeLabel}
           />
         ))}

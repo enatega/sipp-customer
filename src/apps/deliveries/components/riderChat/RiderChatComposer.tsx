@@ -5,6 +5,7 @@ import ChatComposer from '../chat/ChatComposer';
 type Props = {
   isSending?: boolean;
   onChangeText: (value: string) => void;
+  onAttachmentPress: () => void;
   onSend: () => void;
   placeholder: string;
   value: string;
@@ -13,6 +14,7 @@ type Props = {
 export default function RiderChatComposer({
   isSending = false,
   onChangeText,
+  onAttachmentPress,
   onSend,
   placeholder,
   value,
@@ -24,7 +26,8 @@ export default function RiderChatComposer({
       attachmentAccessibilityLabel={t('rider_chat_add_attachment')}
       isSending={isSending}
       messageAccessibilityLabel={t('rider_chat_send_message')}
-      showAttachment={false}
+      showAttachment
+      onAttachmentPress={onAttachmentPress}
       onChangeText={onChangeText}
       onSend={onSend}
       placeholder={placeholder}

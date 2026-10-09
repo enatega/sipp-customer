@@ -13,6 +13,8 @@ type Props = {
   dateOfBirth: string | null | undefined;
   phone: string | null | undefined;
   email: string | null | undefined;
+  isPhoneVerified?: boolean;
+  isEmailVerified?: boolean;
   editLabel: string;
   nameLabel: string;
   dateOfBirthLabel: string;
@@ -30,6 +32,8 @@ export default function MyProfileInfoCard({
   dateOfBirth,
   phone,
   email,
+  isPhoneVerified,
+  isEmailVerified,
   editLabel,
   nameLabel,
   dateOfBirthLabel,
@@ -103,8 +107,8 @@ export default function MyProfileInfoCard({
           onEdit={onEditName}
         />
         <MyProfileInfoRow label={dateOfBirthLabel} value={dateOfBirth} />
-        <MyProfileInfoRow label={phoneLabel} value={phone} />
-        <MyProfileInfoRow label={emailLabel} value={email} />
+        <MyProfileInfoRow label={phoneLabel} value={phone} verificationStatus={isPhoneVerified} />
+        <MyProfileInfoRow label={emailLabel} value={email} verificationStatus={isEmailVerified} />
       </View>
     </View>
   );

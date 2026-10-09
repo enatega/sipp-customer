@@ -129,7 +129,7 @@ export default function NearbyStoreList(props: Props) {
           data={nearbyStoresData}
           keyExtractor={(item) => item.storeId}
           contentContainerStyle={{
-            paddingBottom: spacing.lg,
+            paddingBottom: spacing.xs,
             paddingRight: gutter,
             paddingTop: spacing.xs,
           }}

@@ -1,15 +1,18 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import Text from '../../../../general/components/Text';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../../general/theme/theme';
 
 type Props = {
   sender: 'rider' | 'user';
   text: string;
+  attachmentUrls?: string[];
   timeLabel?: string;
 };
 
-export default function RiderChatMessageBubble({ sender, text, timeLabel }: Props) {
+export default function RiderChatMessageBubble({ sender, text, attachmentUrls = [], timeLabel }: Props) {
+  const { t } = useTranslation('deliveries');
   const { colors, typography } = useTheme();
   const isCurrentUser = sender === 'user';
 
@@ -24,12 +27,15 @@ export default function RiderChatMessageBubble({ sender, text, timeLabel }: Prop
           },
         ]}
       >
-        <Text
+        {attachmentUrls.map((url) => (
+          <Image key={url} source={{ uri: url }} style={styles.photo} accessibilityLabel={t('chat_photo_accessibility')} />
+        ))}
+        {text ? <Text
           color={isCurrentUser ? colors.white : colors.text}
           style={{ fontSize: typography.size.md2, lineHeight: typography.lineHeight.lg }}
         >
           {text}
-        </Text>
+        </Text> : null}
       </View>
       {timeLabel ? (
         <Text
@@ -52,9 +58,15 @@ export default function RiderChatMessageBubble({ sender, text, timeLabel }: Prop
 
 const styles = StyleSheet.create({
   bubble: {
+    gap: 8,
     maxWidth: 240,
     paddingHorizontal: 12,
     paddingVertical: 8,
+  },
+  photo: {
+    borderRadius: 12,
+    height: 180,
+    width: 180,
   },
   currentUserBubble: {
     borderBottomLeftRadius: 24,

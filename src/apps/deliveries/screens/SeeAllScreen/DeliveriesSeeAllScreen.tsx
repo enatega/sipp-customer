@@ -18,6 +18,7 @@ import AppPopup from '../../../../general/components/AppPopup';
 import { pushStoreDetails } from '../../navigation/storeDetailsNavigation';
 import FavouriteFoodResultCard from '../../components/discovery/FavouriteFoodResultCard';
 import { useTheme } from '../../../../general/theme/theme';
+import { searchService } from '../../api/searchService';
 
 type NavigationProp = NativeStackNavigationProp<DeliveriesStackParamList>;
 type SeeAllRouteProp = RouteProp<DeliveriesSeeAllParamList, 'SeeAllScreen'>;
@@ -64,6 +65,7 @@ export default function DeliveriesSeeAllScreen() {
     enabled: true,
     filters: appliedFilters,
     search: debouncedSearch,
+    searchText,
     queryType,
     shopTypeId,
     vendorId,
@@ -98,7 +100,19 @@ export default function DeliveriesSeeAllScreen() {
         return (
           <FavouriteFoodResultCard
             product={item}
-            onPress={() => navigation.navigate('ProductInfo', { productId: item.productId })}
+            onPress={() => {
+              if (item.searchQueryId) {
+                void searchService.trackEvent({
+                  eventType: 'click',
+                  resourceType: 'product',
+                  eventName: 'Product Opened',
+                  queryId: item.searchQueryId,
+                  objectId: item.productId,
+                  position: item.searchPosition,
+                }).catch(() => undefined);
+              }
+              navigation.navigate('ProductInfo', { productId: item.productId });
+            }}
           />
         );
       }

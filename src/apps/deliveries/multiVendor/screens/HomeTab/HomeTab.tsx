@@ -333,7 +333,11 @@ export default function HomeTab() {
         )}
       >
         {(homeLayout.data?.sections ?? fallbackSections).map((section, index) => (
-          <HomeEntrance key={section.key} index={index + 1} style={[styles.sectionGroup, { marginBottom: spacing.section.default }]}>
+          <HomeEntrance
+            key={section.key}
+            index={index + 1}
+            style={[styles.sectionGroup, { marginBottom: spacing.md }]}
+          >
             {section.kind === 'shop-types' && <>
               <ShopTypeList />
               <View style={{ marginTop: spacing.lg }}>

@@ -45,7 +45,7 @@ export default function ShopTypeFeatureCard({ shopType, fallbackTone, isTwoColum
     ? [colors.shopTypeGroceryStart, colors.shopTypeGroceryEnd]
     : [colors.shopTypeRestaurantStart, colors.shopTypeRestaurantEnd];
   const imageUri = shopType.image?.trim();
-  const artworkWidth = cardWidth * (compactCard ? 0.9 : largeText ? 0.53 : 0.72);
+  const artworkWidth = cardWidth * (compactCard ? 0.74 : largeText ? 0.53 : 0.72);
   const artworkHeight = artworkWidth / (kind === 'grocery' ? 900 / 534 : 900 / 501);
 
   return (
@@ -59,7 +59,7 @@ export default function ShopTypeFeatureCard({ shopType, fallbackTone, isTwoColum
         {
           borderRadius: shape.radius.hero,
           flex: isTwoColumn ? 1 : undefined,
-          height: compactCard ? (largeText ? 178 : 156) : undefined,
+          height: compactCard ? (largeText ? 152 : 120) : undefined,
           minHeight: compactCard ? undefined : largeText ? 192 : 168,
           width: isTwoColumn ? undefined : '100%',
         },
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
     end: 16,
     width: 120,
   },
-  fallbackCompact: { bottom: -8, end: 6, height: 90, width: 90 },
+  fallbackCompact: { bottom: -8, end: 6, height: 80, width: 80 },
   copy: {
     alignItems: 'flex-start',
     alignSelf: 'flex-start',

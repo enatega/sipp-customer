@@ -85,6 +85,9 @@ export type SearchProductsParams = {
   limit: number;
   latitude?: number;
   longitude?: number;
+  categoryId?: string;
+  shopTypeId?: string;
+  favouriteFoodId?: string;
 };
 
 // ---------------------------------------------------------------------------
@@ -131,6 +134,8 @@ export type SearchStoresParams = {
   limit: number;
   latitude?: number;
   longitude?: number;
+  categoryId?: string;
+  shopTypeId?: string;
   categoryIds?: string[];
   priceId?: string;
   addressId?: string;

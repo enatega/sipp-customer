@@ -34,6 +34,7 @@ export type SupportChatMessageRecord = {
   receiver_id?: string;
   text?: string;
   message?: string;
+  attachmentUrls?: string[];
   createdAt?: string;
   created_at?: string;
   updatedAt?: string;
@@ -132,10 +133,9 @@ export type SupportMyActiveMessagesResponse = {
 };
 
 export type SendSupportChatMessagePayload = {
-  senderId: string;
-  receiverId: string;
-  text: string;
-  chatBoxId?: string;
+  chatBoxId: string;
+  text?: string;
+  attachmentUrls?: string[];
 };
 
 export type SendSupportChatMessageToAdminPayload = {
@@ -158,6 +158,7 @@ export type SendSupportChatMessageResponse = {
     receiverId?: string;
     receiver_id?: string;
     text?: string;
+    attachmentUrls?: string[];
     chatBoxId?: string;
     chat_box_id?: string;
     createdAt?: string;

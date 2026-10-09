@@ -12,12 +12,14 @@ type Props = {
   backIconName?: React.ComponentProps<typeof Ionicons>['name'];
   onBackPress: () => void;
   title?: string;
+  titleLines?: number;
 };
 
 export default function CheckoutHeader({
   backIconName = 'chevron-back',
   onBackPress,
   title,
+  titleLines = 1,
 }: Props) {
   const { colors, layout, shape, spacing } = useTheme();
   const { t } = useTranslation('deliveries');
@@ -45,7 +47,8 @@ export default function CheckoutHeader({
 
       <Text
         accessibilityRole="header"
-        numberOfLines={1}
+        numberOfLines={titleLines}
+        style={styles.title}
         variant="sectionTitle"
         weight="bold"
       >
@@ -77,6 +80,11 @@ const styles = StyleSheet.create({
   },
   shell: {
     width: '100%',
+  },
+  title: {
+    flex: 1,
+    minWidth: 0,
+    textAlign: 'center',
   },
   trailingSpace: {
     width: 44,

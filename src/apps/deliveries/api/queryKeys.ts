@@ -202,10 +202,10 @@ export const deliveryKeys = {
             slotMinutes?: number;
         },
     ) => [...deliveryKeys.all, 'checkout-schedule', storeId, input] as const,
-    productSearch: (keyword: string, latitude?: number, longitude?: number) =>
-        [...deliveryKeys.search(), 'products', keyword, latitude, longitude] as const,
-    storeSearch: (keyword: string, latitude?: number, longitude?: number) =>
-        [...deliveryKeys.search(), 'stores', keyword, latitude, longitude] as const,
+    productSearch: (keyword: string, latitude?: number, longitude?: number, categoryId?: string, shopTypeId?: string, favouriteFoodId?: string) =>
+        [...deliveryKeys.search(), 'products', keyword, latitude, longitude, categoryId, shopTypeId, favouriteFoodId] as const,
+    storeSearch: (keyword: string, latitude?: number, longitude?: number, categoryId?: string, shopTypeId?: string) =>
+        [...deliveryKeys.search(), 'stores', keyword, latitude, longitude, categoryId, shopTypeId] as const,
     orderAgain: (filters?: {
         limit?: number;
         search?: string;
