@@ -14,6 +14,10 @@ import AppToast from "./src/general/components/AppToast";
 import { useSocketSession } from "./src/general/hooks/useSocketSession";
 import { usePushTokenSync } from './src/general/hooks/usePushTokenSync';
 import { queueOrderNotificationNavigation } from './src/general/navigation/notificationNavigation';
+import { setSessionExpiredHandler } from './src/general/api/apiClient';
+import { signOutLocally } from './src/general/hooks/useAuthMutations';
+
+setSessionExpiredHandler(signOutLocally);
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({

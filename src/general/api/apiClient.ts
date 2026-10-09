@@ -9,6 +9,14 @@ import { resetToAuth } from '../navigation/rootNavigation';
 const TOKEN_KEY = 'super_app_auth_token';
 const REFRESH_TOKEN_KEY = 'super_app_refresh_token';
 let isHandlingSessionExpiry = false;
+let sessionExpiredHandler: (() => Promise<void>) | null = null;
+
+// Registered at app start so an expired session gets the same full cleanup as
+// a manual logout (socket, stored user, query cache) without this module
+// importing the auth layer, which itself depends on apiClient.
+export function setSessionExpiredHandler(handler: (() => Promise<void>) | null) {
+  sessionExpiredHandler = handler;
+}
 
 function redirectToAuthWithRetry() {
   const navigated = resetToAuth();
@@ -387,7 +395,11 @@ httpClient.interceptors.response.use(
       isHandlingSessionExpiry = true;
 
       try {
-        await tokenManager.clearAll();
+        if (sessionExpiredHandler) {
+          await sessionExpiredHandler();
+        } else {
+          await tokenManager.clearAll();
+        }
         redirectToAuthWithRetry();
       } finally {
         isHandlingSessionExpiry = false;
