@@ -101,7 +101,7 @@ export const favouritesService = {
     },
 
     toggleFavourite: async (params: ToggleFavouriteParams): Promise<ToggleFavouriteResponse> => {
-        console.log('[Deliveries][Favourites] toggle request', params);
+        if (__DEV__) console.log('[Deliveries][Favourites] toggle request', params);
         const { storeId, nextIsFavorite } = params;
 
         try {
@@ -111,8 +111,8 @@ export const favouritesService = {
             );
             const normalizedResponse = normalizeToggleFavouriteResponse(response);
 
-            console.log('[Deliveries][Favourites] toggle raw response', response);
-            console.log('[Deliveries][Favourites] toggle normalized response', normalizedResponse);
+            if (__DEV__) console.log('[Deliveries][Favourites] toggle raw response', response);
+            if (__DEV__) console.log('[Deliveries][Favourites] toggle normalized response', normalizedResponse);
 
             return normalizedResponse;
         } catch (error) {
@@ -128,7 +128,7 @@ export const favouritesService = {
                     isFavorite: nextIsFavorite,
                 };
 
-                console.log('[Deliveries][Favourites] toggle fallback success', {
+                if (__DEV__) console.log('[Deliveries][Favourites] toggle fallback success', {
                     storeId,
                     nextIsFavorite,
                     errorData: error.data,

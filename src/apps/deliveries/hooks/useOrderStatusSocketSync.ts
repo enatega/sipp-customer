@@ -100,27 +100,27 @@ export function useOrderStatusSocketSync(orderId?: string, options?: Options) {
     const unsubscribeOrderStatus = subscribeDeliveriesEvent(
       "order-status-updated",
       (payload) => {
-        console.log("[deliveries][socket] order-status-updated received", {
+        if (__DEV__) console.log("[deliveries][socket] order-status-updated received", {
           activeOrderId: currentOrderIdRef.current,
           payload,
         });
 
         if (!isOrderStatusUpdatedEventPayload(payload)) {
-          console.log("[deliveries][socket] ignored invalid order-status-updated payload");
+          if (__DEV__) console.log("[deliveries][socket] ignored invalid order-status-updated payload");
           return;
         }
 
         const activeOrderId = currentOrderIdRef.current;
 
         if (!activeOrderId || payload.orderId !== activeOrderId) {
-          console.log("[deliveries][socket] ignored order-status-updated for different order", {
+          if (__DEV__) console.log("[deliveries][socket] ignored order-status-updated for different order", {
             activeOrderId,
             eventOrderId: payload.orderId,
           });
           return;
         }
 
-        console.log("[deliveries][socket] applying order-status-updated payload to order cache", {
+        if (__DEV__) console.log("[deliveries][socket] applying order-status-updated payload to order cache", {
           orderId: activeOrderId,
           status: payload.status,
           updatedAt: payload.updatedAt,
@@ -173,21 +173,21 @@ export function useOrderStatusSocketSync(orderId?: string, options?: Options) {
     const unsubscribeRiderStatus = subscribeDeliveriesEvent(
       "rider-status-updated",
       (payload: RiderStatusUpdatedEventPayload) => {
-        console.log("[customer][socket] rider-status-updated received", {
+        if (__DEV__) console.log("[customer][socket] rider-status-updated received", {
           activeOrderId: currentOrderIdRef.current,
           payload,
         });
         if (!payload?.orderId) return;
         const activeOrderId = currentOrderIdRef.current;
         if (!activeOrderId || payload.orderId !== activeOrderId) {
-          console.log("[customer][socket] ignored rider-status-updated for different order", {
+          if (__DEV__) console.log("[customer][socket] ignored rider-status-updated for different order", {
             activeOrderId,
             eventOrderId: payload.orderId,
           });
           return;
         }
 
-        console.log("[customer][socket] applying rider-status-updated by invalidating order detail", {
+        if (__DEV__) console.log("[customer][socket] applying rider-status-updated by invalidating order detail", {
           orderId: activeOrderId,
           riderStatus: payload.riderStatus,
           updatedAt: payload.updatedAt,
