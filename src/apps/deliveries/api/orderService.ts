@@ -11,7 +11,7 @@ import type {
 const ORDERS_BASE = '/api/v1/apps/deliveries/orders';
 const CHECKOUT_PREVIEW_PATH = `${ORDERS_BASE}/place-order/preview`;
 const CHECKOUT_PLACE_ORDER_PATH = ORDERS_BASE;
-const ENABLE_DELIVERIES_ORDER_DEBUG = true;
+const ENABLE_DELIVERIES_ORDER_DEBUG = __DEV__;
 
 export const orderService = {
   getCheckoutScheduleSlots: (

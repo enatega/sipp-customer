@@ -76,6 +76,64 @@ function sanitizeHeaders(headers: unknown): Record<string, unknown> | undefined 
   );
 }
 
+const SENSITIVE_BODY_KEYS = new Set([
+  'password',
+  'newpassword',
+  'oldpassword',
+  'currentpassword',
+  'confirmpassword',
+  'otp',
+  'code',
+  'token',
+  'accesstoken',
+  'refreshtoken',
+  'idtoken',
+  'identitytoken',
+  'authorizationcode',
+  'cardnumber',
+  'cvc',
+  'cvv',
+]);
+
+function redactSensitiveValues(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map(redactSensitiveValues);
+  }
+
+  if (!value || typeof value !== 'object') {
+    return value;
+  }
+
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>).map(([key, entryValue]) => [
+      key,
+      SENSITIVE_BODY_KEYS.has(key.toLowerCase()) ? '[redacted]' : redactSensitiveValues(entryValue),
+    ]),
+  );
+}
+
+// Request bodies are logged and attached to ApiError on failure; never let
+// passwords, OTPs or tokens leave this module in plain text.
+function sanitizeRequestBody(data: unknown): unknown {
+  if (data === undefined || data === null) {
+    return data;
+  }
+
+  if (typeof data === 'string') {
+    try {
+      return redactSensitiveValues(JSON.parse(data) as unknown);
+    } catch {
+      return '[unparsed body]';
+    }
+  }
+
+  if (typeof FormData !== 'undefined' && data instanceof FormData) {
+    return '[form-data]';
+  }
+
+  return redactSensitiveValues(data);
+}
+
 function isLikelyAuthExpiry(status: number, responseData?: ApiErrorResponseData): boolean {
   const messageText = toLowerCaseMessage(responseData?.message);
   const errorText = toLowerCaseMessage(responseData?.error);
@@ -357,7 +415,7 @@ function toApiError(error: unknown): ApiError {
       baseURL: axiosError.config?.baseURL,
       timeout: axiosError.config?.timeout,
       params: axiosError.config?.params,
-      data: axiosError.config?.data,
+      data: sanitizeRequestBody(axiosError.config?.data),
       headers: sanitizeHeaders(axiosError.config?.headers),
     };
 
