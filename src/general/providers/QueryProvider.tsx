@@ -28,7 +28,9 @@ const queryClient = new QueryClient({
       refetchOnReconnect: true,    // Refetch on network recovery
     },
     mutations: {
-      retry: 1,
+      // Never auto-retry writes: a timed-out request may already have been
+      // applied server-side (orders, top-ups, payments), so a retry duplicates it.
+      retry: false,
     },
   },
 });

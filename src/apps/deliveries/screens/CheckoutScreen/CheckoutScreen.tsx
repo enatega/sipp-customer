@@ -313,6 +313,7 @@ export default function CheckoutScreen() {
     ]);
   }, [clearCheckoutCoupon, navigateToOrderConfirmation, queryClient]);
 
+  const isPlacingOrderRef = React.useRef(false);
   const placeOrderMutation = usePlaceOrder({
     onError: (error) => {
       if (isStoreClosedError(error)) {
@@ -494,6 +495,11 @@ export default function CheckoutScreen() {
   }, [navigation, refreshCurrentLocation]);
 
   const handlePlaceOrderPress = React.useCallback(() => {
+    // Guard against double taps landing before the button re-renders as disabled.
+    if (isPlacingOrderRef.current || placeOrderMutation.isPending) {
+      return;
+    }
+
     if (!cart?.bucketId || !cart.storeId) {
       return;
     }
@@ -537,8 +543,11 @@ export default function CheckoutScreen() {
         : undefined,
     };
 
+    isPlacingOrderRef.current = true;
     void placeOrderMutation.mutateAsync(payload).catch(() => {
       // Toast feedback is handled by the mutation callbacks.
+    }).finally(() => {
+      isPlacingOrderRef.current = false;
     });
   }, [
     cart?.bucketId,
