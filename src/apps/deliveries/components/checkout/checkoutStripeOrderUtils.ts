@@ -4,8 +4,10 @@ export const CHECKOUT_STRIPE_SUCCESS_URL =
   'https://checkout.enatega.app/deliveries/stripe/success';
 export const CHECKOUT_STRIPE_CANCEL_URL =
   'https://checkout.enatega.app/deliveries/stripe/cancel';
-export const CHECKOUT_STRIPE_SUCCESS_MATCHER = '/success';
-export const CHECKOUT_STRIPE_CANCEL_MATCHER = '/cancel';
+// Matched against the end of the URL path, not as a '/success' substring that
+// unrelated pages during checkout (e.g. 3-D Secure) could also contain.
+export const CHECKOUT_STRIPE_SUCCESS_MATCHER = '/deliveries/stripe/success';
+export const CHECKOUT_STRIPE_CANCEL_MATCHER = '/deliveries/stripe/cancel';
 
 export async function waitForStripeCheckoutOrderId(draftId: string) {
   for (let attempt = 0; attempt < 20; attempt += 1) {

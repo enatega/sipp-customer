@@ -14,6 +14,24 @@ type Props = {
   title: string;
 };
 
+function stripQueryAndHash(url: string) {
+  return url.split(/[?#]/)[0].replace(/\/+$/, '').toLowerCase();
+}
+
+// Absolute matchers must equal the URL's origin + path; path matchers must end
+// the URL's path. Query and hash are ignored (the backend may append a session
+// id), so a matcher appearing only in a query string never counts.
+function matchesReturnUrl(url: string, matcher: string) {
+  const normalizedUrl = stripQueryAndHash(url);
+  const normalizedMatcher = stripQueryAndHash(matcher);
+
+  if (/^https?:\/\//i.test(matcher)) {
+    return normalizedUrl === normalizedMatcher;
+  }
+
+  return normalizedUrl.endsWith(normalizedMatcher);
+}
+
 export default function StripePaymentWebView({
   cancelUrlMatcher,
   checkoutUrl,
@@ -32,7 +50,7 @@ export default function StripePaymentWebView({
 
     onUrlChange?.(url);
 
-    if (url.includes(successUrlMatcher)) {
+    if (matchesReturnUrl(url, successUrlMatcher)) {
       if (!hasResolvedRef.current) {
         hasResolvedRef.current = true;
         onPaymentSuccess(url);
@@ -41,7 +59,7 @@ export default function StripePaymentWebView({
       return false;
     }
 
-    if (url.includes(cancelUrlMatcher)) {
+    if (matchesReturnUrl(url, cancelUrlMatcher)) {
       if (!hasResolvedRef.current) {
         hasResolvedRef.current = true;
 
