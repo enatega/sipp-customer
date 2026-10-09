@@ -12,10 +12,15 @@ import EnterPhoneOtpLogin from "../screens/auth/enterPhoneOtpLogin/EnterPhoneOtp
 import EnterPhoneOtpSignup from "../screens/auth/enterPhoneOtpSignup/EnterPhoneOtpSignup";
 import EnterEmailOtpSignup from "../screens/auth/enterEmailOtpSignup/EnterEmailOtpSignup";
 import type { AuthStackParamList } from "./authTypes";
+import { useAuthStore } from "../stores/useAuthStore";
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 export default function AuthNavigator() {
+  // The signup password lives in the global auth store until OTP verification;
+  // drop it if the user leaves the auth flow without finishing signup.
+  React.useEffect(() => () => useAuthStore.getState().resetSignup(), []);
+
   return (
     <Stack.Navigator>
       <Stack.Screen
