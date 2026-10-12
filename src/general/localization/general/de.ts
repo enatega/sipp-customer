@@ -1,4 +1,12 @@
 const de = {
+  phone_profile_title: 'Telefonnummer hinzufügen oder ändern',
+  phone_profile_description: 'Bestätigen Sie eine Mobilnummer für Bestellungen und den Kontozugang.',
+  phone_transfer_warning: 'Wenn diese Nummer zu einem anderen Kundenkonto gehört, wird sie durch die Bestätigung hierher übertragen. Die Anmeldung per Telefon ist dort danach nicht mehr möglich.',
+  phone_send_error: 'Der Code konnte nicht gesendet werden. Bitte erneut versuchen.',
+  phone_protected: 'Diese Nummer gehört zu einem geschützten Konto oder ist dessen einzige Anmeldemöglichkeit. Verwenden Sie eine andere Nummer oder wenden Sie sich an den Support.',
+  phone_code_expired: 'Dieser Code ist abgelaufen oder wurde bereits verwendet. Fordern Sie einen neuen Code an.',
+  phone_code_invalid: 'Der Code ist falsch. Bitte prüfen und erneut versuchen.',
+  phone_verified: 'Ihre Telefonnummer ist bestätigt.',
   "app_name": "Sipp",
   "greeting": "Guten Morgen 👋",
   "greeting_morning": "Guten Morgen 👋",
@@ -778,4 +786,3 @@ const de = {
 };
 
 export default de;
-

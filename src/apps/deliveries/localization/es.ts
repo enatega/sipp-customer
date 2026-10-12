@@ -1,4 +1,5 @@
 const es = {
+  checkout_phone_transfer_warning: 'Si este número pertenece a otra cuenta de cliente, verificarlo lo trasladará aquí y desactivará el acceso por teléfono en esa cuenta.',
   "shop_type_grocery": "Supermercado",
   "shop_type_restaurant": "Restaurante",
   "shop_type_browse_action": "Explorar",

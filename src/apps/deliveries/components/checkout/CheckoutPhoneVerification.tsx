@@ -9,9 +9,11 @@ import OtpCodeInput from '../../../../general/components/auth/OtpInput';
 import { showToast } from '../../../../general/components/AppToast';
 import { profileService } from '../../../../general/api/profileService';
 import { useTheme } from '../../../../general/theme/theme';
+import { phoneVerificationErrorMessage } from '../../../../general/utils/phoneVerificationError';
 
 export default function CheckoutPhoneVerification({ onBack, onVerified }: { onBack: () => void; onVerified: () => Promise<unknown> }) {
   const { t } = useTranslation('deliveries');
+  const { t: tg } = useTranslation('general');
   const { colors } = useTheme();
   const [phoneText, setPhoneText] = useState('');
   const [phone, setPhone] = useState('');
@@ -31,7 +33,7 @@ export default function CheckoutPhoneVerification({ onBack, onVerified }: { onBa
       attempted.current = '';
       setHasError(false);
     } catch (error) {
-      showToast.error(t('checkout_phone_verify_title'), error instanceof Error ? error.message : t('checkout_phone_send_error'));
+      showToast.error(t('checkout_phone_verify_title'), phoneVerificationErrorMessage(error, tg, t('checkout_phone_send_error')));
     } finally {
       setBusy(false);
     }
@@ -46,7 +48,7 @@ export default function CheckoutPhoneVerification({ onBack, onVerified }: { onBa
       await onVerified();
     } catch (error) {
       setHasError(true);
-      showToast.error(t('checkout_phone_verify_title'), error instanceof Error ? error.message : t('checkout_phone_code_error'));
+      showToast.error(t('checkout_phone_verify_title'), phoneVerificationErrorMessage(error, tg, t('checkout_phone_code_error')));
     } finally {
       setBusy(false);
     }
@@ -58,6 +60,7 @@ export default function CheckoutPhoneVerification({ onBack, onVerified }: { onBa
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24, gap: 20 }}>
         <Text variant="title" weight="bold">{t('checkout_phone_verify_title')}</Text>
         <Text variant="supporting" color={colors.mutedText}>{sentPhone ? t('checkout_phone_code_sent', { phone: sentPhone }) : t('checkout_phone_verify_description')}</Text>
+        {!sentPhone ? <Text variant="supporting" color={colors.mutedText}>{t('checkout_phone_transfer_warning')}</Text> : null}
         {sentPhone ? <>
           <OtpCodeInput onCodeFilled={(value) => {
             setCode(value);

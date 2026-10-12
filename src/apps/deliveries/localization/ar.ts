@@ -1,4 +1,5 @@
 const ar = {
+  checkout_phone_transfer_warning: 'إذا كان هذا الرقم مرتبطًا بحساب عميل آخر، فسيؤدي التحقق منه إلى نقله إلى هنا وتعطيل تسجيل الدخول بالهاتف في ذلك الحساب.',
   "shop_type_grocery": "بقالة",
   "shop_type_restaurant": "مطعم",
   "shop_type_browse_action": "تصفح",

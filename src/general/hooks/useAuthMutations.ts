@@ -9,6 +9,7 @@ import type { ApiError } from "../api/apiClient";
 import type {
   AppleLoginPayload,
   AppleLoginResponse,
+  AppleAuthenticatedResponse,
   EmailLoginPayload,
   EmailLoginRespoce,
   GoogleLoginPayload,
@@ -43,7 +44,7 @@ async function finalizeAuthSession(
     | LoginVerifyOtpResponse
     | EmailLoginRespoce
     | GoogleAuthenticatedResponse
-    | AppleLoginResponse,
+    | AppleAuthenticatedResponse,
 ) {
   await authSession.setSession(data);
   queryClient.setQueryData(authKeys.session(), {
@@ -233,8 +234,24 @@ export function useAppleLogin(
     mutationFn: authService.appleLogin,
     ...options,
     onSuccess: async (data, variables, onMutateResult, context) => {
+      if ('phoneVerificationRequired' in data) {
+        options?.onSuccess?.(data, variables, onMutateResult, context);
+        return;
+      }
       await finalizeAuthSession(queryClient, data);
       options?.onSuccess?.(data, variables, onMutateResult, context);
+      await redirectToPendingAppIfNeeded();
+    },
+  });
+}
+
+export function useApplePhoneVerify() {
+  const queryClient = useQueryClient();
+  return useMutation<AppleAuthenticatedResponse, ApiError, AppleLoginPayload & { phone: string; otp: string }>({
+    mutationFn: authService.verifyApplePhoneOtp,
+    retry: false,
+    onSuccess: async (data) => {
+      await finalizeAuthSession(queryClient, data);
       await redirectToPendingAppIfNeeded();
     },
   });

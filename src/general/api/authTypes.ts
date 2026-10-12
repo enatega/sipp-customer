@@ -122,11 +122,12 @@ export type AppleLoginPayload = {
   device_push_token?: string;
 };
 
-export type AppleLoginResponse = {
+export type AppleAuthenticatedResponse = {
   user: User;
   profiles: Profile;
   accessToken: string;
 };
+export type AppleLoginResponse = AppleAuthenticatedResponse | { phoneVerificationRequired: true };
 
 export type SendForgotPasswordOtpPayload = {
   email: string;

@@ -13,6 +13,7 @@ import { getExpoPushTokenForAuth } from "../../services/notifications/expoPushTo
 import PhoneNumberInput from "./PhoneInput";
 import OtpCodeInput from "./OtpInput";
 import Text from "../Text";
+import { phoneVerificationErrorMessage } from "../../utils/phoneVerificationError";
 
 const iosClientId = process.env.EXPO_PUBLIC_IOS_CLIENT_ID;
 const webClientId =
@@ -82,7 +83,7 @@ const GoogleLogin = () => {
       setCode("");
       submittedCode.current = "";
     } catch (error) {
-      showToast.error(t("google_phone_title"), resolveGoogleLoginErrorMessage(error));
+      showToast.error(t("google_phone_title"), phoneVerificationErrorMessage(error, t, resolveGoogleLoginErrorMessage(error)));
     } finally {
       setIsSendingCode(false);
     }
@@ -97,7 +98,7 @@ const GoogleLogin = () => {
       setIdToken("");
     } catch (error) {
       setHasCodeError(true);
-      showToast.error(t("google_phone_title"), resolveGoogleLoginErrorMessage(error));
+      showToast.error(t("google_phone_title"), phoneVerificationErrorMessage(error, t, resolveGoogleLoginErrorMessage(error)));
     }
   };
 
@@ -149,6 +150,7 @@ const GoogleLogin = () => {
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24, gap: 18 }}>
           <Text variant="title" weight="bold">{t("google_phone_title")}</Text>
           <Text style={{ color: colors.mutedText }}>{sentPhone ? t("google_phone_code_sent", { phone: sentPhone }) : t("google_phone_description")}</Text>
+          {!sentPhone ? <Text style={{ color: colors.mutedText }}>{t("phone_transfer_warning")}</Text> : null}
           {sentPhone ? <>
             <OtpCodeInput
               onCodeFilled={(value) => {

@@ -1,4 +1,5 @@
 const en = {
+  checkout_phone_transfer_warning: 'If this number belongs to another customer account, verifying it will move it here and disable phone sign-in on that account.',
   checkout_phone_verify_title: 'Verify your phone to place an order',
   checkout_phone_verify_description: 'Confirm a mobile number before checkout so we can contact you about your order.',
   checkout_phone_code_sent: 'Enter the four-digit code sent to {{phone}}.',

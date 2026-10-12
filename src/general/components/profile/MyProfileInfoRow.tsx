@@ -44,6 +44,7 @@ export default function MyProfileInfoRow({
           <PressableScale
             onPress={onEdit}
             accessibilityRole="button"
+            accessibilityLabel={`${editLabel} ${label}`}
             style={[styles.editButton, { backgroundColor: colors.primarySoft }]}
           >
             <Text weight="bold" color={colors.primary} style={styles.editText}>
@@ -82,7 +83,8 @@ const styles = StyleSheet.create({
   infoRowHeader: {
     alignItems: 'center',
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   infoValue: {
     fontSize: 12,

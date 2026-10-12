@@ -19,6 +19,7 @@ export function getSignupConflictFields(error: ApiError): SignupConflictField[] 
 
   if (error.code === 'SIGNUP_EMAIL_EXISTS') return ['email'];
   if (error.code === 'SIGNUP_PHONE_EXISTS') return ['phone'];
+  if (error.code === 'PHONE_PROTECTED') return [];
 
   const message = error.message.toLowerCase();
   if (message.includes('email') && !message.includes('phone')) return ['email'];

@@ -6,6 +6,7 @@ import SvgAndTextWrapper from "../../../components/auth/general/SvgAndTextWrappe
 import Footer from "../../../components/Footer";
 import ScreenHeader from "../../../components/ScreenHeader";
 import Button from "../../../components/Button";
+import Text from "../../../components/Text";
 import { useTranslation } from "react-i18next";
 import { useNavigation } from "@react-navigation/native";
 import FieldsWrapper from "../../../components/auth/signup/FieldsWrapper";
@@ -18,6 +19,7 @@ import AppPopup from '../../../components/AppPopup';
 import { showToast } from '../../../components/AppToast';
 import KeyboardDismissWrapper from "../../../components/KeyboardDismissWrapper";
 import { useShallow } from "zustand/react/shallow";
+import { phoneVerificationErrorMessage } from '../../../utils/phoneVerificationError';
 
 const Signup = () => {
   const { colors } = useTheme();
@@ -25,7 +27,7 @@ const Signup = () => {
   const { t } = useTranslation();
   const navigation = useNavigation();
 
-  const { formData, signupPhoneInput, setOtpType, setOtpSent, setSignupConflictFields } = useAuthStore(useShallow((state) => ({ formData: state.formData, signupPhoneInput: state.signupPhoneInput, setOtpType: state.setOtpType, setOtpSent: state.setOtpSent, setSignupConflictFields: state.setSignupConflictFields })));
+  const { formData, setOtpType, setOtpSent, setSignupConflictFields } = useAuthStore(useShallow((state) => ({ formData: state.formData, setOtpType: state.setOtpType, setOtpSent: state.setOtpSent, setSignupConflictFields: state.setSignupConflictFields })));
   const rateLimitModal = useTooManyRequestsModal();
   const sendOtpMutation = useSignupSendOtp({
     onSuccess: () => {
@@ -40,7 +42,7 @@ const Signup = () => {
       } else if (error.status === 429) {
         rateLimitModal.show();
       } else {
-        showToast.error(t('signup_request_error_title'), error.message);
+        showToast.error(t('signup_request_error_title'), phoneVerificationErrorMessage(error, t, error.message));
       }
     },
   });
@@ -50,8 +52,7 @@ const Signup = () => {
     formData.email.trim().length > 0 &&
     isValidEmail(formData.email) &&
     isValidSignupPassword(formData.password) &&
-    formData.phone.startsWith('+') &&
-    signupPhoneInput.replace(/\D/g, '').length >= 6;
+    /^\+[1-9]\d{7,14}$/.test(formData.phone);
 
   const handleContinue = () => {
     if (!isFormValid || sendOtpMutation.isPending) return;
@@ -81,6 +82,7 @@ const Signup = () => {
             heading="signup_heading"
             description="signup_description"
           />
+          <Text color={colors.mutedText} style={{ marginHorizontal: 24, marginBottom: 12 }}>{t('phone_transfer_warning')}</Text>
           <FieldsWrapper disabled={sendOtpMutation.isPending} />
         </ScrollView>
       </KeyboardAvoidingView>

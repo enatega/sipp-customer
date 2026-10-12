@@ -243,7 +243,7 @@ export default function CheckoutScreen() {
     refetch: refetchCart,
   } = useCart();
   const previewInput = React.useMemo(
-    () => phoneProfile.data?.data?.user && !phoneProfile.data.data.user.google_phone_verification_required ? getPreviewInput(
+    () => phoneProfile.data?.data?.user && !(phoneProfile.data.data.user.phone_verification_required ?? (!phoneProfile.data.data.user.phone || !phoneProfile.data.data.user.phone_is_verified)) ? getPreviewInput(
       cart,
       orderType,
       paymentMethod,
@@ -253,7 +253,9 @@ export default function CheckoutScreen() {
     ) : null,
     [
       cart,
-      phoneProfile.data?.data?.user?.google_phone_verification_required,
+      phoneProfile.data?.data?.user?.phone_verification_required,
+      phoneProfile.data?.data?.user?.phone,
+      phoneProfile.data?.data?.user?.phone_is_verified,
       phoneProfile.data?.data?.user?.id,
       orderType,
       paymentMethod,
@@ -316,6 +318,11 @@ export default function CheckoutScreen() {
   const isPlacingOrderRef = React.useRef(false);
   const placeOrderMutation = usePlaceOrder({
     onError: (error) => {
+      if (/PHONE_VERIFICATION_REQUIRED/.test(error.message)) {
+        void phoneProfile.refetch();
+        showToast.error(t('checkout_phone_verify_title'), t('checkout_phone_verify_description'));
+        return;
+      }
       if (isStoreClosedError(error)) {
         showToast.error(
           t('checkout_store_closed_title'),
@@ -860,7 +867,7 @@ export default function CheckoutScreen() {
 
   if (phoneProfile.isPending) return <View style={{ backgroundColor: colors.canvas, flex: 1 }}><CartScreenSkeleton /></View>;
   if (phoneProfile.isError || !phoneProfile.data?.data?.user) return <View style={{ backgroundColor: colors.canvas, flex: 1 }}><ScreenHeader onBack={handleBackPress} /><View style={{ flex: 1, justifyContent: 'center', padding: 24, gap: 18 }}><Text variant="sectionTitle">{t('checkout_phone_profile_error')}</Text><Button variant="primary" label={t('generic_list_retry')} onPress={() => void phoneProfile.refetch()} /></View></View>;
-  if (phoneProfile.data.data.user.google_phone_verification_required) return <CheckoutPhoneVerification onBack={handleBackPress} onVerified={async () => { await phoneProfile.refetch(); }} />;
+  if (phoneProfile.data.data.user.phone_verification_required ?? (!phoneProfile.data.data.user.phone || !phoneProfile.data.data.user.phone_is_verified)) return <CheckoutPhoneVerification onBack={handleBackPress} onVerified={async () => { await phoneProfile.refetch(); }} />;
 
   if (stripeCheckout) {
     return (

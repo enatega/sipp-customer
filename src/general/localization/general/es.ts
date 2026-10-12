@@ -1,4 +1,12 @@
 const es = {
+  phone_profile_title: 'Añadir o cambiar tu número',
+  phone_profile_description: 'Verifica un móvil para tus pedidos y el acceso a tu cuenta.',
+  phone_transfer_warning: 'Si este número pertenece a otra cuenta de cliente, verificarlo lo trasladará aquí y desactivará el acceso por teléfono en esa cuenta.',
+  phone_send_error: 'No pudimos enviar el código. Inténtalo de nuevo.',
+  phone_protected: 'Este número pertenece a una cuenta protegida o es su único método de acceso. Usa otro número o contacta con soporte.',
+  phone_code_expired: 'Este código caducó o ya se usó. Solicita uno nuevo.',
+  phone_code_invalid: 'El código es incorrecto. Revísalo e inténtalo de nuevo.',
+  phone_verified: 'Tu número está verificado.',
   "app_name": "Sipp",
   "greeting": "Buenos días ‹",
   "greeting_morning": "Buenos días ‹",
@@ -778,4 +786,3 @@ const es = {
 };
 
 export default es;
-

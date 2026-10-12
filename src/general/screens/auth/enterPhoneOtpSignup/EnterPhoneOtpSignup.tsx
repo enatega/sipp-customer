@@ -13,12 +13,14 @@ import { useAuthStore, type OtpType } from "../../../stores/useAuthStore";
 import { resolveSignupConflictFields } from '../../../utils/signupValidation';
 import KeyboardDismissWrapper from "../../../components/KeyboardDismissWrapper";
 import { useShallow } from "zustand/react/shallow";
+import { phoneVerificationErrorMessage } from '../../../utils/phoneVerificationError';
 
 const EnterPhoneOtpSignup = () => {
   const navigation = useNavigation();
   const { t } = useTranslation();
 
   const { formData, setOtpType, otpType, setOtpSent, setSignupConflictFields } = useAuthStore(useShallow((state) => ({ formData: state.formData, setOtpType: state.setOtpType, otpType: state.otpType, setOtpSent: state.setOtpSent, setSignupConflictFields: state.setSignupConflictFields })));
+  const activeOtpType = otpType === 'email' ? 'sms' : otpType;
   const rateLimitModal = useTooManyRequestsModal();
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [hasError, sethasError] = useState<boolean>(false);
@@ -38,12 +40,12 @@ const EnterPhoneOtpSignup = () => {
           setSignupConflictFields(fields);
           navigation.navigate("signup" as never);
         } else {
-          setErrorMessage(error.message);
-          showToast.error("Error!", error.message);
+          setErrorMessage(phoneVerificationErrorMessage(error, t, error.message));
+          showToast.error("Error!", phoneVerificationErrorMessage(error, t, error.message));
         }
       } else {
-        showToast.error("Error!", error?.message);
-        setErrorMessage(error?.message);
+        showToast.error("Error!", phoneVerificationErrorMessage(error, t, error?.message));
+        setErrorMessage(phoneVerificationErrorMessage(error, t, error?.message));
       }
     },
   });
@@ -77,12 +79,12 @@ const EnterPhoneOtpSignup = () => {
           setSignupConflictFields(fields);
           navigation.navigate("signup" as never);
         } else {
-          setErrorMessage(error.message);
-          showToast.error("Error!", error.message);
+          setErrorMessage(phoneVerificationErrorMessage(error, t, error.message));
+          showToast.error("Error!", phoneVerificationErrorMessage(error, t, error.message));
         }
       } else {
-        setErrorMessage(error?.message);
-        showToast.error("Error!", error?.message);
+        setErrorMessage(phoneVerificationErrorMessage(error, t, error?.message));
+        showToast.error("Error!", phoneVerificationErrorMessage(error, t, error?.message));
       }
     },
   });
@@ -92,14 +94,14 @@ const EnterPhoneOtpSignup = () => {
       phone: formData.phone,
       email: formData.email,
       otp,
-      otp_type: otpType,
+      otp_type: activeOtpType,
       name: formData.name,
       password: formData.password,
     });
   };
 
   const handleResendOtp = () => {
-    requestOtp(otpType);
+    requestOtp(activeOtpType);
   };
 
   const verificationOptions = [
@@ -115,12 +117,6 @@ const EnterPhoneOtpSignup = () => {
       title: t("call_verification"),
       onSelect: () => { if (otpType !== 'call') requestOtp('call'); },
     },
-    {
-      id: "email",
-      icon: "mail",
-      title: t("email_verification"),
-      onSelect: () => requestOtp('email', () => navigation.navigate("enterEmailOtpSignup" as never)),
-    },
   ];
 
   return (
@@ -130,7 +126,7 @@ const EnterPhoneOtpSignup = () => {
         description={t("enter_otp_sent_to", { contact: formData.phone })}
         showTryAnotherWay={true}
         verificationOptions={verificationOptions}
-        defaultSelectedMethod={otpType}
+        defaultSelectedMethod={activeOtpType}
         deferSelectedMethod
         onVerify={(otp) => {
           handleVerifyOtp(otp);

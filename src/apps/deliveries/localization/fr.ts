@@ -1,4 +1,5 @@
 const fr = {
+  checkout_phone_transfer_warning: 'Si ce numéro appartient à un autre compte client, sa vérification le transférera ici et désactivera la connexion par téléphone sur cet autre compte.',
   checkout_phone_verify_title: 'Vérifiez votre téléphone avant de commander',
   checkout_phone_verify_description: 'Confirmez un numéro de mobile pour recevoir les informations de votre commande.',
   checkout_phone_code_sent: 'Saisissez le code à quatre chiffres envoyé au {{phone}}.',

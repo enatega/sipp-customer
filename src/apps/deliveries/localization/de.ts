@@ -1,4 +1,5 @@
 const de = {
+  checkout_phone_transfer_warning: 'Wenn diese Nummer zu einem anderen Kundenkonto gehört, wird sie durch die Bestätigung hierher übertragen. Die Anmeldung per Telefon ist dort danach nicht mehr möglich.',
   "shop_type_grocery": "Lebensmittelgeschäft",
   "shop_type_restaurant": "Restaurant",
   "shop_type_browse_action": "Entdecken",

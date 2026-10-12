@@ -1,4 +1,12 @@
 const fr = {
+  phone_profile_title: 'Ajouter ou modifier votre numéro',
+  phone_profile_description: 'Confirmez un numéro de mobile pour vos commandes et votre compte.',
+  phone_transfer_warning: 'Si ce numéro appartient à un autre compte client, sa vérification le transférera ici et désactivera la connexion par téléphone sur cet autre compte.',
+  phone_send_error: 'Impossible d’envoyer le code. Veuillez réessayer.',
+  phone_protected: 'Ce numéro appartient à un compte protégé ou constitue son seul moyen de connexion. Utilisez un autre numéro ou contactez l’assistance.',
+  phone_code_expired: 'Ce code a expiré ou a déjà été utilisé. Demandez un nouveau code.',
+  phone_code_invalid: 'Le code est incorrect. Vérifiez-le et réessayez.',
+  phone_verified: 'Votre numéro est confirmé.',
   app_name: 'Sipp',
   google_phone_title: 'Vérifiez votre numéro de mobile',
   google_phone_description: 'Ajoutez un numéro pour terminer la création de votre compte SIPP.',

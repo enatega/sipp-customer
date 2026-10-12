@@ -14,6 +14,7 @@ export type ProfileUser = {
   email_is_verified?: boolean;
   phone_is_verified?: boolean;
   google_phone_verification_required?: boolean;
+  phone_verification_required?: boolean;
   date_of_birth: string | null;
   gender: string | null;
   image: string | null;

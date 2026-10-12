@@ -90,6 +90,12 @@ export const authService = {
       skipAuth: true,
     }),
 
+  sendApplePhoneOtp: (payload: AppleLoginPayload & { phone: string }) =>
+    apiClient.post<{ message: string }>(`/api/v1/auth/login/apple/phone/send-otp`, payload, { skipAuth: true }),
+
+  verifyApplePhoneOtp: (payload: AppleLoginPayload & { phone: string; otp: string }) =>
+    apiClient.post<import('./authTypes').AppleAuthenticatedResponse>(`/api/v1/auth/login/apple/phone/verify-otp`, payload, { skipAuth: true }),
+
   sendForgotPasswordOtp: (payload: SendForgotPasswordOtpPayload) =>
     apiClient.post<SendForgotPasswordOtpResponce>(
       `${FORGOT_PASSWORD}/send`,

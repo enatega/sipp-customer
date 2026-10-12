@@ -13,6 +13,7 @@ import { useTheme } from '../../theme/theme';
 import { showToast } from '../../components/AppToast';
 import useProfile from '../../hooks/useProfile';
 import MyProfileInfoCard from '../../components/profile/MyProfileInfoCard';
+import ProfilePhoneVerification from '../../components/profile/ProfilePhoneVerification';
 import MyProfileSkeleton from '../../components/profile/MyProfileSkeleton';
 import ProfilePhotoEditor from '../../components/profile/ProfilePhotoEditor';
 import ProfileImageViewerModal from '../../components/profile/ProfileImageViewerModal';
@@ -46,6 +47,7 @@ export default function MyProfileScreen({ profilePrefix }: Props) {
     useRoute<RouteProp<ProfileStackParamList, 'MyProfile'>>();
   const { user, addresses, isLoading, refetch } = useProfile(profilePrefix);
   const [isPhotoModalVisible, setIsPhotoModalVisible] = useState(false);
+  const [isPhoneModalVisible, setIsPhoneModalVisible] = useState(false);
   const [isProfileImageViewerVisible, setIsProfileImageViewerVisible] = useState(false);
   const [imageCacheKey, setImageCacheKey] = useState(0);
   const [addressMenuTarget, setAddressMenuTarget] =
@@ -185,7 +187,10 @@ export default function MyProfileScreen({ profilePrefix }: Props) {
               onEditAvatar={() => setIsPhotoModalVisible(true)}
               onPressAvatar={avatarUri ? () => setIsProfileImageViewerVisible(true) : undefined}
               onEditName={handleEditName}
+              onEditPhone={() => setIsPhoneModalVisible(true)}
             />
+
+            <ProfilePhoneVerification visible={isPhoneModalVisible} onClose={() => setIsPhoneModalVisible(false)} onVerified={async () => { await refetch(); }} />
 
             <ProfilePhotoEditor
               isVisible={isPhotoModalVisible}

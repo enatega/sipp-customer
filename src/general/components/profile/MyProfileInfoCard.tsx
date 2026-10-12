@@ -24,6 +24,7 @@ type Props = {
   onEditAvatar?: () => void;
   onPressAvatar?: () => void;
   onEditName?: () => void;
+  onEditPhone?: () => void;
 };
 
 export default function MyProfileInfoCard({
@@ -43,6 +44,7 @@ export default function MyProfileInfoCard({
   onEditAvatar,
   onPressAvatar,
   onEditName,
+  onEditPhone,
 }: Props) {
   const { colors, elevation } = useTheme();
   const initial = displayName.trim().charAt(0).toLocaleUpperCase() || '—';
@@ -108,7 +110,7 @@ export default function MyProfileInfoCard({
           onEdit={onEditName}
         />
         <MyProfileInfoRow label={dateOfBirthLabel} value={dateOfBirth} />
-        <MyProfileInfoRow label={phoneLabel} value={phone} verificationStatus={isPhoneVerified} />
+        <MyProfileInfoRow label={phoneLabel} value={phone} verificationStatus={isPhoneVerified} isEditable editLabel={editLabel} onEdit={onEditPhone} />
         <MyProfileInfoRow label={emailLabel} value={email} verificationStatus={isEmailVerified} />
       </View>
     </View>
