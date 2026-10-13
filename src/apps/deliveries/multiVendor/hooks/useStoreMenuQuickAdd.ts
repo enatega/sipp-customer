@@ -3,11 +3,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { showToast } from '../../../../general/components/AppToast';
 import { deliveryKeys } from '../../api/queryKeys';
+import { cartService } from '../../api/cartService';
 import { productInfoService } from '../../api/productInfoService';
+import { hasCartStoreConflict } from '../../cart/cartLineMatching';
 import type { DeliveryProductActionTarget } from '../../cart/productActionTypes';
 import { isStoreClosedError } from '../../cart/cartFeedback';
 import { useAddCartItemMutation } from '../../hooks/useCartMutations';
-import { useCartDomain } from '../../hooks/useCartDomain';
 import { useCartMutationFeedback } from '../../hooks/useCartMutationFeedback';
 import { useCartStoreConflictResolution } from '../../hooks/useCartStoreConflictResolution';
 import { requireDeliveriesAuthentication } from '../../navigation/deliveriesAuthGate';
@@ -16,7 +17,6 @@ import { getStoreMenuQuickAddSelection } from '../utils/storeMenuQuickAdd';
 export function useStoreMenuQuickAdd(onOpenProduct: (target: DeliveryProductActionTarget) => void) {
   const { t } = useTranslation('deliveries');
   const queryClient = useQueryClient();
-  const { hasStoreMismatch } = useCartDomain();
   const { mutateAsync: addCartItem } = useAddCartItemMutation();
   const { showMutationError } = useCartMutationFeedback();
   const conflictResolution = useCartStoreConflictResolution();
@@ -45,7 +45,12 @@ export function useStoreMenuQuickAdd(onOpenProduct: (target: DeliveryProductActi
         screen: 'ProductInfo', params: { productId: target.productId },
       })) return;
 
-      if (hasStoreMismatch(target.storeId)) {
+      const cart = await queryClient.fetchQuery({
+        queryKey: deliveryKeys.cart(),
+        queryFn: cartService.getCart,
+        staleTime: 30_000,
+      });
+      if (hasCartStoreConflict(cart.storeId, target.storeId)) {
         const shouldReplace = await requestResolution({
           incomingStoreName: target.storeName,
           productName: target.name,
@@ -69,7 +74,7 @@ export function useStoreMenuQuickAdd(onOpenProduct: (target: DeliveryProductActi
       isRequesting.current = false;
       setPendingProductId(null);
     }
-  }, [addCartItem, hasStoreMismatch, onOpenProduct, queryClient, requestResolution, showMutationError, t]);
+  }, [addCartItem, onOpenProduct, queryClient, requestResolution, showMutationError, t]);
 
   return {
     closeStoreClosedModal: () => setClosedStoreName(null),

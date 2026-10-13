@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  ActivityIndicator,
   Animated,
   Easing,
   Pressable,
@@ -106,14 +107,15 @@ export default function CartActionControl({
     outputRange: [0.96, 1],
   });
   const isQuantityMode = mode === 'quantity';
+  const showDisabledStyle = disabled && !isLoading;
 
   return (
     <Animated.View
       style={[
         styles.container,
         {
-          backgroundColor: disabled ? colors.surfaceSunken : isQuantityMode ? colors.surface : colors.primary,
-          borderColor: disabled ? colors.border : isQuantityMode ? colors.border : colors.primary,
+          backgroundColor: showDisabledStyle ? colors.surfaceSunken : isQuantityMode ? colors.surface : colors.primary,
+          borderColor: showDisabledStyle ? colors.border : isQuantityMode ? colors.border : colors.primary,
           borderRadius: config.height / 2,
           height: config.height,
           shadowColor: colors.shadowColor,
@@ -135,16 +137,21 @@ export default function CartActionControl({
         <Pressable
           accessibilityLabel={accessibilityLabel}
           accessibilityRole="button"
+          accessibilityState={{ busy: isLoading, disabled: disabled || isLoading }}
           disabled={disabled || isLoading}
           onPress={onAdd}
           style={({ pressed }) => [
             styles.touchable,
             {
-              opacity: disabled || isLoading ? 0.45 : pressed ? 0.72 : 1,
+              opacity: showDisabledStyle ? 0.45 : pressed && !isLoading ? 0.72 : 1,
             },
           ]}
         >
-          <Icon color={disabled ? colors.textSubtle : colors.onPrimary} name="plus" size={config.actionIcon} type="Feather" />
+          {isLoading ? (
+            <ActivityIndicator color={colors.onPrimary} size="small" />
+          ) : (
+            <Icon color={disabled ? colors.textSubtle : colors.onPrimary} name="plus" size={config.actionIcon} type="Feather" />
+          )}
         </Pressable>
       </Animated.View>
 
@@ -162,6 +169,7 @@ export default function CartActionControl({
       >
         <Pressable
           accessibilityRole="button"
+          accessibilityState={{ busy: isLoading, disabled: disabled || isLoading }}
           disabled={disabled || isLoading}
           hitSlop={6}
           onPress={onDecrement}
@@ -189,15 +197,20 @@ export default function CartActionControl({
 
         <Pressable
           accessibilityRole="button"
+          accessibilityState={{ busy: isLoading, disabled: disabled || isLoading }}
           disabled={disabled || isLoading}
           hitSlop={6}
           onPress={onIncrement}
           style={({ pressed }) => [
             styles.inlineAction,
-            { opacity: disabled || isLoading ? 0.45 : pressed ? 0.72 : 1 },
+            { opacity: showDisabledStyle ? 0.45 : pressed && !isLoading ? 0.72 : 1 },
           ]}
         >
-          <Icon color={colors.text} name="plus" size={config.actionIcon - 1} type="Feather" />
+          {isLoading ? (
+            <ActivityIndicator color={colors.text} size="small" />
+          ) : (
+            <Icon color={colors.text} name="plus" size={config.actionIcon - 1} type="Feather" />
+          )}
         </Pressable>
       </Animated.View>
     </Animated.View>

@@ -14,7 +14,6 @@ import type { DeliveryNearbyStore } from '../../../api/types';
 import type { DeliveryProductActionTarget } from '../../../cart/productActionTypes';
 import CartStoreConflictModal from '../../../components/cart/CartStoreConflictModal';
 import StoreClosedCartModal from '../../../components/cart/StoreClosedCartModal';
-import { useCart } from '../../../hooks/useCart';
 import { requireDeliveriesAuthentication } from '../../../navigation/deliveriesAuthGate';
 import type { MultiVendorStackParamList } from '../../navigation/types';
 import { useStoreMenuWindow } from '../../hooks/useStoreMenuWindow';
@@ -40,7 +39,6 @@ export default function StoreDetailsContent({ selectedStore }: Props) {
   const storeId = selectedStore?.storeId ?? '';
   const menu = useStoreMenuWindow(storeId, isFocused);
   const store = menu.bootstrap.data?.store;
-  const { data: cart } = useCart();
   const scrollY = useSharedValue(0);
   const [isInfoVisible, setInfoVisible] = useState(false);
   const [optimisticFav, setOptimisticFav] = useState<boolean | null>(null);
@@ -106,12 +104,11 @@ export default function StoreDetailsContent({ selectedStore }: Props) {
         onActionPress={storeId ? () => { void menu.bootstrap.refetch(); } : undefined} />
     </View>
   );
-  const hasCart = Boolean(cart && !cart.isEmpty && cart.totalItems > 0);
   return (
     <View style={{ flex: 1, backgroundColor: pageBackground }}>
       <StoreMenuViewport key={`${storeId}:${menu.target?.generation ?? 0}`} storeId={storeId} menu={menu}
         hero={hero} scrollY={scrollY} navigationHeight={insets.top + 60}
-        bottomPadding={hasCart ? insets.bottom + 112 : insets.bottom + 24}
+        bottomPadding={insets.bottom + 112}
         productAction={productAction} onSearch={onSearch} />
       <StoreDetailNavigationHeader isFavourite={display.isFavourite} isFavouriteLoading={favourite.isPending}
         logoImageUrl={display.logoImageUrl} storeName={display.storeName} scrollY={scrollY}
@@ -120,7 +117,7 @@ export default function StoreDetailsContent({ selectedStore }: Props) {
         favouriteAccessibilityLabel={t(display.isFavourite ? 'store_details_action_remove_favorite' : 'store_details_action_favorite')}
         shareAccessibilityLabel={t('store_details_action_share')} />
       <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
-        <StoreDetailCartBar bottomInset={insets.bottom} cart={cart} horizontalInset={16} />
+        <StoreDetailCartBar bottomInset={insets.bottom} horizontalInset={16} />
       </View>
       <AppPopup visible={isInfoVisible} title={t('store_details_about_title')} description={display.infoDescription}
         dismissOnOverlayPress onRequestClose={() => setInfoVisible(false)}
