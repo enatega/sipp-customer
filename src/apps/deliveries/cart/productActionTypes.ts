@@ -7,5 +7,6 @@ export type DeliveryProductActionTarget = CartProductReference & {
 export type DeliveryProductActionBinding = {
   target: DeliveryProductActionTarget;
   onOpenProduct?: (target: DeliveryProductActionTarget) => void;
+  onQuickAdd?: (target: DeliveryProductActionTarget) => void;
   onRequestCartAction?: (target: DeliveryProductActionTarget) => void;
 };

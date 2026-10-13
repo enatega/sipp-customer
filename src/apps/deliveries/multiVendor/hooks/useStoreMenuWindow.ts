@@ -18,7 +18,6 @@ export function useStoreMenuWindow(storeId: string, isFocused: boolean) {
   const generation = useRef(0);
   const edgeRequest = useRef(false);
   const handledStaleError = useRef<unknown>(null);
-  const wasFocused = useRef(false);
   const [isEdgeRequestPending, setEdgeRequestPending] = useState(false);
   const beforePageCommit = useRef<((preservePosition: boolean) => StoreMenuAnchor | undefined) | null>(null);
   const [target, setTarget] = useState<(StoreMenuAnchor & { generation: number }) | null>(null);
@@ -129,11 +128,6 @@ export function useStoreMenuWindow(storeId: string, isFocused: boolean) {
       setIsRefreshing(false);
     }
   }, [bootstrap.refetch, client]);
-
-  useEffect(() => {
-    if (isFocused && !wasFocused.current && bootstrap.data) void refresh({ sectionId });
-    wasFocused.current = isFocused;
-  }, [isFocused, bootstrap.data, refresh, sectionId]);
 
   useEffect(() => {
     if (!(query.error instanceof ApiError) || ![404, 409].includes(query.error.status) ||

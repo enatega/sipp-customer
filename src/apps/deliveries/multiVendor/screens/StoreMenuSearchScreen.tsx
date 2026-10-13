@@ -18,7 +18,10 @@ import { discoveryService } from '../../api/discoveryService';
 import type { DeliveryStoreDetailsProduct } from '../../api/types';
 import type { DeliveryProductActionTarget } from '../../cart/productActionTypes';
 import ProductCard from '../../components/productCard/ProductCard';
+import CartStoreConflictModal from '../../components/cart/CartStoreConflictModal';
+import StoreClosedCartModal from '../../components/cart/StoreClosedCartModal';
 import { useStoreMenuSearch } from '../hooks/useStoreMenuSearch';
+import { useStoreMenuQuickAdd } from '../hooks/useStoreMenuQuickAdd';
 import { isStoreOrderAvailable } from '../utils/storeMenuPresentation';
 import type { MultiVendorStackParamList } from '../navigation/types';
 
@@ -52,7 +55,17 @@ export default function StoreMenuSearchScreen() {
     }
     navigation.navigate('ProductInfo', { productId: target.productId });
   }, [metadata.data, navigation, params.storeName, t]);
-  const productAction = useMemo(() => ({ onOpenProduct: onProduct }), [onProduct]);
+  const quickAdd = useStoreMenuQuickAdd(onProduct);
+  const onQuickAdd = useCallback((target: DeliveryProductActionTarget) => {
+    if (!isStoreOrderAvailable(metadata.data)) {
+      showToast.info(t('store_details_closed_store_title', { storeName: params.storeName }),
+        t('store_details_closed_store_description', { storeName: params.storeName }));
+      return;
+    }
+    void quickAdd.request({ ...target, storeName: params.storeName });
+  }, [metadata.data, params.storeName, quickAdd.request, t]);
+  const productAction = useMemo(() => ({ onOpenProduct: onProduct, onQuickAdd, pendingProductId: quickAdd.pendingProductId }),
+    [onProduct, onQuickAdd, quickAdd.pendingProductId]);
   const isPrompt = search.normalized.length < 2;
   const isLoading = !isPrompt && (search.isDebouncing || search.query.isPending);
   const items = isPrompt || search.isDebouncing ? [] : search.items;
@@ -88,6 +101,12 @@ export default function StoreMenuSearchScreen() {
         renderItem={({ item }) => <View style={{ paddingHorizontal: gutter, paddingVertical: spacing.sm }}>
           <ProductCard product={item} productAction={productAction} storeId={params.storeId} variant="storeMenu" />
         </View>} />
+      <CartStoreConflictModal visible={quickAdd.conflictResolution.isVisible}
+        prompt={quickAdd.conflictResolution.prompt} isSubmitting={quickAdd.conflictResolution.isResolving}
+        onCancel={quickAdd.conflictResolution.cancelResolution}
+        onConfirm={() => { void quickAdd.conflictResolution.confirmResolution(); }} />
+      <StoreClosedCartModal visible={quickAdd.closedStoreName !== null}
+        storeName={quickAdd.closedStoreName} onClose={quickAdd.closeStoreClosedModal} />
     </KeyboardAvoidingView>
   );
 }
