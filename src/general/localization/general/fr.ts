@@ -162,6 +162,7 @@ const fr = {
   address_confirm_location: "Confirmer l'emplacement",
   address_locating: 'Localisation…',
   address_selected_location: 'Emplacement sélectionné',
+  address_location_unavailable: "Position actuelle indisponible. Vérifiez que la localisation de l’appareil est activée, puis réessayez.",
   address_location_name_placeholder: 'Nom du lieu (ex. Ma maison)',
   address_details_label: "Détails de l'adresse",
   address_location_type_label: 'Type de lieu',
