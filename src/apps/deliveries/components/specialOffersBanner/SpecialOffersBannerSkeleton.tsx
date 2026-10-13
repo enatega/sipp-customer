@@ -11,11 +11,10 @@ type Props = {
 export default function SpecialOffersBannerSkeleton({ variant = 'default' }: Props) {
   const { colors, layout, shape, spacing } = useTheme();
   const { gutter, width } = useWindowClass();
-  const sidePadding = variant === 'home' ? gutter + spacing.sm : gutter;
-  const bannerWidth = Math.min(
-    width - sidePadding * 2,
-    layout.contentMaxWidth.commerce,
-  );
+  const sidePadding = gutter;
+  const bannerWidth = variant === 'home'
+    ? Math.min(width, layout.contentMaxWidth.commerce) - gutter * 2
+    : Math.min(width - gutter * 2, layout.contentMaxWidth.commerce);
   const bannerHeight = variant === 'home' ? Math.max(120, bannerWidth / 3) : 176;
 
   return (
