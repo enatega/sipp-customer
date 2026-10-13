@@ -30,9 +30,11 @@ export default function FavouriteFoodsCarousel({ shopTypeId, onFoodPress }: Prop
     ? data.filter((food) => food.shopTypeIds.includes(shopTypeId))
     : data, [data, shopTypeId]);
   const gap = spacing.sm;
-  const cardWidth = Math.round(Math.min(156, Math.max(132, Math.floor((width - gutter * 2 - spacing.md * 1.5) / 2.5))) * 0.66);
+  const cardWidth = Math.max(104, Math.round(
+    Math.min(156, Math.max(132, Math.floor((width - gutter * 2 - spacing.md * 1.5) / 2.5))) * 0.76,
+  ));
   const footerHeight = Math.max(34, Math.ceil(32 * fontScale));
-  const cardHeight = Math.max(cardWidth + spacing.xxl, footerHeight + Math.round(cardWidth * 0.7));
+  const cardHeight = Math.max(cardWidth + spacing.md, footerHeight + 76);
   const cardSurface = { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: shape.radius.control };
   const maxOffset = Math.max(0, foods.length * (cardWidth + gap) - gap - (width - gutter * 2));
   const maxIndex = Math.max(0, Math.ceil(
@@ -133,7 +135,7 @@ export default function FavouriteFoodsCarousel({ shopTypeId, onFoodPress }: Prop
                   : <Ionicons name="restaurant-outline" color={colors.primary} size={Math.min(28, cardWidth * 0.34)} />}
               </View>
               <View style={[styles.footer, { height: footerHeight }]}>
-                <Text color={colors.textStrong} variant="caption" weight="semiBold" numberOfLines={2} style={styles.name}>{name}</Text>
+                <Text color={colors.textStrong} variant="caption" weight="semiBold" numberOfLines={1} ellipsizeMode="tail" style={styles.name}>{name}</Text>
               </View>
             </PressableScale>
           );

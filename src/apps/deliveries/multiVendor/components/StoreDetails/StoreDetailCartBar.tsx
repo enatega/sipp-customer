@@ -7,20 +7,20 @@ import PlatformGlassSurface from '../../../../../general/components/PlatformGlas
 import PressableScale from '../../../../../general/components/PressableScale';
 import Text from '../../../../../general/components/Text';
 import { useTheme } from '../../../../../general/theme/theme';
-import type { CartResponse } from '../../../api/cartServiceTypes';
 import { formatCartPrice } from '../../../components/cart/cartUtils';
+import { useCart } from '../../../hooks/useCart';
 import type { DeliveriesStackParamList } from '../../../navigation/types';
 
 type Props = {
   bottomInset: number;
-  cart?: CartResponse;
   horizontalInset: number;
 };
 
-function StoreDetailCartBar({ bottomInset, cart, horizontalInset }: Props) {
+function StoreDetailCartBar({ bottomInset, horizontalInset }: Props) {
   const navigation = useNavigation<NavigationProp<DeliveriesStackParamList>>();
   const { colors, elevation, shape, spacing } = useTheme();
   const { t } = useTranslation('deliveries');
+  const { data: cart } = useCart();
 
   if (!cart || cart.isEmpty || cart.totalItems <= 0) {
     return null;

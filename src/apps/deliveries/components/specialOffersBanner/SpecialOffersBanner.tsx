@@ -91,11 +91,10 @@ export default function SpecialOffersBanner({
   const { gutter, width } = useWindowClass();
   const [bannerIndex, setBannerIndex] = useState(0);
   const isHomeVariant = variant === 'home';
-  const bannerSidePadding = isHomeVariant ? gutter + spacing.sm : gutter;
-  const bannerWidth = Math.min(
-    width - bannerSidePadding * 2,
-    layout.contentMaxWidth.commerce,
-  );
+  const bannerSidePadding = gutter;
+  const bannerWidth = isHomeVariant
+    ? Math.min(width, layout.contentMaxWidth.commerce) - gutter * 2
+    : Math.min(width - gutter * 2, layout.contentMaxWidth.commerce);
   const activeBannerIndex =
     banners.length > 0 ? Math.min(bannerIndex, banners.length - 1) : 0;
   const navigateToStore = useCallback(

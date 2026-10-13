@@ -12,12 +12,14 @@ import ListStateView from '../../../../../general/components/filterablePaginated
 import { showToast } from '../../../../../general/components/AppToast';
 import type { DeliveryNearbyStore } from '../../../api/types';
 import type { DeliveryProductActionTarget } from '../../../cart/productActionTypes';
-import { useCart } from '../../../hooks/useCart';
+import CartStoreConflictModal from '../../../components/cart/CartStoreConflictModal';
+import StoreClosedCartModal from '../../../components/cart/StoreClosedCartModal';
 import { requireDeliveriesAuthentication } from '../../../navigation/deliveriesAuthGate';
 import type { MultiVendorStackParamList } from '../../navigation/types';
 import { useStoreMenuWindow } from '../../hooks/useStoreMenuWindow';
 import { useStoreMenuPresentation } from '../../hooks/useStoreMenuPresentation';
 import { useToggleFavouriteMutation } from '../../hooks/useToggleFavouriteMutation';
+import { useStoreMenuQuickAdd } from '../../hooks/useStoreMenuQuickAdd';
 import { isStoreOrderAvailable } from '../../utils/storeMenuPresentation';
 import StoreDetailListHeader from './StoreDetailListHeader';
 import StoreDetailNavigationHeader from './StoreDetailNavigationHeader';
@@ -37,7 +39,6 @@ export default function StoreDetailsContent({ selectedStore }: Props) {
   const storeId = selectedStore?.storeId ?? '';
   const menu = useStoreMenuWindow(storeId, isFocused);
   const store = menu.bootstrap.data?.store;
-  const { data: cart } = useCart();
   const scrollY = useSharedValue(0);
   const [isInfoVisible, setInfoVisible] = useState(false);
   const [optimisticFav, setOptimisticFav] = useState<boolean | null>(null);
@@ -67,7 +68,17 @@ export default function StoreDetailsContent({ selectedStore }: Props) {
     }
     navigation.navigate('ProductInfo', { productId: target.productId });
   }, [display.storeName, navigation, selectedStore, store, t]);
-  const productAction = useMemo(() => ({ onOpenProduct: onProduct }), [onProduct]);
+  const quickAdd = useStoreMenuQuickAdd(onProduct);
+  const onQuickAdd = useCallback((target: DeliveryProductActionTarget) => {
+    if (!isStoreOrderAvailable(store ?? selectedStore)) {
+      showToast.info(t('store_details_closed_store_title', { storeName: display.storeName }),
+        t('store_details_closed_store_description', { storeName: display.storeName }));
+      return;
+    }
+    void quickAdd.request({ ...target, storeName: display.storeName });
+  }, [display.storeName, quickAdd.request, selectedStore, store, t]);
+  const productAction = useMemo(() => ({ onOpenProduct: onProduct, onQuickAdd, pendingProductId: quickAdd.pendingProductId }),
+    [onProduct, onQuickAdd, quickAdd.pendingProductId]);
   const onSearch = useCallback(() => navigation.navigate('StoreMenuSearch', {
     storeId, storeName: display.storeName,
   }), [navigation, storeId, display.storeName]);
@@ -93,12 +104,11 @@ export default function StoreDetailsContent({ selectedStore }: Props) {
         onActionPress={storeId ? () => { void menu.bootstrap.refetch(); } : undefined} />
     </View>
   );
-  const hasCart = Boolean(cart && !cart.isEmpty && cart.totalItems > 0);
   return (
     <View style={{ flex: 1, backgroundColor: pageBackground }}>
       <StoreMenuViewport key={`${storeId}:${menu.target?.generation ?? 0}`} storeId={storeId} menu={menu}
         hero={hero} scrollY={scrollY} navigationHeight={insets.top + 60}
-        bottomPadding={hasCart ? insets.bottom + 112 : insets.bottom + 24}
+        bottomPadding={insets.bottom + 112}
         productAction={productAction} onSearch={onSearch} />
       <StoreDetailNavigationHeader isFavourite={display.isFavourite} isFavouriteLoading={favourite.isPending}
         logoImageUrl={display.logoImageUrl} storeName={display.storeName} scrollY={scrollY}
@@ -107,11 +117,17 @@ export default function StoreDetailsContent({ selectedStore }: Props) {
         favouriteAccessibilityLabel={t(display.isFavourite ? 'store_details_action_remove_favorite' : 'store_details_action_favorite')}
         shareAccessibilityLabel={t('store_details_action_share')} />
       <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
-        <StoreDetailCartBar bottomInset={insets.bottom} cart={cart} horizontalInset={16} />
+        <StoreDetailCartBar bottomInset={insets.bottom} horizontalInset={16} />
       </View>
       <AppPopup visible={isInfoVisible} title={t('store_details_about_title')} description={display.infoDescription}
         dismissOnOverlayPress onRequestClose={() => setInfoVisible(false)}
         primaryAction={{ label: t('store_details_close'), onPress: () => setInfoVisible(false) }} />
+      <CartStoreConflictModal visible={quickAdd.conflictResolution.isVisible}
+        prompt={quickAdd.conflictResolution.prompt} isSubmitting={quickAdd.conflictResolution.isResolving}
+        onCancel={quickAdd.conflictResolution.cancelResolution}
+        onConfirm={() => { void quickAdd.conflictResolution.confirmResolution(); }} />
+      <StoreClosedCartModal visible={quickAdd.closedStoreName !== null}
+        storeName={quickAdd.closedStoreName} onClose={quickAdd.closeStoreClosedModal} />
     </View>
   );
 }

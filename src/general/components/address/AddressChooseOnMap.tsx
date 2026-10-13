@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Alert, AppState, StyleSheet, View } from 'react-native';
 import * as Location from 'expo-location';
 import MapView, { LatLng, Region } from 'react-native-maps';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,6 +12,13 @@ import Text from '../../components/Text';
 import useCurrentLocation from '../../hooks/useCurrentLocation';
 import useDebouncedValue from '../../hooks/useDebouncedValue';
 import PressableScale from '../../components/PressableScale';
+import HomeLocationPermissionPopup, { LocationPopupMode } from '../../../screens/home/HomeLocationPermissionPopup';
+import {
+  getLocationPermissionState,
+  openAppLocationSettings,
+  requestLocationPermission,
+} from '../../utils/locationPermission';
+import { useTranslation } from 'react-i18next';
 
 export type MapAddressResult = {
   description: string;
@@ -95,14 +102,24 @@ function AddressChooseOnMap({
   const latestReqId = useRef(0);
   const lastGeoKey = useRef('');
   const lastInitKey = useRef('');
+  const lastAutoLocationKey = useRef('');
   const hasPendingGesture = useRef(false);
   const hasPendingMove = useRef(false);
+  const hasUserMovedMap = useRef(false);
+  const shouldLocateAfterSettings = useRef(false);
+  const hasRequestedLocationOnOpen = useRef(false);
+  const isRequestingLocationRef = useRef(false);
 
   const [center, setCenter] = useState<LatLng | null>(initialCoordinate);
   const [resolved, setResolved] = useState<MapAddressResult | null>(null);
   const [isResolving, setIsResolving] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
-  const { currentCoordinates, isLoadingCurrentLocation, refreshCurrentLocation } = useCurrentLocation();
+  const [isRequestingLocation, setIsRequestingLocation] = useState(false);
+  const [hasLocationPermission, setHasLocationPermission] = useState(false);
+  const [isLocationPopupVisible, setIsLocationPopupVisible] = useState(false);
+  const [locationPopupMode, setLocationPopupMode] = useState<LocationPopupMode>('request');
+  const { t } = useTranslation('general');
+  const { currentCoordinates } = useCurrentLocation();
 
   const debouncedCenter = useDebouncedValue(center, 400);
 
@@ -121,15 +138,19 @@ function AddressChooseOnMap({
   useEffect(() => {
     if (initialCoordinate) {
       const k = toKey(initialCoordinate);
-      if (lastInitKey.current === k) return;
-      lastInitKey.current = k;
-      moveMap(initialCoordinate);
-      return;
+      if (lastInitKey.current !== k) {
+        lastInitKey.current = k;
+        moveMap(initialCoordinate);
+      }
+    } else {
+      lastInitKey.current = '';
     }
-    lastInitKey.current = '';
-    if (!currentCoordinates || center) return;
+    if (!currentCoordinates || hasUserMovedMap.current) return;
+    const currentKey = toKey(currentCoordinates);
+    if (lastAutoLocationKey.current === currentKey) return;
+    lastAutoLocationKey.current = currentKey;
     moveMap(currentCoordinates);
-  }, [center, currentCoordinates, initialCoordinate, moveMap]);
+  }, [currentCoordinates, initialCoordinate, moveMap]);
 
   useEffect(() => {
     const target = debouncedCenter;
@@ -183,10 +204,80 @@ function AddressChooseOnMap({
     setCenter(next);
   }, [center]);
 
-  const handleCurrentLocation = useCallback(async () => {
-    const coords = await refreshCurrentLocation();
-    if (coords) moveMap(coords);
-  }, [moveMap, refreshCurrentLocation]);
+  const locateCurrentPosition = useCallback(async (isAutomatic: boolean) => {
+    try {
+      const position = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      if (!isAutomatic || !hasUserMovedMap.current) {
+        if (!isAutomatic) hasUserMovedMap.current = true;
+        moveMap({ latitude: position.coords.latitude, longitude: position.coords.longitude });
+      }
+      setIsLocationPopupVisible(false);
+    } catch {
+      Alert.alert(t('address_location_unavailable'));
+    }
+  }, [moveMap, t]);
+
+  const handleCurrentLocation = useCallback(async (isAutomatic = false) => {
+    if (isRequestingLocationRef.current) return;
+    isRequestingLocationRef.current = true;
+    setIsRequestingLocation(true);
+    try {
+      const currentPermission = await getLocationPermissionState();
+      if (currentPermission.granted) {
+        setHasLocationPermission(true);
+        await locateCurrentPosition(isAutomatic);
+        return;
+      }
+      if (currentPermission.blocked) {
+        setHasLocationPermission(false);
+        setLocationPopupMode('blocked');
+        setIsLocationPopupVisible(true);
+        return;
+      }
+      const permission = await requestLocationPermission();
+      setHasLocationPermission(permission.granted);
+      if (permission.granted) {
+        await locateCurrentPosition(isAutomatic);
+      } else {
+        setLocationPopupMode(permission.blocked ? 'blocked' : 'denied');
+        setIsLocationPopupVisible(true);
+      }
+    } catch {
+      Alert.alert(t('address_location_unavailable'));
+    } finally {
+      isRequestingLocationRef.current = false;
+      setIsRequestingLocation(false);
+    }
+  }, [locateCurrentPosition, t]);
+
+  useEffect(() => {
+    if (hasRequestedLocationOnOpen.current) return;
+    hasRequestedLocationOnOpen.current = true;
+    void handleCurrentLocation(true);
+  }, [handleCurrentLocation]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state !== 'active' || !shouldLocateAfterSettings.current) return;
+      shouldLocateAfterSettings.current = false;
+      void handleCurrentLocation();
+    });
+    return () => subscription.remove();
+  }, [handleCurrentLocation]);
+
+  const handleOpenSettings = useCallback(async () => {
+    try {
+      shouldLocateAfterSettings.current = true;
+      setIsLocationPopupVisible(false);
+      await openAppLocationSettings();
+    } catch {
+      shouldLocateAfterSettings.current = false;
+      setLocationPopupMode('blocked');
+      setIsLocationPopupVisible(true);
+    }
+  }, []);
 
   const handleConfirm = useCallback(async () => {
     if (!resolved || isConfirming) return;
@@ -202,8 +293,9 @@ function AddressChooseOnMap({
       <Map
         ref={mapRef}
         initialRegion={initialRegion}
-        onPanDrag={() => { hasPendingGesture.current = true; }}
+        onPanDrag={() => { hasPendingGesture.current = true; hasUserMovedMap.current = true; }}
         onRegionChangeComplete={handleRegionComplete}
+        showsUserLocation={hasLocationPermission}
         showsMyLocationButton={false}
         showsCompass={false}
         toolbarEnabled={false}
@@ -258,8 +350,8 @@ function AddressChooseOnMap({
           ]}
         >
           <MapCurrentLocationButton
-            onPress={handleCurrentLocation}
-            isLoading={isLoadingCurrentLocation}
+            onPress={() => { void handleCurrentLocation(); }}
+            isLoading={isRequestingLocation}
             style={styles.currentLocationBtn}
           />
           <Button
@@ -271,6 +363,14 @@ function AddressChooseOnMap({
           />
         </View>
       </View>
+      <HomeLocationPermissionPopup
+        visible={isLocationPopupVisible}
+        mode={locationPopupMode}
+        isLoading={isRequestingLocation}
+        onRequestLocation={() => { void handleCurrentLocation(); }}
+        onOpenSettings={() => { void handleOpenSettings(); }}
+        onDismiss={() => setIsLocationPopupVisible(false)}
+      />
     </View>
   );
 }

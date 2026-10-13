@@ -162,6 +162,7 @@ const en = {
   address_confirm_location: 'Confirm location',
   address_locating: 'Locating…',
   address_selected_location: 'Selected location',
+  address_location_unavailable: 'Current location is unavailable. Check that device location is on and try again.',
   address_location_name_placeholder: 'Location name (e.g. My home)',
   address_details_label: 'Address Details',
   address_location_type_label: 'Location Type',
