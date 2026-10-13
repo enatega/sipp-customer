@@ -16,7 +16,9 @@ export type ProductCardData =
 
 export type ProductCardActionOverrides = {
   onOpenProduct?: (target: DeliveryProductActionTarget) => void;
+  onQuickAdd?: (target: DeliveryProductActionTarget) => void;
   onRequestCartAction?: (target: DeliveryProductActionTarget) => void;
+  pendingProductId?: string | null;
 };
 
 export type ProductCardControlState = {
@@ -26,6 +28,7 @@ export type ProductCardControlState = {
   handleDecrement?: () => void;
   handleIncrement?: () => void;
   isDisabled: boolean;
+  isLoading: boolean;
   shouldShowCountBadge: boolean;
   totalQuantity: number;
 };

@@ -115,13 +115,15 @@ function ProductCard({
           navigation.navigate('ProductInfo', { productId: nextTarget.productId });
         }),
       onRequestCartAction: productAction?.onRequestCartAction,
+      onQuickAdd: productAction?.onQuickAdd,
     }),
-    [navigation, productAction?.onOpenProduct, productAction?.onRequestCartAction, target],
+    [navigation, productAction?.onOpenProduct, productAction?.onQuickAdd, productAction?.onRequestCartAction, target],
   );
   const isUnavailable = isStoreDetailsProduct(localizedProduct) && localizedProduct.inStock === false;
   const state = useProductCardCartState({
     productAction: resolvedProductAction,
     isUnavailable,
+    isLoading: productAction?.pendingProductId === target.productId,
   });
 
   const handleCardPress = React.useCallback(() => {

@@ -12,12 +12,15 @@ import ListStateView from '../../../../../general/components/filterablePaginated
 import { showToast } from '../../../../../general/components/AppToast';
 import type { DeliveryNearbyStore } from '../../../api/types';
 import type { DeliveryProductActionTarget } from '../../../cart/productActionTypes';
+import CartStoreConflictModal from '../../../components/cart/CartStoreConflictModal';
+import StoreClosedCartModal from '../../../components/cart/StoreClosedCartModal';
 import { useCart } from '../../../hooks/useCart';
 import { requireDeliveriesAuthentication } from '../../../navigation/deliveriesAuthGate';
 import type { MultiVendorStackParamList } from '../../navigation/types';
 import { useStoreMenuWindow } from '../../hooks/useStoreMenuWindow';
 import { useStoreMenuPresentation } from '../../hooks/useStoreMenuPresentation';
 import { useToggleFavouriteMutation } from '../../hooks/useToggleFavouriteMutation';
+import { useStoreMenuQuickAdd } from '../../hooks/useStoreMenuQuickAdd';
 import { isStoreOrderAvailable } from '../../utils/storeMenuPresentation';
 import StoreDetailListHeader from './StoreDetailListHeader';
 import StoreDetailNavigationHeader from './StoreDetailNavigationHeader';
@@ -67,7 +70,17 @@ export default function StoreDetailsContent({ selectedStore }: Props) {
     }
     navigation.navigate('ProductInfo', { productId: target.productId });
   }, [display.storeName, navigation, selectedStore, store, t]);
-  const productAction = useMemo(() => ({ onOpenProduct: onProduct }), [onProduct]);
+  const quickAdd = useStoreMenuQuickAdd(onProduct);
+  const onQuickAdd = useCallback((target: DeliveryProductActionTarget) => {
+    if (!isStoreOrderAvailable(store ?? selectedStore)) {
+      showToast.info(t('store_details_closed_store_title', { storeName: display.storeName }),
+        t('store_details_closed_store_description', { storeName: display.storeName }));
+      return;
+    }
+    void quickAdd.request({ ...target, storeName: display.storeName });
+  }, [display.storeName, quickAdd.request, selectedStore, store, t]);
+  const productAction = useMemo(() => ({ onOpenProduct: onProduct, onQuickAdd, pendingProductId: quickAdd.pendingProductId }),
+    [onProduct, onQuickAdd, quickAdd.pendingProductId]);
   const onSearch = useCallback(() => navigation.navigate('StoreMenuSearch', {
     storeId, storeName: display.storeName,
   }), [navigation, storeId, display.storeName]);
@@ -112,6 +125,12 @@ export default function StoreDetailsContent({ selectedStore }: Props) {
       <AppPopup visible={isInfoVisible} title={t('store_details_about_title')} description={display.infoDescription}
         dismissOnOverlayPress onRequestClose={() => setInfoVisible(false)}
         primaryAction={{ label: t('store_details_close'), onPress: () => setInfoVisible(false) }} />
+      <CartStoreConflictModal visible={quickAdd.conflictResolution.isVisible}
+        prompt={quickAdd.conflictResolution.prompt} isSubmitting={quickAdd.conflictResolution.isResolving}
+        onCancel={quickAdd.conflictResolution.cancelResolution}
+        onConfirm={() => { void quickAdd.conflictResolution.confirmResolution(); }} />
+      <StoreClosedCartModal visible={quickAdd.closedStoreName !== null}
+        storeName={quickAdd.closedStoreName} onClose={quickAdd.closeStoreClosedModal} />
     </View>
   );
 }

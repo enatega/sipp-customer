@@ -217,6 +217,7 @@ export default function StoreMenuProductCard({ onPress, product, state }: Props)
             accessibilityLabel={t('store_details_add_product', { item: product.name })}
             count={state.controlCount}
             disabled={state.isDisabled}
+            isLoading={state.isLoading}
             mode={isOutOfStock ? 'add' : state.controlMode}
             onAdd={state.handleAdd}
             onDecrement={state.handleDecrement}
