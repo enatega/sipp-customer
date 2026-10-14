@@ -8,7 +8,7 @@ const hasValidGoogleIosUrlScheme = googleIosUrlScheme?.startsWith('com.googleuse
 module.exports = {
   expo: {
     name: 'Sipp',
-    slug: 'EnategaSuperApp',
+    slug: 'sipp-delivery',
     version: '1.0.0',
     owner: "ninjas_code",
     orientation: 'portrait',
@@ -22,7 +22,7 @@ module.exports = {
     },
     ios: {
       supportsTablet: true,
-      bundleIdentifier: 'com.enategasuper.app',
+      bundleIdentifier: 'com.sipp.delivery.ios.app',
       usesAppleSignIn: true,
       splash: {
         image: './assets/splash-light.png',
@@ -78,14 +78,14 @@ module.exports = {
       favicon: './assets/favicon.png',
     },
     updates: {
-      url: 'https://u.expo.dev/4c12b75d-6b64-4ea6-a4a7-83e366964b04',
+      url: 'https://u.expo.dev/57dcd4c9-eb9f-4269-ad19-55a811dda76c',
     },
     runtimeVersion: {
       policy: 'appVersion',
     },
     extra: {
       eas: {
-        projectId: '4c12b75d-6b64-4ea6-a4a7-83e366964b04',
+        projectId: '57dcd4c9-eb9f-4269-ad19-55a811dda76c',
       },
     },
     plugins: [
