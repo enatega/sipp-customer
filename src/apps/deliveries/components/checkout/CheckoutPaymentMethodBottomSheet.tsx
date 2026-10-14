@@ -20,6 +20,7 @@ type Props = {
   isCardEnabled: boolean;
   isCardAvailabilityKnown: boolean;
   isWalletEnabled: boolean;
+  isWalletAvailabilityKnown: boolean;
   walletBalance: number;
   currencyLabel: string;
   isVisible: boolean;
@@ -102,6 +103,7 @@ export default function CheckoutPaymentMethodBottomSheet({
   isCardEnabled,
   isCardAvailabilityKnown,
   isWalletEnabled,
+  isWalletAvailabilityKnown,
   walletBalance,
   currencyLabel,
   isVisible,
@@ -213,20 +215,22 @@ export default function CheckoutPaymentMethodBottomSheet({
                   ? getCheckoutPaymentMethodSubtitle('stripe', t)
                   : t('checkout_payment_add_card_required')
                 : t('checkout_payment_card_unavailable')}
-            disabled={!isCardEnabled}
+            disabled={isCardAvailabilityKnown && !isCardEnabled}
             icon="card-outline"
             isSelected={draftMethod === 'stripe'}
             label={getCheckoutPaymentMethodTitle('stripe', t)}
             onPress={() => setDraftMethod('stripe')}
           />
           <PaymentOption
-            description={isWalletEnabled
-              ? t('checkout_payment_wallet_balance', {
-                currency: currencyLabel,
-                amount: walletBalance.toFixed(2),
-              })
-              : t('checkout_payment_wallet_insufficient_balance')}
-            disabled={!isWalletEnabled}
+            description={!isWalletAvailabilityKnown
+              ? getCheckoutPaymentMethodSubtitle('wallet', t)
+              : isWalletEnabled
+                ? t('checkout_payment_wallet_balance', {
+                  currency: currencyLabel,
+                  amount: walletBalance.toFixed(2),
+                })
+                : t('checkout_payment_wallet_insufficient_balance')}
+            disabled={isWalletAvailabilityKnown && !isWalletEnabled}
             icon="wallet-outline"
             isSelected={draftMethod === 'wallet'}
             label={getCheckoutPaymentMethodTitle('wallet', t)}

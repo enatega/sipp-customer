@@ -4,7 +4,11 @@ import { AppState, type AppStateStatus } from "react-native";
 import { useAuthSessionQuery } from "../../../general/hooks/useAuthQueries";
 import { deliveryKeys } from "../api/queryKeys";
 import type { OrderDetailsResponse } from "../api/ordersServiceTypes";
-import { deliveriesSocketClient, subscribeDeliveriesEvent } from "../socket/deliveriesSocket";
+import {
+  deliveriesSocketClient,
+  subscribeDeliveriesConnection,
+  subscribeDeliveriesEvent,
+} from "../socket/deliveriesSocket";
 import type { DeliveriesServerEventMap } from "../socket/deliveriesSocket.types";
 
 type Options = {
@@ -96,6 +100,14 @@ export function useOrderStatusSocketSync(orderId?: string, options?: Options) {
     if (!isEnabled || !token) {
       return undefined;
     }
+
+    const unsubscribeConnection = subscribeDeliveriesConnection(() => {
+      const activeOrderId = currentOrderIdRef.current;
+      if (activeOrderId) {
+        void queryClient.invalidateQueries({ queryKey: deliveryKeys.orderDetail(activeOrderId) });
+      }
+      void queryClient.invalidateQueries({ queryKey: deliveryKeys.orders() });
+    });
 
     const unsubscribeOrderStatus = subscribeDeliveriesEvent(
       "order-status-updated",
@@ -197,6 +209,7 @@ export function useOrderStatusSocketSync(orderId?: string, options?: Options) {
     );
 
     return () => {
+      unsubscribeConnection();
       unsubscribeOrderStatus?.();
       unsubscribeRiderStatus?.();
     };

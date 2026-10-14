@@ -80,33 +80,35 @@ export default function ProductOptionRow({
         <Text numberOfLines={2} variant="label" weight={isSelected ? 'bold' : 'semiBold'}>
           {label}
         </Text>
-        {description ? (
+        {description?.trim() && description.trim() !== '-' ? (
           <Text color={colors.textSubtle} numberOfLines={2} variant="caption">
             {description}
           </Text>
         ) : null}
       </View>
 
-      <View
-        style={[
-          styles.priceBadge,
-          {
-            backgroundColor: isSelected ? colors.primary : colors.surfaceSunken,
-            borderRadius: shape.radius.pill,
-            paddingHorizontal: spacing.sm + 2,
-            paddingVertical: spacing.xxs + 1,
-          },
-        ]}
-      >
-        <Text
-          color={isSelected ? colors.onPrimary : colors.textSubtle}
-          numberOfLines={1}
-          variant="caption"
-          weight="bold"
+      {priceLabel ? (
+        <View
+          style={[
+            styles.priceBadge,
+            {
+              backgroundColor: isSelected ? colors.primary : colors.surfaceSunken,
+              borderRadius: shape.radius.pill,
+              paddingHorizontal: spacing.sm + 2,
+              paddingVertical: spacing.xxs + 1,
+            },
+          ]}
         >
-          {priceLabel}
-        </Text>
-      </View>
+          <Text
+            color={isSelected ? colors.onPrimary : colors.textSubtle}
+            numberOfLines={1}
+            variant="caption"
+            weight="bold"
+          >
+            {priceLabel}
+          </Text>
+        </View>
+      ) : null}
     </PressableScale>
   );
 }

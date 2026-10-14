@@ -19,6 +19,7 @@ export type ProductVariationOption = ProductSelectionOption & {
 };
 
 export type ProductSelectionSection = {
+  description: string | null;
   groupId: string;
   helperText: string | null;
   isMarkedRequired: boolean;
@@ -37,6 +38,7 @@ const buildSelectableSections = (
   sections: ProductInfoCustomizationSection[],
 ): ProductSelectionSection[] =>
   sections.map((section) => ({
+    description: section.description,
     groupId: section.groupId,
     helperText: section.helperText,
     isMarkedRequired: section.required,

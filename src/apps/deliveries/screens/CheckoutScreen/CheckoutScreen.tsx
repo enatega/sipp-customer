@@ -637,10 +637,7 @@ export default function CheckoutScreen() {
 
   const handlePaymentMethodPress = React.useCallback(() => {
     setIsPaymentMethodScreenVisible(true);
-    if (previewInput) {
-      void refetchPreview();
-    }
-  }, [previewInput, refetchPreview]);
+  }, []);
 
   const handlePaymentMethodConfirm = React.useCallback((nextPaymentMethod: CheckoutPaymentMethod) => {
     wantsWalletAfterTopUpRef.current = false;
@@ -781,14 +778,22 @@ export default function CheckoutScreen() {
       ),
     });
   }, [navigation, previewTotal, walletBalanceQuery.data]);
+  const previewTotalRef = React.useRef(previewTotal);
+  previewTotalRef.current = previewTotal;
+  const hasFocusedCheckoutRef = React.useRef(false);
   useFocusEffect(React.useCallback(() => {
+    if (!hasFocusedCheckoutRef.current) {
+      hasFocusedCheckoutRef.current = true;
+      return;
+    }
+
     void walletBalanceQuery.refetch().then(({ data }) => {
-      if (wantsWalletAfterTopUpRef.current && data !== undefined && data >= previewTotal) {
+      if (wantsWalletAfterTopUpRef.current && data !== undefined && data >= previewTotalRef.current) {
         wantsWalletAfterTopUpRef.current = false;
         setPaymentMethod('wallet');
       }
     });
-  }, [previewTotal, walletBalanceQuery.refetch]));
+  }, [walletBalanceQuery.refetch]));
   const selectedAddressLabel = formatDeliveryAddressLabel(effectiveSelectedAddress);
   const walletBalance = walletBalanceQuery.data ?? 0;
   const isWalletEnabled = walletBalanceQuery.data !== undefined && walletBalance >= Number(previewTotal || 0);
@@ -986,12 +991,11 @@ export default function CheckoutScreen() {
 
       <CheckoutPaymentMethodBottomSheet
         isCardEnabled={Boolean(adjustedPreview?.store.stripeAllowed)
-          && !isPreviewPending
           && !isPreviewError}
         isCardAvailabilityKnown={Boolean(adjustedPreview?.store)
-          && !isPreviewPending
           && !isPreviewError}
         isWalletEnabled={isWalletEnabled}
+        isWalletAvailabilityKnown={walletBalanceQuery.data !== undefined}
         walletBalance={walletBalance}
         currencyLabel={currencyLabel}
         isSavingCardSelection={setDefaultCardMutation.isPending}

@@ -39,7 +39,9 @@ function buildDeliveriesSocketUrl() {
 
 class DeliveriesSocketClient {
   private socket: Socket | null = null;
+  private socketPromise: Promise<Socket> | null = null;
   private authToken: string | null = null;
+  private hasSession = false;
   private currentUserId: string | null = null;
   private retainCount = 0;
   private readonly listenerRegistry = new Map<
@@ -68,24 +70,40 @@ class DeliveriesSocketClient {
   }
 
   private async ensureSocket(options?: DeliveriesSocketOptions) {
-    const token = this.authToken ?? (await tokenManager.getToken());
-    this.authToken = token;
-
     if (this.socket) {
-      this.socket.auth = this.buildAuth(token);
+      this.socket.auth = this.buildAuth(this.authToken);
       return this.socket;
     }
 
-    this.socket = io(buildDeliveriesSocketUrl(), {
-      ...websocketFirstSocketOptions,
-      ...options,
-      auth: this.buildAuth(token),
-      path: socketPath,
-    });
+    if (!this.socketPromise) {
+      this.socketPromise = (async () => {
+        const storedToken = this.hasSession ? null : await tokenManager.getToken();
+        if (!this.hasSession) {
+          this.authToken = storedToken;
+        }
 
-    this.bindLifecycleListeners(this.socket);
+        const socket = io(buildDeliveriesSocketUrl(), {
+          ...websocketFirstSocketOptions,
+          ...options,
+          auth: this.buildAuth(this.authToken),
+          path: socketPath,
+        });
 
-    return this.socket;
+        this.socket = socket;
+        this.bindLifecycleListeners(socket);
+        this.listenerRegistry.forEach((handlers, event) => {
+          handlers.forEach((wrappedHandler) => socket.on(event, wrappedHandler));
+        });
+
+        return socket;
+      })();
+    }
+
+    try {
+      return await this.socketPromise;
+    } finally {
+      this.socketPromise = null;
+    }
   }
 
   async connect(options?: DeliveriesSocketOptions) {
@@ -139,6 +157,7 @@ class DeliveriesSocketClient {
   }
 
   async updateSession(session: DeliveriesSocketSession) {
+    this.hasSession = true;
     const nextToken = session.token;
     const nextUserId = session.userId;
     const tokenChanged = this.authToken !== nextToken;
@@ -219,15 +238,7 @@ class DeliveriesSocketClient {
     if (this.socket) {
       this.socket.on(event, wrappedHandler);
     } else {
-      void this.ensureSocket().then((socket) => {
-        const latestWrappedHandler = this.listenerRegistry.get(event)?.get(baseHandler);
-
-        if (!latestWrappedHandler) {
-          return;
-        }
-
-        socket.on(event, latestWrappedHandler);
-      });
+      void this.ensureSocket();
     }
 
     return () => {
@@ -301,6 +312,12 @@ export function subscribeDeliveriesEvent<TEvent extends DeliveriesServerEventNam
     event,
     handler,
   );
+}
+
+export function subscribeDeliveriesConnection(
+  handler: () => void,
+): SocketSubscriptionCleanup {
+  return deliveriesSocketClient.subscribe<[]>("connect", handler);
 }
 
 export function offDeliveriesEvent<TEvent extends DeliveriesServerEventName>(

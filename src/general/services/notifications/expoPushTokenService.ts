@@ -58,18 +58,30 @@ async function getPushTokenInternal(): Promise<string | null> {
     }
 
     const projectId = getEasProjectId();
+    console.log('[ExpoPushToken][auth] project IDs', {
+      selected: projectId ?? null,
+      easConfig: Constants.easConfig?.projectId ?? null,
+      expoConfig: Constants.expoConfig?.extra?.eas?.projectId ?? null,
+      environment: process.env.EXPO_PUBLIC_EAS_PROJECT_ID ?? null,
+    });
     const response = projectId
       ? await Notifications.getExpoPushTokenAsync({ projectId })
       : await Notifications.getExpoPushTokenAsync();
 
-    return normalizePushToken(response.data);
-  } catch {
+    const token = normalizePushToken(response.data);
+    console.log('[ExpoPushToken][auth] generated token', token);
+    return token;
+  } catch (error) {
+    console.error('[ExpoPushToken][auth] token generation failed', error);
     return null;
   }
 }
 
 export async function getExpoPushTokenForAuth(): Promise<string | null> {
-  if (cachedToken) return cachedToken;
+  if (cachedToken) {
+    console.log('[ExpoPushToken][auth] cached token', cachedToken);
+    return cachedToken;
+  }
 
   if (inFlightTokenPromise) {
     return inFlightTokenPromise;

@@ -18,12 +18,20 @@ export function usePushTokenSync() {
         const permission = await Notifications.getPermissionsAsync();
         if (!permission.granted && permission.ios?.status !== Notifications.IosAuthorizationStatus.PROVISIONAL) return;
         const projectId = Constants.easConfig?.projectId ?? Constants.expoConfig?.extra?.eas?.projectId;
+        console.log('[ExpoPushToken][sync] project IDs', {
+          selected: projectId ?? null,
+          easConfig: Constants.easConfig?.projectId ?? null,
+          expoConfig: Constants.expoConfig?.extra?.eas?.projectId ?? null,
+        });
         if (!projectId) return;
         const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+        console.log('[ExpoPushToken][sync] generated token', token);
         if (disposed || !token || token === lastRegistered.current) return;
         await apiClient.post('/api/v1/users/push-token/register', { token });
+        console.log('[ExpoPushToken][sync] registered token', token);
         lastRegistered.current = token;
-      } catch {
+      } catch (error) {
+        console.error('[ExpoPushToken][sync] token sync failed', error);
         // Retry when the app returns to the foreground.
       }
     };

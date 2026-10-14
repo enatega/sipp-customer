@@ -480,7 +480,7 @@ export default function MainContainer({
 
           {hasFlavours ? (
             <ItemFlavour
-              formatPrice={formatPrice}
+              currencyLabel={currencyLabel}
               onToggle={toggleAddonOption}
               sections={addonSections}
               selectedOptionIdsByGroup={selectedAddonOptionIdsByGroup}
