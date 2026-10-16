@@ -22,6 +22,7 @@ export type CartSelectedOption = {
 };
 
 export type CartItem = {
+  itemNote?: string | null;
   id: string;
   productId: string;
   name: string;

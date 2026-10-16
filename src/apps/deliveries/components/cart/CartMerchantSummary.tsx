@@ -7,7 +7,6 @@ import PressableScale from '../../../../general/components/PressableScale';
 import Text from '../../../../general/components/Text';
 import { useTheme } from '../../../../general/theme/theme';
 import type { DeliveryStoreViewApiResponse } from '../../api/types';
-import { formatCartPrice } from './cartUtils';
 
 type Props = {
   fallbackName?: string | null;
@@ -38,11 +37,8 @@ export default function CartMerchantSummary({ fallbackName, onPress, store }: Pr
       style={[
         styles.container,
         {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-          borderRadius: shape.radius.surface,
-          gap: spacing.md,
-          padding: spacing.md,
+          gap: spacing.sm,
+          paddingVertical: spacing.xs,
         },
       ]}
     >
@@ -64,46 +60,22 @@ export default function CartMerchantSummary({ fallbackName, onPress, store }: Pr
             },
           ]}
         >
-          <MaterialCommunityIcons color={colors.primary} name="storefront-outline" size={24} />
+          <MaterialCommunityIcons color={colors.primary} name="storefront-outline" size={20} />
         </View>
       )}
 
-      <View style={[styles.copy, { gap: spacing.xs }]}>
-        <Text numberOfLines={1} variant="cardTitle" weight="bold">
+      <View style={styles.copy}>
+        <Text numberOfLines={1} variant="label" weight="semiBold">
           {storeName}
         </Text>
-        <View style={[styles.metadata, { gap: spacing.sm }]}>
-          {hasDeliveryTime ? (
-            <Text color={colors.textSubtle} numberOfLines={1} variant="caption">
-              {t('cart_delivery_time', { time: deliveryTime })}
-            </Text>
-          ) : null}
-          {store?.minimumOrder ? (
-            <>
-              {hasDeliveryTime ? (
-                <View style={[styles.dot, { backgroundColor: colors.divider }]} />
-              ) : null}
-              <Text color={colors.textSubtle} numberOfLines={1} variant="caption">
-                {t('store_details_minimum_order', {
-                  amount: formatCartPrice(store.minimumOrder),
-                })}
-              </Text>
-            </>
-          ) : null}
-        </View>
+        {hasDeliveryTime ? (
+          <Text color={colors.textSubtle} numberOfLines={1} variant="caption">
+            {t('cart_delivery_time', { time: deliveryTime })}
+          </Text>
+        ) : null}
       </View>
 
-      <View
-        style={[
-          styles.trailing,
-          {
-            backgroundColor: colors.primarySoft,
-            borderRadius: shape.radius.pill,
-          },
-        ]}
-      >
-        <MaterialCommunityIcons color={colors.primary} name="chevron-right" size={22} />
-      </View>
+      <MaterialCommunityIcons color={colors.textSubtle} name="chevron-right" size={20} />
     </PressableScale>
   );
 }
@@ -111,38 +83,21 @@ export default function CartMerchantSummary({ fallbackName, onPress, store }: Pr
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
-    overflow: 'hidden',
+    minHeight: 48,
   },
   copy: {
     flex: 1,
     minWidth: 0,
   },
-  dot: {
-    borderRadius: 2,
-    height: 4,
-    width: 4,
-  },
   logo: {
-    height: 54,
-    width: 54,
+    height: 40,
+    width: 40,
   },
   logoFallback: {
     alignItems: 'center',
-    height: 54,
+    height: 40,
     justifyContent: 'center',
-    width: 54,
-  },
-  metadata: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  trailing: {
-    alignItems: 'center',
-    height: 36,
-    justifyContent: 'center',
-    width: 36,
+    width: 40,
   },
 });

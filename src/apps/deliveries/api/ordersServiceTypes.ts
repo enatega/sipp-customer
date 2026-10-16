@@ -68,6 +68,7 @@ export interface DeliveryOrderRider {
 }
 
 export interface DeliveryOrderProduct {
+  itemNote?: string | null;
   id?: string;
   productId?: string;
   name?: string | null;
@@ -90,6 +91,8 @@ export interface DeliveryOrderProduct {
 }
 
 export interface DeliveryOrderProductAddon {
+  type?: string | null;
+  pricingMode?: 'additive' | 'replace_base';
   id?: string;
   name?: string | null;
   title?: string | null;
@@ -158,6 +161,7 @@ export interface OrderDetailsResponse {
   status: DeliveryOrderStatus;
   statusTitle: string;
   statusMessage: string;
+  rejectionReason?: string | null;
   orderType: string;
   paymentMethod: string;
   paymentStatus: string;

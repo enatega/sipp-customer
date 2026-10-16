@@ -10,9 +10,9 @@ const useStyles = (colors: any) =>
       flex: 1,
     },
     centerContent: {
-      flexGrow: 1,
       gap: 18,
-      padding: 16
+      padding: 16,
+      paddingBottom: 24,
     },
   });
 

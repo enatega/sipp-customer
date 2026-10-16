@@ -4,6 +4,7 @@ import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import apiClient from '../api/apiClient';
 import { useAuthSessionQuery } from './useAuthQueries';
+import { pushTokenStorage } from '../services/notifications/expoPushTokenService';
 
 export function usePushTokenSync() {
   const session = useAuthSessionQuery();
@@ -27,7 +28,11 @@ export function usePushTokenSync() {
         const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
         console.log('[ExpoPushToken][sync] generated token', token);
         if (disposed || !token || token === lastRegistered.current) return;
-        await apiClient.post('/api/v1/users/push-token/register', { token });
+        const registered = await pushTokenStorage.register(
+          token,
+          () => apiClient.post('/api/v1/users/push-token/register', { token }),
+        );
+        if (!registered) return;
         console.log('[ExpoPushToken][sync] registered token', token);
         lastRegistered.current = token;
       } catch (error) {

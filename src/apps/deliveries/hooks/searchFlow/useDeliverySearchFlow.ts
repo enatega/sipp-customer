@@ -138,6 +138,7 @@ export default function useDeliverySearchFlow(
   const debouncedQuery = useDebouncedValue(searchQuery, debounceMs);
   const trimmedQuery = searchQuery.trim();
   const trimmedDebouncedQuery = debouncedQuery.trim();
+  const hasSearchTerm = /[\p{L}\p{N}]/u.test(trimmedDebouncedQuery);
   const isWaitingForDebounce =
     trimmedQuery.length > 0 && trimmedQuery !== trimmedDebouncedQuery;
 
@@ -150,7 +151,9 @@ export default function useDeliverySearchFlow(
     isFetchingNextPage: isFetchingMoreProducts,
     hasNextPage: hasMoreProducts,
     fetchNextPage: fetchMoreProducts,
-  } = useProductSearch(trimmedDebouncedQuery, location);
+  } = useProductSearch(trimmedDebouncedQuery, location, {
+    enabled: hasSearchTerm,
+  });
   const {
     data: storesData,
     isLoading: isLoadingStores,
@@ -158,7 +161,7 @@ export default function useDeliverySearchFlow(
     hasNextPage: hasMoreStores,
     fetchNextPage: fetchMoreStores,
   } = useStoreSearch(trimmedDebouncedQuery, location, {
-    enabled: shouldSearchStores && trimmedDebouncedQuery.length > 0,
+    enabled: shouldSearchStores && hasSearchTerm,
   });
 
   const recommendations = recommendationsData ?? [];

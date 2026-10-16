@@ -73,6 +73,7 @@ export default function WalletTopUpCard({ cardLabel, cardExpiry, currency, curre
           accessibilityLabel={t('wallet_topup_amount')}
           editable={!isLoading}
           keyboardType={isWholeUnitCurrency ? 'number-pad' : 'decimal-pad'}
+          textAlignVertical="center"
           onChangeText={handleValueChange}
           placeholder="0"
           placeholderTextColor={colors.walletTextMuted}
@@ -148,9 +149,9 @@ const styles = StyleSheet.create({
   paymentExpiry: { fontSize: 11, lineHeight: 15 },
   addCard: { alignItems: 'center', borderRadius: 14, flexDirection: 'row', gap: 8, height: 46, marginTop: 6, paddingHorizontal: 14 },
   amountLabel: { marginTop: 24 },
-  amountStage: { alignItems: 'center', borderRadius: 16, borderWidth: 1, flexDirection: 'row', height: 84, marginTop: 8, paddingHorizontal: 16 },
+  amountStage: { alignItems: 'center', borderRadius: 16, borderWidth: 1, flexDirection: 'row', minHeight: 84, marginTop: 8, paddingHorizontal: 16 },
   currency: { fontSize: 24, lineHeight: 32 },
-  input: { flex: 1, fontSize: 34, fontWeight: '600', fontVariant: ['tabular-nums'], minWidth: 0, paddingHorizontal: 8, paddingVertical: 12 },
+  input: { flex: 1, fontSize: 34, lineHeight: 42, fontWeight: '600', fontVariant: ['tabular-nums'], minHeight: 58, minWidth: 0, paddingHorizontal: 8, paddingVertical: 0 },
   clear: { alignItems: 'center', height: 44, justifyContent: 'center', width: 44 },
   minimum: { fontSize: 12, lineHeight: 16, marginTop: 6 },
   coverOrder: { alignItems: 'center', borderRadius: 12, flexDirection: 'row', gap: 8, minHeight: 44, marginTop: 10, paddingHorizontal: 12 },

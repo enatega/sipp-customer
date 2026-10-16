@@ -33,6 +33,8 @@ export interface StoreMenuPageParam {
 }
 
 export const storeMenuService = {
+  resolveSlug: (slug: string) =>
+    apiClient.get<{ storeId: string }>(`/api/v1/apps/deliveries/stores/resolve/${encodeURIComponent(slug)}`),
   bootstrap: (storeId: string, signal?: AbortSignal) =>
     apiClient.get<StoreMenuBootstrap>(`/api/v1/apps/deliveries/stores/${storeId}/view/menu`, undefined, { signal }),
   page: (storeId: string, params: StoreMenuPageParam, signal?: AbortSignal) =>

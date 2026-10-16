@@ -31,7 +31,7 @@ export default function CartHeader({
       style={[
         styles.container,
         {
-          backgroundColor: colors.canvas,
+          backgroundColor: colors.surface,
           paddingBottom: spacing.sm,
           paddingHorizontal: gutter,
           paddingTop: insets.top + spacing.sm,

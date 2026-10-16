@@ -10,12 +10,14 @@ import { useTheme } from '../../../../general/theme/theme';
 type Props = {
   isDisabled: boolean;
   isLoading?: boolean;
+  isCheckingOrder?: boolean;
   onPlaceOrderPress: () => void;
 };
 
 export default function CheckoutSummaryFooter({
   isDisabled,
   isLoading = false,
+  isCheckingOrder = false,
   onPlaceOrderPress,
 }: Props) {
   const { elevation, layout, shape, spacing } = useTheme();
@@ -61,7 +63,7 @@ export default function CheckoutSummaryFooter({
               disabled={isDisabled}
               fullWidth
               isLoading={isLoading}
-              label={t('checkout_place_order')}
+              label={t(isCheckingOrder ? 'checkout_checking_order' : 'checkout_place_order')}
               onPress={onPlaceOrderPress}
               size="large"
             />

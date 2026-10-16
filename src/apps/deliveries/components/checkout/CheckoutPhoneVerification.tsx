@@ -54,7 +54,7 @@ export default function CheckoutPhoneVerification({ onBack, onVerified }: { onBa
     }
   };
 
-  return <View style={{ flex: 1, backgroundColor: colors.canvas }}>
+  return <View style={{ flex: 1, backgroundColor: colors.surface }}>
     <ScreenHeader onBack={onBack} />
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24, gap: 20 }}>

@@ -91,6 +91,10 @@ export function createProfileService(appPrefix: ProfileAppPrefix) {
 
 // Service object that accepts appPrefix as the first argument for each method
 export const profileService = {
+  sendEmailVerificationOtp: () =>
+    apiClient.post<{ message: string }>(`${getProfileBase('deliveries')}/email/send-otp`, {}),
+  verifyEmailVerificationOtp: (otp: string) =>
+    apiClient.post<{ message: string }>(`${getProfileBase('deliveries')}/email/verify-otp`, { otp }),
   sendPhoneVerificationOtp: (phone: string) =>
     apiClient.post<{ message: string }>(`${getProfileBase('deliveries')}/phone/send-otp`, { phone }),
   verifyPhoneVerificationOtp: (phone: string, otp: string) =>

@@ -1,6 +1,39 @@
 import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
+import * as SecureStore from "expo-secure-store";
+
+const PUSH_TOKEN_KEY = "sipp_customer_device_push_token";
+const registrations = new Set<Promise<void>>();
+let signingOut = false;
+
+export const pushTokenStorage = {
+  get: () => Platform.OS === "web" ? Promise.resolve(null) : SecureStore.getItemAsync(PUSH_TOKEN_KEY),
+  save: (token: string) => Platform.OS === "web" ? Promise.resolve() : SecureStore.setItemAsync(PUSH_TOKEN_KEY, token),
+  clear: () => {
+    cachedToken = null;
+    return Platform.OS === "web" ? Promise.resolve() : SecureStore.deleteItemAsync(PUSH_TOKEN_KEY);
+  },
+  register: async (token: string, send: () => Promise<unknown>) => {
+    if (signingOut) return false;
+    const pending = (async () => {
+      await send();
+      await pushTokenStorage.save(token);
+    })();
+    registrations.add(pending);
+    try {
+      await pending;
+      return true;
+    } finally {
+      registrations.delete(pending);
+    }
+  },
+  beginLogout: async () => {
+    signingOut = true;
+    await Promise.allSettled([...registrations]);
+  },
+  cancelLogout: () => { signingOut = false; },
+};
 
 let cachedToken: string | null = null;
 let inFlightTokenPromise: Promise<string | null> | null = null;
@@ -93,6 +126,7 @@ export async function getExpoPushTokenForAuth(): Promise<string | null> {
     const token = normalizePushToken(await inFlightTokenPromise);
     if (token) {
       cachedToken = token;
+      await pushTokenStorage.save(token);
     }
     return token;
   } finally {

@@ -24,7 +24,7 @@ type Props = {
   walletBalance: number;
   currencyLabel: string;
   isVisible: boolean;
-  isSavingCardSelection?: boolean;
+  onAddFunds: () => void;
   onClose: () => void;
   onConfirm: (paymentMethod: CheckoutPaymentMethod) => void;
   onManageCards: () => void;
@@ -107,7 +107,7 @@ export default function CheckoutPaymentMethodBottomSheet({
   walletBalance,
   currencyLabel,
   isVisible,
-  isSavingCardSelection = false,
+  onAddFunds,
   onClose,
   onConfirm,
   onManageCards,
@@ -121,6 +121,7 @@ export default function CheckoutPaymentMethodBottomSheet({
   const { colors, elevation, layout, shape, spacing } = useTheme();
   const { t } = useTranslation('deliveries');
   const [draftMethod, setDraftMethod] = React.useState<CheckoutPaymentMethod>(selectedMethod);
+  const wasVisible = React.useRef(false);
   const hasSavedCards = savedCards.length > 0;
   const visibleCardCount = draftMethod === 'stripe' ? savedCards.length + 1 : 0;
   const estimatedContentHeight = 116
@@ -132,13 +133,17 @@ export default function CheckoutPaymentMethodBottomSheet({
   const horizontalInset = width > layout.contentMaxWidth.readable
     ? (width - layout.contentMaxWidth.readable) / 2
     : 0;
+  const needsWalletTopUp = draftMethod === 'wallet'
+    && isWalletAvailabilityKnown
+    && !isWalletEnabled;
   const isConfirmDisabled = (draftMethod === 'stripe' && (!isCardEnabled || !selectedCardId))
-    || (draftMethod === 'wallet' && !isWalletEnabled);
+    || (draftMethod === 'wallet' && !isWalletAvailabilityKnown);
 
   React.useEffect(() => {
-    if (isVisible) {
+    if (isVisible && !wasVisible.current) {
       setDraftMethod(selectedMethod);
     }
+    wasVisible.current = isVisible;
   }, [isVisible, selectedMethod]);
 
   if (!isVisible) {
@@ -229,8 +234,11 @@ export default function CheckoutPaymentMethodBottomSheet({
                   currency: currencyLabel,
                   amount: walletBalance.toFixed(2),
                 })
-                : t('checkout_payment_wallet_insufficient_balance')}
-            disabled={isWalletAvailabilityKnown && !isWalletEnabled}
+                : `${t('checkout_payment_wallet_balance', {
+                    currency: currencyLabel,
+                    amount: walletBalance.toFixed(2),
+                  })}\n${t('checkout_payment_wallet_insufficient_balance')}`}
+            disabled={false}
             icon="wallet-outline"
             isSelected={draftMethod === 'wallet'}
             label={getCheckoutPaymentMethodTitle('wallet', t)}
@@ -247,7 +255,6 @@ export default function CheckoutPaymentMethodBottomSheet({
                     key={card.id}
                     accessibilityRole="radio"
                     accessibilityState={{ selected: isSelected }}
-                    disabled={isSavingCardSelection}
                     onPress={() => onSelectCard(card.id)}
                     style={[
                       styles.cardOption,
@@ -315,8 +322,10 @@ export default function CheckoutPaymentMethodBottomSheet({
           <Button
             disabled={isConfirmDisabled}
             fullWidth
-            label={t('checkout_payment_selector_confirm')}
-            onPress={() => onConfirm(draftMethod)}
+            label={needsWalletTopUp
+              ? t('checkout_insufficient_wallet_balance_add_funds')
+              : t('checkout_payment_selector_confirm')}
+            onPress={needsWalletTopUp ? onAddFunds : () => onConfirm(draftMethod)}
             size="large"
           />
         </View>

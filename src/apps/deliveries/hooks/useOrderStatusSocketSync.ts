@@ -77,10 +77,7 @@ export function useOrderStatusSocketSync(orderId?: string, options?: Options) {
         return;
       }
 
-      if (
-        nextState === "active"
-        && deliveriesSocketClient.hasActiveConsumers()
-      ) {
+      if (nextState === "active") {
         void deliveriesSocketClient.connect();
         const activeOrderId = currentOrderIdRef.current;
         if (activeOrderId) {
@@ -94,6 +91,18 @@ export function useOrderStatusSocketSync(orderId?: string, options?: Options) {
     return () => {
       subscription.remove();
     };
+  }, [isEnabled, queryClient, token]);
+
+  useEffect(() => {
+    if (!isEnabled || !token) return undefined;
+    const poll = () => {
+      if (AppState.currentState !== 'active' || deliveriesSocketClient.isConnected()) return;
+      const activeOrderId = currentOrderIdRef.current;
+      if (activeOrderId) void queryClient.invalidateQueries({ queryKey: deliveryKeys.orderDetail(activeOrderId) });
+      void deliveriesSocketClient.connect();
+    };
+    const interval = setInterval(poll, 15_000);
+    return () => clearInterval(interval);
   }, [isEnabled, queryClient, token]);
 
   useEffect(() => {

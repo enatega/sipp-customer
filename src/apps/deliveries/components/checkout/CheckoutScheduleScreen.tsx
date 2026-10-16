@@ -87,7 +87,7 @@ export default function CheckoutScheduleScreen({
   const isConfirmDisabled = !selectedScheduledSlot || isPending || !schedule?.allowScheduleBooking;
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.canvas }]}>
+    <View style={[styles.screen, { backgroundColor: colors.surface }]}>
       <CheckoutHeader onBackPress={onBackPress} title={t('checkout_schedule_title')} />
 
       <ScrollView

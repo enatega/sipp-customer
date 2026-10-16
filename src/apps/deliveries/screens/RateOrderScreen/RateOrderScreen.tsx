@@ -37,17 +37,20 @@ export default function RateOrderScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const route = useRoute<RouteProp<DeliveriesStackParamList, 'RateOrder'>>();
-  const { orderId, storeName } = route.params;
+  const { orderId, storeName, recipient = 'store' } = route.params;
   const orderReviewQuery = useOrderReviewQuery(orderId);
-  const submittedReview = orderReviewQuery.data?.is_reviewed
-    ? orderReviewQuery.data.review_detail
-    : null;
+  const submittedReview = recipient === 'rider'
+    ? orderReviewQuery.data?.rider_review_detail
+    : orderReviewQuery.data?.review_detail;
+  const recipientName = recipient === 'rider'
+    ? orderReviewQuery.data?.rider_name || t('rate_rider_fallback')
+    : storeName;
 
   const [rating, setRating] = useState(0);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [comment, setComment] = useState('');
 
-  const tags = rating > 0 ? (RATING_TAGS_BY_SCORE[rating] ?? []) : [];
+  const tags = recipient === 'store' && rating > 0 ? (RATING_TAGS_BY_SCORE[rating] ?? []) : [];
 
   const handleTagToggle = (tag: string) => {
     const isSelected = selectedTags.includes(tag);
@@ -90,6 +93,7 @@ export default function RateOrderScreen() {
       orderId,
       rating,
       description: comment.trim(),
+      recipient,
     });
   };
 
@@ -127,22 +131,22 @@ export default function RateOrderScreen() {
           <SubmittedRatingView
             rating={submittedReview.rating}
             description={submittedReview.description ?? ''}
-            storeName={storeName}
+            storeName={recipientName}
           />
         ) : (
           <>
         <View style={styles.hero}>
           <Text variant="caption" color={colors.mutedText} style={styles.center}>
-            {storeName}
+            {recipientName}
           </Text>
 
           <RatingStars value={rating} onChange={handleRatingChange} />
 
           <Text variant="title" weight="bold" style={styles.center}>
-            {t('rate_order_heading')}
+            {t(recipient === 'rider' ? 'rate_rider_heading' : 'rate_order_heading')}
           </Text>
           <Text variant="body" color={colors.mutedText} style={styles.center}>
-            {t('rate_order_subheading')}
+            {t(recipient === 'rider' ? 'rate_rider_subheading' : 'rate_order_subheading')}
           </Text>
         </View>
 

@@ -1,6 +1,5 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useNavigation, type NavigationProp } from "@react-navigation/native";
-import { LinearGradient } from "expo-linear-gradient";
 import { useTranslation } from "react-i18next";
 import {
   RefreshControl,
@@ -8,6 +7,7 @@ import {
   StatusBar,
   StyleSheet,
   View,
+  type ScrollView,
   useWindowDimensions,
 } from "react-native";
 import Animated, {
@@ -22,6 +22,7 @@ import Animated, {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDeliveriesCurrencyLabel } from "../../../../general/stores/useAppConfigStore";
 import { useWindowClass } from "../../../../general/hooks/useWindowClass";
+import { useReducedMotion } from "../../../../general/hooks/useReducedMotion";
 import { useTheme } from "../../../../general/theme/theme";
 import Text from "../../../../general/components/Text";
 import { showToast } from "../../../../general/components/AppToast";
@@ -78,9 +79,15 @@ export default function MainContainer({
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { gutter } = useWindowClass();
+  const isReducedMotionEnabled = useReducedMotion();
   const [quantity, setQuantity] = useState(1);
   const [showSelectionErrors, setShowSelectionErrors] = useState(false);
   const [isCompactHeader, setIsCompactHeader] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const detailsSurfaceY = useRef(0);
+  const variationSectionY = useRef<number | null>(null);
+  const addonsSectionY = useRef<number | null>(null);
+  const addonGroupY = useRef<Record<string, number>>({});
   const scrollY = useSharedValue(0);
   const variations = customizations?.variations ?? [];
   const addons = customizations?.addons ?? [];
@@ -149,6 +156,7 @@ export default function MainContainer({
   const {
     addonSections,
     cartSelectionInputs,
+    incompleteRequiredGroupIds,
     isSelectionComplete,
     selectedAddonsTotal,
     selectedVariation,
@@ -183,7 +191,7 @@ export default function MainContainer({
       productInfoData.usage?.trim() ||
       productInfoData.nutrition?.length,
   );
-  const hasSizes = variationOptions.length > 1;
+  const hasSizes = variationOptions.length > 0;
   const hasFlavours = addonSections.length > 0;
   const hasCustomizationSection = hasSizes || hasFlavours;
   const hasDetailSections =
@@ -378,28 +386,47 @@ export default function MainContainer({
   const handlePrimaryAction = useCallback(() => {
     if (!isSelectionComplete) {
       setShowSelectionErrors(true);
+
+      const isVariationMissing = variationOptions.some((option) => option.required) && !selectedVariation;
+      const firstMissingGroupY = addonGroupY.current[incompleteRequiredGroupIds[0] ?? ""];
+      const sectionY = isVariationMissing
+        ? variationSectionY.current
+        : addonsSectionY.current !== null
+          ? addonsSectionY.current + (firstMissingGroupY ?? 0)
+          : null;
+
+      if (sectionY !== null) {
+        scrollViewRef.current?.scrollTo({
+          animated: !isReducedMotionEnabled,
+          y: Math.max(0, detailsSurfaceY.current + sectionY - navigationHeight - spacing.md),
+        });
+      }
+
+      return;
     }
 
     void handleAddToCart();
-  }, [handleAddToCart, isSelectionComplete]);
+  }, [
+    handleAddToCart,
+    incompleteRequiredGroupIds,
+    isReducedMotionEnabled,
+    isSelectionComplete,
+    navigationHeight,
+    selectedVariation,
+    spacing.md,
+    variationOptions,
+  ]);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.canvas }]}>
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
       <StatusBar
         translucent
         backgroundColor="transparent"
         barStyle={isCompactHeader && !isDark ? "dark-content" : "light-content"}
       />
-      <LinearGradient
-        colors={[colors.primarySoft, colors.canvas, colors.canvas]}
-        end={{ x: 0.82, y: 1 }}
-        locations={[0, 0.42, 1]}
-        pointerEvents="none"
-        start={{ x: 0.18, y: 0 }}
-        style={StyleSheet.absoluteFill}
-      />
       <Animated.ScrollView
         bounces
+        ref={scrollViewRef}
         contentContainerStyle={[
           styles.contentContainer,
           { paddingBottom: insets.bottom + 124 },
@@ -428,6 +455,9 @@ export default function MainContainer({
         </View>
 
         <View
+          onLayout={(event) => {
+            detailsSurfaceY.current = event.nativeEvent.layout.y;
+          }}
           style={[
             styles.detailsSurface,
             elevation.raised,
@@ -453,7 +483,7 @@ export default function MainContainer({
                 : null
             }
             ratingLabel={ratingLabel}
-            unavailableLabel={t("product_info_unavailable")}
+            unavailableLabel={t("store_details_out_of_stock")}
           />
 
           {hasDetailSections ? (
@@ -465,13 +495,19 @@ export default function MainContainer({
           ) : null}
 
           {hasSizes ? (
-            <ItemSizes
-              formatPrice={formatPrice}
-              onSelect={selectVariationOption}
-              helperText={variationHelperText}
-              selectedVariationKey={selectedVariationKey}
-              variations={variationOptions}
-            />
+            <View
+              onLayout={(event) => {
+                variationSectionY.current = event.nativeEvent.layout.y;
+              }}
+            >
+              <ItemSizes
+                formatPrice={formatPrice}
+                onSelect={selectVariationOption}
+                helperText={variationHelperText}
+                selectedVariationKey={selectedVariationKey}
+                variations={variationOptions}
+              />
+            </View>
           ) : null}
 
           {hasSizes && hasFlavours ? (
@@ -479,13 +515,22 @@ export default function MainContainer({
           ) : null}
 
           {hasFlavours ? (
-            <ItemFlavour
-              currencyLabel={currencyLabel}
-              onToggle={toggleAddonOption}
-              sections={addonSections}
-              selectedOptionIdsByGroup={selectedAddonOptionIdsByGroup}
-              showValidationErrors={showSelectionErrors}
-            />
+            <View
+              onLayout={(event) => {
+                addonsSectionY.current = event.nativeEvent.layout.y;
+              }}
+            >
+              <ItemFlavour
+                currencyLabel={currencyLabel}
+                onToggle={toggleAddonOption}
+                onSectionLayout={(groupId, y) => {
+                  addonGroupY.current[groupId] = y;
+                }}
+                sections={addonSections}
+                selectedOptionIdsByGroup={selectedAddonOptionIdsByGroup}
+                showValidationErrors={showSelectionErrors}
+              />
+            </View>
           ) : null}
 
           {hasNutritionSection && hasCustomizationSection ? (

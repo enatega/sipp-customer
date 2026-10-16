@@ -40,6 +40,7 @@ export type DeliveriesSeeAllParamList = {
 export type DeliveriesStoreDetailsParamList = {
   StoreDetails: {
     store?: DeliveryNearbyStore;
+    storeId?: string;
   };
 };
 

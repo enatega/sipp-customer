@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Keyboard, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useState } from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +17,7 @@ import {
   useUpdatePasswordMutation,
 } from '../../hooks/useChangePasswordMutations';
 import type { SettingsAppPrefix } from '../../api/settingsService';
+import useAndroidKeyboardVisible from '../../hooks/useAndroidKeyboardVisible';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -31,6 +32,7 @@ export default function ChangePasswordScreen({ appPrefix }: Props) {
   const { t } = useTranslation('general');
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const isAndroidKeyboardVisible = useAndroidKeyboardVisible();
 
   const [step, setStep] = useState<Step>(1);
   const [email, setEmail] = useState('');
@@ -40,20 +42,6 @@ export default function ChangePasswordScreen({ appPrefix }: Props) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [otpHasError, setOtpHasError] = useState(false);
   const [otpErrorMessage, setOtpErrorMessage] = useState('');
-  const [keyboardOffset, setKeyboardOffset] = useState(0);
-
-  useEffect(() => {
-    const show = Keyboard.addListener('keyboardDidShow', (e) => {
-      setKeyboardOffset(e.endCoordinates.height - insets.bottom + 16);
-    });
-    const hide = Keyboard.addListener('keyboardDidHide', () => {
-      setKeyboardOffset(0);
-    });
-    return () => {
-      show.remove();
-      hide.remove();
-    };
-  }, [insets.bottom]);
 
   const sendOtpMutation = useSendOtpMutation(appPrefix);
   const verifyOtpMutation = useVerifyOtpMutation(appPrefix);
@@ -140,13 +128,17 @@ export default function ChangePasswordScreen({ appPrefix }: Props) {
   };
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : isAndroidKeyboardVisible ? 'height' : undefined}
+      style={[styles.screen, { backgroundColor: colors.background }]}
+    >
       <ScreenHeader title={getTitle()} />
 
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="none"
         showsVerticalScrollIndicator={false}
       >
         {step === 1 && (
@@ -192,7 +184,6 @@ export default function ChangePasswordScreen({ appPrefix }: Props) {
           {
             borderTopColor: colors.border,
             backgroundColor: colors.background,
-            bottom: keyboardOffset,
             paddingBottom: insets.bottom + 12,
           },
         ]}
@@ -205,24 +196,21 @@ export default function ChangePasswordScreen({ appPrefix }: Props) {
           variant={step === 2 && otp.length === 4 ? 'primary' : step === 2 ? 'secondary' : 'primary'}
         />
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   footer: {
     borderTopWidth: 1,
-    left: 0,
     paddingHorizontal: 16,
     paddingTop: 12,
-    position: 'absolute',
-    right: 0,
   },
   otpContent: {
     alignItems: 'center',
     gap: 24,
   },
   screen: { flex: 1 },
-  scrollContent: { paddingBottom: 100, paddingHorizontal: 16, paddingTop: 24 },
+  scrollContent: { paddingBottom: 24, paddingHorizontal: 16, paddingTop: 24 },
   scrollView: { flex: 1 },
 });

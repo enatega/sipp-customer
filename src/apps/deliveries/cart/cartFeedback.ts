@@ -83,12 +83,14 @@ export function getCartMutationErrorFeedback(
   }
 
   if (
+    apiError?.status === 0 ||
     apiError?.code === 'NETWORK_ERROR' ||
+    apiError?.code === 'TRANSIENT_RESPONSE_STREAM_LOST' ||
     normalizedMessage.includes('network error')
   ) {
     return {
       title: t('cart_network_error_title'),
-      message: t('cart_network_error_message'),
+      message: t(kind === 'add' ? 'cart_add_unconfirmed_message' : 'cart_network_error_message'),
     };
   }
 

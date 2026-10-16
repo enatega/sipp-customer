@@ -4,11 +4,20 @@ const googleIosUrlScheme = iosClientId.endsWith('.apps.googleusercontent.com')
   ? `com.googleusercontent.apps.${iosClientId.replace('.apps.googleusercontent.com', '')}`
   : process.env.EXPO_PUBLIC_IOS_URL_SCHEME;
 const hasValidGoogleIosUrlScheme = googleIosUrlScheme?.startsWith('com.googleusercontent.apps');
+const storeWebHost = (() => {
+  try {
+    const url = new URL(process.env.EXPO_PUBLIC_STORE_WEB_BASE_URL || 'https://sipp-delivery.netlify.app');
+    return url.protocol === 'https:' ? url.hostname : null;
+  } catch {
+    return null;
+  }
+})();
 
 module.exports = {
   expo: {
     name: 'Sipp',
     slug: 'sipp',
+    scheme: 'sipp',
     version: '1.0.0',
     owner: "sipp-delivery",
     orientation: 'portrait',
@@ -21,6 +30,7 @@ module.exports = {
       backgroundColor: '#ffffff',
     },
     ios: {
+      ...(storeWebHost ? { associatedDomains: [`applinks:${storeWebHost}`] } : {}),
       supportsTablet: true,
       bundleIdentifier: 'com.sipp.delivery.app',
       usesAppleSignIn: true,
@@ -49,6 +59,12 @@ module.exports = {
       },
     },
     android: {
+      ...(storeWebHost ? { intentFilters: [{
+        action: 'VIEW',
+        autoVerify: true,
+        data: [{ scheme: 'https', host: storeWebHost, pathPrefix: '/restaurants/' }],
+        category: ['BROWSABLE', 'DEFAULT'],
+      }] } : {}),
       softwareKeyboardLayoutMode: 'resize',
       adaptiveIcon: {
         foregroundImage: './assets/adaptive-icon.png',

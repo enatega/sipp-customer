@@ -31,6 +31,7 @@ import CartStoreConflictModal from "../cart/CartStoreConflictModal";
 import { useWindowClass } from "../../../../general/hooks/useWindowClass";
 import OrderDetailsTimelineSection from "./OrderDetailsTimelineSection";
 import AppPopup from '../../../../general/components/AppPopup';
+import { usePostDeliveryReviewPrompt } from '../../hooks/usePostDeliveryReviewPrompt';
 
 type Props = {
   navigation: NativeStackNavigationProp<
@@ -47,12 +48,18 @@ export default function MainContainer({ navigation, orderId }: Props) {
   useOrderStatusSocketSync(orderId);
   const orderDetailsQuery = useOrderDetails(orderId);
   const orderStatus = orderDetailsQuery.data?.status;
-  const isRateableStatus =
-    orderStatus === "delivered" || orderStatus === "cancelled";
+  const isRateableStatus = orderStatus === 'delivered';
   const orderReviewQuery = useOrderReviewQuery(orderId, {
     enabled: isRateableStatus,
   });
   const hasSubmittedRating = Boolean(orderReviewQuery.data?.is_reviewed);
+  const reviewPrompt = usePostDeliveryReviewPrompt({
+    orderId,
+    delivered: orderStatus === 'delivered',
+    reviewLoaded: orderReviewQuery.isSuccess,
+    storeReviewed: hasSubmittedRating,
+    riderReviewed: Boolean(orderReviewQuery.data?.is_rider_reviewed),
+  });
   const orderAgainAction = useOrderAgainAction(orderDetailsQuery.data);
   const cancelOrder = useCancelOrder();
   const [isIncreaseTipVisible, setIsIncreaseTipVisible] = useState(false);
@@ -163,6 +170,9 @@ export default function MainContainer({ navigation, orderId }: Props) {
             statusTitle={order.statusTitle}
             statusTone={statusTone}
           />
+          {order.status === 'rejected' && order.rejectionReason ? (
+            <Text color={colors.text} variant="body">{t('orders_rejection_reason', { reason: order.rejectionReason })}</Text>
+          ) : null}
         </View>
 
         {!isPastOrder && order.timeline?.length > 0 ? (
@@ -266,6 +276,9 @@ export default function MainContainer({ navigation, orderId }: Props) {
 
         <OrderDetailsActionsSection
           hasSubmittedRating={hasSubmittedRating}
+          hasSubmittedRiderRating={Boolean(orderReviewQuery.data?.is_rider_reviewed)}
+          riderName={order.rider?.name}
+          shouldShowRateRider={order.status === 'delivered' && order.orderType === 'delivery' && Boolean(order.rider)}
           isOrderAgainLoading={orderAgainAction.isSubmitting}
           isCancelOrderLoading={cancelOrder.isPending}
           onCancelOrder={shouldShowCancelOrder ? () => setIsCancelOrderVisible(true) : undefined}
@@ -335,6 +348,21 @@ export default function MainContainer({ navigation, orderId }: Props) {
           disabled: cancelOrder.isPending,
           onPress: () => setIsCancelOrderVisible(false),
         }}
+      />
+      <AppPopup
+        visible={reviewPrompt.visible}
+        title={t('review_prompt_title')}
+        description={t('review_prompt_description')}
+        dismissOnOverlayPress
+        onRequestClose={reviewPrompt.dismiss}
+        primaryAction={{
+          label: t('review_prompt_rate'),
+          onPress: () => {
+            reviewPrompt.dismiss();
+            navigation.navigate('RateOrder', { orderId, storeName: order.store.name });
+          },
+        }}
+        secondaryAction={{ label: t('review_prompt_dismiss'), variant: 'secondary', onPress: reviewPrompt.dismiss }}
       />
     </View>
   );

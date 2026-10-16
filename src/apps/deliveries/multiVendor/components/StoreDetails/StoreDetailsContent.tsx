@@ -26,17 +26,18 @@ import StoreDetailNavigationHeader from './StoreDetailNavigationHeader';
 import StoreDetailCartBar from './StoreDetailCartBar';
 import StoreDetailsScreenSkeleton from './StoreDetailsScreenSkeleton';
 import StoreMenuViewport from './StoreMenuViewport';
+import { storeShareUrl } from '../../../navigation/storeShareLinks';
 
-type Props = { selectedStore?: DeliveryNearbyStore };
+type Props = { selectedStore?: DeliveryNearbyStore; sharedStoreId?: string };
 
-export default function StoreDetailsContent({ selectedStore }: Props) {
+export default function StoreDetailsContent({ selectedStore, sharedStoreId }: Props) {
   const { colors, isDark } = useTheme();
   const pageBackground = isDark ? colors.canvas : colors.surface;
   const { t } = useTranslation('deliveries');
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<MultiVendorStackParamList>>();
   const isFocused = useIsFocused();
-  const storeId = selectedStore?.storeId ?? '';
+  const storeId = selectedStore?.storeId ?? sharedStoreId ?? '';
   const menu = useStoreMenuWindow(storeId, isFocused);
   const store = menu.bootstrap.data?.store;
   const scrollY = useSharedValue(0);
@@ -52,7 +53,7 @@ export default function StoreDetailsContent({ selectedStore }: Props) {
     onError: () => { setOptimisticFav(null); showToast.error(t('favourites_toggle_error')); },
   });
   const onFavourite = useCallback(async () => {
-    if (!await requireDeliveriesAuthentication({ screen: 'StoreDetails', params: { store: selectedStore } })) return;
+    if (!await requireDeliveriesAuthentication({ screen: 'StoreDetails', params: { store: selectedStore, storeId } })) return;
     setOptimisticFav(!display.isFavourite);
     favourite.mutate({ storeId });
   }, [display.isFavourite, favourite.mutate, selectedStore, storeId]);
@@ -83,8 +84,13 @@ export default function StoreDetailsContent({ selectedStore }: Props) {
     storeId, storeName: display.storeName,
   }), [navigation, storeId, display.storeName]);
   const onShare = useCallback(async () => {
-    try { await Share.share({ message: display.storeName, title: display.storeName }); } catch { /* Dismissed. */ }
-  }, [display.storeName]);
+    const url = storeShareUrl(storeId);
+    if (!url) {
+      showToast.error(t('store_details_share_unavailable'));
+      return;
+    }
+    try { await Share.share({ message: `${display.storeName}\n${url}`, title: display.storeName, url }); } catch { /* Dismissed. */ }
+  }, [display.storeName, storeId, t]);
   const hero = useMemo(() => <StoreDetailListHeader
     coverImageUrl={display.coverImageUrl} logoImageUrl={display.logoImageUrl} storeName={display.storeName}
     deliveryFee={display.deliveryFee} deliveryTime={display.deliveryTime} distance={display.distance}

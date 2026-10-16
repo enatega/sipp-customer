@@ -107,6 +107,7 @@ const de = {
   "too_many_attempts_desc": "Wir haben vorübergehend weitere Versuche zum Schutz Ihres Kontos gesperrt. Versuchen Sie es in 5 Minuten erneut.",
   "ok": "Ok",
   "enter_your_email": "Melden Sie sich einfach an, indem Sie Ihre E-Mail eingeben!",
+  "auth_email_lookup_failed": "Diese E-Mail konnte nicht geprüft werden. Bitte erneut versuchen.",
   "enter_your_password": "Geben Sie Ihr Passwort ein",
   "email_already_exist": "Ihre E-Mail existiert bereits.",
   "remember_me": "Erinnere dich an mich",

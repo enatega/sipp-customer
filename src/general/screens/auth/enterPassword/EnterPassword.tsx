@@ -76,6 +76,7 @@ const EnterPassword = ({ route }: AuthScreenProps<"enterPassword">) => {
     onError: (error) => {
       setHasError(true);
       if (error.status == 429) {
+        seterrorMessage(error.message || t('too_many_attempts_desc'));
         rateLimitModal.show();
       } else {
         const resolvedErrorMessage = resolveLoginErrorMessage(error?.message, t);
@@ -174,7 +175,7 @@ const EnterPassword = ({ route }: AuthScreenProps<"enterPassword">) => {
       <AppPopup
         visible={rateLimitModal.visible}
         title={t("too_many_attempts")}
-        description={t("too_many_attempts_desc")}
+        description={errorMessage || t("too_many_attempts_desc")}
         onRequestClose={rateLimitModal.hide}
         dismissOnOverlayPress={true}
         primaryAction={{

@@ -27,7 +27,7 @@ export default function CheckoutHeader({
   const { gutter } = useWindowClass();
 
   return (
-    <View style={[styles.shell, { backgroundColor: colors.canvas, paddingTop: insets.top }]}>
+    <View style={[styles.shell, { backgroundColor: colors.surface, paddingTop: insets.top }]}>
       <View style={[styles.container, { gap: spacing.md, maxWidth: layout.contentMaxWidth.readable, paddingHorizontal: gutter }]}>
       <PressableScale
         accessibilityLabel={t('store_details_action_back')}

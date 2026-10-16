@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import OtpVerificationComponent from "../../../components/auth/OtpVerificationComponent";
@@ -23,9 +23,12 @@ const EnterPhoneOtpLogin = () => {
   const rateLimitModal = useTooManyRequestsModal();
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [hasError, sethasError] = useState<boolean>(false);
+  const resendAllowedAt = useRef(0);
 
   const sendOtpMutation = useLoginSendOtp({
     onSuccess: (data) => {
+      resendAllowedAt.current = Date.now() + 30_000;
+      setErrorMessage('');
       showToast.success("Success!", data?.message);
     },
     onError: (error) => {
@@ -43,6 +46,18 @@ const EnterPhoneOtpLogin = () => {
       otp_type: otpType,
     });
   }, []);
+
+  const requestOtp = (method: 'sms' | 'call') => {
+    if (sendOtpMutation.isPending) return;
+    const remaining = Math.ceil((resendAllowedAt.current - Date.now()) / 1000);
+    if (remaining > 0) {
+      showToast.error(t('too_many_attempts'), `${t('resend_in')} ${remaining}s`);
+      return;
+    }
+    sendOtpMutation.mutate({ phone, otp_type: method }, {
+      onSuccess: () => setOtpType(method),
+    });
+  };
 
   const verifyOtpMutation = useLoginVerifyOtp({
     onSuccess: () => {
@@ -71,10 +86,7 @@ const EnterPhoneOtpLogin = () => {
   };
 
   const handleResendOtp = () => {
-    sendOtpMutation.mutate({
-      phone: phone,
-      otp_type: otpType,
-    });
+    requestOtp(otpType === 'call' ? 'call' : 'sms');
   };
 
   const verificationOptions = [
@@ -82,13 +94,13 @@ const EnterPhoneOtpLogin = () => {
       id: "sms",
       icon: "message-square",
       title: t("sms_verification"),
-      onSelect: () => setOtpType("sms"),
+      onSelect: () => { if (otpType !== 'sms') requestOtp('sms'); },
     },
     {
       id: "call",
       icon: "phone",
       title: t("call_verification"),
-      onSelect: () => setOtpType("call"),
+      onSelect: () => { if (otpType !== 'call') requestOtp('call'); },
     },
   ];
 
@@ -99,6 +111,8 @@ const EnterPhoneOtpLogin = () => {
         description={t("enter_otp_sent_to", { contact: phone })}
         showTryAnotherWay={true}
         verificationOptions={verificationOptions}
+        defaultSelectedMethod={otpType}
+        deferSelectedMethod
         onVerify={(otp) => {
           handleVerifyOtp(otp);
         }}
@@ -106,7 +120,7 @@ const EnterPhoneOtpLogin = () => {
         errorMessage={errorMessage}
         hasError={hasError}
         setHasError={sethasError}
-        isLoading={verifyOtpMutation.isPending}
+        isLoading={verifyOtpMutation.isPending || sendOtpMutation.isPending}
       />
       <AppPopup
         visible={rateLimitModal.visible}

@@ -154,7 +154,7 @@ export default function OrderTrackingModernEtaFrame({
         {statusMessage ? (
           <Text
             color={colors.mutedText}
-            numberOfLines={2}
+            numberOfLines={status === "pending" ? undefined : 2}
             style={styles.statusMessage}
             weight="regular"
           >

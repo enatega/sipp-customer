@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useNavigation } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import OtpVerificationComponent from "../../../components/auth/OtpVerificationComponent";
@@ -24,9 +24,11 @@ const EnterPhoneOtpSignup = () => {
   const rateLimitModal = useTooManyRequestsModal();
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [hasError, sethasError] = useState<boolean>(false);
+  const resendAllowedAt = useRef(Date.now() + 30_000);
 
   const sendOtpMutation = useSignupSendOtp({
     onSuccess: (data) => {
+      resendAllowedAt.current = Date.now() + 30_000;
       setOtpSent(true);
       setErrorMessage('');
       showToast.success("Success!", data?.message);
@@ -52,6 +54,11 @@ const EnterPhoneOtpSignup = () => {
 
   const requestOtp = (nextType: OtpType, onSent?: () => void) => {
     if (sendOtpMutation.isPending) return;
+    const remaining = Math.ceil((resendAllowedAt.current - Date.now()) / 1000);
+    if (remaining > 0) {
+      showToast.error(t('too_many_attempts'), `${t('resend_in')} ${remaining}s`);
+      return;
+    }
     sendOtpMutation.mutate({
       email: formData.email.trim(),
       phone: formData.phone.trim(),

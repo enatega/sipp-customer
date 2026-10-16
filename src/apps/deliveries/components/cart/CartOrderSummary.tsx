@@ -11,8 +11,6 @@ type Props = {
   discountAmount: number;
   finalPrice: number;
   onFeeInfoPress: () => void;
-  onPromoPress: () => void;
-  promoCode?: string | null;
   subtotal: number;
 };
 
@@ -20,8 +18,6 @@ export default function CartOrderSummary({
   discountAmount,
   finalPrice,
   onFeeInfoPress,
-  onPromoPress,
-  promoCode,
   subtotal,
 }: Props) {
   const { t } = useTranslation('deliveries');
@@ -43,47 +39,6 @@ export default function CartOrderSummary({
       <Text accessibilityRole="header" variant="sectionTitle" weight="bold">
         {t('cart_order_summary')}
       </Text>
-
-      <PressableScale
-        accessibilityRole="button"
-        onPress={onPromoPress}
-        style={[
-          styles.promoRow,
-          {
-            backgroundColor: promoCode ? colors.successSoft : colors.surfaceSunken,
-            borderRadius: shape.radius.control,
-            gap: spacing.md,
-            padding: spacing.md,
-          },
-        ]}
-      >
-        <View
-          style={[
-            styles.promoIcon,
-            {
-              backgroundColor: promoCode ? colors.success : colors.primarySoft,
-              borderRadius: shape.radius.pill,
-            },
-          ]}
-        >
-          <MaterialCommunityIcons
-            color={promoCode ? colors.white : colors.primary}
-            name="ticket-percent-outline"
-            size={20}
-          />
-        </View>
-        <View style={styles.promoCopy}>
-          <Text numberOfLines={1} variant="label" weight="bold">
-            {promoCode || t('cart_promo_title')}
-          </Text>
-          <Text color={colors.textSubtle} numberOfLines={1} variant="caption">
-            {promoCode ? t('cart_promo_applied') : t('cart_promo_subtitle')}
-          </Text>
-        </View>
-        <Text color={colors.primary} variant="label" weight="semiBold">
-          {promoCode ? t('cart_promo_change') : t('cart_promo_add')}
-        </Text>
-      </PressableScale>
 
       <View style={[styles.lines, { gap: spacing.sm }]}>
         <View style={styles.line}>
@@ -149,21 +104,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   lines: {},
-  promoCopy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  promoIcon: {
-    alignItems: 'center',
-    height: 38,
-    justifyContent: 'center',
-    width: 38,
-  },
-  promoRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    overflow: 'hidden',
-  },
   totalRow: {
     alignItems: 'center',
     borderTopWidth: StyleSheet.hairlineWidth,

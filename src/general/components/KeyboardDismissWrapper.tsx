@@ -1,13 +1,14 @@
 import React from "react";
-import { ScrollView, type ViewStyle } from "react-native";
+import { Platform, ScrollView, type ViewStyle } from "react-native";
 import useKeyboard from "../hooks/useKeyboard";
 
 interface Props {
   children: React.ReactNode;
   style?: ViewStyle;
+  scrollEnabled?: boolean;
 }
 
-export default function KeyboardDismissWrapper({ children, style }: Props) {
+export default function KeyboardDismissWrapper({ children, style, scrollEnabled = true }: Props) {
   const { dismissKeyboard } = useKeyboard();
 
   return (
@@ -16,7 +17,8 @@ export default function KeyboardDismissWrapper({ children, style }: Props) {
       contentContainerStyle={{ flexGrow: 1 }}
       keyboardShouldPersistTaps="handled"
       onScrollBeginDrag={dismissKeyboard}
-      scrollEnabled={false}
+      automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+      scrollEnabled={scrollEnabled}
     >
       {children}
     </ScrollView>

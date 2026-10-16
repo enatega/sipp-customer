@@ -14,6 +14,9 @@ type Props = {
     "OrderDetailsScreen"
   >;
   hasSubmittedRating: boolean;
+  hasSubmittedRiderRating: boolean;
+  riderName?: string | null;
+  shouldShowRateRider: boolean;
   shouldShowRateOrder: boolean;
   shouldShowTrackProgress: boolean;
   shouldShowOrderAgain: boolean;
@@ -30,6 +33,9 @@ type Props = {
 export default function OrderDetailsActionsSection({
   navigation,
   hasSubmittedRating,
+  hasSubmittedRiderRating,
+  riderName,
+  shouldShowRateRider,
   shouldShowRateOrder,
   shouldShowTrackProgress,
   shouldShowOrderAgain,
@@ -84,6 +90,17 @@ export default function OrderDetailsActionsSection({
               storeName,
             });
           }}
+          style={secondaryButtonStyle}
+          labelStyle={labelStyle}
+          variant="secondary"
+        />
+      ) : null}
+      {shouldShowRateRider ? (
+        <Button
+          label={t(hasSubmittedRiderRating ? 'order_details_view_rider_rating' : 'order_details_rate_rider')}
+          onPress={() => navigation.navigate('RateOrder', {
+            orderId, storeName: riderName || t('rate_rider_fallback'), recipient: 'rider',
+          })}
           style={secondaryButtonStyle}
           labelStyle={labelStyle}
           variant="secondary"

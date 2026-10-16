@@ -9,6 +9,7 @@ import { getLocalizedProductName } from '../productTranslation';
 export type OrderProductAddonLine = {
   label: string;
   priceLabel: string | null;
+  kind?: 'variation' | 'addon';
 };
 
 export function getProductAddonLines(product: DeliveryOrderProduct) {
@@ -21,13 +22,20 @@ export function getProductAddonLines(product: DeliveryOrderProduct) {
     product.selectedOptions,
   ];
 
-  return addonCollections.flatMap((collection) =>
+  const lines = addonCollections.flatMap((collection) =>
     Array.isArray(collection)
       ? collection
           .map((item) => formatAddonLine(item))
           .filter((item): item is OrderProductAddonLine => Boolean(item))
       : [],
   );
+  const seen = new Set<string>();
+  return lines.filter((line) => {
+    const key = `${line.label.trim().toLocaleLowerCase()}|${line.priceLabel ?? ''}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 export function getOrderPreviewImages(orderItems: DeliveryOrderItems) {
@@ -125,5 +133,6 @@ function formatAddonLine(
   return {
     label: lineLabel,
     priceLabel,
+    kind: item.pricingMode === 'replace_base' || item.type === 'variation' ? 'variation' : 'addon',
   };
 }

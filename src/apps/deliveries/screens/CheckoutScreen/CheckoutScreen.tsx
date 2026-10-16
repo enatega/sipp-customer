@@ -6,6 +6,7 @@ import type { NavigationProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { showToast } from '../../../../general/components/AppToast';
+import { ApiError } from '../../../../general/api/apiClient';
 import FeedbackModal from '../../../../general/components/FeedbackModal';
 import { useTheme } from '../../../../general/theme/theme';
 import AddressSelectionBottomSheet from '../../../../general/components/address/AddressSelectionBottomSheet';
@@ -33,6 +34,7 @@ import {
 } from '../../../../general/utils/address';
 import { usePlaceOrder } from '../../hooks/usePlaceOrder';
 import { orderService } from '../../api/orderService';
+import { ordersService } from '../../api/ordersService';
 import CheckoutMessageEditorScreen from '../../components/checkout/CheckoutMessageEditorScreen';
 import CheckoutCustomTipScreen from '../../components/checkout/CheckoutCustomTipScreen';
 import {
@@ -58,10 +60,7 @@ import {
 } from '../../components/checkout/checkoutStripeOrderUtils';
 import { deliveryKeys } from '../../api/queryKeys';
 import { useCheckoutCouponStore } from '../../stores/useCheckoutCouponStore';
-import {
-  useWalletSavedCardsQuery,
-  useWalletSetDefaultCardMutation,
-} from '../../../../general/api/walletSavedCardsService';
+import { useWalletSavedCardsQuery } from '../../../../general/api/walletSavedCardsService';
 import { useCustomerWalletBalance } from '../../api/walletService';
 import { useDeliveriesCurrencyLabel } from '../../../../general/stores/useAppConfigStore';
 import { profileService } from '../../../../general/api/profileService';
@@ -69,6 +68,7 @@ import Text from '../../../../general/components/Text';
 import Button from '../../../../general/components/Button';
 import ScreenHeader from '../../../../general/components/ScreenHeader';
 import CheckoutPhoneVerification from '../../components/checkout/CheckoutPhoneVerification';
+import { checkoutAttemptStorage, type CheckoutAttempt } from '../../storage/checkoutAttemptStorage';
 
 const DELIVERY_ROOT_ROUTES = ['SingleVendor', 'MultiVendor', 'Chain'] as const;
 
@@ -140,44 +140,6 @@ function getPreviewInput(
   };
 }
 
-function applyPercentageCouponFallback(params: {
-  subtotal: number;
-  backendDiscount: number;
-  discountType?: string;
-  discountValue?: number;
-  maxDiscountCap?: number;
-  minOrderValue?: number;
-}) {
-  const {
-    subtotal,
-    backendDiscount,
-    discountType,
-    discountValue,
-    maxDiscountCap,
-    minOrderValue,
-  } = params;
-
-  // Keep current behavior for FIXED/FLAT and for already-applied backend discount.
-  if (discountType !== 'PERCENTAGE' || backendDiscount > 0) {
-    return backendDiscount;
-  }
-
-  if (typeof discountValue !== 'number' || discountValue <= 0) {
-    return backendDiscount;
-  }
-
-  if (typeof minOrderValue === 'number' && subtotal < minOrderValue) {
-    return backendDiscount;
-  }
-
-  const percentageAmount = (subtotal * discountValue) / 100;
-  const cappedAmount = typeof maxDiscountCap === 'number' && maxDiscountCap > 0
-    ? Math.min(percentageAmount, maxDiscountCap)
-    : percentageAmount;
-
-  return Number.isFinite(cappedAmount) && cappedAmount > 0 ? cappedAmount : backendDiscount;
-}
-
 export default function CheckoutScreen() {
   const { colors } = useTheme();
   const currencyLabel = useDeliveriesCurrencyLabel();
@@ -192,6 +154,14 @@ export default function CheckoutScreen() {
   const navigation = useNavigation<NavigationProp<Record<string, object | undefined>>>();
   const [activeMessageTarget, setActiveMessageTarget] = React.useState<CheckoutMessageTarget | null>(null);
   const [isAddressSheetVisible, setIsAddressSheetVisible] = React.useState(false);
+  const [uncertainOrder, setUncertainOrder] = React.useState<{
+    bucketId: string;
+    storeId: string;
+  } | null>(null);
+  const [checkoutAttempt, setCheckoutAttempt] = React.useState<CheckoutAttempt | null>(null);
+  const checkoutAttemptRef = React.useRef<CheckoutAttempt | null>(null);
+  const [isLoadingCheckoutAttempt, setIsLoadingCheckoutAttempt] = React.useState(true);
+  const [recoveryClientSecret, setRecoveryClientSecret] = React.useState<string | null>(null);
   const [isPaymentMethodScreenVisible, setIsPaymentMethodScreenVisible] = React.useState(false);
   const [isCustomTipScreenVisible, setIsCustomTipScreenVisible] = React.useState(false);
   const [stripeCheckout, setStripeCheckout] = React.useState<{
@@ -211,12 +181,13 @@ export default function CheckoutScreen() {
     [addresses],
   );
   const effectiveSelectedAddress = React.useMemo(
-    () => selectedAddress ?? fallbackSelectedAddress,
-    [fallbackSelectedAddress, selectedAddress],
+    () => selectedAddress?.id && addresses.some((address) => address.id === selectedAddress.id)
+      ? selectedAddress : fallbackSelectedAddress,
+    [addresses, fallbackSelectedAddress, selectedAddress],
   );
   const resolvedAddressId = React.useMemo(
-    () => resolveSavedAddressId(selectedAddress?.id, addresses),
-    [addresses, selectedAddress?.id],
+    () => resolveSavedAddressId(effectiveSelectedAddress?.id, addresses),
+    [addresses, effectiveSelectedAddress?.id],
   );
   const { selectSavedAddress, selectingAddressId } = useSelectSavedAddress("deliveries");
   const [orderType, setOrderType] = React.useState<CheckoutOrderType>('delivery');
@@ -234,8 +205,13 @@ export default function CheckoutScreen() {
   const savedCardsQuery = useWalletSavedCardsQuery('deliveries');
   const walletBalanceQuery = useCustomerWalletBalance();
   const wantsWalletAfterTopUpRef = React.useRef(false);
-  const setDefaultCardMutation = useWalletSetDefaultCardMutation('deliveries');
+  const hasManuallySelectedPaymentMethodRef = React.useRef(false);
   const [selectedStripeCardId, setSelectedStripeCardId] = React.useState<string | null>(null);
+  const savedCards = savedCardsQuery.data?.cards ?? [];
+  const selectedSavedCard = savedCards.find((card) => card.id === selectedStripeCardId)
+    ?? savedCards.find((card) => card.isDefault)
+    ?? savedCards[0]
+    ?? null;
   const {
     data: cart,
     isPending: isCartPending,
@@ -270,54 +246,67 @@ export default function CheckoutScreen() {
     isFetching: isPreviewPending,
     isError: isPreviewError,
     refetch: refetchPreview,
-  } = useCheckoutPreview(
-    previewInput,
-    previewInput
-      ? { placeholderData: (previousPreview) => previousPreview }
-      : undefined,
-  );
+  } = useCheckoutPreview(previewInput);
 
-  const navigateToOrderConfirmation = React.useCallback((orderId: string) => {
+  const checkoutUserId = phoneProfile.data?.data?.user?.id;
+  React.useEffect(() => {
+    if (!checkoutUserId) {
+      if (!phoneProfile.isPending) setIsLoadingCheckoutAttempt(false);
+      return;
+    }
+    let active = true;
+    setIsLoadingCheckoutAttempt(true);
+    void checkoutAttemptStorage.read(checkoutUserId).catch(() => null).then((saved) => {
+      if (active) {
+        checkoutAttemptRef.current = saved;
+        setCheckoutAttempt(saved);
+      }
+    }).finally(() => {
+      if (active) setIsLoadingCheckoutAttempt(false);
+    });
+    return () => { active = false; };
+  }, [checkoutUserId, phoneProfile.isPending]);
+
+  const navigateToOrderTracking = React.useCallback((orderId: string) => {
     const rootRouteName = getCheckoutRootRoute(navigation);
 
     navigation.reset({
       index: 1,
       routes: [
+        { name: rootRouteName },
         {
-          name: rootRouteName,
-        },
-        {
-          name: 'OrderConfirmation',
-          params: {
-            orderId,
-            snapshot: {
-              itemCount: preview?.bucket.itemCount,
-              orderType,
-              scheduledAt: null,
-              storeImage: preview?.store.logo ?? preview?.store.image,
-              storeName: preview?.store.name,
-              totalAmount: preview?.pricing.totalAmount,
-            },
-          },
+          name: 'OrderTrackingScreen',
+          params: { orderId },
         },
       ],
     } as never);
-  }, [navigation, orderType, preview]);
+  }, [navigation]);
 
   const completePlacedOrder = React.useCallback((orderId: string) => {
+    if (checkoutUserId) void checkoutAttemptStorage.clear(checkoutUserId);
+    checkoutAttemptRef.current = null;
+    setCheckoutAttempt(null);
+    setUncertainOrder(null);
     clearCheckoutCoupon();
-    navigateToOrderConfirmation(orderId);
+    navigateToOrderTracking(orderId);
     void Promise.all([
       queryClient.invalidateQueries({ queryKey: deliveryKeys.cart() }),
       queryClient.invalidateQueries({ queryKey: deliveryKeys.cartCount() }),
       queryClient.invalidateQueries({ queryKey: deliveryKeys.orders() }),
       queryClient.invalidateQueries({ queryKey: deliveryKeys.walletBalance() }),
     ]);
-  }, [clearCheckoutCoupon, navigateToOrderConfirmation, queryClient]);
+  }, [checkoutUserId, clearCheckoutCoupon, navigateToOrderTracking, queryClient]);
 
   const isPlacingOrderRef = React.useRef(false);
   const placeOrderMutation = usePlaceOrder({
     onError: (error) => {
+      if (error.code === 'ORDER_STATUS_UNKNOWN') {
+        if (cart?.bucketId && cart.storeId) {
+          setUncertainOrder({ bucketId: cart.bucketId, storeId: cart.storeId });
+        }
+        showToast.info(t('checkout_order_confirmation_delayed'));
+        return;
+      }
       if (/PHONE_VERIFICATION_REQUIRED/.test(error.message)) {
         void phoneProfile.refetch();
         showToast.error(t('checkout_phone_verify_title'), t('checkout_phone_verify_description'));
@@ -340,6 +329,16 @@ export default function CheckoutScreen() {
     },
     onSuccess: async (response) => {
       if (response.mode === 'stripe') {
+        if (checkoutAttemptRef.current && checkoutUserId) {
+          const saved = {
+            ...checkoutAttemptRef.current,
+            draftId: response.draftId,
+            checkoutUrl: response.checkoutUrl ?? undefined,
+          };
+          checkoutAttemptRef.current = saved;
+          setCheckoutAttempt(saved);
+          await checkoutAttemptStorage.save(saved).catch(() => undefined);
+        }
         if (response.orderId) {
           completePlacedOrder(response.orderId);
           return;
@@ -348,6 +347,7 @@ export default function CheckoutScreen() {
         if (response.clientSecret) {
           const { error } = await handleNextAction(response.clientSecret);
           if (error) {
+            setUncertainOrder(cart?.bucketId && cart.storeId ? { bucketId: cart.bucketId, storeId: cart.storeId } : null);
             showToast.error(t('checkout_payment_failed'), error.message);
             return;
           }
@@ -359,6 +359,16 @@ export default function CheckoutScreen() {
               return;
             }
           } catch (error) {
+            if (
+              error instanceof ApiError &&
+              (error.status === 0 || error.code === 'TRANSIENT_RESPONSE_STREAM_LOST') &&
+              cart?.bucketId && cart.storeId
+            ) {
+              setUncertainOrder({ bucketId: cart.bucketId, storeId: cart.storeId });
+              showToast.info(t('checkout_order_confirmation_delayed'));
+              return;
+            }
+            setUncertainOrder(cart?.bucketId && cart.storeId ? { bucketId: cart.bucketId, storeId: cart.storeId } : null);
             showToast.error(
               t('checkout_payment_failed'),
               error instanceof Error ? error.message : undefined,
@@ -383,6 +393,63 @@ export default function CheckoutScreen() {
     },
   });
 
+  const [reconcileNonce, setReconcileNonce] = React.useState(0);
+  React.useEffect(() => {
+    const pending = checkoutAttempt ?? uncertainOrder;
+    if (!pending || placeOrderMutation.isPending || isPlacingOrderRef.current) return;
+    let cancelled = false;
+    let checking = false;
+    const check = async () => {
+      if (checking || cancelled) return;
+      checking = true;
+      try {
+        const lookup = await orderService.getPlacedOrderByBucket(pending.bucketId, pending.storeId);
+        if (cancelled) return;
+        if (lookup.orderId) {
+          setUncertainOrder(null);
+          completePlacedOrder(lookup.orderId);
+          return;
+        }
+        const draftId = checkoutAttempt?.draftId || lookup.draftId;
+        if (draftId) {
+          const draft = await ordersService.getStripeDraftStatus(draftId);
+          if (cancelled) return;
+          if (checkoutAttempt && checkoutUserId && (
+            checkoutAttempt.draftId !== draftId ||
+            (draft.checkoutUrl && checkoutAttempt.checkoutUrl !== draft.checkoutUrl)
+          )) {
+            const updated = { ...checkoutAttempt, draftId, checkoutUrl: draft.checkoutUrl || checkoutAttempt.checkoutUrl };
+            checkoutAttemptRef.current = updated;
+            setCheckoutAttempt(updated);
+            void checkoutAttemptStorage.save(updated);
+          }
+          if (draft.orderId) {
+            setUncertainOrder(null);
+            completePlacedOrder(draft.orderId);
+          } else if (draft.status === 'payment_failed' || draft.status === 'cancelled') {
+            setUncertainOrder(null);
+            if (checkoutUserId) void checkoutAttemptStorage.clear(checkoutUserId);
+            checkoutAttemptRef.current = null;
+            setCheckoutAttempt(null);
+            showToast.error(t('checkout_payment_failed'));
+          } else if (draft.clientSecret && draft.status === 'requires_action') {
+            setRecoveryClientSecret(draft.clientSecret);
+          }
+        }
+      } catch {
+        // Network failure does not establish whether payment succeeded.
+      } finally {
+        checking = false;
+      }
+    };
+    void check();
+    const interval = setInterval(() => { void check(); }, 5000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [checkoutAttempt, checkoutUserId, completePlacedOrder, placeOrderMutation.isPending, reconcileNonce, uncertainOrder, t]);
+
   React.useEffect(() => {
     if (!preview?.store) {
       return;
@@ -404,6 +471,15 @@ export default function CheckoutScreen() {
 
     setPaymentMethod(getPreferredCheckoutPaymentMethod(preview.store));
   }, [paymentMethod, preview?.store]);
+
+  React.useEffect(() => {
+    if (!selectedSavedCard || preview?.store?.stripeAllowed !== true
+      || hasManuallySelectedPaymentMethodRef.current) {
+      return;
+    }
+
+    setPaymentMethod('stripe');
+  }, [selectedSavedCard?.id, preview?.store?.stripeAllowed]);
 
   React.useEffect(() => {
     if (preview?.store?.stripeAllowed === false && leaveAtDoor) {
@@ -503,7 +579,7 @@ export default function CheckoutScreen() {
 
   const handlePlaceOrderPress = React.useCallback(() => {
     // Guard against double taps landing before the button re-renders as disabled.
-    if (isPlacingOrderRef.current || placeOrderMutation.isPending) {
+    if (isPlacingOrderRef.current || placeOrderMutation.isPending || uncertainOrder || checkoutAttemptRef.current || isLoadingCheckoutAttempt) {
       return;
     }
 
@@ -532,9 +608,7 @@ export default function CheckoutScreen() {
       bucketId: cart.bucketId,
       orderType,
       paymentMethod,
-      paymentMethodId: paymentMethod === 'stripe'
-        ? selectedStripeCardId ?? savedCardsQuery.data?.cards.find((card) => card.isDefault)?.id
-        : undefined,
+      paymentMethodId: paymentMethod === 'stripe' ? selectedSavedCard?.id : undefined,
       addressId: orderType === 'delivery' ? resolvedAddressId : undefined,
       customerNote: buildCustomerNote({
         restaurant: messages.restaurant,
@@ -542,19 +616,34 @@ export default function CheckoutScreen() {
       }),
       couponCode: selectedCoupon?.code,
       riderTip: orderType === 'delivery' && selectedTip > 0 ? selectedTip : undefined,
-      successUrl: paymentMethod === 'stripe' && !selectedStripeCardId
+      successUrl: paymentMethod === 'stripe' && !selectedSavedCard
         ? CHECKOUT_STRIPE_SUCCESS_URL
         : undefined,
-      cancelUrl: paymentMethod === 'stripe' && !selectedStripeCardId
+      cancelUrl: paymentMethod === 'stripe' && !selectedSavedCard
         ? CHECKOUT_STRIPE_CANCEL_URL
         : undefined,
     };
 
     isPlacingOrderRef.current = true;
-    void placeOrderMutation.mutateAsync(payload).catch(() => {
-      // Toast feedback is handled by the mutation callbacks.
+    void (async () => {
+      if (paymentMethod === 'stripe') {
+        if (!checkoutUserId) throw new Error('Signed-in customer is unavailable');
+        const attempt: CheckoutAttempt = {
+          userId: checkoutUserId,
+          bucketId: cart.bucketId,
+          storeId: cart.storeId,
+          createdAt: new Date().toISOString(),
+        };
+        await checkoutAttemptStorage.save(attempt);
+        checkoutAttemptRef.current = attempt;
+        setCheckoutAttempt(attempt);
+      }
+      await placeOrderMutation.mutateAsync(payload);
+    })().catch((error) => {
+      if (!(error instanceof ApiError)) showToast.error(t('checkout_place_order_error'));
     }).finally(() => {
       isPlacingOrderRef.current = false;
+      setReconcileNonce((value) => value + 1);
     });
   }, [
     cart?.bucketId,
@@ -568,8 +657,10 @@ export default function CheckoutScreen() {
     leaveAtDoor,
     preview?.store?.stripeAllowed,
     selectedTip,
-    savedCardsQuery.data?.cards,
-    selectedStripeCardId,
+    selectedSavedCard?.id,
+    uncertainOrder,
+    checkoutUserId,
+    isLoadingCheckoutAttempt,
     t,
   ]);
 
@@ -607,12 +698,13 @@ export default function CheckoutScreen() {
 
   const handleStripeCheckoutBackPress = React.useCallback(() => {
     setStripeCheckout(null);
+    setReconcileNonce((value) => value + 1);
   }, []);
 
   const handleStripeCheckoutCancel = React.useCallback(() => {
     setStripeCheckout(null);
-    showToast.info(t('checkout_payment_cancelled'));
-  }, [t]);
+    setReconcileNonce((value) => value + 1);
+  }, []);
 
   const handleStripeCheckoutSuccess = React.useCallback(async () => {
     if (!stripeCheckout?.draftId) return;
@@ -626,14 +718,33 @@ export default function CheckoutScreen() {
     } catch (error) {
       if (error instanceof Error && error.message === 'payment_failed') {
         setStripeCheckout(null);
-        showToast.error(t('checkout_payment_failed'));
+        setReconcileNonce((value) => value + 1);
         return;
       }
     }
 
     setStripeCheckout(null);
+    setReconcileNonce((value) => value + 1);
     showToast.info(t('checkout_payment_confirmation_delayed'));
   }, [completePlacedOrder, stripeCheckout?.draftId, t]);
+
+  const handleResumeSavedCard = React.useCallback(async () => {
+    const draftId = checkoutAttempt?.draftId;
+    if (!draftId || !recoveryClientSecret) return;
+    const { error } = await handleNextAction(recoveryClientSecret);
+    if (!error) {
+      try {
+        const finalized = await orderService.finalizeSavedCardOrder(draftId);
+        if (finalized.mode === 'stripe' && finalized.orderId) {
+          completePlacedOrder(finalized.orderId);
+          return;
+        }
+      } catch {
+        // The authoritative draft check below will reconcile a lost response.
+      }
+    }
+    setReconcileNonce((value) => value + 1);
+  }, [checkoutAttempt?.draftId, completePlacedOrder, handleNextAction, recoveryClientSecret]);
 
   const handlePaymentMethodPress = React.useCallback(() => {
     setIsPaymentMethodScreenVisible(true);
@@ -641,6 +752,7 @@ export default function CheckoutScreen() {
 
   const handlePaymentMethodConfirm = React.useCallback((nextPaymentMethod: CheckoutPaymentMethod) => {
     wantsWalletAfterTopUpRef.current = false;
+    hasManuallySelectedPaymentMethodRef.current = true;
     setPaymentMethod(nextPaymentMethod);
     setIsPaymentMethodScreenVisible(false);
   }, []);
@@ -654,15 +766,10 @@ export default function CheckoutScreen() {
     setIsPaymentMethodScreenVisible(true);
   }, []);
 
-  const handleSelectStripeCard = React.useCallback(async (cardId: string) => {
+  const handleSelectStripeCard = React.useCallback((cardId: string) => {
+    hasManuallySelectedPaymentMethodRef.current = true;
     setSelectedStripeCardId(cardId);
-    try {
-      await setDefaultCardMutation.mutateAsync(cardId);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : t('wallet_add_card_error');
-      showToast.error(t('wallet_add_card_error'), message);
-    }
-  }, [setDefaultCardMutation, t]);
+  }, []);
 
   const handleLeaveAtDoorChange = React.useCallback((nextValue: boolean) => {
     if (!nextValue) {
@@ -730,50 +837,16 @@ export default function CheckoutScreen() {
     [],
   );
 
-  const adjustedPricing = (() => {
-    if (!preview?.pricing) {
-      return null;
-    }
-
-    const nextDiscount = applyPercentageCouponFallback({
-      subtotal: preview.pricing.subtotal,
-      backendDiscount: preview.pricing.discount,
-      discountType: selectedCoupon?.discountType,
-      discountValue: selectedCoupon?.discountValue,
-      maxDiscountCap: selectedCoupon?.maxDiscountCap,
-      minOrderValue: selectedCoupon?.minOrderValue,
-    });
-
-    if (nextDiscount === preview.pricing.discount) {
-      return preview.pricing;
-    }
-
-    const nextTotalAmount = Math.max(
-      0,
-      preview.pricing.subtotal
-      - nextDiscount
-      + preview.pricing.tax
-      + preview.pricing.packingCharges
-      + preview.pricing.deliveryFee
-      + preview.pricing.riderTip,
-    );
-
-    return {
-      ...preview.pricing,
-      discount: nextDiscount,
-      totalAmount: nextTotalAmount,
-    };
-  })();
-  const adjustedPreview = preview && adjustedPricing
-    ? { ...preview, pricing: adjustedPricing }
-    : preview;
+  const adjustedPreview = preview;
   const previewTotal = adjustedPreview?.pricing.totalAmount ?? cart?.finalPrice ?? 0;
   const handleAddFundsFromInsufficientBalance = React.useCallback(() => {
     setIsInsufficientBalanceModalVisible(false);
+    setIsPaymentMethodScreenVisible(false);
+    hasManuallySelectedPaymentMethodRef.current = true;
     wantsWalletAfterTopUpRef.current = true;
     navigation.navigate('Wallet', {
       suggestedTopUpAmount: Math.max(
-        500,
+        0.01,
         Math.ceil((previewTotal - (walletBalanceQuery.data ?? 0)) * 100) / 100,
       ),
     });
@@ -787,13 +860,14 @@ export default function CheckoutScreen() {
       return;
     }
 
+    void savedCardsQuery.refetch();
     void walletBalanceQuery.refetch().then(({ data }) => {
       if (wantsWalletAfterTopUpRef.current && data !== undefined && data >= previewTotalRef.current) {
         wantsWalletAfterTopUpRef.current = false;
         setPaymentMethod('wallet');
       }
     });
-  }, [walletBalanceQuery.refetch]));
+  }, [savedCardsQuery.refetch, walletBalanceQuery.refetch]));
   const selectedAddressLabel = formatDeliveryAddressLabel(effectiveSelectedAddress);
   const walletBalance = walletBalanceQuery.data ?? 0;
   const isWalletEnabled = walletBalanceQuery.data !== undefined && walletBalance >= Number(previewTotal || 0);
@@ -804,21 +878,6 @@ export default function CheckoutScreen() {
   }, [isWalletEnabled, paymentMethod, preview?.store, walletBalanceQuery.data]);
   const paymentIconName = paymentMethod === 'stripe' ? 'card-outline' : paymentMethod === 'wallet' ? 'wallet-outline' : 'cash-outline';
   const paymentTitle = getCheckoutPaymentMethodTitle(paymentMethod, t);
-  const defaultSavedCard = savedCardsQuery.data?.cards.find((card) => card.isDefault) ?? null;
-  const selectedSavedCard = (() => {
-    if (!savedCardsQuery.data?.cards?.length) {
-      return null;
-    }
-
-    if (selectedStripeCardId) {
-      const selectedCard = savedCardsQuery.data.cards.find((card) => card.id === selectedStripeCardId);
-      if (selectedCard) {
-        return selectedCard;
-      }
-    }
-
-    return defaultSavedCard;
-  })();
   const paymentSubtitle = paymentMethod === 'stripe'
     ? selectedSavedCard
       ? t('checkout_payment_card_saved_subtitle', {
@@ -850,28 +909,16 @@ export default function CheckoutScreen() {
       : t('checkout_payment_cod_unavailable_error')
     : leaveAtDoorPaymentErrorMessage;
 
-  if (isCartPending && !cart) {
+  if (isLoadingCheckoutAttempt || (isCartPending && !cart && !checkoutAttempt && !uncertainOrder)) {
     return (
-      <View style={{ backgroundColor: colors.canvas, flex: 1 }}>
+      <View style={{ backgroundColor: colors.surface, flex: 1 }}>
         <CartScreenSkeleton />
       </View>
     );
   }
 
-  if (!cart || cartError || cart.isEmpty) {
-    return (
-      <View style={{ backgroundColor: colors.canvas, flex: 1 }}>
-        <CartScreenErrorState
-          onRetry={() => {
-            void refetchCart();
-          }}
-        />
-      </View>
-    );
-  }
-
-  if (phoneProfile.isPending) return <View style={{ backgroundColor: colors.canvas, flex: 1 }}><CartScreenSkeleton /></View>;
-  if (phoneProfile.isError || !phoneProfile.data?.data?.user) return <View style={{ backgroundColor: colors.canvas, flex: 1 }}><ScreenHeader onBack={handleBackPress} /><View style={{ flex: 1, justifyContent: 'center', padding: 24, gap: 18 }}><Text variant="sectionTitle">{t('checkout_phone_profile_error')}</Text><Button variant="primary" label={t('generic_list_retry')} onPress={() => void phoneProfile.refetch()} /></View></View>;
+  if (phoneProfile.isPending) return <View style={{ backgroundColor: colors.surface, flex: 1 }}><CartScreenSkeleton /></View>;
+  if (phoneProfile.isError || !phoneProfile.data?.data?.user) return <View style={{ backgroundColor: colors.surface, flex: 1 }}><ScreenHeader onBack={handleBackPress} /><View style={{ flex: 1, justifyContent: 'center', padding: 24, gap: 18 }}><Text variant="sectionTitle">{t('checkout_phone_profile_error')}</Text><Button variant="primary" label={t('generic_list_retry')} onPress={() => void phoneProfile.refetch()} /></View></View>;
   if (phoneProfile.data.data.user.phone_verification_required ?? (!phoneProfile.data.data.user.phone || !phoneProfile.data.data.user.phone_is_verified)) return <CheckoutPhoneVerification onBack={handleBackPress} onVerified={async () => { await phoneProfile.refetch(); }} />;
 
   if (stripeCheckout) {
@@ -884,10 +931,41 @@ export default function CheckoutScreen() {
         onPaymentFailure={() => {
           showToast.error(t('checkout_payment_failed'));
         }}
+        onLoadError={() => {
+          setStripeCheckout(null);
+          setReconcileNonce((value) => value + 1);
+        }}
         onPaymentSuccess={handleStripeCheckoutSuccess}
         successUrlMatcher={CHECKOUT_STRIPE_SUCCESS_MATCHER}
         title={t('checkout_payment_webview_title')}
       />
+    );
+  }
+
+  if ((checkoutAttempt || uncertainOrder) && !placeOrderMutation.isPending) {
+    return (
+      <View style={{ backgroundColor: colors.surface, flex: 1 }}>
+        <ScreenHeader onBack={handleBackPress} />
+        <View style={{ flex: 1, justifyContent: 'center', padding: 24, gap: 18 }}>
+          <Text variant="sectionTitle">{t('checkout_payment_checking_title')}</Text>
+          <Text variant="body">{t('checkout_payment_checking_description')}</Text>
+          <Button variant="primary" label={t('generic_list_retry')} onPress={() => setReconcileNonce((value) => value + 1)} />
+          {checkoutAttempt?.checkoutUrl && checkoutAttempt.draftId ? (
+            <Button variant="secondary" label={t('checkout_payment_continue')} onPress={() => setStripeCheckout({ checkoutUrl: checkoutAttempt.checkoutUrl!, draftId: checkoutAttempt.draftId! })} />
+          ) : null}
+          {recoveryClientSecret && checkoutAttempt?.draftId ? (
+            <Button variant="secondary" label={t('checkout_payment_continue')} onPress={() => { void handleResumeSavedCard(); }} />
+          ) : null}
+        </View>
+      </View>
+    );
+  }
+
+  if (!cart || cartError || cart.isEmpty) {
+    return (
+      <View style={{ backgroundColor: colors.surface, flex: 1 }}>
+        <CartScreenErrorState onRetry={() => { void refetchCart(); }} />
+      </View>
     );
   }
 
@@ -928,13 +1006,15 @@ export default function CheckoutScreen() {
   }
 
   return (
-    <View style={{ backgroundColor: colors.canvas, flex: 1 }}>
+    <View style={{ backgroundColor: colors.surface, flex: 1 }}>
       <CheckoutScreenContent
+        cartItems={cart?.items ?? []}
         courierMessage={messages.courier}
         hasAddressRequirement={orderType === 'delivery' && !resolvedAddressId}
         isPickupEnabled={adjustedPreview?.store.pickupAllowed ?? true}
         isPromoApplied={isPromoApplied}
         isPlacingOrder={placeOrderMutation.isPending}
+        isCheckingOrder={Boolean(uncertainOrder)}
         isPaymentBlocked={!isPaymentAvailable || isLeaveAtDoorCardRequired}
         isPreviewEnabled={Boolean(previewInput)}
         isPreviewError={isPreviewError}
@@ -986,7 +1066,7 @@ export default function CheckoutScreen() {
         onSelectAddress={handleSelectAddress}
         onUseCurrentLocation={handleUseCurrentLocation}
         selectingAddressId={selectingAddressId}
-        selectedAddressId={resolvedAddressId ?? selectedAddress?.id}
+        selectedAddressId={resolvedAddressId}
       />
 
       <CheckoutPaymentMethodBottomSheet
@@ -998,8 +1078,8 @@ export default function CheckoutScreen() {
         isWalletAvailabilityKnown={walletBalanceQuery.data !== undefined}
         walletBalance={walletBalance}
         currencyLabel={currencyLabel}
-        isSavingCardSelection={setDefaultCardMutation.isPending}
         isVisible={isPaymentMethodScreenVisible}
+        onAddFunds={handleAddFundsFromInsufficientBalance}
         onClose={() => {
           setIsPaymentMethodScreenVisible(false);
         }}
@@ -1008,10 +1088,8 @@ export default function CheckoutScreen() {
           setIsPaymentMethodScreenVisible(false);
           navigation.navigate('Wallet');
         }}
-        onSelectCard={(cardId) => {
-          void handleSelectStripeCard(cardId);
-        }}
-        savedCards={savedCardsQuery.data?.cards ?? []}
+        onSelectCard={handleSelectStripeCard}
+        savedCards={savedCards}
         selectedCardId={selectedSavedCard?.id ?? null}
         selectedMethod={paymentMethod}
       />

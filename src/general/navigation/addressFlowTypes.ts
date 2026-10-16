@@ -1,4 +1,5 @@
 import { ProfileAppPrefix } from "../api/profileService";
+import type { AddressAdditionalFields } from '../api/addressService';
 
 export type AddressFlowOrigin =
   | 'multi-vendor-home'
@@ -12,6 +13,7 @@ export type AddressFlowParams = {
   editAddressId?: string;
   editType?: string;
   editLocationName?: string;
+  editAdditionalFields?: AddressAdditionalFields;
   initialLatitude?: number;
   initialLongitude?: number;
   origin?: AddressFlowOrigin;
@@ -26,6 +28,7 @@ export type AddressDetailParams = {
   editAddressId?: string;
   editType?: string;
   editLocationName?: string;
+  editAdditionalFields?: AddressAdditionalFields;
   origin?: AddressFlowOrigin;
   preselectAsDefault?: boolean;
 };

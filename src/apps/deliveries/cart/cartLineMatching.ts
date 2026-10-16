@@ -20,7 +20,7 @@ function buildSelectionSignature(selectedOptions?: CartSelectionInput[]) {
 
 export function matchesCartItemSelection(
   item: CartItem,
-  product: ConfiguredCartProductReference,
+  product: Pick<ConfiguredCartProductReference, 'productId' | 'selectedOptions'>,
 ) {
   if (item.productId !== product.productId) {
     return false;
@@ -34,14 +34,14 @@ export function matchesCartItemSelection(
 
 export function findMatchingCartItem(
   items: CartItem[],
-  product: ConfiguredCartProductReference,
+  product: Pick<ConfiguredCartProductReference, 'productId' | 'selectedOptions'>,
 ) {
   return items.find((item) => matchesCartItemSelection(item, product)) ?? null;
 }
 
 export function getMatchingCartItemQuantity(
   items: CartItem[],
-  product: ConfiguredCartProductReference,
+  product: Pick<ConfiguredCartProductReference, 'productId' | 'selectedOptions'>,
 ) {
   return findMatchingCartItem(items, product)?.quantity ?? 0;
 }

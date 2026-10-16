@@ -106,7 +106,6 @@ export default function StoreMenuProductCard({ onPress, product, state }: Props)
   ].find((value): value is string => typeof value === 'string' && value.trim().length > 0) ?? null;
   const [hasImageError, setHasImageError] = useRecyclingState(false, [product.id, productImageUrl]);
   const imageSize = isCompact ? 96 : 112;
-  const isQuantityMode = !isOutOfStock && state.controlMode === 'quantity';
 
   return (
     <PressableScale
@@ -159,10 +158,27 @@ export default function StoreMenuProductCard({ onPress, product, state }: Props)
         ) : null}
       </View>
 
-      <View style={[styles.content, { gap: spacing.xs }]}>
-        <Text numberOfLines={2} style={styles.title} variant="body" weight="semiBold">
-          {product.name}
-        </Text>
+      <View style={[styles.content, { gap: spacing.xs, minHeight: imageSize, paddingBottom: 44 + spacing.xs }]}>
+        <View style={[styles.heading, { gap: spacing.xs }]}>
+          <Text numberOfLines={2} style={styles.title} variant="body" weight="semiBold">
+            {product.name}
+          </Text>
+          {hasDeal && resolvedOffer ? (
+            <View
+              style={[
+                styles.offerChip,
+                {
+                  backgroundColor: colors.primarySoft,
+                  borderRadius: shape.radius.pill,
+                },
+              ]}
+            >
+              <Text color={colors.primary} numberOfLines={1} variant="badge" weight="bold">
+                {resolvedOffer}
+              </Text>
+            </View>
+          ) : null}
+        </View>
         {description?.trim() ? (
           <Text color={colors.textSubtle} numberOfLines={2} style={styles.description} variant="caption">
             {description.trim()}
@@ -175,58 +191,38 @@ export default function StoreMenuProductCard({ onPress, product, state }: Props)
             </Text>
           </View>
         ) : null}
-        {hasDeal && resolvedOffer ? (
-          <View
-            style={[
-              styles.offerChip,
-              {
-                backgroundColor: colors.primarySoft,
-                borderRadius: shape.radius.pill,
-                gap: spacing.xs,
-              },
-            ]}
-          >
-            <Icon color={colors.primary} name="pricetag-outline" size={12} type="Ionicons" />
-            <Text color={colors.primary} numberOfLines={1} variant="badge" weight="bold">
-              {resolvedOffer}
+        <View style={[styles.priceGroup, { gap: spacing.xs }]}>
+          {effectivePrice !== null ? (
+            <Text color={colors.textStrong} numberOfLines={2} style={styles.price} variant="body" weight="bold">
+              {formatPrice(effectivePrice, currencyLabel)}
             </Text>
-          </View>
-        ) : null}
-
-        <View style={[styles.footer, isQuantityMode && styles.footerWithQuantity]}>
-          <View style={[styles.priceGroup, isQuantityMode && styles.priceGroupWithQuantity, { gap: spacing.xs }]}>
-            {typeof strikePrice === 'number' ? (
-              <Text
-                color={colors.textSubtle}
-                style={styles.strikePrice}
-                variant="caption"
-                weight="medium"
-                numberOfLines={1}
-              >
-                {formatPrice(strikePrice, currencyLabel)}
-              </Text>
-            ) : null}
-            {effectivePrice !== null ? (
-              <Text color={colors.textStrong} numberOfLines={2} style={styles.price} variant="body" weight="bold">
-                {formatPrice(effectivePrice, currencyLabel)}
-              </Text>
-            ) : null}
-          </View>
-
-          <CartActionControl
-            accessibilityLabel={t('store_details_add_product', { item: product.name })}
-            count={state.controlCount}
-            disabled={state.isDisabled}
-            isLoading={state.isLoading}
-            mode={isOutOfStock ? 'add' : state.controlMode}
-            onAdd={state.handleAdd}
-            onDecrement={state.handleDecrement}
-            onIncrement={state.handleIncrement}
-            size="medium"
-            style={isQuantityMode ? styles.quantityControl : undefined}
-          />
+          ) : null}
+          {typeof strikePrice === 'number' ? (
+            <Text
+              color={colors.textSubtle}
+              style={styles.strikePrice}
+              variant="caption"
+              weight="medium"
+              numberOfLines={1}
+            >
+              {formatPrice(strikePrice, currencyLabel)}
+            </Text>
+          ) : null}
         </View>
       </View>
+
+      <CartActionControl
+        accessibilityLabel={t('store_details_add_product', { item: product.name })}
+        count={state.controlCount}
+        disabled={state.isDisabled}
+        isLoading={state.isLoading}
+        mode={isOutOfStock ? 'add' : state.controlMode}
+        onAdd={state.handleAdd}
+        onDecrement={state.handleDecrement}
+        onIncrement={state.handleIncrement}
+        size="medium"
+        style={[styles.actionControl, { bottom: spacing.md, right: spacing.md }]}
+      />
     </PressableScale>
   );
 }
@@ -241,7 +237,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     alignItems: 'center',
     flexDirection: 'row',
-    maxWidth: '100%',
+    maxWidth: '48%',
     paddingHorizontal: 8,
     paddingVertical: 5,
   },
@@ -258,16 +254,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
   },
-  footer: {
-    alignItems: 'flex-end',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 'auto',
-  },
-  footerWithQuantity: {
-    alignItems: 'stretch',
-    flexDirection: 'column',
-    gap: 6,
+  actionControl: {
+    position: 'absolute',
   },
   fallback: {
     alignItems: 'center',
@@ -276,20 +264,21 @@ const styles = StyleSheet.create({
   imageFrame: {
     overflow: 'hidden',
   },
-  priceGroup: {
-    flex: 1,
-    minWidth: 0,
+  heading: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
-  priceGroupWithQuantity: {
-    flex: 0,
+  priceGroup: {
+    alignItems: 'baseline',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    minWidth: 0,
   },
   price: {
     fontSize: 15,
     lineHeight: 20,
     letterSpacing: -0.1,
-  },
-  quantityControl: {
-    alignSelf: 'flex-end',
   },
   strikePrice: {
     fontSize: 11,
@@ -297,6 +286,7 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
   },
   title: {
+    flexShrink: 1,
     fontSize: 15,
     lineHeight: 20,
     letterSpacing: -0.1,

@@ -17,6 +17,7 @@ import { showToast } from "../../../components/AppToast";
 import { useAuthStore } from "../../../stores/useAuthStore";
 import KeyboardDismissWrapper from "../../../components/KeyboardDismissWrapper";
 import { useShallow } from "zustand/react/shallow";
+import { isValidSignupPassword } from '../../../utils/signupValidation';
 
 const CreateNewPassword = ({ route }: AuthScreenProps<"createNewPassword">) => {
   const { userId, emailId } = route.params;
@@ -51,7 +52,7 @@ const CreateNewPassword = ({ route }: AuthScreenProps<"createNewPassword">) => {
   });
 
   const isFormValid =
-    password.trim().length > 0 &&
+    isValidSignupPassword(password) &&
     confirmPassword.trim().length > 0 &&
     password === confirmPassword;
 
@@ -81,6 +82,9 @@ const CreateNewPassword = ({ route }: AuthScreenProps<"createNewPassword">) => {
           onBlur={() => setFocusedField(null)}
           hasError={hasError}
         />
+        <Text color={isValidSignupPassword(password) || !password ? colors.mutedText : colors.danger} variant="caption">
+          {t('signup_password_requirements')}
+        </Text>
         <TextInputField
           value={confirmPassword}
           onChangeText={(text) => {
@@ -96,6 +100,9 @@ const CreateNewPassword = ({ route }: AuthScreenProps<"createNewPassword">) => {
           onBlur={() => setFocusedField(null)}
           hasError={hasError}
         />
+        {confirmPassword && password !== confirmPassword ? (
+          <Text color={colors.danger} variant="caption">{t('reset_password_mismatch')}</Text>
+        ) : null}
         {hasError && (
           <View style={rowStyles.errorContainer}>
             <Icon type="Feather" name="info" size={15} color={colors.danger} />

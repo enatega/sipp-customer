@@ -47,6 +47,18 @@ export function formatDeliveryAddressLabel(
   return locationName || addressLine || null;
 }
 
+export function formatSavedAddressDetails(
+  address: Pick<SavedAddress, 'address' | 'location_name' | 'additional_fields'>,
+) {
+  const line = formatDeliveryAddressLabel({ address: address.address, locationName: address.location_name });
+  const fields = address.additional_fields;
+  if (!fields) return line;
+  const details = [fields.houseNo, fields.apartmentNo, fields.building, fields.companyName,
+    fields.floorNo, fields.department, fields.societyArea, fields.landmark]
+    .map((value) => value?.trim()).filter(Boolean);
+  return [line, ...new Set(details)].filter(Boolean).join(' · ');
+}
+
 export function areDeliveryAddressesEqual(
   first: DeliveryAddress | null | undefined,
   second: DeliveryAddress | null | undefined,
@@ -88,7 +100,8 @@ export function resolveSavedAddressId(
   if (
     selectedAddressId &&
     selectedAddressId !== CURRENT_LOCATION_ADDRESS_ID &&
-    selectedAddressId !== GUEST_SELECTED_LOCATION_ADDRESS_ID
+    selectedAddressId !== GUEST_SELECTED_LOCATION_ADDRESS_ID &&
+    addresses?.some((address) => address.id === selectedAddressId)
   ) {
     return selectedAddressId;
   }

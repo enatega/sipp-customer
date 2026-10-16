@@ -1,4 +1,4 @@
-import apiClient from "./apiClient";
+import apiClient, { ApiError } from "./apiClient";
 import type {
   AppleLoginPayload,
   AppleLoginResponse,
@@ -32,10 +32,22 @@ export const authService = {
       skipAuth: true,
     }),
 
-  checkEmailExists: (email: string) =>
-    apiClient.get<{ exists: boolean }>(`/api/v1/users/check-email/${encodeURIComponent(email)}`, undefined, {
-      skipAuth: true,
-    }),
+  checkEmailExists: async (email: string): Promise<{ exists: boolean }> => {
+    try {
+      return await apiClient.get<{ exists: boolean }>(
+        `/api/v1/users/check-email/${encodeURIComponent(email)}`,
+        undefined,
+        { skipAuth: true, silentStatuses: [409] },
+      );
+    } catch (error) {
+      // This existing endpoint reports an already registered email as 409.
+      // For login routing, that means the user should enter their password.
+      if (error instanceof ApiError && error.status === 409) {
+        return { exists: true };
+      }
+      throw error;
+    }
+  },
 
   sendSignupOtp: (payload: SignupSendOtpPayload) =>
     apiClient.post<SignupSendOtpResponse>(`${SIGNUP_BASE}/send-otp`, payload, {

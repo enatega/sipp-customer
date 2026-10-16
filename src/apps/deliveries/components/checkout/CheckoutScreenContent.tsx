@@ -10,6 +10,7 @@ import type {
   CheckoutOrderType,
   CheckoutPreviewResponse,
 } from '../../api/orderServiceTypes';
+import type { CartItem } from '../../api/cartServiceTypes';
 import CheckoutHeader from './CheckoutHeader';
 import CheckoutInfoRow from './CheckoutInfoRow';
 import CheckoutMerchantSummary from './CheckoutMerchantSummary';
@@ -21,11 +22,13 @@ import CheckoutTipSection from './CheckoutTipSection';
 import { getCheckoutMessagePreview } from './checkoutMessageUtils';
 
 type Props = {
+  cartItems?: CartItem[];
   canShowLeaveAtDoor?: boolean;
   hasAddressRequirement: boolean;
   isPickupEnabled: boolean;
   isPromoApplied?: boolean;
   isPlacingOrder?: boolean;
+  isCheckingOrder?: boolean;
   isPaymentBlocked?: boolean;
   isPreviewEnabled: boolean;
   isPreviewError: boolean;
@@ -63,11 +66,13 @@ type Props = {
 };
 
 export default function CheckoutScreenContent({
+  cartItems = [],
   canShowLeaveAtDoor = true,
   hasAddressRequirement,
   isPickupEnabled,
   isPromoApplied = false,
   isPlacingOrder = false,
+  isCheckingOrder = false,
   isPaymentBlocked = false,
   isPreviewEnabled,
   isPreviewError,
@@ -111,7 +116,8 @@ export default function CheckoutScreenContent({
     && !hasAddressRequirement
     && !isPreviewPending
     && !isPaymentBlocked
-    && !isPlacingOrder;
+    && !isPlacingOrder
+    && !isCheckingOrder;
   const addressTitle = orderType === 'pickup'
     ? preview?.store.name ?? t('checkout_pickup_title')
     : selectedAddressLabel ?? preview?.fulfillment.delivery?.label ?? t('checkout_address_title');
@@ -130,7 +136,7 @@ export default function CheckoutScreenContent({
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.canvas }]}>
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
       <CheckoutHeader onBackPress={onBackPress} />
 
       <ScrollView
@@ -155,6 +161,14 @@ export default function CheckoutScreenContent({
           ]}
         >
           <CheckoutMerchantSummary preview={preview} />
+          {cartItems.some((item) => item.itemNote?.trim()) ? (
+            <Surface outlined style={[styles.groupSurface, { padding: spacing.md, gap: spacing.sm }]}>
+              <Text accessibilityRole="header" variant="sectionTitle" weight="bold">{t('cart_item_instructions')}</Text>
+              {cartItems.filter((item) => item.itemNote?.trim()).map((item) => (
+                <Text key={item.id} color={colors.textSubtle}>{item.name}: {item.itemNote}</Text>
+              ))}
+            </Surface>
+          ) : null}
 
           <View style={[styles.section, { gap: spacing.md }]}>
             <Text accessibilityRole="header" variant="sectionTitle" weight="bold">
@@ -318,6 +332,7 @@ export default function CheckoutScreenContent({
       <CheckoutSummaryFooter
         isDisabled={!canPlaceOrder}
         isLoading={isPlacingOrder}
+        isCheckingOrder={isCheckingOrder}
         onPlaceOrderPress={onPlaceOrderPress}
       />
     </View>

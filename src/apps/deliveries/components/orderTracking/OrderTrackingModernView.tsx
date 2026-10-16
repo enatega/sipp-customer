@@ -12,6 +12,7 @@ import ScreenHeader from "../../../../general/components/ScreenHeader";
 import SwipeableBottomSheet from "../../../../general/components/SwipeableBottomSheet";
 import Text from "../../../../general/components/Text";
 import { useTheme } from "../../../../general/theme/theme";
+import { typography } from "../../../../general/theme/typography";
 import OrderTrackingErrorState from "./OrderTrackingErrorState";
 import OrderTrackingLoadingSkeleton from "./OrderTrackingLoadingSkeleton";
 import OrderTrackingModernEtaFrame from "./OrderTrackingModernEtaFrame";
@@ -28,6 +29,15 @@ export default function OrderTrackingModernView({ viewModel }: Props) {
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
   const { order, orderDetailsQuery } = viewModel;
+  const orderReference = useMemo(() => {
+    for (const raw of [order?.orderCode, order?.summary.orderNumber]) {
+      const code = raw?.replace(/^order\s*#*\s*/i, "").replace(/^#+\s*/, "").trim();
+      if (code && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(code)) {
+        return code;
+      }
+    }
+    return null;
+  }, [order?.orderCode, order?.summary.orderNumber]);
   const [isOrderItemsExpanded, setIsOrderItemsExpanded] = useState(false);
   const [isMapReady, setIsMapReady] = useState(false);
   const [sheetState, setSheetState] = useState<"collapsed" | "default" | "expanded">("expanded");
@@ -90,15 +100,6 @@ export default function OrderTrackingModernView({ viewModel }: Props) {
     return () => cancelAnimationFrame(frame);
   }, [fitCoordinatesSignature, fitRouteToMap, isMapReady]);
 
-  const progressTimeLabel = useMemo(() => {
-    const item = order?.timeline?.find((entry) => entry.active || entry.completed);
-    if (!item?.completedAt) return "—";
-    return new Date(item.completedAt).toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  }, [order?.timeline]);
-
   if (orderDetailsQuery.isLoading) {
     return (
       <View style={[styles.screen, { backgroundColor: colors.background }]}> 
@@ -114,6 +115,8 @@ export default function OrderTrackingModernView({ viewModel }: Props) {
         <OrderTrackingErrorState
           isRetrying={orderDetailsQuery.isFetching}
           onRetry={() => void orderDetailsQuery.refetch()}
+          unavailable={Boolean(orderDetailsQuery.error && 'status' in orderDetailsQuery.error && [403, 404].includes(Number(orderDetailsQuery.error.status)))}
+          onClose={viewModel.onClose}
         />
       </View>
     );
@@ -175,6 +178,29 @@ export default function OrderTrackingModernView({ viewModel }: Props) {
             icon="close"
             onPress={viewModel.onClose}
           />
+          <View
+            accessible={Boolean(orderReference)}
+            accessibilityLabel={orderReference ? t("order_tracking_reference", { code: orderReference }) : undefined}
+            pointerEvents="none"
+            style={styles.orderReferenceSlot}
+          >
+            {orderReference ? (
+              <PlatformGlassSurface
+                effectStyle="clear"
+                scrimColor={colors.glassControlScrim}
+                style={[styles.orderReferencePill, { borderColor: colors.glassBorder }]}
+              >
+                <Text
+                  color={colors.glassControlForeground}
+                  numberOfLines={1}
+                  style={styles.orderReferenceText}
+                  weight="semiBold"
+                >
+                  #{orderReference}
+                </Text>
+              </PlatformGlassSurface>
+            ) : null}
+          </View>
           <GlassMapButton
             accessibilityLabel={t("order_tracking_help")}
             icon="help-circle-outline"
@@ -245,8 +271,8 @@ export default function OrderTrackingModernView({ viewModel }: Props) {
               hasLiveEta={hasLiveEta}
               showDeliveredTitle={viewModel.isDelivered}
               status={order.status}
-              statusMessage={order.statusMessage}
-              statusTitle={order.statusTitle}
+              statusMessage={order.status === "pending" ? t("order_tracking_pending_description") : order.statusMessage}
+              statusTitle={order.status === "pending" ? t("orders_status_pending") : order.statusTitle}
             />
           </View>
         }
@@ -272,16 +298,32 @@ export default function OrderTrackingModernView({ viewModel }: Props) {
           showsVerticalScrollIndicator={false}
           style={styles.sheetScroll}
         >
-          <OrderTrackingModernProgressCard
-            progressTimeLabel={progressTimeLabel}
-            status={order.status}
-          />
+          <OrderTrackingModernProgressCard status={order.status} />
           <OrderTrackingModernSections
             isOrderItemsExpanded={isOrderItemsExpanded}
             onToggleItems={() => setIsOrderItemsExpanded((previous) => !previous)}
             order={order}
             viewModel={viewModel}
           />
+          {viewModel.canCancelOrder ? (
+            <View style={styles.cancelSection}>
+              <Text color={colors.textSubtle} style={styles.cancelCaption}>
+                {t("order_tracking_cancel_available")}
+              </Text>
+              <PressableScale
+                accessibilityHint={t("order_tracking_cancel_available")}
+                accessibilityLabel={t("order_cancel_confirm")}
+                accessibilityRole="button"
+                onPress={viewModel.onCancelOrderPress}
+                style={[styles.cancelAction, { borderColor: colors.danger, borderRadius: shape.radius.control }]}
+              >
+                <Ionicons color={colors.dangerText} name="close-circle-outline" size={19} />
+                <Text color={colors.dangerText} style={typography.role.button} weight="semiBold">
+                  {t("order_cancel_confirm")}
+                </Text>
+              </PressableScale>
+            </View>
+          ) : null}
         </ScrollView>
       </SwipeableBottomSheet>
     </View>
@@ -335,6 +377,9 @@ const styles = StyleSheet.create({
   mapUnavailableCopy: { fontSize: 13, lineHeight: 19, marginTop: 4, maxWidth: 280, textAlign: "center" },
   mapUnavailableIcon: { alignItems: "center", borderRadius: 24, height: 56, justifyContent: "center", marginBottom: 12, width: 56 },
   mapUnavailableTitle: { fontSize: 18, lineHeight: 24 },
+  orderReferenceSlot: { alignItems: "center", flex: 1, justifyContent: "center", minWidth: 0, paddingHorizontal: 8 },
+  orderReferencePill: { alignItems: "center", borderRadius: 18, borderWidth: StyleSheet.hairlineWidth, justifyContent: "center", maxWidth: "100%", minHeight: 36, overflow: "hidden", paddingHorizontal: 12 },
+  orderReferenceText: { ...typography.role.label, fontVariant: ["tabular-nums"] },
   recenterWrap: { position: "absolute", right: 16, zIndex: 4 },
   routeNotice: { alignItems: "center", alignSelf: "center", borderRadius: 16, borderWidth: StyleSheet.hairlineWidth, flexDirection: "row", gap: 9, maxWidth: "78%", paddingHorizontal: 12, paddingVertical: 9, position: "absolute", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.08, shadowRadius: 8, zIndex: 3 },
   routeNoticeCopy: { flexShrink: 1 },
@@ -343,8 +388,11 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   sheet: { borderTopWidth: StyleSheet.hairlineWidth, elevation: 12, overflow: "hidden", shadowOffset: { width: 0, height: -8 }, shadowOpacity: 0.12, shadowRadius: 22, zIndex: 5 },
   sheetContent: { paddingHorizontal: 20 },
+  cancelAction: { alignItems: "center", borderWidth: 1, flexDirection: "row", gap: 8, justifyContent: "center", minHeight: 52, paddingHorizontal: 16, paddingVertical: 12 },
+  cancelCaption: { ...typography.role.caption, marginBottom: 10, textAlign: "center" },
+  cancelSection: { marginTop: 24 },
   sheetHandleContainer: { alignSelf: "stretch" },
   sheetHandleContent: { paddingHorizontal: 20, paddingTop: 10 },
   sheetScroll: { flex: 1 },
-  topControls: { flexDirection: "row", justifyContent: "space-between", left: 16, position: "absolute", right: 16, zIndex: 4 },
+  topControls: { alignItems: "center", flexDirection: "row", justifyContent: "space-between", left: 16, position: "absolute", right: 16, zIndex: 4 },
 });

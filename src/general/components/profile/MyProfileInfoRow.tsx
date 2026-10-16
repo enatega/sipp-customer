@@ -12,6 +12,7 @@ type Props = {
   editLabel?: string;
   onEdit?: () => void;
   verificationStatus?: boolean;
+  onVerify?: () => void;
 };
 
 export default function MyProfileInfoRow({
@@ -21,6 +22,7 @@ export default function MyProfileInfoRow({
   editLabel,
   onEdit,
   verificationStatus,
+  onVerify,
 }: Props) {
   const { colors } = useTheme();
   const { t } = useTranslation('general');
@@ -39,6 +41,16 @@ export default function MyProfileInfoRow({
               {t(verificationStatus ? 'profile_verified' : 'profile_not_verified')}
             </Text>
           </View>
+        ) : null}
+        {value && verificationStatus === false && onVerify ? (
+          <PressableScale
+            onPress={onVerify}
+            accessibilityRole="button"
+            accessibilityLabel={`${t('profile_verify_email')} ${label}`}
+            style={[styles.editButton, { backgroundColor: colors.primarySoft }]}
+          >
+            <Text weight="bold" color={colors.primary} style={styles.editText}>{t('profile_verify_email')}</Text>
+          </PressableScale>
         ) : null}
         {isEditable && editLabel ? (
           <PressableScale

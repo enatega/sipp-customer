@@ -8,6 +8,7 @@ type Props = {
   onBackPress: () => void;
   onPaymentCancel?: (url: string) => void;
   onPaymentFailure?: (url: string) => void;
+  onLoadError?: () => void;
   onPaymentSuccess: (url: string) => void;
   onUrlChange?: (url: string) => void;
   successUrlMatcher: string;
@@ -38,6 +39,7 @@ export default function StripePaymentWebView({
   onBackPress,
   onPaymentCancel,
   onPaymentFailure,
+  onLoadError,
   onPaymentSuccess,
   onUrlChange,
   successUrlMatcher,
@@ -87,6 +89,7 @@ export default function StripePaymentWebView({
     <AppWebView
       onBackPress={onBackPress}
       onShouldStartLoad={handleShouldStartLoad}
+      onLoadError={onLoadError}
       sourceUrl={checkoutUrl}
       title={title}
     />

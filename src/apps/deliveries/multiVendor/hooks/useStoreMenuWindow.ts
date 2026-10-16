@@ -26,11 +26,11 @@ export function useStoreMenuWindow(storeId: string, isFocused: boolean) {
     queryKey: deliveryKeys.storeMenu(storeId),
     queryFn: ({ signal }) => storeMenuService.bootstrap(storeId, signal),
     enabled: Boolean(storeId) && isFocused,
-    staleTime: Infinity,
+    staleTime: 0,
     gcTime: 0,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    refetchOnMount: false,
+    refetchOnMount: true,
     retry: 1,
   });
   const sections = bootstrap.data?.sections;
@@ -128,6 +128,13 @@ export function useStoreMenuWindow(storeId: string, isFocused: boolean) {
       setIsRefreshing(false);
     }
   }, [bootstrap.refetch, client]);
+
+  const hasBeenFocused = useRef(false);
+  useEffect(() => {
+    if (!isFocused) return;
+    if (hasBeenFocused.current) void refresh();
+    hasBeenFocused.current = true;
+  }, [isFocused, refresh]);
 
   useEffect(() => {
     if (!(query.error instanceof ApiError) || ![404, 409].includes(query.error.status) ||

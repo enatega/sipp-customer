@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../../../../general/components/Button';
 import Text from '../../../../general/components/Text';
 import { useWindowClass } from '../../../../general/hooks/useWindowClass';
+import useAndroidKeyboardVisible from '../../../../general/hooks/useAndroidKeyboardVisible';
 import { useDeliveriesCurrencyLabel } from '../../../../general/stores/useAppConfigStore';
 import { useTheme } from '../../../../general/theme/theme';
 import CheckoutHeader from './CheckoutHeader';
@@ -34,6 +35,7 @@ export default function CheckoutCustomTipScreen({
   const { colors, layout, shape, spacing, typography } = useTheme();
   const { gutter } = useWindowClass();
   const [isFocused, setIsFocused] = React.useState(false);
+  const isAndroidKeyboardVisible = useAndroidKeyboardVisible();
   const currencyLabel = useDeliveriesCurrencyLabel();
   const parsedTip = Number.parseFloat(tipValue);
   const isSaveDisabled = !Number.isFinite(parsedTip) || parsedTip <= 0;
@@ -41,9 +43,9 @@ export default function CheckoutCustomTipScreen({
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : isAndroidKeyboardVisible ? 'height' : undefined}
       keyboardVerticalOffset={keyboardVerticalOffset}
-      style={[styles.screen, { backgroundColor: colors.canvas }]}
+      style={[styles.screen, { backgroundColor: colors.surface }]}
     >
       <CheckoutHeader
         backIconName="close"
@@ -56,7 +58,7 @@ export default function CheckoutCustomTipScreen({
           styles.content,
           { gap: spacing.lg, paddingHorizontal: gutter },
         ]}
-        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'none'}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >

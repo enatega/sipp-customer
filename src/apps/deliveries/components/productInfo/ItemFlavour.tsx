@@ -11,6 +11,7 @@ type Props = {
   sections: ProductSelectionSection[];
   selectedOptionIdsByGroup: Record<string, string[]>;
   onToggle: (groupId: string, optionId: string) => void;
+  onSectionLayout?: (groupId: string, y: number) => void;
   currencyLabel: string;
   showValidationErrors?: boolean;
 };
@@ -19,6 +20,7 @@ export default function ItemFlavour({
   sections,
   selectedOptionIdsByGroup,
   onToggle,
+  onSectionLayout,
   currencyLabel,
   showValidationErrors = false,
 }: Props) {
@@ -36,7 +38,8 @@ export default function ItemFlavour({
       </Text>
       {sections.map((section) => {
         const selectionHint =
-          section.description?.trim() ||
+          (section.required && /^optional\.?$/i.test(section.description?.trim() ?? '')
+            ? null : section.description?.trim()) ||
           section.helperText ||
           (section.minSelect > 1 && section.maxSelect > section.minSelect
             ? t("product_option_choose_range", {
@@ -54,6 +57,7 @@ export default function ItemFlavour({
         return (
           <View
             key={section.groupId}
+            onLayout={(event) => onSectionLayout?.(section.groupId, event.nativeEvent.layout.y)}
             style={[styles.sectionBlock, { gap: spacing.md }]}
           >
             <ProductOptionSectionHeader
