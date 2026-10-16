@@ -150,7 +150,6 @@ const GoogleLogin = () => {
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24, gap: 18 }}>
           <Text variant="title" weight="bold">{t("google_phone_title")}</Text>
           <Text style={{ color: colors.mutedText }}>{sentPhone ? t("google_phone_code_sent", { phone: sentPhone }) : t("google_phone_description")}</Text>
-          {!sentPhone ? <Text style={{ color: colors.mutedText }}>{t("phone_transfer_warning")}</Text> : null}
           {sentPhone ? <>
             <OtpCodeInput
               onCodeFilled={(value) => {

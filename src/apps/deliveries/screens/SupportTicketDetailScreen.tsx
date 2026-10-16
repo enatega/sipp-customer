@@ -15,7 +15,6 @@ import SupportHeader from '../../../general/components/support/SupportHeader';
 import Text from '../../../general/components/Text';
 import { showToast } from '../../../general/components/AppToast';
 import { useAuthSessionQuery } from '../../../general/hooks/useAuthQueries';
-import type { SocketReceivedMessage } from '../../../general/services/socket';
 import { useTheme } from '../../../general/theme/theme';
 import ChatComposer from '../components/chat/ChatComposer';
 import ChatMessageBubble from '../components/chat/ChatMessageBubble';
@@ -31,7 +30,7 @@ import type {
   SupportChatMessagesResponse,
 } from '../api/supportChatTypes';
 import type { SupportNavigationParamList } from '../navigation/supportNavigationTypes';
-import { subscribeDeliveriesEvent } from '../socket/deliveriesSocket';
+import { subscribeDeliveriesConnection, subscribeDeliveriesEvent } from '../socket/deliveriesSocket';
 import { supportTicketService } from '../api/supportTicketService';
 import { pickChatPhoto } from '../utils/pickChatPhoto';
 import {
@@ -178,18 +177,15 @@ export default function SupportTicketDetailScreen() {
   }, [messages.length]);
 
   useEffect(() => {
+    const savedMessages = getSupportChatMessages(supportChatMessagesQuery.data);
     setRealtimeMessages((current) => {
-      const nextMessages = current.filter((item) => !messages.some(
-        (serverMessage) =>
-          serverMessage.id !== item.id
-          && serverMessage.isCurrentUser === item.isCurrentUser
-          && serverMessage.text === item.text
-          && serverMessage.attachmentUrls?.join(',') === item.attachmentUrls?.join(','),
+      const nextMessages = current.filter((item) => !savedMessages.some(
+        (serverMessage) => getSupportChatMessageId(serverMessage) === item.id,
       ));
 
       return nextMessages.length === current.length ? current : nextMessages;
     });
-  }, [messages]);
+  }, [supportChatMessagesQuery.data]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -355,47 +351,41 @@ export default function SupportTicketDetailScreen() {
   useEffect(() => {
     const currentUserId = sessionQuery.data?.user?.id;
 
-    if (!currentUserId || !receiverId) {
+    if (!currentUserId || !resolvedChatBoxId) {
       return undefined;
     }
 
-    return subscribeDeliveriesEvent('receive-message', (message: SocketReceivedMessage) => {
-      const isConversationMessage =
-        message.receiver === currentUserId && message.sender === receiverId;
-
-      if (!isConversationMessage) {
+    const unsubscribeUpdate = subscribeDeliveriesEvent('support-updated', (update) => {
+      if (update.chatBoxId !== resolvedChatBoxId) {
         return;
       }
 
-      setRealtimeMessages((current) => {
-        const alreadyExists = current.some(
-          (item) => !item.isCurrentUser && item.text === message.text
-            && item.attachmentUrls?.join(',') === message.attachmentUrls?.join(','),
-        );
-
-        if (alreadyExists) {
-          return current;
-        }
-
-        return [
-          ...current,
-          {
-            id: `realtime-${Date.now()}`,
+      const message = update.message;
+      if (update.type === 'message' && message && message.sender_id !== currentUserId) {
+        setRealtimeMessages((current) => current.some((item) => item.id === message.id)
+          ? current
+          : [...current, {
+            id: message.id,
             isCurrentUser: false,
             text: message.text,
             attachmentUrls: message.attachmentUrls ?? [],
-            timeLabel: formatSupportChatTimeLabel(new Date().toISOString()),
-          },
-        ];
-      });
-
-      if (resolvedChatBoxId) {
-        void refetchSupportChatBox();
-        void refetchSupportChatMessages();
+            timeLabel: formatSupportChatTimeLabel(message.createdAt),
+          }]);
       }
+
+      void refetchSupportChatBox();
+      void refetchSupportChatMessages();
     });
+    const unsubscribeConnection = subscribeDeliveriesConnection(() => {
+      void refetchSupportChatBox();
+      void refetchSupportChatMessages();
+    });
+
+    return () => {
+      unsubscribeUpdate();
+      unsubscribeConnection();
+    };
   }, [
-    receiverId,
     refetchSupportChatBox,
     refetchSupportChatMessages,
     resolvedChatBoxId,

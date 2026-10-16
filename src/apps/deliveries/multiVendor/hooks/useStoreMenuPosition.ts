@@ -6,7 +6,6 @@ import type { StoreMenuListRow as Row } from '../utils/storeMenuRows';
 import type { StoreMenuAnchor, useStoreMenuWindow } from './useStoreMenuWindow';
 import { useStoreMenuTopEdge } from './useStoreMenuTopEdge';
 import { useStoreMenuBottomEdge } from './useStoreMenuBottomEdge';
-import { useStoreMenuPageAnchor } from './useStoreMenuPageAnchor';
 import { STORE_DETAIL_HERO_HEIGHT } from '../components/StoreDetails/StoreDetailNavigationHeader';
 
 type Params = {
@@ -66,10 +65,10 @@ export function useStoreMenuPosition({ list, rows, menu, activeSection, hasHero,
     return activeSection ? { sectionId: activeSection.id } : undefined;
   }, [activeSection, hasHero, heroHeight, navigationHeight, rows, sections, toolbarHeight]);
 
-  const { preservePageAnchor, cancelPageAnchor } = useStoreMenuPageAnchor({
-    list, rows, pages, ready: hasRestored, toolbarInset: navigationHeight + toolbarHeight,
-    captureAnchor, beforePageCommit: menu.beforePageCommit,
-  });
+  React.useLayoutEffect(() => {
+    menu.captureVisibleAnchor.current = () => hasRestored.current ? captureAnchor() : undefined;
+    return () => { menu.captureVisibleAnchor.current = null; };
+  }, [captureAnchor, menu.captureVisibleAnchor]);
 
   const syncActiveSection = useCallback(() => {
     if (!hasDragged.current || !list.current) return;
@@ -92,11 +91,10 @@ export function useStoreMenuPosition({ list, rows, menu, activeSection, hasHero,
     if (direction >= 0) fillViewport();
   }, [fillViewport, requestPrevious, syncActiveSection]);
   const beginDrag = useCallback(() => {
-    cancelPageAnchor();
     hasDragged.current = true;
     // Native scrolling may claim the touch before JS receives a move event.
     if (hasRestored.current && list.current && list.current.getAbsoluteLastScrollOffset() <= 0) requestPrevious();
-  }, [cancelPageAnchor, list, requestPrevious]);
+  }, [list, requestPrevious]);
   const onScroll = useAnimatedScrollHandler({
     onBeginDrag: () => {
       isDragging.value = true;
@@ -149,14 +147,7 @@ export function useStoreMenuPosition({ list, rows, menu, activeSection, hasHero,
 
 
   return {
-    toolbarStyle, captureAnchor, preservePageAnchor, syncActiveSection, onScroll, restore, fillViewport,
-    topEdgeTouches: {
-      ...topEdgeTouches,
-      onTouchStart: (event: Parameters<typeof topEdgeTouches.onTouchStart>[0]) => {
-        cancelPageAnchor();
-        topEdgeTouches.onTouchStart(event);
-      },
-    },
+    toolbarStyle, captureAnchor, syncActiveSection, onScroll, restore, fillViewport, topEdgeTouches,
     onStartReached: () => {
       if (isUserScrolling.value && scrollDirection.value < 0) requestPrevious();
     },

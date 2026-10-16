@@ -211,7 +211,6 @@ const AppleLogin = () => {
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24, gap: 18 }}>
           <Text variant="title" weight="bold">{t("google_phone_title")}</Text>
           <Text style={{ color: colors.mutedText }}>{sentPhone ? t("google_phone_code_sent", { phone: sentPhone }) : t("google_phone_description")}</Text>
-          {!sentPhone ? <Text style={{ color: colors.mutedText }}>{t("phone_transfer_warning")}</Text> : null}
           {sentPhone ? <>
             <OtpCodeInput onCodeFilled={(value) => { setCode(value); setCodeError(false); if (value.length === 4 && attempted.current !== value) { attempted.current = value; void confirmCode(value); } }} onResend={() => { attempted.current = ""; void sendCode(); }} hasError={codeError} errorMessage={t("google_phone_code_error")} />
             <Button variant="primary" label={t("verify_otp")} onPress={() => void confirmCode(code)} disabled={code.length !== 4 || verifyPhone.isPending} isLoading={verifyPhone.isPending} />

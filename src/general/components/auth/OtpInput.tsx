@@ -12,6 +12,9 @@ type Props = {
   hasError?: boolean;
   errorMessage?: string;
   timerDuration?: number;
+  hideResend?: boolean;
+  disabled?: boolean;
+  onCodeChange?: (code: string) => void;
 };
 
 export default function OtpCodeInput({
@@ -20,6 +23,9 @@ export default function OtpCodeInput({
   hasError = false,
   errorMessage,
   timerDuration = 30,
+  hideResend = false,
+  disabled = false,
+  onCodeChange,
 }: Props) {
   const { colors } = useTheme();
   const [timer, setTimer] = useState(timerDuration);
@@ -53,6 +59,8 @@ export default function OtpCodeInput({
     <View style={styles.container}>
       <OtpInput
         numberOfDigits={4}
+        disabled={disabled}
+        onTextChange={onCodeChange}
         onFilled={onCodeFilled}
         theme={{
           containerStyle: styles.otpContainer,
@@ -79,7 +87,7 @@ export default function OtpCodeInput({
         </View>
       )}
 
-      <View style={styles.resendContainer}>
+      {!hideResend ? <View style={styles.resendContainer}>
         <Text style={{ color: colors.mutedText }}>
           {t("didnt_receive_the_code")}{" "}
         </Text>
@@ -94,8 +102,7 @@ export default function OtpCodeInput({
             {t("resend_in")} {formatTime(timer)}
           </Text>
         )}
-      </View>
-      <View>{}</View>
+      </View> : null}
     </View>
   );
 }

@@ -105,7 +105,6 @@ const Signup = () => {
           heading="signup_heading"
           description="signup_description"
         />
-        <Text color={colors.mutedText} style={{ marginHorizontal: 24, marginBottom: 12 }}>{t('phone_transfer_warning')}</Text>
         <FieldsWrapper disabled={sendOtpMutation.isPending} />
       </ScrollView>
       <Footer>

@@ -9,9 +9,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import Icon from "../Icon";
 import Text from "../Text";
-import AddressSelectionBottomSheet from "../address/AddressSelectionBottomSheet";
 import SearchInput from "./SearchInput";
 import RecentSearches from "./RecentSearches";
 import SearchSuggestions from "./SearchSuggestions";
@@ -20,7 +18,6 @@ import type { GenericSearchMainContainerProps } from "./types";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../../theme/theme";
 import { useWindowClass } from "../../hooks/useWindowClass";
-import PressableScale from "../PressableScale";
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs";
 
 export default function SearchMainContainer({
@@ -28,7 +25,6 @@ export default function SearchMainContainer({
   searchQuery,
   recommendations,
   recentSearches,
-  selectedAddressLabel,
   isLoadingRecommendations,
   deletingRecentSearchId,
   isDeletingRecentSearch,
@@ -45,15 +41,12 @@ export default function SearchMainContainer({
   handleRecentSearchPress,
   onDeleteRecentSearch,
   onClearRecentSearches,
-  addressSheet,
   children,
 }: GenericSearchMainContainerProps) {
   const { t } = useTranslation("general");
-  const { colors: themeColors, layout, shape, spacing } = useTheme();
+  const { colors: themeColors, layout, spacing } = useTheme();
   const { gutter } = useWindowClass();
   const tabBarHeight = useBottomTabBarHeight();
-  const resolvedAddressLabel =
-    selectedAddressLabel ?? t("multi_vendor_address_label");
 
   return (
     <>
@@ -94,58 +87,7 @@ export default function SearchMainContainer({
                 onSubmitEditing={handleSubmitEditing}
               />
 
-              <PressableScale
-                accessibilityRole="button"
-                accessibilityLabel={`${t("searching_near")} ${resolvedAddressLabel}`}
-                onPress={addressSheet.onOpen}
-                pressedScale={0.985}
-                style={[
-                  styles.addressContext,
-                  {
-                    gap: spacing.xs,
-                    minHeight: layout.touchTarget.minimum,
-                    paddingHorizontal: spacing.sm,
-                  },
-                ]}
-              >
-                <View
-                  style={[
-                    styles.addressIcon,
-                    {
-                      backgroundColor: themeColors.primarySoft,
-                      borderRadius: shape.radius.pill,
-                    },
-                  ]}
-                >
-                  <Icon
-                    type="Ionicons"
-                    name="location-outline"
-                    size={16}
-                    color={themeColors.primary}
-                  />
-                </View>
-                <Text
-                  color={themeColors.textSubtle}
-                  numberOfLines={1}
-                  variant="caption"
-                >
-                  {t("searching_near")}
-                </Text>
-                <Text
-                  numberOfLines={1}
-                  weight="semiBold"
-                  variant="caption"
-                  style={styles.addressValue}
-                >
-                  {resolvedAddressLabel}
-                </Text>
-                <Icon
-                  type="Ionicons"
-                  name="chevron-down"
-                  size={16}
-                  color={themeColors.primary}
-                />
-              </PressableScale>
+
             </View>
 
             <ScrollView
@@ -207,18 +149,7 @@ export default function SearchMainContainer({
         </SafeAreaView>
       </TouchableWithoutFeedback>
 
-      <AddressSelectionBottomSheet
-        addresses={addressSheet?.addresses}
-        bottomOffset={addressSheet?.bottomOffset}
-        isLoading={addressSheet?.isLoading}
-        isVisible={addressSheet?.isVisible}
-        onAddAddress={addressSheet?.onAddAddress}
-        onClose={addressSheet?.onClose}
-        onSelectAddress={addressSheet?.onSelectAddress}
-        onUseCurrentLocation={addressSheet?.onUseCurrentLocation}
-        selectingAddressId={addressSheet?.selectingAddressId}
-        selectedAddressId={addressSheet?.selectedAddressId ?? undefined}
-      />
+
     </>
   );
 }
@@ -241,22 +172,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-  },
-  addressContext: {
-    alignItems: "center",
-    flexDirection: "row",
-    minWidth: 0,
-    width: "100%",
-  },
-  addressIcon: {
-    alignItems: "center",
-    height: 28,
-    justifyContent: "center",
-    width: 28,
-  },
-  addressValue: {
-    flex: 1,
-    minWidth: 0,
   },
   suggestions: {},
 });
