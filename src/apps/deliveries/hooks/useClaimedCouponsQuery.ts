@@ -1,26 +1,18 @@
-import { useQuery } from '@tanstack/react-query';
-import type { ApiError } from '../../../general/api/apiClient';
-import {
-  claimedCouponsService,
-  type ClaimedCouponsResponse,
-} from '../api/claimedCouponsService';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { useAuthSessionQuery } from '../../../general/hooks/useAuthQueries';
+import { claimedCouponsService } from '../api/claimedCouponsService';
 
-const DEFAULT_OFFSET = 0;
-const DEFAULT_LIMIT = 10;
+export const claimedCouponsKeys = { all: ['deliveries-claimed-coupons'] as const };
 
-export const claimedCouponsKeys = {
-  all: ['deliveries-claimed-coupons'] as const,
-  list: (offset: number, limit: number) =>
-    [...claimedCouponsKeys.all, offset, limit] as const,
-};
-
-export function useClaimedCouponsQuery(
-  offset = DEFAULT_OFFSET,
-  limit = DEFAULT_LIMIT,
-) {
-  return useQuery<ClaimedCouponsResponse, ApiError>({
-    queryKey: claimedCouponsKeys.list(offset, limit),
-    queryFn: () => claimedCouponsService.getClaimedCoupons(offset, limit),
-    staleTime: 60 * 1000,
+export function useClaimedCouponsQuery(enabled = true) {
+  const session = useAuthSessionQuery();
+  return useInfiniteQuery({
+    queryKey: [...claimedCouponsKeys.all, session.data?.user?.id],
+    queryFn: ({ pageParam }) => claimedCouponsService.getClaimedCoupons(pageParam, 12),
+    initialPageParam: 0,
+    getNextPageParam: last => last.data.length && last.offset + last.data.length < last.total
+      ? last.offset + last.data.length : undefined,
+    enabled: enabled && Boolean(session.data?.token && session.data?.user?.id),
+    staleTime: 30 * 1000,
   });
 }

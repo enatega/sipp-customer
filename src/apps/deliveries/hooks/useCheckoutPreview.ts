@@ -1,4 +1,4 @@
-import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
+import { useIsMutating, useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import type { ApiError } from '../../../general/api/apiClient';
 import { deliveryKeys } from '../api/queryKeys';
 import { orderService } from '../api/orderService';
@@ -6,6 +6,9 @@ import type {
   CheckoutPreviewInput,
   CheckoutPreviewResponse,
 } from '../api/orderServiceTypes';
+
+import { useAuthSessionQuery } from '../../../general/hooks/useAuthQueries';
+import { couponMutationKey } from './useUseCouponMutation';
 
 type UseCheckoutPreviewOptions = Omit<
   UseQueryOptions<CheckoutPreviewResponse, ApiError>,
@@ -15,10 +18,13 @@ type UseCheckoutPreviewOptions = Omit<
 export function useCheckoutPreview(
   input: CheckoutPreviewInput | null,
   options?: UseCheckoutPreviewOptions,
+  cartRevision?: string,
 ) {
+  const session = useAuthSessionQuery();
+  const isSelectingCoupon = useIsMutating({ mutationKey: couponMutationKey }) > 0;
   return useQuery<CheckoutPreviewResponse, ApiError>({
     queryKey: input
-      ? deliveryKeys.checkoutPreview(input)
+      ? [...deliveryKeys.checkoutPreview(input), session.data?.user?.id, cartRevision]
       : [...deliveryKeys.all, 'checkout-preview', 'idle'],
     queryFn: () => {
       if (!input) {
@@ -27,7 +33,7 @@ export function useCheckoutPreview(
 
       return orderService.getCheckoutPreview(input);
     },
-    enabled: Boolean(input),
+    enabled: Boolean(input && session.data?.token) && !isSelectingCoupon,
     retry: false,
     staleTime: 0,
     ...options,

@@ -191,7 +191,8 @@ export default function MainContainer({
       productInfoData.usage?.trim() ||
       productInfoData.nutrition?.length,
   );
-  const hasSizes = variationOptions.length > 0;
+  // A sole variation remains selected for pricing and submission without a selector.
+  const hasSizes = variationOptions.length > 1;
   const hasFlavours = addonSections.length > 0;
   const hasCustomizationSection = hasSizes || hasFlavours;
   const hasDetailSections =

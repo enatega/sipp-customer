@@ -39,6 +39,9 @@ export type CartItem = {
 };
 
 export type CartResponse = {
+  appliedCouponIds?: string[];
+  appliedCouponId?: string | null;
+  appliedCouponCode?: string | null;
   bucketId: string | null;
   customerId: string;
   status: string;

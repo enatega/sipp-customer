@@ -11,7 +11,6 @@ import CartFeeInfoModal from './CartFeeInfoModal';
 import CartFooter from './CartFooter';
 import CartHeader from './CartHeader';
 import CartItemsSection from './CartItemsSection';
-import CartMerchantSummary from './CartMerchantSummary';
 import CartOrderSummary from './CartOrderSummary';
 import CartRecommendationsSection from './CartRecommendationsSection';
 import CartStatusBanner from './CartStatusBanner';
@@ -112,7 +111,9 @@ export default function CartScreenContent({
 
       <CartHeader
         clearDisabled={isMutatingCart}
-        itemCount={cart.totalItems}
+        store={store}
+        storeName={recommendations[0]?.storeName}
+        onStorePress={handleStartShopping}
         onBackPress={handleBack}
         onClearPress={onOpenClearCart}
       />
@@ -140,11 +141,6 @@ export default function CartScreenContent({
             },
           ]}
         >
-          <CartMerchantSummary
-            fallbackName={recommendations[0]?.storeName}
-            onPress={handleStartShopping}
-            store={store}
-          />
           <CartStatusBanner
             minimumOrder={store?.minimumOrder}
             onInfoPress={onOpenFeeModal}
@@ -184,7 +180,6 @@ export default function CartScreenContent({
 
       <CartFeeInfoModal
         currentSubtotal={cart.finalPrice}
-        deliveryFee={store?.baseFee}
         minimumOrder={store?.minimumOrder}
         onClose={onCloseFeeModal}
         visible={isFeeModalVisible}

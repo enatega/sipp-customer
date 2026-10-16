@@ -82,6 +82,8 @@ export type CheckoutPreviewPricing = {
 export type CheckoutPreviewBucketItem = Record<string, unknown>;
 
 export type CheckoutPreviewResponse = {
+  coupon?: CheckoutPreviewCoupon | null;
+  coupons?: CheckoutPreviewCoupon[];
   store: CheckoutPreviewStore;
   fulfillment: {
     orderType: CheckoutOrderType;
@@ -97,6 +99,26 @@ export type CheckoutPreviewResponse = {
   bucket: {
     itemCount: number;
     items: CheckoutPreviewBucketItem[];
+  };
+};
+
+export type CouponIssue = {
+  code: string;
+  message?: string;
+  details?: Record<string, unknown>;
+};
+
+export type CheckoutPreviewCoupon = {
+  id: string;
+  code: string;
+  name?: string;
+  isApplied: boolean;
+  appliedDiscount?: number;
+  issue?: CouponIssue | null;
+  requirements?: {
+    paymentMethods: string[];
+    deliveryTypes: string[];
+    minOrderValue: number;
   };
 };
 

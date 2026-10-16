@@ -226,25 +226,6 @@ export default function CheckoutPaymentMethodBottomSheet({
             label={getCheckoutPaymentMethodTitle('stripe', t)}
             onPress={() => setDraftMethod('stripe')}
           />
-          <PaymentOption
-            description={!isWalletAvailabilityKnown
-              ? getCheckoutPaymentMethodSubtitle('wallet', t)
-              : isWalletEnabled
-                ? t('checkout_payment_wallet_balance', {
-                  currency: currencyLabel,
-                  amount: walletBalance.toFixed(2),
-                })
-                : `${t('checkout_payment_wallet_balance', {
-                    currency: currencyLabel,
-                    amount: walletBalance.toFixed(2),
-                  })}\n${t('checkout_payment_wallet_insufficient_balance')}`}
-            disabled={false}
-            icon="wallet-outline"
-            isSelected={draftMethod === 'wallet'}
-            label={getCheckoutPaymentMethodTitle('wallet', t)}
-            onPress={() => setDraftMethod('wallet')}
-          />
-
           {draftMethod === 'stripe' ? (
             <View style={[styles.cardsWrap, { gap: spacing.sm }]}>
               {savedCards.map((card) => {
@@ -306,6 +287,25 @@ export default function CheckoutPaymentMethodBottomSheet({
               </PressableScale>
             </View>
           ) : null}
+
+          <PaymentOption
+            description={!isWalletAvailabilityKnown
+              ? getCheckoutPaymentMethodSubtitle('wallet', t)
+              : isWalletEnabled
+                ? t('checkout_payment_wallet_balance', {
+                  currency: currencyLabel,
+                  amount: walletBalance.toFixed(2),
+                })
+                : `${t('checkout_payment_wallet_balance', {
+                    currency: currencyLabel,
+                    amount: walletBalance.toFixed(2),
+                  })}\n${t('checkout_payment_wallet_insufficient_balance')}`}
+            disabled={false}
+            icon="wallet-outline"
+            isSelected={draftMethod === 'wallet'}
+            label={getCheckoutPaymentMethodTitle('wallet', t)}
+            onPress={() => setDraftMethod('wallet')}
+          />
         </ScrollView>
 
         <View

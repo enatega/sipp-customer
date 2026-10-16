@@ -104,7 +104,7 @@ export default function AddressDetailScreen() {
   const hasCompletedGuestSelection = useRef(false);
   const [isSaving, setIsSaving] = useState(false);
   const params = route.params;
-  const { setSelectedAddress } = useAddress();
+  const { selectedAddress, setSelectedAddress } = useAddress();
   const sessionQuery = useAuthSessionQuery();
   const isEditing = Boolean(params.editAddressId);
 

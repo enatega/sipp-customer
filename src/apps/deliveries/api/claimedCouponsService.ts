@@ -9,7 +9,17 @@ export type ClaimedCouponApiItem = {
   end_date: string;
   id: string;
   is_active: boolean;
-  max_discount_cap: number;
+  max_discount_cap: number | null;
+  payment_method?: Array<'CARD' | 'WALLET' | 'COD'>;
+  delivery_type?: Array<'ALL' | 'DELIVERY' | 'PICKUP'>;
+  usage_per_user?: number;
+  total_usage_limit?: number;
+  user_usage_count?: number;
+  total_usage_count?: number;
+  applies_to_products?: string[];
+  applies_to_product_names?: string[];
+  only_premium_shops?: boolean;
+  for_new_users?: boolean;
   min_order_value: number;
   name: string;
   offered_by:

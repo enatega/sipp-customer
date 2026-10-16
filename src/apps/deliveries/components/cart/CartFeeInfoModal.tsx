@@ -12,7 +12,6 @@ import { formatCartPrice } from './cartUtils';
 
 type Props = {
   currentSubtotal: number;
-  deliveryFee?: number | null;
   minimumOrder?: number | null;
   onClose: () => void;
   visible: boolean;
@@ -20,7 +19,6 @@ type Props = {
 
 export default function CartFeeInfoModal({
   currentSubtotal,
-  deliveryFee,
   minimumOrder,
   onClose,
   visible,
@@ -46,15 +44,8 @@ export default function CartFeeInfoModal({
           value: formatCartPrice(minimumOrder),
         }
       : null,
-    typeof deliveryFee === 'number'
-      ? {
-          icon: 'bike-fast' as const,
-          label: t('cart_fee_modal_base_delivery'),
-          value: formatCartPrice(deliveryFee),
-        }
-      : null,
   ].filter(Boolean) as Array<{
-    icon: 'basket-outline' | 'shopping-outline' | 'bike-fast';
+    icon: 'basket-outline' | 'shopping-outline';
     label: string;
     value: string;
   }>;

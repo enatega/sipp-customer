@@ -16,7 +16,7 @@ type Props = {
 };
 
 export default function CartRecommendationCard({ item, onPress }: Props) {
-  const { colors, layout, shape, spacing } = useTheme();
+  const { colors, shape, spacing } = useTheme();
   const { t, i18n } = useTranslation('deliveries');
   const localizedName = getLocalizedProductName(
     {
@@ -78,19 +78,7 @@ export default function CartRecommendationCard({ item, onPress }: Props) {
               </Text>
             ) : null}
           </View>
-          <View
-            style={[
-              styles.trailing,
-              {
-                backgroundColor: colors.primary,
-                borderRadius: shape.radius.pill,
-                height: layout.touchTarget.minimum,
-                width: layout.touchTarget.minimum,
-              },
-            ]}
-          >
-            <MaterialCommunityIcons color={colors.onPrimary} name="arrow-top-right" size={19} />
-          </View>
+
         </View>
       </View>
     </PressableScale>
@@ -128,9 +116,5 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     flexDirection: 'row',
     marginTop: 8,
-  },
-  trailing: {
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

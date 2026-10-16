@@ -1,10 +1,10 @@
 import React from 'react';
 import { useStripe } from '@stripe/stripe-react-native';
-import { View } from 'react-native';
+import { AppState, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useIsMutating, useQuery, useQueryClient } from '@tanstack/react-query';
 import { showToast } from '../../../../general/components/AppToast';
 import { ApiError } from '../../../../general/api/apiClient';
 import FeedbackModal from '../../../../general/components/FeedbackModal';
@@ -24,7 +24,7 @@ import useCurrentLocation from '../../../../general/hooks/useCurrentLocation';
 import useSelectSavedAddress from '../../../../general/hooks/useSelectSavedAddress';
 import { useCart } from '../../hooks/useCart';
 import { useCheckoutPreview } from '../../hooks/useCheckoutPreview';
-import { useUseCouponMutation } from '../../hooks/useUseCouponMutation';
+import { couponMutationKey } from '../../hooks/useUseCouponMutation';
 import { claimedCouponsKeys } from '../../hooks/useClaimedCouponsQuery';
 import { formatCartPrice } from '../../components/cart/cartUtils';
 import {
@@ -59,7 +59,12 @@ import {
   waitForStripeCheckoutOrderId,
 } from '../../components/checkout/checkoutStripeOrderUtils';
 import { deliveryKeys } from '../../api/queryKeys';
-import { useCheckoutCouponStore } from '../../stores/useCheckoutCouponStore';
+import CheckoutOffersSheet from '../../components/offers/CheckoutOffersSheet';
+import { cartCouponIds, previewCoupons, couponIssueFromError } from '../../utils/couponRules';
+import { useCouponSyncStore } from '../../stores/useCouponSyncStore';
+import { useInventoryMessage, isInventoryError } from '../../hooks/useInventoryMessage';
+import { useCouponText } from '../../hooks/useCouponText';
+import { formatCurrency } from '../../utils/orderDetails/orderDetailsUtils';
 import { useWalletSavedCardsQuery } from '../../../../general/api/walletSavedCardsService';
 import { useCustomerWalletBalance } from '../../api/walletService';
 import { useDeliveriesCurrencyLabel } from '../../../../general/stores/useAppConfigStore';
@@ -118,7 +123,6 @@ function getPreviewInput(
   orderType: CheckoutOrderType,
   paymentMethod: CheckoutPaymentMethod,
   selectedAddressId?: string,
-  couponCode?: string,
   riderTip?: number,
 ) {
   if (!cart?.bucketId || !cart.storeId) {
@@ -135,8 +139,7 @@ function getPreviewInput(
     orderType,
     paymentMethod,
     addressId: orderType === 'delivery' ? selectedAddressId : undefined,
-    couponCode: couponCode ?? undefined,
-    riderTip: riderTip && riderTip > 0 ? riderTip : undefined,
+    riderTip: orderType === 'delivery' && riderTip && riderTip > 0 ? riderTip : undefined,
   };
 }
 
@@ -199,9 +202,11 @@ export default function CheckoutScreen() {
   });
   const [selectedTip, setSelectedTip] = React.useState(0);
   const [customTipValue, setCustomTipValue] = React.useState('');
-  const selectedCoupon = useCheckoutCouponStore((state) => state.selectedCoupon);
-  const clearCheckoutCoupon = useCheckoutCouponStore((state) => state.clearCoupon);
-  const useCouponMutation = useUseCouponMutation();
+  const [isOffersVisible, setIsOffersVisible] = React.useState(false);
+  const isSelectingCoupon = useIsMutating({ mutationKey: couponMutationKey }) > 0;
+  const couponText = useCouponText();
+  const inventoryMessage = useInventoryMessage();
+  const [placementInventoryError, setPlacementInventoryError] = React.useState<ApiError | null>(null);
   const savedCardsQuery = useWalletSavedCardsQuery('deliveries');
   const walletBalanceQuery = useCustomerWalletBalance();
   const wantsWalletAfterTopUpRef = React.useRef(false);
@@ -224,7 +229,6 @@ export default function CheckoutScreen() {
       orderType,
       paymentMethod,
       resolvedAddressId,
-      selectedCoupon?.code,
       selectedTip,
     ) : null,
     [
@@ -236,7 +240,6 @@ export default function CheckoutScreen() {
       orderType,
       paymentMethod,
       resolvedAddressId,
-      selectedCoupon?.code,
       selectedTip,
     ],
   );
@@ -246,9 +249,40 @@ export default function CheckoutScreen() {
     isFetching: isPreviewPending,
     isError: isPreviewError,
     refetch: refetchPreview,
-  } = useCheckoutPreview(previewInput);
+  } = useCheckoutPreview(previewInput, undefined, JSON.stringify([cartCouponIds(cart), cart?.items.map(item => [item.id, item.quantity, item.unitPrice]), cart?.totalPrice, cart?.discountAmount]));
+
+  React.useEffect(() => {
+    if (preview && !isPreviewError && !isPreviewPending) setPlacementInventoryError(null);
+  }, [preview, isPreviewError, isPreviewPending]);
+  const inventoryErrorMessage = inventoryMessage(previewError) ?? inventoryMessage(placementInventoryError);
 
   const checkoutUserId = phoneProfile.data?.data?.user?.id;
+  const couponSyncPending = useCouponSyncStore(state => state.userId === checkoutUserId && state.pending);
+  const couponPreviews = previewCoupons(preview);
+  const selectedCouponIds = cart && (cart.appliedCouponIds !== undefined || cart.appliedCouponId !== undefined)
+    ? cartCouponIds(cart) : couponPreviews.map(coupon => coupon.id);
+  const hasCouponIssues = couponPreviews.some(coupon => selectedCouponIds.includes(coupon.id) && (coupon.issue || !coupon.isApplied));
+  const missingCouponPreview = selectedCouponIds.some(id => !couponPreviews.some(coupon => coupon.id === id));
+  const isCouponChecking = isPreviewPending || isSelectingCoupon || couponSyncPending;
+  const isCouponBlocked = isCouponChecking || hasCouponIssues || missingCouponPreview;
+  const confirmedSavings = isCouponChecking || isPreviewError ? 0 : couponPreviews.reduce((sum, coupon) =>
+    sum + (selectedCouponIds.includes(coupon.id) && coupon.isApplied && !coupon.issue ? coupon.appliedDiscount ?? 0 : 0), 0);
+  const refreshOfferPreview = React.useCallback(async () => {
+    await refetchPreview({ throwOnError: true });
+  }, [refetchPreview]);
+  useFocusEffect(React.useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: deliveryKeys.cart() });
+    void queryClient.invalidateQueries({ queryKey: [...deliveryKeys.all, 'checkout-preview'] });
+    void queryClient.invalidateQueries({ queryKey: claimedCouponsKeys.all });
+    const listener = AppState.addEventListener('change', state => {
+      if (state !== 'active') return;
+      void queryClient.invalidateQueries({ queryKey: deliveryKeys.cart() });
+      void queryClient.invalidateQueries({ queryKey: [...deliveryKeys.all, 'checkout-preview'] });
+      void queryClient.invalidateQueries({ queryKey: claimedCouponsKeys.all });
+    });
+    return () => listener.remove();
+  }, [queryClient]));
+
   React.useEffect(() => {
     if (!checkoutUserId) {
       if (!phoneProfile.isPending) setIsLoadingCheckoutAttempt(false);
@@ -287,7 +321,6 @@ export default function CheckoutScreen() {
     checkoutAttemptRef.current = null;
     setCheckoutAttempt(null);
     setUncertainOrder(null);
-    clearCheckoutCoupon();
     navigateToOrderTracking(orderId);
     void Promise.all([
       queryClient.invalidateQueries({ queryKey: deliveryKeys.cart() }),
@@ -295,11 +328,32 @@ export default function CheckoutScreen() {
       queryClient.invalidateQueries({ queryKey: deliveryKeys.orders() }),
       queryClient.invalidateQueries({ queryKey: deliveryKeys.walletBalance() }),
     ]);
-  }, [checkoutUserId, clearCheckoutCoupon, navigateToOrderTracking, queryClient]);
+  }, [checkoutUserId, navigateToOrderTracking, queryClient]);
 
   const isPlacingOrderRef = React.useRef(false);
   const placeOrderMutation = usePlaceOrder({
     onError: (error) => {
+      if (isInventoryError(error)) {
+        if (checkoutUserId) void checkoutAttemptStorage.clear(checkoutUserId);
+        checkoutAttemptRef.current = null;
+        setCheckoutAttempt(null);
+        setPlacementInventoryError(error);
+        showToast.error(t('inventory_title'), inventoryMessage(error) ?? t('inventory_update_cart'));
+        void refetchCart();
+        void refetchPreview();
+        return;
+      }
+      const issue = couponIssueFromError(error);
+      if (issue) {
+        // A definitive coupon refusal happens before payment/draft creation.
+        if (checkoutUserId) void checkoutAttemptStorage.clear(checkoutUserId);
+        checkoutAttemptRef.current = null;
+        setCheckoutAttempt(null);
+        setIsOffersVisible(true);
+        showToast.error(t('offers_review'), couponText.issue(issue));
+        void refetchPreview();
+        return;
+      }
       if (error.code === 'ORDER_STATUS_UNKNOWN') {
         if (cart?.bucketId && cart.storeId) {
           setUncertainOrder({ bucketId: cart.bucketId, storeId: cart.storeId });
@@ -583,7 +637,8 @@ export default function CheckoutScreen() {
       return;
     }
 
-    if (!cart?.bucketId || !cart.storeId) {
+    if (!cart?.bucketId || !cart.storeId || !preview || isPreviewError || isPreviewPending
+      || inventoryErrorMessage || isCouponBlocked || queryClient.isMutating({ mutationKey: couponMutationKey }) > 0) {
       return;
     }
 
@@ -614,7 +669,6 @@ export default function CheckoutScreen() {
         restaurant: messages.restaurant,
         courier: orderType === 'delivery' ? messages.courier : '',
       }),
-      couponCode: selectedCoupon?.code,
       riderTip: orderType === 'delivery' && selectedTip > 0 ? selectedTip : undefined,
       successUrl: paymentMethod === 'stripe' && !selectedSavedCard
         ? CHECKOUT_STRIPE_SUCCESS_URL
@@ -651,8 +705,13 @@ export default function CheckoutScreen() {
     orderType,
     paymentMethod,
     placeOrderMutation,
+    preview,
+    isPreviewError,
+    isPreviewPending,
+    isCouponBlocked,
+    inventoryErrorMessage,
+    queryClient,
     resolvedAddressId,
-    selectedCoupon?.code,
     messages,
     leaveAtDoor,
     preview?.store?.stripeAllowed,
@@ -664,37 +723,7 @@ export default function CheckoutScreen() {
     t,
   ]);
 
-  const handlePromoPress = React.useCallback(() => {
-    navigation.navigate('Coupons');
-  }, [navigation]);
-
-  const handlePromoRemove = React.useCallback(async () => {
-    if (!selectedCoupon?.id) {
-      clearCheckoutCoupon();
-      return;
-    }
-
-    try {
-      await useCouponMutation.mutateAsync({
-        id: selectedCoupon.id,
-        isActive: false,
-      });
-      clearCheckoutCoupon();
-      void queryClient.invalidateQueries({ queryKey: claimedCouponsKeys.all });
-      showToast.success(t('checkout_promo_removed'));
-      void refetchPreview();
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : t('coupon_deactivate_error_fallback');
-      showToast.error(t('coupon_deactivate_error_title'), message);
-    }
-  }, [
-    clearCheckoutCoupon,
-    refetchPreview,
-    selectedCoupon?.id,
-    t,
-    useCouponMutation,
-  ]);
+  const handlePromoPress = React.useCallback(() => setIsOffersVisible(true), []);
 
   const handleStripeCheckoutBackPress = React.useCallback(() => {
     setStripeCheckout(null);
@@ -886,12 +915,13 @@ export default function CheckoutScreen() {
       })
       : getCheckoutPaymentMethodSubtitle(paymentMethod, t)
     : getCheckoutPaymentMethodSubtitle(paymentMethod, t);
-  const isPromoApplied = Boolean(selectedCoupon?.code);
-  const promoTitle = selectedCoupon?.title ?? t('checkout_promo_title');
-  const promoCode = selectedCoupon?.code ?? null;
-  const promoSubtitle = selectedCoupon
-    ? t('checkout_promo_tap_to_change')
-    : t('checkout_promo_subtitle');
+  const promoTitle = hasCouponIssues || missingCouponPreview || couponSyncPending ? t('offers_review') : t('offers_title');
+  const promoSubtitle = couponSyncPending && !isSelectingCoupon ? t('offers_sync_error')
+    : isPreviewError && selectedCouponIds.length ? t('offers_fix_before_order')
+    : isCouponChecking ? t('offers_checking')
+    : hasCouponIssues || missingCouponPreview ? t('offers_fix_before_order')
+    : selectedCouponIds.length ? t('offers_summary', { count: selectedCouponIds.length, amount: formatCurrency(confirmedSavings) })
+    : t('offers_description');
   const isPaymentAvailable = isCheckoutPaymentMethodAvailable(
     paymentMethod,
     preview?.store,
@@ -1008,14 +1038,15 @@ export default function CheckoutScreen() {
   return (
     <View style={{ backgroundColor: colors.surface, flex: 1 }}>
       <CheckoutScreenContent
+        inventoryErrorMessage={inventoryErrorMessage}
+        onReviewCart={() => navigation.navigate('Cart')}
         cartItems={cart?.items ?? []}
         courierMessage={messages.courier}
         hasAddressRequirement={orderType === 'delivery' && !resolvedAddressId}
         isPickupEnabled={adjustedPreview?.store.pickupAllowed ?? true}
-        isPromoApplied={isPromoApplied}
         isPlacingOrder={placeOrderMutation.isPending}
         isCheckingOrder={Boolean(uncertainOrder)}
-        isPaymentBlocked={!isPaymentAvailable || isLeaveAtDoorCardRequired}
+        isPaymentBlocked={!isPaymentAvailable || isLeaveAtDoorCardRequired || isCouponBlocked || Boolean(inventoryErrorMessage)}
         isPreviewEnabled={Boolean(previewInput)}
         isPreviewError={isPreviewError}
         isStoreClosedError={isStoreClosedError(previewError)}
@@ -1033,7 +1064,6 @@ export default function CheckoutScreen() {
         onPlaceOrderPress={handlePlaceOrderPress}
         onPaymentPress={handlePaymentMethodPress}
         onPromoPress={handlePromoPress}
-        onPromoRemove={handlePromoRemove}
         onRestaurantMessagePress={() => {
           handleMessagePress('restaurant');
         }}
@@ -1047,7 +1077,6 @@ export default function CheckoutScreen() {
         paymentIconName={paymentIconName}
         paymentSubtitle={paymentSubtitle}
         paymentTitle={paymentTitle}
-        promoCode={promoCode}
         promoTitle={promoTitle}
         promoSubtitle={promoSubtitle}
         preview={adjustedPreview ?? null}
@@ -1056,6 +1085,17 @@ export default function CheckoutScreen() {
         selectedTip={selectedTip}
         totalLabel={formatCartPrice(previewTotal)}
       />
+
+      {isOffersVisible ? <CheckoutOffersSheet
+        key={checkoutUserId}
+        onClose={() => setIsOffersVisible(false)}
+        selectedIds={selectedCouponIds}
+        previews={couponPreviews}
+        checking={isCouponChecking || isPreviewError}
+        previewFailed={isPreviewError}
+        onRefreshPreview={refreshOfferPreview}
+        context={{ storeId: cart.storeId, subtotal: preview?.pricing.subtotal ?? cart.totalPrice, orderType, paymentMethod, productIds: cart.items.map(item => item.productId) }}
+      /> : null}
 
       <AddressSelectionBottomSheet
         addresses={addresses}
