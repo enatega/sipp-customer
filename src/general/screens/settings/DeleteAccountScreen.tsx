@@ -8,9 +8,11 @@ import ScreenHeader from '../../components/ScreenHeader';
 import Button from '../../components/Button';
 import { useTheme } from '../../theme/theme';
 import { showToast } from '../../components/AppToast';
-import { useAppLogout } from '../../hooks/useAppLogout';
+import { signOutLocally } from '../../hooks/useAuthMutations';
 import { useDeleteAccountMutation } from '../../hooks/useDeleteAccountMutation';
 import { authSession } from '../../auth/authSession';
+import { resetToSharedRoute } from '../../navigation/rootNavigation';
+import { useWalletBalanceVisibilityStore } from '../../stores/useWalletBalanceVisibilityStore';
 import DeleteAccountStepIndicator from '../../components/settings/DeleteAccountStepIndicator';
 import DeleteAccountReasonStep from '../../components/settings/DeleteAccountReasonStep';
 import DeleteAccountConfirmStep from '../../components/settings/DeleteAccountConfirmStep';
@@ -26,12 +28,12 @@ export default function DeleteAccountScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const deleteAccountMutation = useDeleteAccountMutation();
-  const logoutMutation = useAppLogout();
 
   const [step, setStep] = useState<Step>(1);
   const [selectedReason, setSelectedReason] = useState<string | null>(null);
   const [checkedItems, setCheckedItems] = useState<boolean[]>([false, false]);
   const [userEmail, setUserEmail] = useState<string>('');
+  const [isFinishingDeletion, setIsFinishingDeletion] = useState(false);
 
   useEffect(() => {
     authSession.getUser().then((u) => {
@@ -60,12 +62,17 @@ export default function DeleteAccountScreen() {
   };
 
   const handleDeleteAccount = async () => {
+    if (isFinishingDeletion) return;
+    setIsFinishingDeletion(true);
     try {
       await deleteAccountMutation.mutateAsync(selectedReason ?? '');
-      await logoutMutation.mutateAsync();
+      await signOutLocally();
+      useWalletBalanceVisibilityStore.getState().hideBalance();
+      resetToSharedRoute('Deliveries');
     } catch (error) {
       const message = error instanceof Error ? error.message : t('delete_account_error');
       showToast.error(t('delete_account_error_title'), message);
+      setIsFinishingDeletion(false);
     }
   };
 
@@ -80,7 +87,7 @@ export default function DeleteAccountScreen() {
   const isContinueDisabled = () => {
     if (step === 1) return selectedReason === null;
     if (step === 2) return !checkedItems.every(Boolean);
-    return deleteAccountMutation.isPending || logoutMutation.isPending;
+    return deleteAccountMutation.isPending || isFinishingDeletion;
   };
 
   const closeButton = (

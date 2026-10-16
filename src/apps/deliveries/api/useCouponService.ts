@@ -12,6 +12,6 @@ export const useCouponService = {
   useCoupon: (id: string, payload: UseCouponPayload) =>
     apiClient.post<UseCouponResponse>(
       `/api/v1/apps/deliveries/customer-coupons/use/${id}`,
-      payload,
+      { ...payload, mode: 'add' },
     ),
 };

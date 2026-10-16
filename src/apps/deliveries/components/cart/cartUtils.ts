@@ -26,5 +26,8 @@ export function getCartItemSubtitle(item: CartItem) {
     return selectedOptionsLabel;
   }
 
-  return item.description?.trim() ?? '';
+  const description = item.description?.trim() ?? '';
+  return description.toLocaleLowerCase() === item.name.trim().toLocaleLowerCase()
+    ? ''
+    : description;
 }

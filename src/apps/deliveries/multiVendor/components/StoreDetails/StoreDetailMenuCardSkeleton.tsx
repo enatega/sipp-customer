@@ -5,7 +5,7 @@ import { useWindowClass } from '../../../../../general/hooks/useWindowClass';
 import { useTheme } from '../../../../../general/theme/theme';
 
 export default function StoreDetailMenuCardSkeleton() {
-  const { colors, elevation, shape, spacing } = useTheme();
+  const { colors, shape, spacing } = useTheme();
   const { isCompact } = useWindowClass();
   const imageSize = isCompact ? 96 : 112;
 
@@ -13,7 +13,6 @@ export default function StoreDetailMenuCardSkeleton() {
     <View
       style={[
         styles.card,
-        elevation.subtle,
         {
           backgroundColor: colors.surfaceElevated,
           borderColor: colors.border,
@@ -45,12 +44,12 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    justifyContent: 'center',
     minWidth: 0,
   },
   footer: {
-    alignItems: 'flex-end',
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 'auto',
   },
 });

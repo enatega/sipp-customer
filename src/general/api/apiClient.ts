@@ -61,6 +61,7 @@ type ApiErrorResponseData = {
 
 type ExtendedAxiosRequestConfig = AxiosRequestConfig & {
   skipSessionExpiryHandling?: boolean;
+  suppressNetworkFailureLog?: boolean;
   suppressTransientSuccessStreamWarning?: boolean;
   silentStatuses?: number[];
 };
@@ -475,7 +476,7 @@ function toApiError(error: unknown): ApiError {
         if (!suppressTransientSuccessStreamWarning) {
           console.warn('[API] successful response stream was lost before Axios could parse it', logPayload);
         }
-      } else {
+      } else if (!(axiosError.config as ExtendedAxiosRequestConfig | undefined)?.suppressNetworkFailureLog) {
         console.error('[API] network request failed before response', logPayload);
       }
 
@@ -518,6 +519,8 @@ function toApiError(error: unknown): ApiError {
 // Core request wrapper
 // ---------------------------------------------------------------------------
 export type ApiRequestOptions = {
+  timeout?: number;
+  suppressNetworkFailureLog?: boolean;
   skipSessionExpiryHandling?: boolean;
   skipAuth?: boolean;
   suppressTransientSuccessStreamWarning?: boolean;
@@ -534,6 +537,8 @@ async function request<T>(
   try {
     const requestConfig: ExtendedAxiosRequestConfig = {
       ...config,
+      timeout: options.timeout ?? config.timeout,
+      suppressNetworkFailureLog: options.suppressNetworkFailureLog,
       signal: options.signal ?? config.signal,
       skipSessionExpiryHandling: options.skipSessionExpiryHandling,
       suppressTransientSuccessStreamWarning: options.suppressTransientSuccessStreamWarning,

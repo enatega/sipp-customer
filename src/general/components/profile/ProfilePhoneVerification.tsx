@@ -55,7 +55,6 @@ export default function ProfilePhoneVerification({ visible, onClose, onVerified 
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24, gap: 18 }}>
         <Text variant="title" weight="bold">{t('phone_profile_title')}</Text>
         <Text color={colors.mutedText}>{sentPhone ? t('google_phone_code_sent', { phone: sentPhone }) : t('phone_profile_description')}</Text>
-        {!sentPhone ? <Text color={colors.mutedText}>{t('phone_transfer_warning')}</Text> : null}
         {sentPhone ? <>
           <OtpCodeInput onCodeFilled={(value) => { setCode(value); setCodeError(false); if (value.length === 4 && attempted.current !== value) { attempted.current = value; void verify(value); } }} onResend={() => { attempted.current = ''; void sendCode(); }} hasError={codeError} errorMessage={t('google_phone_code_error')} />
           <Button variant="primary" label={t('verify_otp')} onPress={() => void verify(code)} disabled={code.length !== 4 || busy} isLoading={busy} />

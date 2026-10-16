@@ -7,6 +7,7 @@ import type { DeliveryOrderEta } from "../api/ordersServiceTypes";
 
 type Options = {
   enabled?: boolean;
+  orderId?: string;
 };
 
 type RiderLocation = {
@@ -56,13 +57,16 @@ export function useOrderRiderLocationSync(
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
   const riderUserIdRef = useRef(riderUserId ?? null);
   const customerUserIdRef = useRef(customerUserId);
+  const orderIdRef = useRef(options?.orderId ?? null);
   const [riderLocation, setRiderLocation] = useState<RiderLocation | null>(
     initialLocation ?? null,
   );
 
   useEffect(() => {
     riderUserIdRef.current = riderUserId ?? null;
-  }, [riderUserId]);
+    orderIdRef.current = options?.orderId ?? null;
+    setRiderLocation(initialLocation ?? null);
+  }, [riderUserId, options?.orderId]);
 
   useEffect(() => {
     customerUserIdRef.current = customerUserId;
@@ -133,8 +137,10 @@ export function useOrderRiderLocationSync(
         const payloadRecord = payload as RiderLocationEventPayload;
         const eventRiderUserId = readString(payloadRecord.riderUserId);
         const eventCustomerUserId = readString(payloadRecord.customerUserId);
+        const eventOrderId = readString((payloadRecord as { orderId?: unknown }).orderId);
         const activeRiderUserId = riderUserIdRef.current;
         const activeCustomerUserId = customerUserIdRef.current;
+        if (eventOrderId && orderIdRef.current && eventOrderId !== orderIdRef.current) return;
 
         if (activeRiderUserId && eventRiderUserId && activeRiderUserId !== eventRiderUserId) {
           return;

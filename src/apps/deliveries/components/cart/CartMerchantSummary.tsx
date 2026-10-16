@@ -7,15 +7,15 @@ import PressableScale from '../../../../general/components/PressableScale';
 import Text from '../../../../general/components/Text';
 import { useTheme } from '../../../../general/theme/theme';
 import type { DeliveryStoreViewApiResponse } from '../../api/types';
-import { formatCartPrice } from './cartUtils';
 
 type Props = {
+  compact?: boolean;
   fallbackName?: string | null;
   onPress: () => void;
   store?: DeliveryStoreViewApiResponse;
 };
 
-export default function CartMerchantSummary({ fallbackName, onPress, store }: Props) {
+export default function CartMerchantSummary({ compact = false, fallbackName, onPress, store }: Props) {
   const { t } = useTranslation('deliveries');
   const { colors, shape, spacing } = useTheme();
   const [hasImageError, setHasImageError] = React.useState(false);
@@ -37,12 +37,10 @@ export default function CartMerchantSummary({ fallbackName, onPress, store }: Pr
       onPress={onPress}
       style={[
         styles.container,
+        compact && styles.compact,
         {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-          borderRadius: shape.radius.surface,
-          gap: spacing.md,
-          padding: spacing.md,
+          gap: spacing.sm,
+          paddingVertical: spacing.xs,
         },
       ]}
     >
@@ -52,58 +50,35 @@ export default function CartMerchantSummary({ fallbackName, onPress, store }: Pr
           onError={() => setHasImageError(true)}
           resizeMode="cover"
           source={{ uri: imageUrl }}
-          style={[styles.logo, { borderRadius: shape.radius.control }]}
+          style={[styles.logo, compact && styles.compactLogo, { borderRadius: shape.radius.control }]}
         />
       ) : (
         <View
           style={[
             styles.logoFallback,
+            compact && styles.compactLogo,
             {
               backgroundColor: colors.primarySoft,
               borderRadius: shape.radius.control,
             },
           ]}
         >
-          <MaterialCommunityIcons color={colors.primary} name="storefront-outline" size={24} />
+          <MaterialCommunityIcons color={colors.primary} name="storefront-outline" size={20} />
         </View>
       )}
 
-      <View style={[styles.copy, { gap: spacing.xs }]}>
-        <Text numberOfLines={1} variant="cardTitle" weight="bold">
+      <View style={compact ? styles.compactCopy : styles.copy}>
+        <Text numberOfLines={1} ellipsizeMode="tail" variant="label" weight="semiBold">
           {storeName}
         </Text>
-        <View style={[styles.metadata, { gap: spacing.sm }]}>
-          {hasDeliveryTime ? (
-            <Text color={colors.textSubtle} numberOfLines={1} variant="caption">
-              {t('cart_delivery_time', { time: deliveryTime })}
-            </Text>
-          ) : null}
-          {store?.minimumOrder ? (
-            <>
-              {hasDeliveryTime ? (
-                <View style={[styles.dot, { backgroundColor: colors.divider }]} />
-              ) : null}
-              <Text color={colors.textSubtle} numberOfLines={1} variant="caption">
-                {t('store_details_minimum_order', {
-                  amount: formatCartPrice(store.minimumOrder),
-                })}
-              </Text>
-            </>
-          ) : null}
-        </View>
+        {!compact && hasDeliveryTime ? (
+          <Text color={colors.textSubtle} numberOfLines={1} variant="caption">
+            {t('cart_delivery_time', { time: deliveryTime })}
+          </Text>
+        ) : null}
       </View>
 
-      <View
-        style={[
-          styles.trailing,
-          {
-            backgroundColor: colors.primarySoft,
-            borderRadius: shape.radius.pill,
-          },
-        ]}
-      >
-        <MaterialCommunityIcons color={colors.primary} name="chevron-right" size={22} />
-      </View>
+      {!compact ? <MaterialCommunityIcons color={colors.textSubtle} name="chevron-right" size={20} /> : null}
     </PressableScale>
   );
 }
@@ -111,38 +86,35 @@ export default function CartMerchantSummary({ fallbackName, onPress, store }: Pr
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
-    overflow: 'hidden',
+    minHeight: 48,
+  },
+  compact: {
+    flex: 1,
+    minWidth: 0,
+    justifyContent: 'center',
+  },
+  compactCopy: {
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  compactLogo: {
+    height: 32,
+    width: 32,
+    flexShrink: 0,
   },
   copy: {
     flex: 1,
     minWidth: 0,
   },
-  dot: {
-    borderRadius: 2,
-    height: 4,
-    width: 4,
-  },
   logo: {
-    height: 54,
-    width: 54,
+    height: 40,
+    width: 40,
   },
   logoFallback: {
     alignItems: 'center',
-    height: 54,
+    height: 40,
     justifyContent: 'center',
-    width: 54,
-  },
-  metadata: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  trailing: {
-    alignItems: 'center',
-    height: 36,
-    justifyContent: 'center',
-    width: 36,
+    width: 40,
   },
 });

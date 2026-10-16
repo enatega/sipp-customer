@@ -1,6 +1,39 @@
 import Constants from "expo-constants";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
+import * as SecureStore from "expo-secure-store";
+
+const PUSH_TOKEN_KEY = "sipp_customer_device_push_token";
+const registrations = new Set<Promise<void>>();
+let signingOut = false;
+
+export const pushTokenStorage = {
+  get: () => Platform.OS === "web" ? Promise.resolve(null) : SecureStore.getItemAsync(PUSH_TOKEN_KEY),
+  save: (token: string) => Platform.OS === "web" ? Promise.resolve() : SecureStore.setItemAsync(PUSH_TOKEN_KEY, token),
+  clear: () => {
+    cachedToken = null;
+    return Platform.OS === "web" ? Promise.resolve() : SecureStore.deleteItemAsync(PUSH_TOKEN_KEY);
+  },
+  register: async (token: string, send: () => Promise<unknown>) => {
+    if (signingOut) return false;
+    const pending = (async () => {
+      await send();
+      await pushTokenStorage.save(token);
+    })();
+    registrations.add(pending);
+    try {
+      await pending;
+      return true;
+    } finally {
+      registrations.delete(pending);
+    }
+  },
+  beginLogout: async () => {
+    signingOut = true;
+    await Promise.allSettled([...registrations]);
+  },
+  cancelLogout: () => { signingOut = false; },
+};
 
 let cachedToken: string | null = null;
 let inFlightTokenPromise: Promise<string | null> | null = null;
@@ -58,18 +91,30 @@ async function getPushTokenInternal(): Promise<string | null> {
     }
 
     const projectId = getEasProjectId();
+    console.log('[ExpoPushToken][auth] project IDs', {
+      selected: projectId ?? null,
+      easConfig: Constants.easConfig?.projectId ?? null,
+      expoConfig: Constants.expoConfig?.extra?.eas?.projectId ?? null,
+      environment: process.env.EXPO_PUBLIC_EAS_PROJECT_ID ?? null,
+    });
     const response = projectId
       ? await Notifications.getExpoPushTokenAsync({ projectId })
       : await Notifications.getExpoPushTokenAsync();
 
-    return normalizePushToken(response.data);
-  } catch {
+    const token = normalizePushToken(response.data);
+    console.log('[ExpoPushToken][auth] generated token', token);
+    return token;
+  } catch (error) {
+    console.error('[ExpoPushToken][auth] token generation failed', error);
     return null;
   }
 }
 
 export async function getExpoPushTokenForAuth(): Promise<string | null> {
-  if (cachedToken) return cachedToken;
+  if (cachedToken) {
+    console.log('[ExpoPushToken][auth] cached token', cachedToken);
+    return cachedToken;
+  }
 
   if (inFlightTokenPromise) {
     return inFlightTokenPromise;
@@ -81,6 +126,7 @@ export async function getExpoPushTokenForAuth(): Promise<string | null> {
     const token = normalizePushToken(await inFlightTokenPromise);
     if (token) {
       cachedToken = token;
+      await pushTokenStorage.save(token);
     }
     return token;
   } finally {

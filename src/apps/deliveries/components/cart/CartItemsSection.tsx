@@ -14,6 +14,7 @@ type Props = {
   onAddMorePress: () => void;
   onItemPendingChange?: (itemId: string, isPending: boolean) => void;
   onSetItemQuantity: (itemId: string, quantity: number) => Promise<void>;
+  onSetItemNote: (itemId: string, note: string) => Promise<void>;
   onRemoveItem: (itemId: string) => void;
 };
 
@@ -23,6 +24,7 @@ export default function CartItemsSection({
   onAddMorePress,
   onItemPendingChange,
   onSetItemQuantity,
+  onSetItemNote,
   onRemoveItem,
 }: Props) {
   const { colors, elevation, layout, shape, spacing } = useTheme();
@@ -30,24 +32,9 @@ export default function CartItemsSection({
 
   return (
     <View style={[styles.container, { gap: spacing.md }]}>
-      <View style={styles.headingRow}>
-        <Text accessibilityRole="header" variant="sectionTitle" weight="bold">
-          {t('cart_items_title')}
-        </Text>
-        <View
-          style={[
-            styles.itemCount,
-            {
-              backgroundColor: colors.primarySoft,
-              borderRadius: shape.radius.pill,
-            },
-          ]}
-        >
-          <Text color={colors.primary} variant="caption" weight="bold">
-            {items.length}
-          </Text>
-        </View>
-      </View>
+      <Text accessibilityRole="header" variant="sectionTitle" weight="bold">
+        {t('cart_items_title')}
+      </Text>
 
       <View
         style={[
@@ -68,6 +55,7 @@ export default function CartItemsSection({
             item={item}
             onPendingChange={onItemPendingChange}
             onSetQuantity={(quantity) => onSetItemQuantity(item.id, quantity)}
+            onSetNote={(note) => onSetItemNote(item.id, note)}
             onRemove={() => onRemoveItem(item.id)}
           />
         ))}
@@ -80,27 +68,16 @@ export default function CartItemsSection({
             {
               borderTopColor: colors.divider,
               borderTopWidth: StyleSheet.hairlineWidth,
-              gap: spacing.md,
+              gap: spacing.sm,
               minHeight: layout.touchTarget.comfortable,
-              paddingVertical: spacing.sm,
+              paddingVertical: spacing.md,
             },
           ]}
         >
-          <View
-            style={[
-              styles.addIcon,
-              {
-                backgroundColor: colors.primarySoft,
-                borderRadius: shape.radius.pill,
-              },
-            ]}
-          >
-            <Ionicons color={colors.primary} name="add" size={19} />
-          </View>
-          <Text style={styles.addLabel} variant="label" weight="semiBold">
+          <Ionicons color={colors.primary} name="add" size={20} />
+          <Text color={colors.primary} style={styles.addLabel} variant="label" weight="semiBold">
             {t('cart_add_more')}
           </Text>
-          <Ionicons color={colors.textSubtle} name="chevron-forward" size={18} />
         </PressableScale>
       </View>
     </View>
@@ -108,34 +85,15 @@ export default function CartItemsSection({
 }
 
 const styles = StyleSheet.create({
-  addIcon: {
-    alignItems: 'center',
-    height: 34,
-    justifyContent: 'center',
-    width: 34,
-  },
   addLabel: {
     flex: 1,
   },
   addMoreButton: {
     alignItems: 'center',
     flexDirection: 'row',
-    overflow: 'hidden',
   },
   container: {
     width: '100%',
-  },
-  headingRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  itemCount: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 26,
-    minWidth: 26,
-    paddingHorizontal: 8,
   },
   surface: {
     width: '100%',

@@ -11,7 +11,8 @@ type Props = {
   sections: ProductSelectionSection[];
   selectedOptionIdsByGroup: Record<string, string[]>;
   onToggle: (groupId: string, optionId: string) => void;
-  formatPrice: (value: number) => string;
+  onSectionLayout?: (groupId: string, y: number) => void;
+  currencyLabel: string;
   showValidationErrors?: boolean;
 };
 
@@ -19,7 +20,8 @@ export default function ItemFlavour({
   sections,
   selectedOptionIdsByGroup,
   onToggle,
-  formatPrice,
+  onSectionLayout,
+  currencyLabel,
   showValidationErrors = false,
 }: Props) {
   const { t } = useTranslation("deliveries");
@@ -36,6 +38,8 @@ export default function ItemFlavour({
       </Text>
       {sections.map((section) => {
         const selectionHint =
+          (section.required && /^optional\.?$/i.test(section.description?.trim() ?? '')
+            ? null : section.description?.trim()) ||
           section.helperText ||
           (section.minSelect > 1 && section.maxSelect > section.minSelect
             ? t("product_option_choose_range", {
@@ -53,6 +57,7 @@ export default function ItemFlavour({
         return (
           <View
             key={section.groupId}
+            onLayout={(event) => onSectionLayout?.(section.groupId, event.nativeEvent.layout.y)}
             style={[styles.sectionBlock, { gap: spacing.md }]}
           >
             <ProductOptionSectionHeader
@@ -93,7 +98,7 @@ export default function ItemFlavour({
                     key={item.optionId}
                     label={item.label}
                     onPress={() => onToggle(section.groupId, item.optionId)}
-                    priceLabel={item.price === 0 ? t("free") : formatPrice(item.price)}
+                    priceLabel={item.price > 0 ? `+ ${item.price.toFixed(2)}${currencyLabel}` : ""}
                   />
                 );
               })}

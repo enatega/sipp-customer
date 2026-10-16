@@ -46,6 +46,7 @@ import apiClient from '../../../../../general/api/apiClient';
 import FavouriteFoodsCarousel from '../../components/favouriteFoods/FavouriteFoodsCarousel';
 import type { DeliveryFavouriteFood } from '../../../api/types';
 import { getLocalizedProductName } from '../../../utils/productTranslation';
+import HomeDeliveryReviewPrompt from '../../../components/review/HomeDeliveryReviewPrompt';
 
 type HomeSection = { key: string; kind: string; title: string };
 type HomeLayout = { revision: number; sections: HomeSection[] };
@@ -377,6 +378,7 @@ export default function HomeTab() {
         onSeeMenu={handleSeeClosedStoreMenu}
         store={selectedClosedStore}
       />
+      <HomeDeliveryReviewPrompt onRate={({ orderId, storeName }) => navigation.navigate('RateOrder', { orderId, storeName, recipient: 'store' })} />
     </>
   );
 }

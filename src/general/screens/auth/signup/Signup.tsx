@@ -1,5 +1,5 @@
-import React from "react";
-import { View, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { Keyboard, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
 import useStyles from "./styles";
 import { useTheme } from "../../../theme/theme";
 import SvgAndTextWrapper from "../../../components/auth/general/SvgAndTextWrapper";
@@ -17,7 +17,6 @@ import { useSignupSendOtp } from '../../../hooks/useAuthMutations';
 import { useTooManyRequestsModal } from '../../../hooks/useTooManyRequestsModal';
 import AppPopup from '../../../components/AppPopup';
 import { showToast } from '../../../components/AppToast';
-import KeyboardDismissWrapper from "../../../components/KeyboardDismissWrapper";
 import { useShallow } from "zustand/react/shallow";
 import { phoneVerificationErrorMessage } from '../../../utils/phoneVerificationError';
 
@@ -26,6 +25,29 @@ const Signup = () => {
   const styles = useStyles(colors);
   const { t } = useTranslation();
   const navigation = useNavigation();
+  const scrollRef = useRef<ScrollView>(null);
+  const [isAndroidKeyboardVisible, setIsAndroidKeyboardVisible] = useState(
+    Platform.OS === 'android' && Keyboard.isVisible(),
+  );
+
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    const showSubscription = Keyboard.addListener('keyboardDidShow', () => {
+      setIsAndroidKeyboardVisible(true);
+    });
+    const hideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      setIsAndroidKeyboardVisible(false);
+      requestAnimationFrame(() => {
+        if (!Keyboard.isVisible()) {
+          scrollRef.current?.scrollTo({ y: 0, animated: false });
+        }
+      });
+    });
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   const { formData, setOtpType, setOtpSent, setSignupConflictFields } = useAuthStore(useShallow((state) => ({ formData: state.formData, setOtpType: state.setOtpType, setOtpSent: state.setOtpSent, setSignupConflictFields: state.setSignupConflictFields })));
   const rateLimitModal = useTooManyRequestsModal();
@@ -65,27 +87,26 @@ const Signup = () => {
   };
 
   return (
-    <KeyboardDismissWrapper style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={[styles.container]}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : isAndroidKeyboardVisible ? "height" : undefined}
+      style={styles.container}
+    >
+      <ScreenHeader />
+      <ScrollView
+        ref={scrollRef}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="none"
+        showsVerticalScrollIndicator={false}
+        style={styles.scrollView}
+        contentContainerStyle={styles.centerContent}
       >
-        <ScreenHeader />
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          style={styles.scrollView}
-          contentContainerStyle={styles.centerContent}
-        >
-          <SvgAndTextWrapper
-            svgName="login"
-            heading="signup_heading"
-            description="signup_description"
-          />
-          <Text color={colors.mutedText} style={{ marginHorizontal: 24, marginBottom: 12 }}>{t('phone_transfer_warning')}</Text>
-          <FieldsWrapper disabled={sendOtpMutation.isPending} />
-        </ScrollView>
-      </KeyboardAvoidingView>
+        <SvgAndTextWrapper
+          svgName="login"
+          heading="signup_heading"
+          description="signup_description"
+        />
+        <FieldsWrapper disabled={sendOtpMutation.isPending} />
+      </ScrollView>
       <Footer>
         <Button
           variant={isFormValid ? "primary" : "secondary"}
@@ -103,7 +124,7 @@ const Signup = () => {
         dismissOnOverlayPress
         primaryAction={{ label: t('ok'), onPress: rateLimitModal.hide, variant: 'danger' }}
       />
-    </KeyboardDismissWrapper>
+    </KeyboardAvoidingView>
   );
 };
 

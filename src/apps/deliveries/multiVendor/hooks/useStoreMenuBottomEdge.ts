@@ -20,7 +20,7 @@ export function useStoreMenuBottomEdge({ list, rows, ready, direction, bottomPad
   const frame = useRef<number | null>(null);
   const check = useCallback(() => {
     const ref = list.current;
-    if (!ref || !ready.current || !hasNextPage || !pageCount || pageCount >= 12) return;
+    if (!ref || !ready.current || !hasNextPage || !pageCount) return;
     // Measure menu content, excluding the loading footer and bottom padding.
     // Those can make a short menu appear tall enough even with no more items.
     let index = rows.length - 1;

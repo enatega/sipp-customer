@@ -15,7 +15,7 @@ import Text from '../Text';
 import { useTheme } from '../../theme/theme';
 import type { ProfileAddress } from '../../api/profileService';
 import {
-  formatDeliveryAddressLabel,
+  formatSavedAddressDetails,
   getSelectedSavedAddressId,
 } from '../../utils/address';
 import {
@@ -308,10 +308,7 @@ export default function AddressSelectionBottomSheet({
               return (
                 <SavedAddressSelectionRow
                   key={address.id}
-                  address={formatDeliveryAddressLabel({
-                    address: address.address,
-                    locationName: address.location_name,
-                  })}
+                  address={formatSavedAddressDetails(address)}
                   iconName={getSavedAddressIcon(address.type)}
                   isDisabled={isSelectionPending}
                   isSelected={resolvedSelectedAddressId === address.id}

@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../../../../general/components/Button';
 import Text from '../../../../general/components/Text';
 import { useWindowClass } from '../../../../general/hooks/useWindowClass';
+import useAndroidKeyboardVisible from '../../../../general/hooks/useAndroidKeyboardVisible';
 import { useTheme } from '../../../../general/theme/theme';
 import CheckoutHeader from './CheckoutHeader';
 import { CHECKOUT_MESSAGE_MAX_LENGTH } from './checkoutMessageUtils';
@@ -40,12 +41,13 @@ export default function CheckoutMessageEditorScreen({
   const { colors, layout, shape, spacing, typography } = useTheme();
   const { gutter } = useWindowClass();
   const [isFocused, setIsFocused] = React.useState(false);
+  const isAndroidKeyboardVisible = useAndroidKeyboardVisible();
   const trimmedValue = value.trim();
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={[styles.screen, { backgroundColor: colors.canvas }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : isAndroidKeyboardVisible ? 'height' : undefined}
+      style={[styles.screen, { backgroundColor: colors.surface }]}
     >
       <CheckoutHeader
         backIconName="close"

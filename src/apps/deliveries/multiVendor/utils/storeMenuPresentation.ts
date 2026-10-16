@@ -2,14 +2,20 @@ import type { DeliveryStoreTimings } from '../../api/types';
 
 export function getTodayStoreHours(
   storeTimings?: DeliveryStoreTimings | null,
+  timezone?: string | null,
 ) {
   if (!storeTimings) {
     return null;
   }
 
-  const dayKey = new Intl.DateTimeFormat('en-US', { weekday: 'long' })
-    .format(new Date())
-    .toLowerCase();
+  let dayKey: string;
+  try {
+    dayKey = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: timezone || 'UTC' })
+      .format(new Date()).toLowerCase();
+  } catch {
+    dayKey = new Intl.DateTimeFormat('en-US', { weekday: 'long', timeZone: 'UTC' })
+      .format(new Date()).toLowerCase();
+  }
   const daySchedule = storeTimings[dayKey];
 
   if (!daySchedule) {
@@ -20,13 +26,10 @@ export function getTodayStoreHours(
     return null;
   }
 
-  const firstSlot = daySchedule.slots[0];
-
-  if (!firstSlot?.open || !firstSlot?.close) {
-    return null;
-  }
-
-  return `${firstSlot.open} - ${firstSlot.close}`;
+  const hours = daySchedule.slots
+    .filter((slot) => slot?.open && slot?.close)
+    .map((slot) => `${slot.open} – ${slot.close}`);
+  return hours.length ? hours.join(' · ') : null;
 }
 
 export function isStoreOrderAvailable(store?: {
@@ -43,4 +46,3 @@ export function isStoreOrderAvailable(store?: {
   // home listing, search results, and cart validation.
   return !(store.isAvailable === false || store.isClosed === true);
 }
-

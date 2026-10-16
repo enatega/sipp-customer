@@ -13,6 +13,8 @@ export interface StripeOrderDraftStatus {
   draftId: string;
   status: string;
   orderId: string | null;
+  checkoutUrl?: string | null;
+  clientSecret?: string | null;
 }
 
 export const ordersService = {

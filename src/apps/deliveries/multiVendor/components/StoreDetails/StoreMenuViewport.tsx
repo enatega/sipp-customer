@@ -3,6 +3,8 @@ import { ActivityIndicator, RefreshControl, View } from 'react-native';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import Animated, { type SharedValue } from 'react-native-reanimated';
 import { useTranslation } from 'react-i18next';
+import Button from '../../../../../general/components/Button';
+import Text from '../../../../../general/components/Text';
 import ListStateView from '../../../../../general/components/filterablePaginatedList/ListStateView';
 import { useTheme } from '../../../../../general/theme/theme';
 import type { ProductCardActionOverrides } from '../../../components/productCard/types';
@@ -28,7 +30,7 @@ type Props = {
 };
 
 export default function StoreMenuViewport({ storeId, menu, hero, scrollY, navigationHeight, bottomPadding, productAction, onSearch }: Props) {
-  const { colors, spacing, layout } = useTheme();
+  const { colors, spacing, shape, layout, elevation } = useTheme();
   const { t } = useTranslation('deliveries');
   const list = useRef<FlashListRef<Row>>(null);
   const [heroHeight, setHeroHeight] = useState(0);
@@ -87,7 +89,7 @@ export default function StoreMenuViewport({ storeId, menu, hero, scrollY, naviga
         onScroll={position.onScroll} scrollEventThrottle={16}
         onLoad={() => { position.restore(); position.fillViewport(); }}
         onContentSizeChange={position.fillViewport}
-        onCommitLayoutEffect={() => { position.preservePageAnchor(); position.fillViewport(); }}
+        onCommitLayoutEffect={position.fillViewport}
         {...position.topEdgeTouches}
         onStartReached={position.onStartReached} onStartReachedThreshold={0.4}
         onEndReached={position.onEndReached} onEndReachedThreshold={0.4}
@@ -98,9 +100,6 @@ export default function StoreMenuViewport({ storeId, menu, hero, scrollY, naviga
           ? <RefreshControl refreshing={menu.isRefreshing} tintColor={colors.primary}
               onRefresh={() => { void menu.refresh(position.captureAnchor()); }} />
           : undefined}
-        ListHeaderComponent={menu.query.isFetchingPreviousPage ? <ActivityIndicator color={colors.primary} />
-          : menu.query.isFetchPreviousPageError ? <ListStateView variant="error" description={t('store_menu_page_error')}
-            actionLabel={t('generic_list_retry')} onActionPress={retryPage} /> : null}
         ListFooterComponent={menu.bootstrap.isError ? <ListStateView variant="error" description={t('store_menu_refresh_error')}
           actionLabel={t('generic_list_retry')} onActionPress={() => { void menu.refresh(position.captureAnchor()); }} />
           : menu.query.isFetchingNextPage ? <ActivityIndicator style={{ padding: spacing.lg }} color={colors.primary} />
@@ -115,6 +114,23 @@ export default function StoreMenuViewport({ storeId, menu, hero, scrollY, naviga
           if (item.type === 'empty') return <ListStateView variant="empty" description={t(sections.length ? 'store_menu_no_section_items' : 'store_details_no_items')} />;
           return <StoreMenuProductRow item={item} storeId={storeId} productAction={productAction} />;
         }} />
+      {menu.query.isFetchingPreviousPage || menu.query.isFetchPreviousPageError ? (
+        <View pointerEvents="box-none" style={{ position: 'absolute', top: navigationHeight + toolbarHeight + spacing.sm,
+          left: spacing.md, right: spacing.md, zIndex: layout.layer.navigation - 1, alignItems: 'center' }}>
+          {menu.query.isFetchingPreviousPage ? (
+            <View pointerEvents="none" style={[{ backgroundColor: colors.surfaceElevated, borderRadius: shape.radius.pill,
+              padding: spacing.sm }, elevation.floating]}>
+              <ActivityIndicator color={colors.primary} />
+            </View>
+          ) : (
+            <View style={[{ alignSelf: 'stretch', alignItems: 'center', backgroundColor: colors.surfaceElevated,
+              borderRadius: shape.radius.surface, gap: spacing.sm, padding: spacing.md }, elevation.floating]}>
+              <Text variant="supporting" color={colors.textSubtle} style={{ textAlign: 'center' }}>{t('store_menu_page_error')}</Text>
+              <Button label={t('generic_list_retry')} size="compact" onPress={retryPage} />
+            </View>
+          )}
+        </View>
+      ) : null}
       <Animated.View style={[{ position: 'absolute', top: navigationHeight, left: 0, right: 0, zIndex: layout.layer.navigation - 1 }, position.toolbarStyle]}>
         <StoreMenuToolbar categories={store.categories} subcategories={subcategories}
           activeCategoryId={activeSection?.categoryId ?? null} activeSubcategoryId={activeSection?.subcategoryId ?? null}

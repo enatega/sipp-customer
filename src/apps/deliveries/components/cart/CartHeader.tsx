@@ -1,4 +1,6 @@
 import React from 'react';
+import CartMerchantSummary from './CartMerchantSummary';
+import type { DeliveryStoreViewApiResponse } from '../../api/types';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,14 +12,18 @@ import { useTheme } from '../../../../general/theme/theme';
 
 type Props = {
   clearDisabled?: boolean;
-  itemCount?: number;
+  store?: DeliveryStoreViewApiResponse;
+  storeName?: string | null;
+  onStorePress?: () => void;
   onBackPress: () => void;
   onClearPress?: () => void;
 };
 
 export default function CartHeader({
   clearDisabled = false,
-  itemCount,
+  store,
+  storeName,
+  onStorePress,
   onBackPress,
   onClearPress,
 }: Props) {
@@ -31,7 +37,7 @@ export default function CartHeader({
       style={[
         styles.container,
         {
-          backgroundColor: colors.canvas,
+          backgroundColor: colors.surface,
           paddingBottom: spacing.sm,
           paddingHorizontal: gutter,
           paddingTop: insets.top + spacing.sm,
@@ -57,25 +63,12 @@ export default function CartHeader({
           <Ionicons color={colors.text} name="chevron-back" size={21} />
         </PressableScale>
 
-        <View style={[styles.titleRow, { gap: spacing.sm }]}>
-          <Text numberOfLines={1} variant="sectionTitle" weight="bold">
-            {t('cart_title')}
-          </Text>
-          {typeof itemCount === 'number' && itemCount > 0 ? (
-            <View
-              style={[
-                styles.countBadge,
-                {
-                  backgroundColor: colors.primarySoft,
-                  borderRadius: shape.radius.pill,
-                },
-              ]}
-            >
-              <Text color={colors.primary} variant="badge" weight="bold">
-                {itemCount}
-              </Text>
-            </View>
-          ) : null}
+        <View style={[styles.titleRow, { marginHorizontal: spacing.sm }]}>
+          {onStorePress ? (
+            <CartMerchantSummary compact store={store} fallbackName={storeName} onPress={onStorePress} />
+          ) : (
+            <Text numberOfLines={1} variant="sectionTitle" weight="bold">{t('cart_title')}</Text>
+          )}
         </View>
 
         {onClearPress ? (
@@ -109,13 +102,6 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
   },
-  countBadge: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 22,
-    minWidth: 22,
-    paddingHorizontal: 6,
-  },
   iconButton: {
     alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
@@ -130,6 +116,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   titleRow: {
+    flex: 1,
+    minWidth: 0,
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'center',

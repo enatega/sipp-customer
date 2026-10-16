@@ -107,6 +107,7 @@ const es = {
   "too_many_attempts_desc": "Hemos bloqueado temporalmente otros intentos para proteger su cuenta. Prueba de nuevo en 5 minutos.",
   "ok": "Ok",
   "enter_your_email": "Inicie sesión fácilmente introduciendo su correo electrónico!",
+  "auth_email_lookup_failed": "No se pudo comprobar el correo. Inténtalo de nuevo.",
   "enter_your_password": "Introduzca su contraseña",
   "email_already_exist": "Su email ya existe.",
   "remember_me": "Recuérdame",

@@ -9,11 +9,15 @@ import { useTheme } from "../../../../general/theme/theme";
 type Props = {
   isRetrying?: boolean;
   onRetry: () => void;
+  unavailable?: boolean;
+  onClose?: () => void;
 };
 
 export default function OrderTrackingErrorState({
   isRetrying = false,
   onRetry,
+  unavailable = false,
+  onClose,
 }: Props) {
   const { t } = useTranslation("deliveries");
   const { colors } = useTheme();
@@ -29,12 +33,18 @@ export default function OrderTrackingErrorState({
           },
         ]}
       >
-        <Ionicons color={colors.primary} name="cloud-offline-outline" size={28} />
+        <Ionicons color={colors.primary} name={unavailable ? 'receipt-outline' : 'cloud-offline-outline'} size={28} />
       </View>
 
       <Text color={colors.text} style={styles.title} weight="extraBold">
-        {t("order_tracking_error_title")}
+        {t(unavailable ? 'order_tracking_unavailable_account_title' : 'order_tracking_error_title')}
       </Text>
+
+      {unavailable ? (
+        <Text color={colors.textSubtle} style={styles.description}>
+          {t('order_tracking_unavailable_account_description')}
+        </Text>
+      ) : null}
 
       <Button
         isLoading={isRetrying}
@@ -42,6 +52,7 @@ export default function OrderTrackingErrorState({
         onPress={onRetry}
         style={styles.retryButton}
       />
+      {unavailable && onClose ? <Button variant="secondary" label={t('order_tracking_close')} onPress={onClose} style={styles.retryButton} /> : null}
     </View>
   );
 }
@@ -70,4 +81,5 @@ const styles = StyleSheet.create({
     fontSize: 22,
     textAlign: "center",
   },
+  description: { marginTop: 10, textAlign: 'center' },
 });

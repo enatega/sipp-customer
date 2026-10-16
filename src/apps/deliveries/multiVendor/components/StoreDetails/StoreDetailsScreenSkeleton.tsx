@@ -9,7 +9,7 @@ import StoreDetailMenuCardSkeleton from './StoreDetailMenuCardSkeleton';
 import { STORE_DETAIL_HERO_HEIGHT } from './StoreDetailNavigationHeader';
 
 export default function StoreDetailsScreenSkeleton() {
-  const { colors, elevation, isDark, layout, shape, spacing } = useTheme();
+  const { colors, isDark, layout, shape, spacing } = useTheme();
   const pageBackground = isDark ? colors.canvas : colors.surface;
   const { gutter } = useWindowClass();
   const insets = useSafeAreaInsets();
@@ -49,14 +49,14 @@ export default function StoreDetailsScreenSkeleton() {
         </View>
       </View>
 
-      <View style={[elevation.subtle, {
+      <View style={{
         backgroundColor: colors.surfaceElevated,
         borderRadius: shape.radius.sheet,
         gap: spacing.md,
         marginHorizontal: gutter,
         marginTop: -spacing.hero,
         padding: spacing.xl,
-      }]}>
+      }}>
         <View style={[styles.identity, { gap: spacing.md }]}>
           <Skeleton height={68} width={68} borderRadius={shape.radius.control} />
           <View style={{ flex: 1, gap: spacing.sm }}>

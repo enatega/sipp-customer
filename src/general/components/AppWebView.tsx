@@ -8,6 +8,7 @@ import { useTheme } from '../theme/theme';
 type Props = {
   onBackPress: () => void;
   onShouldStartLoad?: (navigation: WebViewNavigation) => boolean;
+  onLoadError?: () => void;
   sourceUrl: string;
   title: string;
 };
@@ -15,6 +16,7 @@ type Props = {
 export default function AppWebView({
   onBackPress,
   onShouldStartLoad,
+  onLoadError,
   sourceUrl,
   title,
 }: Props) {
@@ -33,6 +35,7 @@ export default function AppWebView({
         source={{ uri: sourceUrl }}
         style={styles.webview}
         onShouldStartLoadWithRequest={onShouldStartLoad}
+        onError={onLoadError}
       />
     </View>
   );

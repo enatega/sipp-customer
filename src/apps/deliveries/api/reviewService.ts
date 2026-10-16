@@ -6,6 +6,7 @@ export interface SubmitReviewPayload {
   orderId: string;
   rating: number;
   description: string;
+  recipient?: 'store' | 'rider';
 }
 
 export interface SubmitReviewResponse {
@@ -27,6 +28,9 @@ export interface OrderReviewResponse {
   store_address: string;
   order_status: string;
   is_reviewed: boolean;
+  is_rider_reviewed?: boolean;
+  rider_name?: string | null;
+  rider_review_detail?: Pick<OrderReviewDetail, 'id' | 'rating' | 'description'> | null;
   review_detail: OrderReviewDetail | null;
 }
 

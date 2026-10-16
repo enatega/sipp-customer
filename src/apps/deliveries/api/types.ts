@@ -272,6 +272,7 @@ export interface DeliveryStoreDetailsStore {
     tagLine?: string | null;
     description?: string | null;
     storeTimings?: DeliveryStoreTimings | null;
+    timezone?: string | null;
     isAvailable?: boolean;
     isClosed?: boolean;
     isFavorited?: boolean;

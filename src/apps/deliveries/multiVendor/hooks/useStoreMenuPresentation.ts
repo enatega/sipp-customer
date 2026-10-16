@@ -46,7 +46,7 @@ export function useStoreMenuPresentation(store: DeliveryStoreViewApiResponse | u
     store?.coverImage ?? selectedStore?.coverImage ?? 'https://placehold.co/1400x800.png';
   const logoImageUrl = store?.logo ?? selectedStore?.logo ?? 'https://placehold.co/176x176.png';
   const isStoreAvailable = isStoreOrderAvailable(store ?? selectedStore);
-  const hours = getTodayStoreHours(store?.storeTimings) ?? (
+  const hours = getTodayStoreHours(store?.storeTimings, store?.timezone) ?? (
     t('store_details_hours_unavailable')
   );
   const isFavourite = optimisticFav ?? store?.isFavorited ?? selectedStore?.isFavorite ?? false;

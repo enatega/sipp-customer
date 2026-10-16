@@ -24,7 +24,7 @@ const ACTIVE_PROGRESS: Partial<Record<string, number>> = {
 
 const STATUS_KEYS: Partial<Record<string, string>> = {
   scheduled: "orders_status_scheduled",
-  pending: "orders_status_received",
+  pending: "orders_status_pending",
   accepted: "orders_status_confirmed",
   preparing: "orders_status_preparing",
   ready: "orders_status_ready",

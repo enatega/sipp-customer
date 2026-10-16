@@ -91,7 +91,7 @@ export default function EditProfileForm({
       </View>
 
       {/* Date of birth — Day / Month / Year dropdowns */}
-      <View style={styles.fieldGroup}>
+      <View style={[styles.fieldGroup, { zIndex: 20 }]}>
         <Text weight="medium" style={styles.label}>{dateOfBirthLabel}</Text>
         <View style={styles.dobRow}>
           {/* Day */}
@@ -253,8 +253,8 @@ export default function EditProfileForm({
 const styles = StyleSheet.create({
   container: { gap: 16, paddingHorizontal: 16, paddingVertical: 12 },
   dobColumn: { flex: 1 },
-  dobDropdown: { maxHeight: 180, marginTop: 4 },
-  dobRow: { flexDirection: 'row', gap: 8 },
+  dobDropdown: { maxHeight: 180, marginTop: 4, position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 30 },
+  dobRow: { flexDirection: 'row', gap: 8, zIndex: 20 },
   dropdown: { borderRadius: 6, borderWidth: 1 },
   dropdownItem: { paddingHorizontal: 12, paddingVertical: 10 },
   fieldGroup: { gap: 4 },

@@ -26,7 +26,7 @@ export default function ItemSizes({
   const { spacing } = useTheme();
   const isRequired = variations.some((variation) => variation.required);
 
-  if (variations.length === 0) {
+  if (variations.length <= 1) {
     return null;
   }
 

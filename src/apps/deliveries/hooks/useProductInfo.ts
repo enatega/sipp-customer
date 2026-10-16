@@ -25,6 +25,8 @@ export function useProductInfo(
     queryFn: () => productInfoService.getProductInfo(productId),
     enabled: options?.enabled ?? productId.length > 0,
     staleTime: 10 * 60 * 1000,
+    refetchOnMount: 'always',
+    refetchInterval: 30_000,
     ...options,
   });
 }
@@ -38,6 +40,8 @@ export function useProductInfoCustomizations(
     queryFn: () => productInfoService.getProductInfoCustomizations(productId),
     enabled: options?.enabled ?? productId.length > 0,
     staleTime: 10 * 60 * 1000,
+    refetchOnMount: 'always',
+    refetchInterval: 30_000,
     ...options,
   });
 }

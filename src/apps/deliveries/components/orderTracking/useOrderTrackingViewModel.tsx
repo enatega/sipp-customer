@@ -32,6 +32,7 @@ const TRACKING_RIDER_MARKER = require("../../../../general/assets/map-markers/tr
 export type OrderTrackingViewModel = {
   canContactCourier: boolean;
   canCallCourier: boolean;
+  canCancelOrder: boolean;
   chatBoxId: string | null | undefined;
   courierNote: string | null;
   estimatedMinutes: number;
@@ -47,6 +48,7 @@ export type OrderTrackingViewModel = {
   onCallCourierPress: () => void;
   onClose: () => void;
   onOpenOrderDetails: () => void;
+  onCancelOrderPress: () => void;
   onOrderUnavailableAcknowledge: () => void;
   order: OrderDetailsResponse | undefined;
   orderDetailsQuery: ReturnType<typeof useOrderDetails>;
@@ -69,6 +71,7 @@ type Props = {
     "OrderTrackingScreen"
   >;
   onMissingReceiver: () => void;
+  onCancelOrderPress: () => void;
   orderId: string;
 };
 
@@ -86,6 +89,7 @@ type RiderLocation = {
 export function useOrderTrackingViewModel({
   navigation,
   onMissingReceiver,
+  onCancelOrderPress,
   orderId,
 }: Props): OrderTrackingViewModel {
   const { t } = useTranslation("deliveries");
@@ -114,7 +118,7 @@ export function useOrderTrackingViewModel({
   const riderLocation = useOrderRiderLocationSync(
     order?.orderType === "delivery" ? (order?.rider?.userId ?? null) : null,
     getOrderRiderLocation(order?.rider),
-    { enabled: order?.orderType === "delivery" },
+    { enabled: order?.orderType === "delivery", orderId },
   );
   const eta = riderLocation?.eta ?? order?.eta ?? null;
   const estimatedMinutes = eta?.estimatedMinutes
@@ -253,6 +257,7 @@ export function useOrderTrackingViewModel({
   return {
     canContactCourier,
     canCallCourier,
+    canCancelOrder: order?.status === 'pending' || order?.status === 'scheduled',
     chatBoxId,
     courierNote,
     estimatedMinutes,
@@ -294,13 +299,19 @@ export function useOrderTrackingViewModel({
       goToDeliveriesHome();
     },
     onOpenOrderDetails: () => navigation.navigate("OrderDetailsScreen", { orderId }),
+    onCancelOrderPress,
     onOrderUnavailableAcknowledge,
     order,
     orderDetailsQuery,
     orderId,
     orderUnavailableActionLabel: t("order_tracking_unavailable_action"),
-    orderUnavailableDescription:
-      order?.status === "cancelled"
+    orderUnavailableDescription: order?.status === 'rejected'
+      ? [
+          order.rejectionReason ? t('orders_rejection_reason', { reason: order.rejectionReason }) : t('order_tracking_unavailable_description'),
+          order.paymentStatus === 'paid' && ['wallet', 'card'].includes(order.paymentMethod)
+            ? t('order_tracking_refund_wallet') : null,
+        ].filter(Boolean).join(' ')
+      : order?.status === "cancelled"
         ? t("order_tracking_unavailable_cancelled_description")
         : t("order_tracking_unavailable_description"),
     orderUnavailableTitle: t("order_tracking_unavailable_title"),

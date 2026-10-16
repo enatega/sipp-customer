@@ -19,18 +19,18 @@ export function useStoreMenuWindow(storeId: string, isFocused: boolean) {
   const edgeRequest = useRef(false);
   const handledStaleError = useRef<unknown>(null);
   const [isEdgeRequestPending, setEdgeRequestPending] = useState(false);
-  const beforePageCommit = useRef<((preservePosition: boolean) => StoreMenuAnchor | undefined) | null>(null);
+  const captureVisibleAnchor = useRef<(() => StoreMenuAnchor | undefined) | null>(null);
   const [target, setTarget] = useState<(StoreMenuAnchor & { generation: number }) | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const bootstrap = useQuery({
     queryKey: deliveryKeys.storeMenu(storeId),
     queryFn: ({ signal }) => storeMenuService.bootstrap(storeId, signal),
     enabled: Boolean(storeId) && isFocused,
-    staleTime: Infinity,
+    staleTime: 0,
     gcTime: 0,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    refetchOnMount: false,
+    refetchOnMount: true,
     retry: 1,
   });
   const sections = bootstrap.data?.sections;
@@ -45,15 +45,11 @@ export function useStoreMenuWindow(storeId: string, isFocused: boolean) {
       const page = await storeMenuService.page(storeId, pageParam, signal);
       if (!signal.aborted) {
         const cached = client.getQueryData<InfiniteData<StoreMenuPage, StoreMenuPageParam>>(queryKey);
-        // Appending below the viewport must not issue a scroll command.
-        // Only prepends and front-page eviction can move the visible rows.
-        const preservePosition = Boolean(cached?.pages.length &&
-          (pageParam.direction === 'backward' || cached.pages.length >= 12));
-        const anchor = beforePageCommit.current?.(preservePosition);
-        const evictedPage = pageParam.direction === 'backward' ? cached?.pages[cached.pages.length - 1] : cached?.pages[0];
         // A user can reverse direction while this request is in flight. Never
         // evict their visible product merely because an old edge request completed.
-        if (cached && cached.pages.length >= 12 && anchor?.productId &&
+        const evictedPage = pageParam.direction === 'backward' ? cached?.pages[cached.pages.length - 1] : cached?.pages[0];
+        const anchor = cached && cached.pages.length >= 12 ? captureVisibleAnchor.current?.() : undefined;
+        if (anchor?.productId &&
             evictedPage?.items.some((item) => item.id === anchor.productId)) {
           await client.cancelQueries({ queryKey, exact: true });
         }
@@ -129,6 +125,13 @@ export function useStoreMenuWindow(storeId: string, isFocused: boolean) {
     }
   }, [bootstrap.refetch, client]);
 
+  const hasBeenFocused = useRef(false);
+  useEffect(() => {
+    if (!isFocused) return;
+    if (hasBeenFocused.current) void refresh();
+    hasBeenFocused.current = true;
+  }, [isFocused, refresh]);
+
   useEffect(() => {
     if (!(query.error instanceof ApiError) || ![404, 409].includes(query.error.status) ||
       handledStaleError.current === query.error) return;
@@ -162,5 +165,5 @@ export function useStoreMenuWindow(storeId: string, isFocused: boolean) {
     else void query.refetch();
   }, [query.error, refresh, sectionId, query.isFetchPreviousPageError, query.isFetchNextPageError, query.fetchPreviousPage, query.fetchNextPage, query.refetch]);
 
-  return { bootstrap, query, target, sectionId, jump, refresh, isRefreshing, load, retryPage, beforePageCommit };
+  return { bootstrap, query, target, sectionId, jump, refresh, isRefreshing, load, retryPage, captureVisibleAnchor };
 }

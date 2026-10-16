@@ -4,7 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import PressableScale from '../../../../general/components/PressableScale';
 import Text from '../../../../general/components/Text';
-import { useDeliveriesCurrencyLabel } from '../../../../general/stores/useAppConfigStore';
+import { useDeliveriesCurrencyCode } from '../../../../general/stores/useAppConfigStore';
+import { formatCurrency } from '../../utils/orderDetails/orderDetailsUtils';
 import { useTheme } from '../../../../general/theme/theme';
 
 type Props = {
@@ -13,8 +14,6 @@ type Props = {
   onSelectTip: (amount: number) => void;
 };
 
-const TIP_OPTIONS = [5, 10, 20, 50] as const;
-
 export default function CheckoutTipSection({
   selectedTip,
   onCustomTipPress,
@@ -22,9 +21,10 @@ export default function CheckoutTipSection({
 }: Props) {
   const { colors, layout, shape, spacing } = useTheme();
   const { t } = useTranslation('deliveries');
-  const currencyLabel = useDeliveriesCurrencyLabel();
-  const isCustomSelected = selectedTip > 0 && !TIP_OPTIONS.includes(selectedTip as (typeof TIP_OPTIONS)[number]);
-  const choices = [0, ...TIP_OPTIONS];
+  const currencyCode = useDeliveriesCurrencyCode();
+  const tipOptions = currencyCode.toUpperCase() === 'CRC' ? [500, 1000, 2000] : [5, 10, 20];
+  const isCustomSelected = selectedTip > 0 && !tipOptions.includes(selectedTip);
+  const choices = [0, ...tipOptions];
 
   return (
     <View style={[styles.section, { gap: spacing.md }]}>
@@ -68,7 +68,7 @@ export default function CheckoutTipSection({
                 variant="label"
                 weight={isSelected ? 'semiBold' : 'medium'}
               >
-                {amount === 0 ? t('checkout_tip_none') : `${currencyLabel} ${amount}`}
+                {amount === 0 ? t('checkout_tip_none') : formatCurrency(amount)}
               </Text>
             </PressableScale>
           );

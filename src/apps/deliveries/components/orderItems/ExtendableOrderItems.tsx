@@ -72,27 +72,31 @@ export default function ExtendableOrderItems({
         }
         renderItem={({ item: product }) => (
           <OrderDetailsProductCard
-            addonLines={getProductAddonLines(product)}
+            addonLines={getProductAddonLines(product).map((line) => ({
+              ...line,
+              label: line.kind === 'variation'
+                ? `${t('order_details_variation')}: ${line.label}`
+                : `${t('order_details_addon')}: ${line.label}`,
+            }))}
             imageUri={product.image}
             name={
               getLocalizedOrderProductName(product, i18n.language) ||
               localizedSummaryLabel ||
               t("order_details_empty_items")
             }
-            priceLabel={
-              typeof (
-                product.price ??
-                product.unitPrice ??
-                product.totalPrice
-              ) === "number"
-                ? formatCurrency(
-                  product.price ?? product.unitPrice ?? product.totalPrice,
-                )
-                : null
-            }
+            priceLabel={typeof product.totalPrice === 'number'
+              ? t('order_details_line_total', { amount: formatCurrency(product.totalPrice) })
+              : typeof (product.unitPrice ?? product.price) === 'number'
+                ? t('order_details_line_total', { amount: formatCurrency((product.unitPrice ?? product.price ?? 0) * Math.max(1, product.quantity ?? 1)) })
+                : null}
+            unitPriceLabel={typeof (product.unitPrice ?? product.price) === 'number'
+              ? t('order_details_unit_price', { amount: formatCurrency(product.unitPrice ?? product.price ?? 0) })
+              : null}
             quantityLabel={t("order_details_quantity_one", {
               count: product.quantity ?? 0,
             })}
+            itemNote={product.itemNote?.trim() || null}
+            itemNoteLabel={t('order_details_item_note')}
             subtitle={
               product.note ||
               product.description ||

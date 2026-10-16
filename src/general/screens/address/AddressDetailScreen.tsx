@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Keyboard, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
@@ -31,6 +31,7 @@ import type {
 } from '../../api/addressService';
 import { navigateAfterAddressSelection } from '../../navigation/addressFlowNavigation';
 import { useAuthSessionQuery } from '../../hooks/useAuthQueries';
+import useAndroidKeyboardVisible from '../../hooks/useAndroidKeyboardVisible';
 
 function areAdditionalFieldsEqual(
   first: AddressAdditionalFields | undefined,
@@ -98,13 +99,12 @@ export default function AddressDetailScreen() {
   const { colors, elevation } = useTheme();
   const { t } = useTranslation('general');
   const insets = useSafeAreaInsets();
+  const isAndroidKeyboardVisible = useAndroidKeyboardVisible();
   const formRef = useRef<AddressDetailFormHandle>(null);
   const hasCompletedGuestSelection = useRef(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
-  const [keyboardOffset, setKeyboardOffset] = useState(0);
   const params = route.params;
-  const { setSelectedAddress } = useAddress();
+  const { selectedAddress, setSelectedAddress } = useAddress();
   const sessionQuery = useAuthSessionQuery();
   const isEditing = Boolean(params.editAddressId);
 
@@ -138,22 +138,6 @@ export default function AddressDetailScreen() {
     setSelectedAddress,
   ]);
 
-  useEffect(() => {
-    const show = Keyboard.addListener('keyboardDidShow', (event) => {
-      setIsKeyboardVisible(true);
-      setKeyboardOffset(event.endCoordinates.height - insets.bottom + 16);
-    });
-    const hide = Keyboard.addListener('keyboardDidHide', () => {
-      setIsKeyboardVisible(false);
-      setKeyboardOffset(0);
-    });
-
-    return () => {
-      show.remove();
-      hide.remove();
-    };
-  }, [insets.bottom]);
-
   const handleSave = useCallback(
     async (data: AddressDetailFormSubmitData) => {
       const payload = {
@@ -177,7 +161,7 @@ export default function AddressDetailScreen() {
         }
 
         // Keep the just-saved address selected so users don't need to reselect it.
-        if (data.shouldSetDefault) {
+        if (data.shouldSetDefault || (isEditing && selectedAddress?.id === params.editAddressId)) {
           const savedAddresses = await addressService.getSavedAddresses(
             params.appPrefix,
           );
@@ -210,7 +194,7 @@ export default function AddressDetailScreen() {
         showToast.error(t('address_save_error'));
       }
     },
-    [isEditing, nav, params.appPrefix, params.editAddressId, params.origin, setSelectedAddress, t],
+    [isEditing, nav, params.appPrefix, params.editAddressId, params.origin, selectedAddress?.id, setSelectedAddress, t],
   );
 
   const handleButtonPress = useCallback(async () => {
@@ -234,21 +218,17 @@ export default function AddressDetailScreen() {
   }
 
   return (
-    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : isAndroidKeyboardVisible ? 'height' : undefined}
+      style={[styles.screen, { backgroundColor: colors.background }]}
+    >
       <ScreenHeader title={screenTitle} />
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={[
-          styles.scrollContent,
-          {
-            paddingBottom: isKeyboardVisible
-              ? keyboardOffset + 24
-              : 100,
-          },
-        ]}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="interactive"
+        keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'none'}
       >
         <AddressDetailForm
           ref={formRef}
@@ -258,9 +238,12 @@ export default function AddressDetailScreen() {
           initialLocationName={params.editLocationName}
           initialSetAsDefault={params.preselectAsDefault}
           initialType={(params.editType as AddressType) ?? 'HOME'}
+          initialAdditionalFields={params.editAdditionalFields}
           onSave={handleSave}
           labels={{
             apartmentDetailsTitle: t('address_apartment_details_title'),
+            requiredFieldSuffix: t('address_required_field_suffix'),
+            invalidCoordinates: t('address_invalid_coordinates'),
             apartmentFloorTowerLabel: t('address_field_floor_tower_optional'),
             apartmentFloorTowerPlaceholder: t('address_detail_floor_placeholder'),
             apartmentLandmarkLabel: t('address_field_landmark_optional'),
@@ -297,28 +280,26 @@ export default function AddressDetailScreen() {
         />
       </ScrollView>
 
-      {isKeyboardVisible ? null : (
-        <View
-          style={[
-            styles.footer,
-            elevation.floating,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.divider,
-              bottom: Math.max(insets.bottom, 8),
-              paddingBottom: 12,
-            },
-          ]}
-        >
-          <Button
-            label={buttonLabel}
-            onPress={handleButtonPress}
-            isLoading={isSaving}
-            disabled={isSaving}
-          />
-        </View>
-      )}
-    </View>
+      <View
+        style={[
+          styles.footer,
+          elevation.floating,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.divider,
+            marginBottom: Math.max(insets.bottom, 8),
+            paddingBottom: 12,
+          },
+        ]}
+      >
+        <Button
+          label={buttonLabel}
+          onPress={handleButtonPress}
+          isLoading={isSaving}
+          disabled={isSaving}
+        />
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -326,13 +307,11 @@ const styles = StyleSheet.create({
   footer: {
     borderRadius: 22,
     borderWidth: 1,
-    left: 12,
+    marginHorizontal: 12,
     paddingHorizontal: 12,
     paddingTop: 12,
-    position: 'absolute',
-    right: 12,
   },
   screen: { flex: 1 },
-  scrollContent: { gap: 16, paddingTop: 16 },
+  scrollContent: { gap: 16, paddingBottom: 24, paddingTop: 16 },
   scrollView: { flex: 1 },
 });

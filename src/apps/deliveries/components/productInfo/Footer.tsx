@@ -142,7 +142,7 @@ export default function Footer({
               label={
                 isAvailable
                   ? `${t("add_to_cart")}  ·  ${totalPriceLabel}`
-                  : t("product_info_unavailable")
+                  : t("store_details_out_of_stock")
               }
               onPress={onAddToCart}
               variant="primary"

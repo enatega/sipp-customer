@@ -7,6 +7,7 @@ import Text from '../../Text';
 import { useAuthStore } from "../../../stores/useAuthStore";
 import { useTheme } from '../../../theme/theme';
 import { isValidSignupPassword } from '../../../utils/signupValidation';
+import { isValidEmail } from '../../../utils/validation';
 import { useShallow } from "zustand/react/shallow";
 
 export default function FieldsWrapper({ disabled = false }: { disabled?: boolean }) {
@@ -14,7 +15,26 @@ export default function FieldsWrapper({ disabled = false }: { disabled?: boolean
   const { colors } = useTheme();
   const { t } = useTranslation();
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [touched, setTouched] = useState<string[]>([]);
+  const touch = (field: string) => {
+    setFocusedField(null);
+    setTouched((current) => current.includes(field) ? current : [...current, field]);
+  };
   const hasPasswordError = formData.password.length > 0 && !isValidSignupPassword(formData.password);
+  const emailError = signupConflictFields.includes('email')
+    ? t('signup_email_exists')
+    : touched.includes('email') && !formData.email.trim()
+      ? t('signup_field_required')
+      : touched.includes('email') && !isValidEmail(formData.email)
+        ? t('signup_invalid_email')
+        : null;
+  const phoneError = signupConflictFields.includes('phone')
+    ? t('signup_phone_exists')
+    : touched.includes('phone') && !formData.phone.trim()
+      ? t('signup_field_required')
+      : touched.includes('phone') && !/^\+[1-9]\d{7,14}$/.test(formData.phone)
+        ? t('signup_invalid_phone')
+        : null;
 
   const updateField = (field: keyof typeof formData, value: string) => {
     setFormData({ [field]: value });
@@ -22,6 +42,7 @@ export default function FieldsWrapper({ disabled = false }: { disabled?: boolean
 
   return (
     <View style={styles.container}>
+      <View style={styles.field}>
       <TextInputField
         value={formData.name}
         editable={!disabled}
@@ -30,8 +51,12 @@ export default function FieldsWrapper({ disabled = false }: { disabled?: boolean
         iconName="user"
         isFocused={focusedField === "name"}
         onFocus={() => setFocusedField("name")}
-        onBlur={() => setFocusedField(null)}
+        onBlur={() => touch('name')}
       />
+      <Text variant="caption" color={colors.danger} style={styles.feedback}>
+        {touched.includes('name') && !formData.name.trim() ? t('signup_field_required') : ' '}
+      </Text>
+      </View>
       <View style={styles.field}>
         <TextInputField
           value={formData.email}
@@ -42,13 +67,11 @@ export default function FieldsWrapper({ disabled = false }: { disabled?: boolean
           keyboardType="email-address"
           autoCapitalize="none"
           isFocused={focusedField === "email"}
-          hasError={signupConflictFields.includes('email')}
+          hasError={Boolean(emailError)}
           onFocus={() => setFocusedField("email")}
-          onBlur={() => setFocusedField(null)}
+          onBlur={() => touch('email')}
         />
-        {signupConflictFields.includes('email') ? <Text variant="caption" color={colors.danger}>
-          {t('signup_email_exists')}
-        </Text> : null}
+        <Text variant="caption" color={colors.danger} style={styles.feedback}>{emailError ?? ' '}</Text>
       </View>
       <View style={styles.field}>
         <TextInputField
@@ -62,7 +85,7 @@ export default function FieldsWrapper({ disabled = false }: { disabled?: boolean
           isFocused={focusedField === "password"}
           hasError={hasPasswordError}
           onFocus={() => setFocusedField("password")}
-          onBlur={() => setFocusedField(null)}
+          onBlur={() => touch('password')}
         />
         <Text variant="caption" color={hasPasswordError ? colors.danger : colors.textSubtle}>
           {t('signup_password_requirements')}
@@ -77,13 +100,11 @@ export default function FieldsWrapper({ disabled = false }: { disabled?: boolean
           onChangeFormattedText={(formattedValue) => updateField("phone", formattedValue)}
           onChangeCountry={(country) => setSignupCountryCode(country.cca2)}
           isActive={focusedField === "phone"}
-          hasError={signupConflictFields.includes('phone')}
+          hasError={Boolean(phoneError)}
           onFocus={() => setFocusedField("phone")}
-          onBlur={() => setFocusedField(null)}
+          onBlur={() => touch('phone')}
         />
-        {signupConflictFields.includes('phone') ? <Text variant="caption" color={colors.danger}>
-          {t('signup_phone_exists')}
-        </Text> : null}
+        <Text variant="caption" color={colors.danger} style={styles.feedback}>{phoneError ?? ' '}</Text>
       </View>
     </View>
   );
@@ -95,4 +116,5 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   field: { gap: 4 },
+  feedback: { minHeight: 18 },
 });

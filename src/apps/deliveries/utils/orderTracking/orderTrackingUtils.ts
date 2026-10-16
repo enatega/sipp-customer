@@ -162,7 +162,7 @@ const CUSTOMER_STATUS_LABELS: Partial<Record<DeliveryOrderStatus, string>> = {
 
 const CUSTOMER_STATUS_KEYS: Partial<Record<DeliveryOrderStatus, string>> = {
   scheduled: "orders_status_scheduled",
-  pending: "orders_status_received",
+  pending: "orders_status_pending",
   accepted: "orders_status_confirmed",
   preparing: "orders_status_preparing",
   picked_up: "orders_status_on_the_way",

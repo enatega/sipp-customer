@@ -36,6 +36,8 @@ import { clearActiveAppRoute } from "../navigation/pendingAppRedirect";
 import { socketClient } from "../services/socket";
 import { useAuthStore } from "../stores/useAuthStore";
 import { queryClient } from "../providers/QueryProvider";
+import apiClient from "../api/apiClient";
+import { pushTokenStorage } from "../services/notifications/expoPushTokenService";
 
 async function finalizeAuthSession(
   queryClient: ReturnType<typeof useQueryClient>,
@@ -68,6 +70,7 @@ export async function clearStoredAuthSession() {
 // wallet, cards or addresses while refetches are in flight.
 export async function signOutLocally() {
   await clearStoredAuthSession();
+  await pushTokenStorage.clear();
   // Queries only: clearing the mutation cache would drop the in-flight logout
   // mutation and skip its callbacks.
   queryClient.getQueryCache().clear();
@@ -167,7 +170,18 @@ export function useLogout(options?: UseMutationOptions<void, ApiError, void>) {
   const queryClient = useQueryClient();
 
   return useMutation<void, ApiError, void>({
-    mutationFn: signOutLocally,
+    mutationFn: async () => {
+      await pushTokenStorage.beginLogout();
+      try {
+        const token = await pushTokenStorage.get();
+        if (token) {
+          await apiClient.post('/api/v1/users/push-token/unregister', { token });
+        }
+        await signOutLocally();
+      } finally {
+        pushTokenStorage.cancelLogout();
+      }
+    },
     ...options,
     onSuccess: async (_data, variables, onMutateResult, context) => {
       queryClient.setQueryData(authKeys.session(), {

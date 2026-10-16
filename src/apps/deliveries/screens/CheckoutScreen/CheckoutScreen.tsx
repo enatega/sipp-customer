@@ -4,8 +4,9 @@ import { View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useIsMutating, useQuery, useQueryClient } from '@tanstack/react-query';
 import { showToast } from '../../../../general/components/AppToast';
+import { ApiError } from '../../../../general/api/apiClient';
 import FeedbackModal from '../../../../general/components/FeedbackModal';
 import { useTheme } from '../../../../general/theme/theme';
 import AddressSelectionBottomSheet from '../../../../general/components/address/AddressSelectionBottomSheet';
@@ -23,8 +24,7 @@ import useCurrentLocation from '../../../../general/hooks/useCurrentLocation';
 import useSelectSavedAddress from '../../../../general/hooks/useSelectSavedAddress';
 import { useCart } from '../../hooks/useCart';
 import { useCheckoutPreview } from '../../hooks/useCheckoutPreview';
-import { useUseCouponMutation } from '../../hooks/useUseCouponMutation';
-import { claimedCouponsKeys } from '../../hooks/useClaimedCouponsQuery';
+import { couponMutationKey } from '../../hooks/useUseCouponMutation';
 import { formatCartPrice } from '../../components/cart/cartUtils';
 import {
   createSelectedDeliveryAddress,
@@ -33,6 +33,7 @@ import {
 } from '../../../../general/utils/address';
 import { usePlaceOrder } from '../../hooks/usePlaceOrder';
 import { orderService } from '../../api/orderService';
+import { ordersService } from '../../api/ordersService';
 import CheckoutMessageEditorScreen from '../../components/checkout/CheckoutMessageEditorScreen';
 import CheckoutCustomTipScreen from '../../components/checkout/CheckoutCustomTipScreen';
 import {
@@ -57,11 +58,13 @@ import {
   waitForStripeCheckoutOrderId,
 } from '../../components/checkout/checkoutStripeOrderUtils';
 import { deliveryKeys } from '../../api/queryKeys';
-import { useCheckoutCouponStore } from '../../stores/useCheckoutCouponStore';
-import {
-  useWalletSavedCardsQuery,
-  useWalletSetDefaultCardMutation,
-} from '../../../../general/api/walletSavedCardsService';
+import CheckoutOffersSheet from '../../components/offers/CheckoutOffersSheet';
+import { cartCouponIds, previewCoupons, couponIssueFromError } from '../../utils/couponRules';
+import { useCouponSyncStore } from '../../stores/useCouponSyncStore';
+import { useInventoryMessage, isInventoryError } from '../../hooks/useInventoryMessage';
+import { useCouponText } from '../../hooks/useCouponText';
+import { formatCurrency } from '../../utils/orderDetails/orderDetailsUtils';
+import { useWalletSavedCardsQuery } from '../../../../general/api/walletSavedCardsService';
 import { useCustomerWalletBalance } from '../../api/walletService';
 import { useDeliveriesCurrencyLabel } from '../../../../general/stores/useAppConfigStore';
 import { profileService } from '../../../../general/api/profileService';
@@ -69,6 +72,7 @@ import Text from '../../../../general/components/Text';
 import Button from '../../../../general/components/Button';
 import ScreenHeader from '../../../../general/components/ScreenHeader';
 import CheckoutPhoneVerification from '../../components/checkout/CheckoutPhoneVerification';
+import { checkoutAttemptStorage, type CheckoutAttempt } from '../../storage/checkoutAttemptStorage';
 
 const DELIVERY_ROOT_ROUTES = ['SingleVendor', 'MultiVendor', 'Chain'] as const;
 
@@ -118,7 +122,6 @@ function getPreviewInput(
   orderType: CheckoutOrderType,
   paymentMethod: CheckoutPaymentMethod,
   selectedAddressId?: string,
-  couponCode?: string,
   riderTip?: number,
 ) {
   if (!cart?.bucketId || !cart.storeId) {
@@ -135,47 +138,8 @@ function getPreviewInput(
     orderType,
     paymentMethod,
     addressId: orderType === 'delivery' ? selectedAddressId : undefined,
-    couponCode: couponCode ?? undefined,
-    riderTip: riderTip && riderTip > 0 ? riderTip : undefined,
+    riderTip: orderType === 'delivery' && riderTip && riderTip > 0 ? riderTip : undefined,
   };
-}
-
-function applyPercentageCouponFallback(params: {
-  subtotal: number;
-  backendDiscount: number;
-  discountType?: string;
-  discountValue?: number;
-  maxDiscountCap?: number;
-  minOrderValue?: number;
-}) {
-  const {
-    subtotal,
-    backendDiscount,
-    discountType,
-    discountValue,
-    maxDiscountCap,
-    minOrderValue,
-  } = params;
-
-  // Keep current behavior for FIXED/FLAT and for already-applied backend discount.
-  if (discountType !== 'PERCENTAGE' || backendDiscount > 0) {
-    return backendDiscount;
-  }
-
-  if (typeof discountValue !== 'number' || discountValue <= 0) {
-    return backendDiscount;
-  }
-
-  if (typeof minOrderValue === 'number' && subtotal < minOrderValue) {
-    return backendDiscount;
-  }
-
-  const percentageAmount = (subtotal * discountValue) / 100;
-  const cappedAmount = typeof maxDiscountCap === 'number' && maxDiscountCap > 0
-    ? Math.min(percentageAmount, maxDiscountCap)
-    : percentageAmount;
-
-  return Number.isFinite(cappedAmount) && cappedAmount > 0 ? cappedAmount : backendDiscount;
 }
 
 export default function CheckoutScreen() {
@@ -192,6 +156,14 @@ export default function CheckoutScreen() {
   const navigation = useNavigation<NavigationProp<Record<string, object | undefined>>>();
   const [activeMessageTarget, setActiveMessageTarget] = React.useState<CheckoutMessageTarget | null>(null);
   const [isAddressSheetVisible, setIsAddressSheetVisible] = React.useState(false);
+  const [uncertainOrder, setUncertainOrder] = React.useState<{
+    bucketId: string;
+    storeId: string;
+  } | null>(null);
+  const [checkoutAttempt, setCheckoutAttempt] = React.useState<CheckoutAttempt | null>(null);
+  const checkoutAttemptRef = React.useRef<CheckoutAttempt | null>(null);
+  const [isLoadingCheckoutAttempt, setIsLoadingCheckoutAttempt] = React.useState(true);
+  const [recoveryClientSecret, setRecoveryClientSecret] = React.useState<string | null>(null);
   const [isPaymentMethodScreenVisible, setIsPaymentMethodScreenVisible] = React.useState(false);
   const [isCustomTipScreenVisible, setIsCustomTipScreenVisible] = React.useState(false);
   const [stripeCheckout, setStripeCheckout] = React.useState<{
@@ -211,12 +183,13 @@ export default function CheckoutScreen() {
     [addresses],
   );
   const effectiveSelectedAddress = React.useMemo(
-    () => selectedAddress ?? fallbackSelectedAddress,
-    [fallbackSelectedAddress, selectedAddress],
+    () => selectedAddress?.id && addresses.some((address) => address.id === selectedAddress.id)
+      ? selectedAddress : fallbackSelectedAddress,
+    [addresses, fallbackSelectedAddress, selectedAddress],
   );
   const resolvedAddressId = React.useMemo(
-    () => resolveSavedAddressId(selectedAddress?.id, addresses),
-    [addresses, selectedAddress?.id],
+    () => resolveSavedAddressId(effectiveSelectedAddress?.id, addresses),
+    [addresses, effectiveSelectedAddress?.id],
   );
   const { selectSavedAddress, selectingAddressId } = useSelectSavedAddress("deliveries");
   const [orderType, setOrderType] = React.useState<CheckoutOrderType>('delivery');
@@ -228,30 +201,44 @@ export default function CheckoutScreen() {
   });
   const [selectedTip, setSelectedTip] = React.useState(0);
   const [customTipValue, setCustomTipValue] = React.useState('');
-  const selectedCoupon = useCheckoutCouponStore((state) => state.selectedCoupon);
-  const clearCheckoutCoupon = useCheckoutCouponStore((state) => state.clearCoupon);
-  const useCouponMutation = useUseCouponMutation();
+  const [isOffersVisible, setIsOffersVisible] = React.useState(false);
+  const isSelectingCoupon = useIsMutating({ mutationKey: couponMutationKey }) > 0;
+  const couponText = useCouponText();
+  const inventoryMessage = useInventoryMessage();
+  const [placementInventoryError, setPlacementInventoryError] = React.useState<ApiError | null>(null);
   const savedCardsQuery = useWalletSavedCardsQuery('deliveries');
   const walletBalanceQuery = useCustomerWalletBalance();
   const wantsWalletAfterTopUpRef = React.useRef(false);
-  const setDefaultCardMutation = useWalletSetDefaultCardMutation('deliveries');
+  const hasManuallySelectedPaymentMethodRef = React.useRef(false);
+  const [initialPaymentReady, setInitialPaymentReady] = React.useState(false);
   const [selectedStripeCardId, setSelectedStripeCardId] = React.useState<string | null>(null);
+  const savedCards = savedCardsQuery.data?.cards ?? [];
+  const selectedSavedCard = savedCards.find((card) => card.id === selectedStripeCardId)
+    ?? savedCards.find((card) => card.isDefault)
+    ?? savedCards[0]
+    ?? null;
   const {
     data: cart,
     isPending: isCartPending,
     error: cartError,
     refetch: refetchCart,
   } = useCart();
+  React.useEffect(() => {
+    if (initialPaymentReady || savedCardsQuery.isPending) return;
+    if (selectedSavedCard) setPaymentMethod('stripe');
+    setInitialPaymentReady(true);
+  }, [initialPaymentReady, savedCardsQuery.isPending, selectedSavedCard?.id]);
   const previewInput = React.useMemo(
-    () => phoneProfile.data?.data?.user && !(phoneProfile.data.data.user.phone_verification_required ?? (!phoneProfile.data.data.user.phone || !phoneProfile.data.data.user.phone_is_verified)) ? getPreviewInput(
+    () => initialPaymentReady && !isAddressesLoading && phoneProfile.data?.data?.user && !(phoneProfile.data.data.user.phone_verification_required ?? (!phoneProfile.data.data.user.phone || !phoneProfile.data.data.user.phone_is_verified)) ? getPreviewInput(
       cart,
       orderType,
       paymentMethod,
       resolvedAddressId,
-      selectedCoupon?.code,
       selectedTip,
     ) : null,
     [
+      initialPaymentReady,
+      isAddressesLoading,
       cart,
       phoneProfile.data?.data?.user?.phone_verification_required,
       phoneProfile.data?.data?.user?.phone,
@@ -260,7 +247,6 @@ export default function CheckoutScreen() {
       orderType,
       paymentMethod,
       resolvedAddressId,
-      selectedCoupon?.code,
       selectedTip,
     ],
   );
@@ -270,54 +256,116 @@ export default function CheckoutScreen() {
     isFetching: isPreviewPending,
     isError: isPreviewError,
     refetch: refetchPreview,
-  } = useCheckoutPreview(
-    previewInput,
-    previewInput
-      ? { placeholderData: (previousPreview) => previousPreview }
-      : undefined,
-  );
+  } = useCheckoutPreview(previewInput, undefined, JSON.stringify([cartCouponIds(cart).sort(), cart?.items.map(item => [item.id, item.quantity, item.unitPrice]).sort((a, b) => String(a[0]).localeCompare(String(b[0]))), cart?.totalPrice, cart?.discountAmount, effectiveSelectedAddress]));
 
-  const navigateToOrderConfirmation = React.useCallback((orderId: string) => {
+  React.useEffect(() => {
+    if (preview && !isPreviewError && !isPreviewPending) setPlacementInventoryError(null);
+  }, [preview, isPreviewError, isPreviewPending]);
+  const inventoryErrorMessage = inventoryMessage(previewError) ?? inventoryMessage(placementInventoryError);
+
+  const checkoutUserId = phoneProfile.data?.data?.user?.id;
+  const couponSyncPending = useCouponSyncStore(state => state.userId === checkoutUserId && state.pending);
+  const couponPreviews = previewCoupons(preview);
+  const selectedCouponIds = cart && (cart.appliedCouponIds !== undefined || cart.appliedCouponId !== undefined)
+    ? cartCouponIds(cart) : couponPreviews.map(coupon => coupon.id);
+  const hasCouponIssues = couponPreviews.some(coupon => selectedCouponIds.includes(coupon.id) && (coupon.issue || !coupon.isApplied));
+  const missingCouponPreview = selectedCouponIds.some(id => !couponPreviews.some(coupon => coupon.id === id));
+  const isCouponChecking = isSelectingCoupon || couponSyncPending || (selectedCouponIds.length > 0 && isPreviewPending);
+  const isCouponBlocked = isCouponChecking || hasCouponIssues || missingCouponPreview;
+  const confirmedSavings = isCouponChecking || isPreviewError ? 0 : couponPreviews.reduce((sum, coupon) =>
+    sum + (selectedCouponIds.includes(coupon.id) && coupon.isApplied && !coupon.issue ? coupon.appliedDiscount ?? 0 : 0), 0);
+  const refreshOfferPreview = React.useCallback(async () => {
+    await refetchPreview({ throwOnError: true });
+  }, [refetchPreview]);
+  const hasLoadedCheckoutCart = React.useRef(false);
+  useFocusEffect(React.useCallback(() => {
+    if (!hasLoadedCheckoutCart.current) {
+      hasLoadedCheckoutCart.current = true;
+      return;
+    }
+    // A return from cart/address editing may change pricing inputs. The preview
+    // key handles actual changes; unchanged cart data does not recalculate totals.
+    void queryClient.invalidateQueries({ queryKey: deliveryKeys.cart() });
+  }, [queryClient]));
+
+  React.useEffect(() => {
+    if (!checkoutUserId) {
+      if (!phoneProfile.isPending) setIsLoadingCheckoutAttempt(false);
+      return;
+    }
+    let active = true;
+    setIsLoadingCheckoutAttempt(true);
+    void checkoutAttemptStorage.read(checkoutUserId).catch(() => null).then((saved) => {
+      if (active) {
+        checkoutAttemptRef.current = saved;
+        setCheckoutAttempt(saved);
+      }
+    }).finally(() => {
+      if (active) setIsLoadingCheckoutAttempt(false);
+    });
+    return () => { active = false; };
+  }, [checkoutUserId, phoneProfile.isPending]);
+
+  const navigateToOrderTracking = React.useCallback((orderId: string) => {
     const rootRouteName = getCheckoutRootRoute(navigation);
 
     navigation.reset({
       index: 1,
       routes: [
+        { name: rootRouteName },
         {
-          name: rootRouteName,
-        },
-        {
-          name: 'OrderConfirmation',
-          params: {
-            orderId,
-            snapshot: {
-              itemCount: preview?.bucket.itemCount,
-              orderType,
-              scheduledAt: null,
-              storeImage: preview?.store.logo ?? preview?.store.image,
-              storeName: preview?.store.name,
-              totalAmount: preview?.pricing.totalAmount,
-            },
-          },
+          name: 'OrderTrackingScreen',
+          params: { orderId },
         },
       ],
     } as never);
-  }, [navigation, orderType, preview]);
+  }, [navigation]);
 
   const completePlacedOrder = React.useCallback((orderId: string) => {
-    clearCheckoutCoupon();
-    navigateToOrderConfirmation(orderId);
+    if (checkoutUserId) void checkoutAttemptStorage.clear(checkoutUserId);
+    checkoutAttemptRef.current = null;
+    setCheckoutAttempt(null);
+    setUncertainOrder(null);
+    navigateToOrderTracking(orderId);
     void Promise.all([
       queryClient.invalidateQueries({ queryKey: deliveryKeys.cart() }),
       queryClient.invalidateQueries({ queryKey: deliveryKeys.cartCount() }),
       queryClient.invalidateQueries({ queryKey: deliveryKeys.orders() }),
       queryClient.invalidateQueries({ queryKey: deliveryKeys.walletBalance() }),
     ]);
-  }, [clearCheckoutCoupon, navigateToOrderConfirmation, queryClient]);
+  }, [checkoutUserId, navigateToOrderTracking, queryClient]);
 
   const isPlacingOrderRef = React.useRef(false);
   const placeOrderMutation = usePlaceOrder({
     onError: (error) => {
+      if (isInventoryError(error)) {
+        if (checkoutUserId) void checkoutAttemptStorage.clear(checkoutUserId);
+        checkoutAttemptRef.current = null;
+        setCheckoutAttempt(null);
+        setPlacementInventoryError(error);
+        showToast.error(t('inventory_title'), inventoryMessage(error) ?? t('inventory_update_cart'));
+        void refetchCart();
+        void refetchPreview();
+        return;
+      }
+      const issue = couponIssueFromError(error);
+      if (issue) {
+        // A definitive coupon refusal happens before payment/draft creation.
+        if (checkoutUserId) void checkoutAttemptStorage.clear(checkoutUserId);
+        checkoutAttemptRef.current = null;
+        setCheckoutAttempt(null);
+        setIsOffersVisible(true);
+        showToast.error(t('offers_review'), couponText.issue(issue));
+        void refetchPreview();
+        return;
+      }
+      if (error.code === 'ORDER_STATUS_UNKNOWN') {
+        if (cart?.bucketId && cart.storeId) {
+          setUncertainOrder({ bucketId: cart.bucketId, storeId: cart.storeId });
+        }
+        showToast.info(t('checkout_order_confirmation_delayed'));
+        return;
+      }
       if (/PHONE_VERIFICATION_REQUIRED/.test(error.message)) {
         void phoneProfile.refetch();
         showToast.error(t('checkout_phone_verify_title'), t('checkout_phone_verify_description'));
@@ -340,6 +388,16 @@ export default function CheckoutScreen() {
     },
     onSuccess: async (response) => {
       if (response.mode === 'stripe') {
+        if (checkoutAttemptRef.current && checkoutUserId) {
+          const saved = {
+            ...checkoutAttemptRef.current,
+            draftId: response.draftId,
+            checkoutUrl: response.checkoutUrl ?? undefined,
+          };
+          checkoutAttemptRef.current = saved;
+          setCheckoutAttempt(saved);
+          await checkoutAttemptStorage.save(saved).catch(() => undefined);
+        }
         if (response.orderId) {
           completePlacedOrder(response.orderId);
           return;
@@ -348,6 +406,7 @@ export default function CheckoutScreen() {
         if (response.clientSecret) {
           const { error } = await handleNextAction(response.clientSecret);
           if (error) {
+            setUncertainOrder(cart?.bucketId && cart.storeId ? { bucketId: cart.bucketId, storeId: cart.storeId } : null);
             showToast.error(t('checkout_payment_failed'), error.message);
             return;
           }
@@ -359,6 +418,16 @@ export default function CheckoutScreen() {
               return;
             }
           } catch (error) {
+            if (
+              error instanceof ApiError &&
+              (error.status === 0 || error.code === 'TRANSIENT_RESPONSE_STREAM_LOST') &&
+              cart?.bucketId && cart.storeId
+            ) {
+              setUncertainOrder({ bucketId: cart.bucketId, storeId: cart.storeId });
+              showToast.info(t('checkout_order_confirmation_delayed'));
+              return;
+            }
+            setUncertainOrder(cart?.bucketId && cart.storeId ? { bucketId: cart.bucketId, storeId: cart.storeId } : null);
             showToast.error(
               t('checkout_payment_failed'),
               error instanceof Error ? error.message : undefined,
@@ -383,6 +452,63 @@ export default function CheckoutScreen() {
     },
   });
 
+  const [reconcileNonce, setReconcileNonce] = React.useState(0);
+  React.useEffect(() => {
+    const pending = checkoutAttempt ?? uncertainOrder;
+    if (!pending || placeOrderMutation.isPending || isPlacingOrderRef.current) return;
+    let cancelled = false;
+    let checking = false;
+    const check = async () => {
+      if (checking || cancelled) return;
+      checking = true;
+      try {
+        const lookup = await orderService.getPlacedOrderByBucket(pending.bucketId, pending.storeId);
+        if (cancelled) return;
+        if (lookup.orderId) {
+          setUncertainOrder(null);
+          completePlacedOrder(lookup.orderId);
+          return;
+        }
+        const draftId = checkoutAttempt?.draftId || lookup.draftId;
+        if (draftId) {
+          const draft = await ordersService.getStripeDraftStatus(draftId);
+          if (cancelled) return;
+          if (checkoutAttempt && checkoutUserId && (
+            checkoutAttempt.draftId !== draftId ||
+            (draft.checkoutUrl && checkoutAttempt.checkoutUrl !== draft.checkoutUrl)
+          )) {
+            const updated = { ...checkoutAttempt, draftId, checkoutUrl: draft.checkoutUrl || checkoutAttempt.checkoutUrl };
+            checkoutAttemptRef.current = updated;
+            setCheckoutAttempt(updated);
+            void checkoutAttemptStorage.save(updated);
+          }
+          if (draft.orderId) {
+            setUncertainOrder(null);
+            completePlacedOrder(draft.orderId);
+          } else if (draft.status === 'payment_failed' || draft.status === 'cancelled') {
+            setUncertainOrder(null);
+            if (checkoutUserId) void checkoutAttemptStorage.clear(checkoutUserId);
+            checkoutAttemptRef.current = null;
+            setCheckoutAttempt(null);
+            showToast.error(t('checkout_payment_failed'));
+          } else if (draft.clientSecret && draft.status === 'requires_action') {
+            setRecoveryClientSecret(draft.clientSecret);
+          }
+        }
+      } catch {
+        // Network failure does not establish whether payment succeeded.
+      } finally {
+        checking = false;
+      }
+    };
+    void check();
+    const interval = setInterval(() => { void check(); }, 5000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [checkoutAttempt, checkoutUserId, completePlacedOrder, placeOrderMutation.isPending, reconcileNonce, uncertainOrder, t]);
+
   React.useEffect(() => {
     if (!preview?.store) {
       return;
@@ -404,6 +530,15 @@ export default function CheckoutScreen() {
 
     setPaymentMethod(getPreferredCheckoutPaymentMethod(preview.store));
   }, [paymentMethod, preview?.store]);
+
+  React.useEffect(() => {
+    if (!selectedSavedCard || preview?.store?.stripeAllowed !== true
+      || hasManuallySelectedPaymentMethodRef.current) {
+      return;
+    }
+
+    setPaymentMethod('stripe');
+  }, [selectedSavedCard?.id, preview?.store?.stripeAllowed]);
 
   React.useEffect(() => {
     if (preview?.store?.stripeAllowed === false && leaveAtDoor) {
@@ -503,11 +638,12 @@ export default function CheckoutScreen() {
 
   const handlePlaceOrderPress = React.useCallback(() => {
     // Guard against double taps landing before the button re-renders as disabled.
-    if (isPlacingOrderRef.current || placeOrderMutation.isPending) {
+    if (isPlacingOrderRef.current || placeOrderMutation.isPending || uncertainOrder || checkoutAttemptRef.current || isLoadingCheckoutAttempt) {
       return;
     }
 
-    if (!cart?.bucketId || !cart.storeId) {
+    if (!cart?.bucketId || !cart.storeId || !preview || isPreviewError || isPreviewPending
+      || inventoryErrorMessage || isCouponBlocked || queryClient.isMutating({ mutationKey: couponMutationKey }) > 0) {
       return;
     }
 
@@ -532,29 +668,41 @@ export default function CheckoutScreen() {
       bucketId: cart.bucketId,
       orderType,
       paymentMethod,
-      paymentMethodId: paymentMethod === 'stripe'
-        ? selectedStripeCardId ?? savedCardsQuery.data?.cards.find((card) => card.isDefault)?.id
-        : undefined,
+      paymentMethodId: paymentMethod === 'stripe' ? selectedSavedCard?.id : undefined,
       addressId: orderType === 'delivery' ? resolvedAddressId : undefined,
       customerNote: buildCustomerNote({
         restaurant: messages.restaurant,
         courier: orderType === 'delivery' ? messages.courier : '',
       }),
-      couponCode: selectedCoupon?.code,
       riderTip: orderType === 'delivery' && selectedTip > 0 ? selectedTip : undefined,
-      successUrl: paymentMethod === 'stripe' && !selectedStripeCardId
+      successUrl: paymentMethod === 'stripe' && !selectedSavedCard
         ? CHECKOUT_STRIPE_SUCCESS_URL
         : undefined,
-      cancelUrl: paymentMethod === 'stripe' && !selectedStripeCardId
+      cancelUrl: paymentMethod === 'stripe' && !selectedSavedCard
         ? CHECKOUT_STRIPE_CANCEL_URL
         : undefined,
     };
 
     isPlacingOrderRef.current = true;
-    void placeOrderMutation.mutateAsync(payload).catch(() => {
-      // Toast feedback is handled by the mutation callbacks.
+    void (async () => {
+      if (paymentMethod === 'stripe') {
+        if (!checkoutUserId) throw new Error('Signed-in customer is unavailable');
+        const attempt: CheckoutAttempt = {
+          userId: checkoutUserId,
+          bucketId: cart.bucketId,
+          storeId: cart.storeId,
+          createdAt: new Date().toISOString(),
+        };
+        await checkoutAttemptStorage.save(attempt);
+        checkoutAttemptRef.current = attempt;
+        setCheckoutAttempt(attempt);
+      }
+      await placeOrderMutation.mutateAsync(payload);
+    })().catch((error) => {
+      if (!(error instanceof ApiError)) showToast.error(t('checkout_place_order_error'));
     }).finally(() => {
       isPlacingOrderRef.current = false;
+      setReconcileNonce((value) => value + 1);
     });
   }, [
     cart?.bucketId,
@@ -562,57 +710,35 @@ export default function CheckoutScreen() {
     orderType,
     paymentMethod,
     placeOrderMutation,
+    preview,
+    isPreviewError,
+    isPreviewPending,
+    isCouponBlocked,
+    inventoryErrorMessage,
+    queryClient,
     resolvedAddressId,
-    selectedCoupon?.code,
     messages,
     leaveAtDoor,
     preview?.store?.stripeAllowed,
     selectedTip,
-    savedCardsQuery.data?.cards,
-    selectedStripeCardId,
+    selectedSavedCard?.id,
+    uncertainOrder,
+    checkoutUserId,
+    isLoadingCheckoutAttempt,
     t,
   ]);
 
-  const handlePromoPress = React.useCallback(() => {
-    navigation.navigate('Coupons');
-  }, [navigation]);
-
-  const handlePromoRemove = React.useCallback(async () => {
-    if (!selectedCoupon?.id) {
-      clearCheckoutCoupon();
-      return;
-    }
-
-    try {
-      await useCouponMutation.mutateAsync({
-        id: selectedCoupon.id,
-        isActive: false,
-      });
-      clearCheckoutCoupon();
-      void queryClient.invalidateQueries({ queryKey: claimedCouponsKeys.all });
-      showToast.success(t('checkout_promo_removed'));
-      void refetchPreview();
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : t('coupon_deactivate_error_fallback');
-      showToast.error(t('coupon_deactivate_error_title'), message);
-    }
-  }, [
-    clearCheckoutCoupon,
-    refetchPreview,
-    selectedCoupon?.id,
-    t,
-    useCouponMutation,
-  ]);
+  const handlePromoPress = React.useCallback(() => setIsOffersVisible(true), []);
 
   const handleStripeCheckoutBackPress = React.useCallback(() => {
     setStripeCheckout(null);
+    setReconcileNonce((value) => value + 1);
   }, []);
 
   const handleStripeCheckoutCancel = React.useCallback(() => {
     setStripeCheckout(null);
-    showToast.info(t('checkout_payment_cancelled'));
-  }, [t]);
+    setReconcileNonce((value) => value + 1);
+  }, []);
 
   const handleStripeCheckoutSuccess = React.useCallback(async () => {
     if (!stripeCheckout?.draftId) return;
@@ -626,24 +752,41 @@ export default function CheckoutScreen() {
     } catch (error) {
       if (error instanceof Error && error.message === 'payment_failed') {
         setStripeCheckout(null);
-        showToast.error(t('checkout_payment_failed'));
+        setReconcileNonce((value) => value + 1);
         return;
       }
     }
 
     setStripeCheckout(null);
+    setReconcileNonce((value) => value + 1);
     showToast.info(t('checkout_payment_confirmation_delayed'));
   }, [completePlacedOrder, stripeCheckout?.draftId, t]);
 
+  const handleResumeSavedCard = React.useCallback(async () => {
+    const draftId = checkoutAttempt?.draftId;
+    if (!draftId || !recoveryClientSecret) return;
+    const { error } = await handleNextAction(recoveryClientSecret);
+    if (!error) {
+      try {
+        const finalized = await orderService.finalizeSavedCardOrder(draftId);
+        if (finalized.mode === 'stripe' && finalized.orderId) {
+          completePlacedOrder(finalized.orderId);
+          return;
+        }
+      } catch {
+        // The authoritative draft check below will reconcile a lost response.
+      }
+    }
+    setReconcileNonce((value) => value + 1);
+  }, [checkoutAttempt?.draftId, completePlacedOrder, handleNextAction, recoveryClientSecret]);
+
   const handlePaymentMethodPress = React.useCallback(() => {
     setIsPaymentMethodScreenVisible(true);
-    if (previewInput) {
-      void refetchPreview();
-    }
-  }, [previewInput, refetchPreview]);
+  }, []);
 
   const handlePaymentMethodConfirm = React.useCallback((nextPaymentMethod: CheckoutPaymentMethod) => {
     wantsWalletAfterTopUpRef.current = false;
+    hasManuallySelectedPaymentMethodRef.current = true;
     setPaymentMethod(nextPaymentMethod);
     setIsPaymentMethodScreenVisible(false);
   }, []);
@@ -657,15 +800,10 @@ export default function CheckoutScreen() {
     setIsPaymentMethodScreenVisible(true);
   }, []);
 
-  const handleSelectStripeCard = React.useCallback(async (cardId: string) => {
+  const handleSelectStripeCard = React.useCallback((cardId: string) => {
+    hasManuallySelectedPaymentMethodRef.current = true;
     setSelectedStripeCardId(cardId);
-    try {
-      await setDefaultCardMutation.mutateAsync(cardId);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : t('wallet_add_card_error');
-      showToast.error(t('wallet_add_card_error'), message);
-    }
-  }, [setDefaultCardMutation, t]);
+  }, []);
 
   const handleLeaveAtDoorChange = React.useCallback((nextValue: boolean) => {
     if (!nextValue) {
@@ -733,87 +871,47 @@ export default function CheckoutScreen() {
     [],
   );
 
-  const adjustedPricing = (() => {
-    if (!preview?.pricing) {
-      return null;
-    }
-
-    const nextDiscount = applyPercentageCouponFallback({
-      subtotal: preview.pricing.subtotal,
-      backendDiscount: preview.pricing.discount,
-      discountType: selectedCoupon?.discountType,
-      discountValue: selectedCoupon?.discountValue,
-      maxDiscountCap: selectedCoupon?.maxDiscountCap,
-      minOrderValue: selectedCoupon?.minOrderValue,
-    });
-
-    if (nextDiscount === preview.pricing.discount) {
-      return preview.pricing;
-    }
-
-    const nextTotalAmount = Math.max(
-      0,
-      preview.pricing.subtotal
-      - nextDiscount
-      + preview.pricing.tax
-      + preview.pricing.packingCharges
-      + preview.pricing.deliveryFee
-      + preview.pricing.riderTip,
-    );
-
-    return {
-      ...preview.pricing,
-      discount: nextDiscount,
-      totalAmount: nextTotalAmount,
-    };
-  })();
-  const adjustedPreview = preview && adjustedPricing
-    ? { ...preview, pricing: adjustedPricing }
-    : preview;
+  const adjustedPreview = preview;
   const previewTotal = adjustedPreview?.pricing.totalAmount ?? cart?.finalPrice ?? 0;
   const handleAddFundsFromInsufficientBalance = React.useCallback(() => {
     setIsInsufficientBalanceModalVisible(false);
+    setIsPaymentMethodScreenVisible(false);
+    hasManuallySelectedPaymentMethodRef.current = true;
     wantsWalletAfterTopUpRef.current = true;
     navigation.navigate('Wallet', {
       suggestedTopUpAmount: Math.max(
-        500,
+        0.01,
         Math.ceil((previewTotal - (walletBalanceQuery.data ?? 0)) * 100) / 100,
       ),
     });
   }, [navigation, previewTotal, walletBalanceQuery.data]);
+  const previewTotalRef = React.useRef(previewTotal);
+  previewTotalRef.current = previewTotal;
+  const hasFocusedCheckoutRef = React.useRef(false);
   useFocusEffect(React.useCallback(() => {
+    if (!hasFocusedCheckoutRef.current) {
+      hasFocusedCheckoutRef.current = true;
+      return;
+    }
+
+    void savedCardsQuery.refetch();
     void walletBalanceQuery.refetch().then(({ data }) => {
-      if (wantsWalletAfterTopUpRef.current && data !== undefined && data >= previewTotal) {
+      if (wantsWalletAfterTopUpRef.current && data !== undefined && data >= previewTotalRef.current) {
         wantsWalletAfterTopUpRef.current = false;
         setPaymentMethod('wallet');
       }
     });
-  }, [previewTotal, walletBalanceQuery.refetch]));
+  }, [savedCardsQuery.refetch, walletBalanceQuery.refetch]));
   const selectedAddressLabel = formatDeliveryAddressLabel(effectiveSelectedAddress);
   const walletBalance = walletBalanceQuery.data ?? 0;
   const isWalletEnabled = walletBalanceQuery.data !== undefined && walletBalance >= Number(previewTotal || 0);
   React.useEffect(() => {
-    if (paymentMethod === 'wallet' && walletBalanceQuery.data !== undefined && !isWalletEnabled) {
+    if (preview?.store && !isPreviewPending && paymentMethod === 'wallet' && walletBalanceQuery.data !== undefined && !isWalletEnabled) {
       setPaymentMethod(getPreferredCheckoutPaymentMethod(preview?.store));
     }
-  }, [isWalletEnabled, paymentMethod, preview?.store, walletBalanceQuery.data]);
+  }, [isWalletEnabled, isPreviewPending, paymentMethod, preview?.store, walletBalanceQuery.data]);
   const paymentIconName = paymentMethod === 'stripe' ? 'card-outline' : paymentMethod === 'wallet' ? 'wallet-outline' : 'cash-outline';
   const paymentTitle = getCheckoutPaymentMethodTitle(paymentMethod, t);
-  const defaultSavedCard = savedCardsQuery.data?.cards.find((card) => card.isDefault) ?? null;
-  const selectedSavedCard = (() => {
-    if (!savedCardsQuery.data?.cards?.length) {
-      return null;
-    }
-
-    if (selectedStripeCardId) {
-      const selectedCard = savedCardsQuery.data.cards.find((card) => card.id === selectedStripeCardId);
-      if (selectedCard) {
-        return selectedCard;
-      }
-    }
-
-    return defaultSavedCard;
-  })();
   const paymentSubtitle = paymentMethod === 'stripe'
     ? selectedSavedCard
       ? t('checkout_payment_card_saved_subtitle', {
@@ -822,12 +920,13 @@ export default function CheckoutScreen() {
       })
       : getCheckoutPaymentMethodSubtitle(paymentMethod, t)
     : getCheckoutPaymentMethodSubtitle(paymentMethod, t);
-  const isPromoApplied = Boolean(selectedCoupon?.code);
-  const promoTitle = selectedCoupon?.title ?? t('checkout_promo_title');
-  const promoCode = selectedCoupon?.code ?? null;
-  const promoSubtitle = selectedCoupon
-    ? t('checkout_promo_tap_to_change')
-    : t('checkout_promo_subtitle');
+  const promoTitle = hasCouponIssues || missingCouponPreview || couponSyncPending ? t('offers_review') : t('offers_title');
+  const promoSubtitle = couponSyncPending && !isSelectingCoupon ? t('offers_sync_error')
+    : isPreviewError && selectedCouponIds.length ? t('offers_fix_before_order')
+    : isCouponChecking ? t('offers_checking')
+    : hasCouponIssues || missingCouponPreview ? t('offers_fix_before_order')
+    : selectedCouponIds.length ? t('offers_summary', { count: selectedCouponIds.length, amount: formatCurrency(confirmedSavings) })
+    : t('offers_description');
   const isPaymentAvailable = isCheckoutPaymentMethodAvailable(
     paymentMethod,
     preview?.store,
@@ -845,28 +944,16 @@ export default function CheckoutScreen() {
       : t('checkout_payment_cod_unavailable_error')
     : leaveAtDoorPaymentErrorMessage;
 
-  if (isCartPending && !cart) {
+  if (isLoadingCheckoutAttempt || (isCartPending && !cart && !checkoutAttempt && !uncertainOrder)) {
     return (
-      <View style={{ backgroundColor: colors.canvas, flex: 1 }}>
+      <View style={{ backgroundColor: colors.surface, flex: 1 }}>
         <CartScreenSkeleton />
       </View>
     );
   }
 
-  if (!cart || cartError || cart.isEmpty) {
-    return (
-      <View style={{ backgroundColor: colors.canvas, flex: 1 }}>
-        <CartScreenErrorState
-          onRetry={() => {
-            void refetchCart();
-          }}
-        />
-      </View>
-    );
-  }
-
-  if (phoneProfile.isPending) return <View style={{ backgroundColor: colors.canvas, flex: 1 }}><CartScreenSkeleton /></View>;
-  if (phoneProfile.isError || !phoneProfile.data?.data?.user) return <View style={{ backgroundColor: colors.canvas, flex: 1 }}><ScreenHeader onBack={handleBackPress} /><View style={{ flex: 1, justifyContent: 'center', padding: 24, gap: 18 }}><Text variant="sectionTitle">{t('checkout_phone_profile_error')}</Text><Button variant="primary" label={t('generic_list_retry')} onPress={() => void phoneProfile.refetch()} /></View></View>;
+  if (phoneProfile.isPending) return <View style={{ backgroundColor: colors.surface, flex: 1 }}><CartScreenSkeleton /></View>;
+  if (phoneProfile.isError || !phoneProfile.data?.data?.user) return <View style={{ backgroundColor: colors.surface, flex: 1 }}><ScreenHeader onBack={handleBackPress} /><View style={{ flex: 1, justifyContent: 'center', padding: 24, gap: 18 }}><Text variant="sectionTitle">{t('checkout_phone_profile_error')}</Text><Button variant="primary" label={t('generic_list_retry')} onPress={() => void phoneProfile.refetch()} /></View></View>;
   if (phoneProfile.data.data.user.phone_verification_required ?? (!phoneProfile.data.data.user.phone || !phoneProfile.data.data.user.phone_is_verified)) return <CheckoutPhoneVerification onBack={handleBackPress} onVerified={async () => { await phoneProfile.refetch(); }} />;
 
   if (stripeCheckout) {
@@ -879,10 +966,41 @@ export default function CheckoutScreen() {
         onPaymentFailure={() => {
           showToast.error(t('checkout_payment_failed'));
         }}
+        onLoadError={() => {
+          setStripeCheckout(null);
+          setReconcileNonce((value) => value + 1);
+        }}
         onPaymentSuccess={handleStripeCheckoutSuccess}
         successUrlMatcher={CHECKOUT_STRIPE_SUCCESS_MATCHER}
         title={t('checkout_payment_webview_title')}
       />
+    );
+  }
+
+  if ((checkoutAttempt || uncertainOrder) && !placeOrderMutation.isPending) {
+    return (
+      <View style={{ backgroundColor: colors.surface, flex: 1 }}>
+        <ScreenHeader onBack={handleBackPress} />
+        <View style={{ flex: 1, justifyContent: 'center', padding: 24, gap: 18 }}>
+          <Text variant="sectionTitle">{t('checkout_payment_checking_title')}</Text>
+          <Text variant="body">{t('checkout_payment_checking_description')}</Text>
+          <Button variant="primary" label={t('generic_list_retry')} onPress={() => setReconcileNonce((value) => value + 1)} />
+          {checkoutAttempt?.checkoutUrl && checkoutAttempt.draftId ? (
+            <Button variant="secondary" label={t('checkout_payment_continue')} onPress={() => setStripeCheckout({ checkoutUrl: checkoutAttempt.checkoutUrl!, draftId: checkoutAttempt.draftId! })} />
+          ) : null}
+          {recoveryClientSecret && checkoutAttempt?.draftId ? (
+            <Button variant="secondary" label={t('checkout_payment_continue')} onPress={() => { void handleResumeSavedCard(); }} />
+          ) : null}
+        </View>
+      </View>
+    );
+  }
+
+  if (!cart || cartError || cart.isEmpty) {
+    return (
+      <View style={{ backgroundColor: colors.surface, flex: 1 }}>
+        <CartScreenErrorState onRetry={() => { void refetchCart(); }} />
+      </View>
     );
   }
 
@@ -923,14 +1041,17 @@ export default function CheckoutScreen() {
   }
 
   return (
-    <View style={{ backgroundColor: colors.canvas, flex: 1 }}>
+    <View style={{ backgroundColor: colors.surface, flex: 1 }}>
       <CheckoutScreenContent
+        inventoryErrorMessage={inventoryErrorMessage}
+        onReviewCart={() => navigation.navigate('Cart')}
+        cartItems={cart?.items ?? []}
         courierMessage={messages.courier}
         hasAddressRequirement={orderType === 'delivery' && !resolvedAddressId}
         isPickupEnabled={adjustedPreview?.store.pickupAllowed ?? true}
-        isPromoApplied={isPromoApplied}
         isPlacingOrder={placeOrderMutation.isPending}
-        isPaymentBlocked={!isPaymentAvailable || isLeaveAtDoorCardRequired}
+        isCheckingOrder={Boolean(uncertainOrder)}
+        isPaymentBlocked={!isPaymentAvailable || isLeaveAtDoorCardRequired || isCouponBlocked || Boolean(inventoryErrorMessage)}
         isPreviewEnabled={Boolean(previewInput)}
         isPreviewError={isPreviewError}
         isStoreClosedError={isStoreClosedError(previewError)}
@@ -948,7 +1069,6 @@ export default function CheckoutScreen() {
         onPlaceOrderPress={handlePlaceOrderPress}
         onPaymentPress={handlePaymentMethodPress}
         onPromoPress={handlePromoPress}
-        onPromoRemove={handlePromoRemove}
         onRestaurantMessagePress={() => {
           handleMessagePress('restaurant');
         }}
@@ -962,7 +1082,6 @@ export default function CheckoutScreen() {
         paymentIconName={paymentIconName}
         paymentSubtitle={paymentSubtitle}
         paymentTitle={paymentTitle}
-        promoCode={promoCode}
         promoTitle={promoTitle}
         promoSubtitle={promoSubtitle}
         preview={adjustedPreview ?? null}
@@ -971,6 +1090,17 @@ export default function CheckoutScreen() {
         selectedTip={selectedTip}
         totalLabel={formatCartPrice(previewTotal)}
       />
+
+      {isOffersVisible ? <CheckoutOffersSheet
+        key={checkoutUserId}
+        onClose={() => setIsOffersVisible(false)}
+        selectedIds={selectedCouponIds}
+        previews={couponPreviews}
+        checking={isCouponChecking || isPreviewError}
+        previewFailed={isPreviewError}
+        onRefreshPreview={isPreviewError ? refreshOfferPreview : undefined}
+        context={{ storeId: cart.storeId, subtotal: preview?.pricing.subtotal ?? cart.totalPrice, orderType, paymentMethod, productIds: cart.items.map(item => item.productId) }}
+      /> : null}
 
       <AddressSelectionBottomSheet
         addresses={addresses}
@@ -981,21 +1111,20 @@ export default function CheckoutScreen() {
         onSelectAddress={handleSelectAddress}
         onUseCurrentLocation={handleUseCurrentLocation}
         selectingAddressId={selectingAddressId}
-        selectedAddressId={resolvedAddressId ?? selectedAddress?.id}
+        selectedAddressId={resolvedAddressId}
       />
 
       <CheckoutPaymentMethodBottomSheet
         isCardEnabled={Boolean(adjustedPreview?.store.stripeAllowed)
-          && !isPreviewPending
           && !isPreviewError}
         isCardAvailabilityKnown={Boolean(adjustedPreview?.store)
-          && !isPreviewPending
           && !isPreviewError}
         isWalletEnabled={isWalletEnabled}
+        isWalletAvailabilityKnown={walletBalanceQuery.data !== undefined}
         walletBalance={walletBalance}
         currencyLabel={currencyLabel}
-        isSavingCardSelection={setDefaultCardMutation.isPending}
         isVisible={isPaymentMethodScreenVisible}
+        onAddFunds={handleAddFundsFromInsufficientBalance}
         onClose={() => {
           setIsPaymentMethodScreenVisible(false);
         }}
@@ -1004,10 +1133,8 @@ export default function CheckoutScreen() {
           setIsPaymentMethodScreenVisible(false);
           navigation.navigate('Wallet');
         }}
-        onSelectCard={(cardId) => {
-          void handleSelectStripeCard(cardId);
-        }}
-        savedCards={savedCardsQuery.data?.cards ?? []}
+        onSelectCard={handleSelectStripeCard}
+        savedCards={savedCards}
         selectedCardId={selectedSavedCard?.id ?? null}
         selectedMethod={paymentMethod}
       />

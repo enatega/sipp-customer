@@ -44,6 +44,12 @@ export const styles = StyleSheet.create({
     justifyContent: "center",
     width: 56,
   },
+  itemNote: {
+    borderRadius: 8,
+    gap: 3,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
   metaRow: {
     alignItems: "center",
     flexDirection: "row",

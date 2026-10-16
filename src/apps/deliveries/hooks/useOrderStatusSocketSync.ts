@@ -4,7 +4,11 @@ import { AppState, type AppStateStatus } from "react-native";
 import { useAuthSessionQuery } from "../../../general/hooks/useAuthQueries";
 import { deliveryKeys } from "../api/queryKeys";
 import type { OrderDetailsResponse } from "../api/ordersServiceTypes";
-import { deliveriesSocketClient, subscribeDeliveriesEvent } from "../socket/deliveriesSocket";
+import {
+  deliveriesSocketClient,
+  subscribeDeliveriesConnection,
+  subscribeDeliveriesEvent,
+} from "../socket/deliveriesSocket";
 import type { DeliveriesServerEventMap } from "../socket/deliveriesSocket.types";
 
 type Options = {
@@ -73,10 +77,7 @@ export function useOrderStatusSocketSync(orderId?: string, options?: Options) {
         return;
       }
 
-      if (
-        nextState === "active"
-        && deliveriesSocketClient.hasActiveConsumers()
-      ) {
+      if (nextState === "active") {
         void deliveriesSocketClient.connect();
         const activeOrderId = currentOrderIdRef.current;
         if (activeOrderId) {
@@ -93,9 +94,29 @@ export function useOrderStatusSocketSync(orderId?: string, options?: Options) {
   }, [isEnabled, queryClient, token]);
 
   useEffect(() => {
+    if (!isEnabled || !token) return undefined;
+    const poll = () => {
+      if (AppState.currentState !== 'active' || deliveriesSocketClient.isConnected()) return;
+      const activeOrderId = currentOrderIdRef.current;
+      if (activeOrderId) void queryClient.invalidateQueries({ queryKey: deliveryKeys.orderDetail(activeOrderId) });
+      void deliveriesSocketClient.connect();
+    };
+    const interval = setInterval(poll, 15_000);
+    return () => clearInterval(interval);
+  }, [isEnabled, queryClient, token]);
+
+  useEffect(() => {
     if (!isEnabled || !token) {
       return undefined;
     }
+
+    const unsubscribeConnection = subscribeDeliveriesConnection(() => {
+      const activeOrderId = currentOrderIdRef.current;
+      if (activeOrderId) {
+        void queryClient.invalidateQueries({ queryKey: deliveryKeys.orderDetail(activeOrderId) });
+      }
+      void queryClient.invalidateQueries({ queryKey: deliveryKeys.orders() });
+    });
 
     const unsubscribeOrderStatus = subscribeDeliveriesEvent(
       "order-status-updated",
@@ -197,6 +218,7 @@ export function useOrderStatusSocketSync(orderId?: string, options?: Options) {
     );
 
     return () => {
+      unsubscribeConnection();
       unsubscribeOrderStatus?.();
       unsubscribeRiderStatus?.();
     };

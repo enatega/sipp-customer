@@ -1,10 +1,8 @@
 import React from 'react';
 import { ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import type { NavigationProp } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient';
 import type { DeliveryOrderAgainItem, DeliveryStoreViewApiResponse } from '../../api/types';
 import type { CartResponse } from '../../api/cartServiceTypes';
-import { useCheckoutCouponStore } from '../../stores/useCheckoutCouponStore';
 import { useWindowClass } from '../../../../general/hooks/useWindowClass';
 import { useTheme } from '../../../../general/theme/theme';
 import CartClearPopup from './CartClearPopup';
@@ -13,7 +11,6 @@ import CartFeeInfoModal from './CartFeeInfoModal';
 import CartFooter from './CartFooter';
 import CartHeader from './CartHeader';
 import CartItemsSection from './CartItemsSection';
-import CartMerchantSummary from './CartMerchantSummary';
 import CartOrderSummary from './CartOrderSummary';
 import CartRecommendationsSection from './CartRecommendationsSection';
 import CartStatusBanner from './CartStatusBanner';
@@ -36,6 +33,7 @@ type Props = {
   onOpenFeeModal: () => void;
   onRemoveItem: (itemId: string) => void;
   onSetItemQuantity: (itemId: string, quantity: number) => Promise<void>;
+  onSetItemNote: (itemId: string, note: string) => Promise<void>;
   recommendations: DeliveryOrderAgainItem[];
   store?: DeliveryStoreViewApiResponse;
 };
@@ -57,13 +55,13 @@ export default function CartScreenContent({
   onOpenFeeModal,
   onRemoveItem,
   onSetItemQuantity,
+  onSetItemNote,
   recommendations,
   store,
 }: Props) {
   const { colors, layout, spacing } = useTheme();
   const { gutter } = useWindowClass();
   const [footerHeight, setFooterHeight] = React.useState(96);
-  const selectedCoupon = useCheckoutCouponStore((state) => state.selectedCoupon);
 
   const handleBack = React.useCallback(() => navigation.goBack(), [navigation]);
 
@@ -94,10 +92,6 @@ export default function CartScreenContent({
     [navigation],
   );
 
-  const handlePromoPress = React.useCallback(() => {
-    navigation.navigate('Coupons');
-  }, [navigation]);
-
   const handleFooterLayout = React.useCallback((event: LayoutChangeEvent) => {
     const nextHeight = Math.ceil(event.nativeEvent.layout.height);
     setFooterHeight((height) => height === nextHeight ? height : nextHeight);
@@ -105,13 +99,7 @@ export default function CartScreenContent({
 
   if (!cart || cart.isEmpty) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.canvas }]}>
-        <LinearGradient
-          colors={[colors.primarySoft, colors.canvas, colors.canvas]}
-          locations={[0, 0.38, 1]}
-          pointerEvents="none"
-          style={StyleSheet.absoluteFillObject}
-        />
+      <View style={[styles.container, { backgroundColor: colors.surface }]}>
         <CartHeader onBackPress={handleBack} />
         <CartEmptyState onStartShoppingPress={handleStartShopping} />
       </View>
@@ -119,17 +107,13 @@ export default function CartScreenContent({
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.canvas }]}>
-      <LinearGradient
-        colors={[colors.primarySoft, colors.canvas, colors.canvas]}
-        locations={[0, 0.28, 1]}
-        pointerEvents="none"
-        style={StyleSheet.absoluteFillObject}
-      />
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
 
       <CartHeader
         clearDisabled={isMutatingCart}
-        itemCount={cart.totalItems}
+        store={store}
+        storeName={recommendations[0]?.storeName}
+        onStorePress={handleStartShopping}
         onBackPress={handleBack}
         onClearPress={onOpenClearCart}
       />
@@ -148,17 +132,21 @@ export default function CartScreenContent({
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <CartMerchantSummary
-          fallbackName={recommendations[0]?.storeName}
-          onPress={handleStartShopping}
-          store={store}
-        />
-
-        <CartStatusBanner
-          minimumOrder={store?.minimumOrder}
-          onInfoPress={onOpenFeeModal}
-          totalPrice={cart.totalPrice}
-        />
+        <View
+          style={[
+            styles.cartContext,
+            {
+              borderBottomColor: colors.divider,
+              paddingBottom: spacing.sm,
+            },
+          ]}
+        >
+          <CartStatusBanner
+            minimumOrder={store?.minimumOrder}
+            onInfoPress={onOpenFeeModal}
+            totalPrice={cart.finalPrice}
+          />
+        </View>
 
         <CartItemsSection
           isUpdatingItemId={isUpdatingItemId}
@@ -167,14 +155,13 @@ export default function CartScreenContent({
           onItemPendingChange={onItemPendingChange}
           onRemoveItem={onRemoveItem}
           onSetItemQuantity={onSetItemQuantity}
+          onSetItemNote={onSetItemNote}
         />
 
         <CartOrderSummary
           discountAmount={cart.discountAmount}
           finalPrice={cart.finalPrice}
           onFeeInfoPress={onOpenFeeModal}
-          onPromoPress={handlePromoPress}
-          promoCode={selectedCoupon?.code}
           subtotal={cart.totalPrice}
         />
 
@@ -186,14 +173,13 @@ export default function CartScreenContent({
 
       <CartFooter
         amountLabel={formatCartPrice(cart.finalPrice)}
-        disabled={cart.isEmpty || isMutatingCart}
+        disabled={cart.isEmpty || isMutatingCart || !store || cart.finalPrice < Number(store.minimumOrder ?? 0)}
         onLayout={handleFooterLayout}
         onCheckoutPress={onCheckoutPress}
       />
 
       <CartFeeInfoModal
-        currentSubtotal={cart.totalPrice}
-        deliveryFee={store?.baseFee}
+        currentSubtotal={cart.finalPrice}
         minimumOrder={store?.minimumOrder}
         onClose={onCloseFeeModal}
         visible={isFeeModalVisible}
@@ -210,6 +196,9 @@ export default function CartScreenContent({
 }
 
 const styles = StyleSheet.create({
+  cartContext: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
   container: {
     flex: 1,
   },

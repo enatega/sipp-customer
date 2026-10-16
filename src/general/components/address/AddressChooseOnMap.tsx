@@ -38,10 +38,10 @@ type Props = {
 };
 
 const DEFAULT_REGION: Region = {
-  latitude: 24.8607,
-  longitude: 67.0011,
-  latitudeDelta: 0.08,
-  longitudeDelta: 0.08,
+  latitude: 0,
+  longitude: 0,
+  latitudeDelta: 120,
+  longitudeDelta: 120,
 };
 
 const FOCUSED_DELTA = { latitudeDelta: 0.012, longitudeDelta: 0.012 };
@@ -107,7 +107,6 @@ function AddressChooseOnMap({
   const hasPendingMove = useRef(false);
   const hasUserMovedMap = useRef(false);
   const shouldLocateAfterSettings = useRef(false);
-  const hasRequestedLocationOnOpen = useRef(false);
   const isRequestingLocationRef = useRef(false);
 
   const [center, setCenter] = useState<LatLng | null>(initialCoordinate);
@@ -251,12 +250,6 @@ function AddressChooseOnMap({
       setIsRequestingLocation(false);
     }
   }, [locateCurrentPosition, t]);
-
-  useEffect(() => {
-    if (hasRequestedLocationOnOpen.current) return;
-    hasRequestedLocationOnOpen.current = true;
-    void handleCurrentLocation(true);
-  }, [handleCurrentLocation]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (state) => {

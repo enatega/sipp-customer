@@ -14,6 +14,7 @@ import { showToast } from '../../components/AppToast';
 import useProfile from '../../hooks/useProfile';
 import MyProfileInfoCard from '../../components/profile/MyProfileInfoCard';
 import ProfilePhoneVerification from '../../components/profile/ProfilePhoneVerification';
+import ProfileEmailVerification from '../../components/profile/ProfileEmailVerification';
 import MyProfileSkeleton from '../../components/profile/MyProfileSkeleton';
 import ProfilePhotoEditor from '../../components/profile/ProfilePhotoEditor';
 import ProfileImageViewerModal from '../../components/profile/ProfileImageViewerModal';
@@ -48,6 +49,7 @@ export default function MyProfileScreen({ profilePrefix }: Props) {
   const { user, addresses, isLoading, refetch } = useProfile(profilePrefix);
   const [isPhotoModalVisible, setIsPhotoModalVisible] = useState(false);
   const [isPhoneModalVisible, setIsPhoneModalVisible] = useState(false);
+  const [isEmailModalVisible, setIsEmailModalVisible] = useState(false);
   const [isProfileImageViewerVisible, setIsProfileImageViewerVisible] = useState(false);
   const [imageCacheKey, setImageCacheKey] = useState(0);
   const [addressMenuTarget, setAddressMenuTarget] =
@@ -97,11 +99,15 @@ export default function MyProfileScreen({ profilePrefix }: Props) {
 
   const handleEditAddress = useCallback(() => {
     if (!addressMenuTarget) return;
-    navigation.navigate('AddressSearch', {
+    navigation.navigate('AddressDetail', {
       appPrefix: profilePrefix,
+      address: addressMenuTarget.address,
+      latitude: addressMenuTarget.location.coordinates[1],
+      longitude: addressMenuTarget.location.coordinates[0],
       editAddressId: addressMenuTarget.id,
       editType: addressMenuTarget.type,
       editLocationName: addressMenuTarget.location_name ?? '',
+      editAdditionalFields: addressMenuTarget.additional_fields,
       origin: isSelectionMode
         ? 'multi-vendor-home'
         : 'profile',
@@ -188,9 +194,11 @@ export default function MyProfileScreen({ profilePrefix }: Props) {
               onPressAvatar={avatarUri ? () => setIsProfileImageViewerVisible(true) : undefined}
               onEditName={handleEditName}
               onEditPhone={() => setIsPhoneModalVisible(true)}
+              onVerifyEmail={() => setIsEmailModalVisible(true)}
             />
 
             <ProfilePhoneVerification visible={isPhoneModalVisible} onClose={() => setIsPhoneModalVisible(false)} onVerified={async () => { await refetch(); }} />
+            <ProfileEmailVerification visible={isEmailModalVisible} email={user?.email ?? ''} onClose={() => setIsEmailModalVisible(false)} onVerified={async () => { await refetch(); }} />
 
             <ProfilePhotoEditor
               isVisible={isPhotoModalVisible}

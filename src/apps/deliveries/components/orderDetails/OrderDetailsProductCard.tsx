@@ -10,18 +10,24 @@ import { styles } from "./OrderDetailsProductCard.styles";
 type Props = {
   addonLines?: OrderProductAddonLine[];
   imageUri?: string | null;
+  itemNote?: string | null;
+  itemNoteLabel?: string;
   name: string;
   quantityLabel: string;
   priceLabel?: string | null;
+  unitPriceLabel?: string | null;
   subtitle?: string | null;
 };
 
 export default function OrderDetailsProductCard({
   addonLines = [],
   imageUri,
+  itemNote,
+  itemNoteLabel,
   name,
   quantityLabel,
   priceLabel,
+  unitPriceLabel,
   subtitle,
 }: Props) {
   const { colors, typography } = useTheme();
@@ -145,17 +151,31 @@ export default function OrderDetailsProductCard({
           </View>
         ) : null}
 
+        {itemNote ? (
+          <View style={[styles.itemNote, { backgroundColor: colors.primarySoft }]}>
+            <Text color={colors.primary} variant="caption" weight="semiBold">
+              {itemNoteLabel}
+            </Text>
+            <Text color={colors.text} variant="caption">
+              {itemNote}
+            </Text>
+          </View>
+        ) : null}
+
         <View style={styles.metaRow}>
-          <Text
-            style={{
-              color: colors.mutedText,
-              fontSize: typography.size.xs2,
-              lineHeight: typography.lineHeight.sm,
-            }}
-            weight="medium"
-          >
-            {quantityLabel}
-          </Text>
+          <View>
+            <Text
+              style={{
+                color: colors.mutedText,
+                fontSize: typography.size.xs2,
+                lineHeight: typography.lineHeight.sm,
+              }}
+              weight="medium"
+            >
+              {quantityLabel}
+            </Text>
+            {unitPriceLabel ? <Text color={colors.mutedText} variant="caption">{unitPriceLabel}</Text> : null}
+          </View>
 
           {priceLabel ? (
             <Text

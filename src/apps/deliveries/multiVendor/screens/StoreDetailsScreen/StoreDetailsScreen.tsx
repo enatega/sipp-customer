@@ -5,5 +5,6 @@ import StoreDetailsContent from '../../components/StoreDetails/StoreDetailsConte
 
 export default function StoreDetailsScreen() {
   const route = useRoute<RouteProp<MultiVendorStackParamList, 'StoreDetails'>>();
-  return <StoreDetailsContent key={route.params?.store?.storeId ?? 'missing'} selectedStore={route.params?.store} />;
+  const storeId = route.params?.storeId ?? route.params?.store?.storeId;
+  return <StoreDetailsContent key={storeId ?? 'missing'} selectedStore={route.params?.store} sharedStoreId={storeId} />;
 }

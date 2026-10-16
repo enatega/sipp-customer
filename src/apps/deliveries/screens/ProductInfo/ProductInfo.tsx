@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo } from "react";
+import { useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from "react-i18next";
 import MainContainer from "../../components/productInfo/MainContainer";
 import ProductInfoErrorState from "../../components/productInfo/ProductInfoErrorState";
@@ -44,6 +45,11 @@ const ProductInfo = ({ route }: ProductInfoProps) => {
       await refetchCustomizations();
     }
   }, [productInfo?.productId, refetchCustomizations, refetchProductInfo]);
+  const hasFocused = React.useRef(false);
+  useFocusEffect(useCallback(() => {
+    if (hasFocused.current) void handleRefresh();
+    hasFocused.current = true;
+  }, [handleRefresh]));
   const isRefreshing = isProductInfoFetching || isCustomizationsFetching;
   const localizedProductInfo = useMemo(
     () =>

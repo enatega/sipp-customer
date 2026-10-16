@@ -63,6 +63,7 @@ export type DeliveriesStackParamList = DeliveriesAccountNavigationParamList & {
   RateOrder: {
     orderId: string;
     storeName: string;
+    recipient?: 'store' | 'rider';
   };
   OrderDetailsScreen: {
     orderId: string;
@@ -81,6 +82,7 @@ export type DeliveriesStackParamList = DeliveriesAccountNavigationParamList & {
   StoreMenuSearch: MultiVendorStackParamList['StoreMenuSearch'];
   StoreDetails: {
     store?: DeliveryNearbyStore;
+    storeId?: string;
   };
   Cart: undefined;
   Checkout: undefined;

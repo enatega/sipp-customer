@@ -5,6 +5,7 @@ import React, {
   useImperativeHandle,
   useState,
 } from 'react';
+import { showToast } from '../../components/AppToast';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Text from '../../components/Text';
 import useDebouncedValue from '../../hooks/useDebouncedValue';
@@ -39,6 +40,7 @@ type Props = {
   initialLocationName?: string;
   initialSetAsDefault?: boolean;
   initialType?: AddressType;
+  initialAdditionalFields?: AddressAdditionalFields;
   onSave: (data: AddressDetailFormSubmitData) => Promise<void>;
   labels: {
     apartmentDetailsTitle: string;
@@ -74,6 +76,8 @@ type Props = {
     officeLandmarkPlaceholder: string;
     other: string;
     setAsDefaultAddress: string;
+    requiredFieldSuffix: string;
+    invalidCoordinates: string;
   };
 };
 
@@ -161,6 +165,7 @@ const AddressDetailFormInner = forwardRef<AddressDetailFormHandle, Props>(
       initialLocationName = '',
       initialSetAsDefault = false,
       initialType = 'HOME',
+      initialAdditionalFields,
       onSave,
       labels,
     },
@@ -172,8 +177,20 @@ const AddressDetailFormInner = forwardRef<AddressDetailFormHandle, Props>(
     const [currentLng, setCurrentLng] = useState(longitude);
     const [locationName, setLocationName] = useState(initialLocationName);
     const [addressType, setAddressType] = useState<AddressType>(initialType);
-    const [detailValues, setDetailValues] =
-      useState<AddressDetailValues>(EMPTY_DETAIL_VALUES);
+    const [detailValues, setDetailValues] = useState<AddressDetailValues>(() => ({
+      ...EMPTY_DETAIL_VALUES,
+      apartmentFloorTower: initialAdditionalFields?.floorNo ?? '',
+      apartmentLandmark: initialAdditionalFields?.landmark ?? '',
+      apartmentSocietyBuildingName: initialAdditionalFields?.building ?? '',
+      apartmentUnit: initialAdditionalFields?.apartmentNo ?? '',
+      homeAreaStreet: initialAdditionalFields?.societyArea ?? '',
+      homeHouseFlatNumber: initialAdditionalFields?.houseNo ?? '',
+      homeLandmark: initialAdditionalFields?.landmark ?? '',
+      officeCompanyBuildingName: initialAdditionalFields?.companyName ?? '',
+      officeDepartment: initialAdditionalFields?.department ?? '',
+      officeFloorSuiteUnit: initialAdditionalFields?.floorNo ?? '',
+      officeLandmark: initialAdditionalFields?.landmark ?? '',
+    }));
     const [isSaving, setIsSaving] = useState(false);
     const [shouldSetDefault, setShouldSetDefault] = useState(initialSetAsDefault);
     const [showPredictions, setShowPredictions] = useState(false);
@@ -214,6 +231,23 @@ const AddressDetailFormInner = forwardRef<AddressDetailFormHandle, Props>(
         return;
       }
 
+      const requiredField = !editableAddress.trim() ? labels.addressDetailsLabel
+        : addressType === 'HOME' && !detailValues.homeHouseFlatNumber.trim() ? labels.homeHouseFlatNumberLabel
+        : addressType === 'HOME' && !detailValues.homeAreaStreet.trim() ? labels.homeAreaStreetLabel
+        : addressType === 'APARTMENT' && !detailValues.apartmentUnit.trim() ? labels.apartmentUnitLabel
+        : addressType === 'APARTMENT' && !detailValues.apartmentSocietyBuildingName.trim() ? labels.apartmentSocietyBuildingNameLabel
+        : addressType === 'OFFICE' && !detailValues.officeCompanyBuildingName.trim() ? labels.officeCompanyBuildingNameLabel
+        : null;
+      if (requiredField) {
+        showToast.error(`${requiredField} ${labels.requiredFieldSuffix}`);
+        return;
+      }
+      if (!Number.isFinite(currentLat) || !Number.isFinite(currentLng)
+        || Math.abs(currentLat) > 90 || Math.abs(currentLng) > 180) {
+        showToast.error(labels.invalidCoordinates);
+        return;
+      }
+
       const resolvedLocationName = buildLocationName(
         addressType,
         locationName,
@@ -232,7 +266,7 @@ const AddressDetailFormInner = forwardRef<AddressDetailFormHandle, Props>(
       setIsSaving(true);
       try {
         await onSave({
-          address: editableAddress.trim() || address,
+          address: editableAddress.trim(),
           latitude: currentLat,
           longitude: currentLng,
           type: addressType,
@@ -246,7 +280,6 @@ const AddressDetailFormInner = forwardRef<AddressDetailFormHandle, Props>(
         setIsSaving(false);
       }
     }, [
-      address,
       addressType,
       currentLat,
       currentLng,

@@ -10,6 +10,7 @@ import type {
   CheckoutOrderType,
   CheckoutPreviewResponse,
 } from '../../api/orderServiceTypes';
+import type { CartItem } from '../../api/cartServiceTypes';
 import CheckoutHeader from './CheckoutHeader';
 import CheckoutInfoRow from './CheckoutInfoRow';
 import CheckoutMerchantSummary from './CheckoutMerchantSummary';
@@ -21,11 +22,14 @@ import CheckoutTipSection from './CheckoutTipSection';
 import { getCheckoutMessagePreview } from './checkoutMessageUtils';
 
 type Props = {
+  inventoryErrorMessage?: string | null;
+  onReviewCart: () => void;
+  cartItems?: CartItem[];
   canShowLeaveAtDoor?: boolean;
   hasAddressRequirement: boolean;
   isPickupEnabled: boolean;
-  isPromoApplied?: boolean;
   isPlacingOrder?: boolean;
+  isCheckingOrder?: boolean;
   isPaymentBlocked?: boolean;
   isPreviewEnabled: boolean;
   isPreviewError: boolean;
@@ -41,7 +45,6 @@ type Props = {
   onPlaceOrderPress: () => void;
   onPaymentPress: () => void;
   onPromoPress: () => void;
-  onPromoRemove?: () => void;
   onRestaurantMessagePress: () => void;
   onRetryPreview: () => void;
   onCustomTipPress: () => void;
@@ -51,7 +54,6 @@ type Props = {
   paymentIconName: React.ComponentProps<typeof CheckoutInfoRow>['iconName'];
   paymentSubtitle?: string | null;
   paymentTitle: string;
-  promoCode?: string | null;
   promoTitle?: string | null;
   promoSubtitle?: string | null;
   preview: CheckoutPreviewResponse | null;
@@ -63,11 +65,14 @@ type Props = {
 };
 
 export default function CheckoutScreenContent({
+  inventoryErrorMessage,
+  onReviewCart,
+  cartItems = [],
   canShowLeaveAtDoor = true,
   hasAddressRequirement,
   isPickupEnabled,
-  isPromoApplied = false,
   isPlacingOrder = false,
+  isCheckingOrder = false,
   isPaymentBlocked = false,
   isPreviewEnabled,
   isPreviewError,
@@ -83,7 +88,6 @@ export default function CheckoutScreenContent({
   onPlaceOrderPress,
   onPaymentPress,
   onPromoPress,
-  onPromoRemove,
   onRestaurantMessagePress,
   onRetryPreview,
   onCustomTipPress,
@@ -93,7 +97,6 @@ export default function CheckoutScreenContent({
   paymentIconName,
   paymentSubtitle,
   paymentTitle,
-  promoCode,
   promoTitle,
   promoSubtitle,
   preview,
@@ -110,8 +113,11 @@ export default function CheckoutScreenContent({
   const canPlaceOrder = Boolean(preview)
     && !hasAddressRequirement
     && !isPreviewPending
+    && !isPreviewError
+    && isPreviewEnabled
     && !isPaymentBlocked
-    && !isPlacingOrder;
+    && !isPlacingOrder
+    && !isCheckingOrder;
   const addressTitle = orderType === 'pickup'
     ? preview?.store.name ?? t('checkout_pickup_title')
     : selectedAddressLabel ?? preview?.fulfillment.delivery?.label ?? t('checkout_address_title');
@@ -130,7 +136,7 @@ export default function CheckoutScreenContent({
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.canvas }]}>
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
       <CheckoutHeader onBackPress={onBackPress} />
 
       <ScrollView
@@ -155,6 +161,14 @@ export default function CheckoutScreenContent({
           ]}
         >
           <CheckoutMerchantSummary preview={preview} />
+          {cartItems.some((item) => item.itemNote?.trim()) ? (
+            <Surface outlined style={[styles.groupSurface, { padding: spacing.md, gap: spacing.sm }]}>
+              <Text accessibilityRole="header" variant="sectionTitle" weight="bold">{t('cart_item_instructions')}</Text>
+              {cartItems.filter((item) => item.itemNote?.trim()).map((item) => (
+                <Text key={item.id} color={colors.textSubtle}>{item.name}: {item.itemNote}</Text>
+              ))}
+            </Surface>
+          ) : null}
 
           <View style={[styles.section, { gap: spacing.md }]}>
             <Text accessibilityRole="header" variant="sectionTitle" weight="bold">
@@ -226,17 +240,15 @@ export default function CheckoutScreenContent({
 
           <CheckoutPaymentSection
             errorMessage={paymentErrorMessage}
-            isPromoApplied={isPromoApplied}
             onPaymentPress={onPaymentPress}
-            onPromoPress={onPromoPress}
-            onPromoRemove={onPromoRemove}
             paymentIconName={paymentIconName}
             paymentSubtitle={paymentSubtitle}
             paymentTitle={paymentTitle}
-            promoCode={promoCode}
-            promoTitle={promoTitle}
-            promoSubtitle={promoSubtitle}
           />
+
+          <Surface outlined style={[styles.groupSurface, { padding: spacing.xs }]}>
+            <CheckoutInfoRow title={promoTitle ?? t('offers_title')} subtitle={promoSubtitle} iconName="ticket-outline" onPress={onPromoPress} />
+          </Surface>
 
           {isDeliveryOrder ? (
             <CheckoutTipSection
@@ -265,7 +277,12 @@ export default function CheckoutScreenContent({
             </View>
           ) : null}
 
-          {isPreviewEnabled && isPreviewError && !isPaymentBlocked ? (
+          {inventoryErrorMessage ? (
+            <ListStateView variant="error" title={t('inventory_title')} description={inventoryErrorMessage}
+              actionLabel={t('inventory_review_cart')} onActionPress={onReviewCart} containerStyle={styles.stateBlock} />
+          ) : null}
+
+          {isPreviewEnabled && isPreviewError && !inventoryErrorMessage ? (
             <ListStateView
               variant="error"
               icon={isAddressOutsideDeliveryAreaError ? 'location-outline' : undefined}
@@ -318,6 +335,7 @@ export default function CheckoutScreenContent({
       <CheckoutSummaryFooter
         isDisabled={!canPlaceOrder}
         isLoading={isPlacingOrder}
+        isCheckingOrder={isCheckingOrder}
         onPlaceOrderPress={onPlaceOrderPress}
       />
     </View>

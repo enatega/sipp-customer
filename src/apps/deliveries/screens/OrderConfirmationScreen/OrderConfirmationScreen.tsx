@@ -48,6 +48,7 @@ function getConfirmationRootRoute(
 }
 
 function cleanOrderReference(value: string | null | undefined) {
+  if (value && /^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(value.trim())) return null;
   return value
     ?.replace(/^order\s*#*\s*/i, '')
     .replace(/^#+\s*/, '')
@@ -144,7 +145,7 @@ export default function OrderConfirmationScreen({ navigation, route }: Props) {
   const storeName = order?.store.name || snapshot?.storeName || t('order_confirmation_store_fallback');
   const storeImage = order?.store.logo || order?.store.image || snapshot?.storeImage || null;
   const orderReference = cleanOrderReference(
-    order?.orderCode || order?.summary.orderNumber || order?.orderId || orderId,
+    order?.orderCode || order?.summary.orderNumber,
   );
   const itemCount = order?.orderItems?.products?.reduce(
     (count, product) => count + Math.max(1, Number(product.quantity) || 1),
@@ -279,7 +280,13 @@ export default function OrderConfirmationScreen({ navigation, route }: Props) {
               <Text color={colors.primary} style={styles.centeredText} variant="label" weight="semiBold">
                 {t('order_confirmation_number', { number: orderReference })}
               </Text>
-            ) : null}
+            ) : orderDetailsQuery.isError ? (
+              <Button variant="secondary" label={t('order_confirmation_number_retry')} onPress={() => void orderDetailsQuery.refetch()} />
+            ) : (
+              <Text color={colors.textSubtle} style={styles.centeredText} variant="label">
+                {t('order_confirmation_number_loading')}
+              </Text>
+            )}
             <Text color={colors.textSubtle} style={styles.centeredText} variant="body">
               {isStoreConfirmed && order?.statusMessage
                 ? order.statusMessage
