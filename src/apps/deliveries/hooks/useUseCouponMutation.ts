@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { ApiError } from '../../../general/api/apiClient';
 import { useAuthSessionQuery } from '../../../general/hooks/useAuthQueries';
 import { authSession } from '../../../general/auth/authSession';
@@ -7,6 +7,7 @@ import { cartService } from '../api/cartService';
 import { deliveryKeys } from '../api/queryKeys';
 import { cartCouponIds } from '../utils/couponRules';
 import { claimedCouponsKeys } from './useClaimedCouponsQuery';
+import type { ClaimedCouponsResponse } from '../api/claimedCouponsService';
 import { useCouponSyncStore } from '../stores/useCouponSyncStore';
 
 export const couponMutationKey = ['deliveries-coupon-selection'] as const;
@@ -35,14 +36,25 @@ export function useUseCouponMutation() {
         throw error;
       }
     },
-    onSettled: async () => {
+    onSettled: async (_data, _error) => {
       if ((await authSession.getUser())?.id !== userId) return;
       // Finish reconciliation before releasing the mutation's pending state.
       await client.invalidateQueries({ queryKey: deliveryKeys.cart(), refetchType: 'none' });
       await client.refetchQueries({ queryKey: deliveryKeys.cart(), type: 'all' }, { throwOnError: true });
-      // Pricing resumes once this mutation settles. Offer metadata refreshes independently.
-      await client.invalidateQueries({ queryKey: [...deliveryKeys.all, 'checkout-preview'], refetchType: 'none' });
-      void client.invalidateQueries({ queryKey: claimedCouponsKeys.all });
+      // Cart selection is authoritative. Updating this badge needs no offer-list request.
+      const cart = client.getQueryData<import('../api/cartServiceTypes').CartResponse>(deliveryKeys.cart());
+      if (cart) {
+        const ids = cartCouponIds(cart);
+        client.setQueriesData<InfiniteData<ClaimedCouponsResponse>>(
+          { queryKey: [...claimedCouponsKeys.all, userId] },
+          old => old ? { ...old, pages: old.pages.map(page => ({ ...page,
+            data: page.data.map(coupon => ({ ...coupon, is_active: ids.includes(coupon.id) })),
+          })) } : old,
+        );
+      }
+      // Only changed selections need a new preview. A repeated/failed no-op
+      // keeps its existing confirmed total.
+      if (!_error) await client.invalidateQueries({ queryKey: [...deliveryKeys.all, 'checkout-preview'], refetchType: 'none' });
       if (userId) useCouponSyncStore.getState().setPending(userId, false);
     },
   });

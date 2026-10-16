@@ -42,7 +42,7 @@ export default function OrderTrackingModernProgressCard({
         {t("order_tracking_progress")}
       </Text>
 
-      <View accessibilityRole="progressbar" style={styles.journeyRow}>
+      <View accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: stageLabels.length, now: completedSteps }} accessibilityLabel={t("order_tracking_progress")} style={styles.journeyRow}>
         {stageLabels.map((label, index) => {
           const step = index + 1;
           const isComplete = step <= completedSteps;
@@ -50,9 +50,7 @@ export default function OrderTrackingModernProgressCard({
           return (
             <View key={label} style={styles.stage}>
               <View style={styles.stageRailRow}>
-                {index > 0 ? (
-                  <View style={[styles.rail, { backgroundColor: isComplete ? accentColor : colors.border }]} />
-                ) : null}
+                <View style={[styles.rail, { backgroundColor: index === 0 ? 'transparent' : isComplete ? accentColor : colors.border }]} />
                 <View
                   style={[
                     styles.stageNode,
@@ -65,9 +63,7 @@ export default function OrderTrackingModernProgressCard({
                   {isComplete ? <Ionicons color={colors.onPrimary} name="checkmark" size={12} /> : null}
                   {isActive ? <View style={[styles.activeDot, { backgroundColor: accentColor }]} /> : null}
                 </View>
-                {index < stageLabels.length - 1 ? (
-                  <View style={[styles.rail, { backgroundColor: step < completedSteps ? accentColor : colors.border }]} />
-                ) : null}
+                <View style={[styles.rail, { backgroundColor: index === stageLabels.length - 1 ? 'transparent' : step < completedSteps ? accentColor : colors.border }]} />
               </View>
               <Text
                 color={isComplete || isActive ? colors.text : colors.textSubtle}
@@ -106,7 +102,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.35,
     lineHeight: 27,
   },
-  journeyRow: { flexDirection: "row", marginHorizontal: -7, marginTop: 20 },
+  journeyRow: { flexDirection: "row", marginTop: 20 },
   rail: { flex: 1, height: 2.5 },
   stage: { alignItems: "center", flex: 1 },
   stageLabel: { fontSize: 9, lineHeight: 12, marginTop: 7, minHeight: 24, paddingHorizontal: 2, textAlign: "center" },

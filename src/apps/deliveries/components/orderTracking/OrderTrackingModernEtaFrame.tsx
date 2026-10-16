@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import { Animated, Image, StyleSheet, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
 import Svg, {
   Circle,
   Defs,
@@ -40,7 +41,7 @@ export default function OrderTrackingModernEtaFrame({
   statusTitle,
 }: Props) {
   const { t } = useTranslation("deliveries");
-  const { colors, motion } = useTheme();
+  const { colors, motion, spacing, shape } = useTheme();
   const isReducedMotionEnabled = useReducedMotion();
   const progress = useMemo(() => getStatusProgress(status), [status]);
   const animatedProgress = useRef(new Animated.Value(progress)).current;
@@ -77,6 +78,24 @@ export default function OrderTrackingModernEtaFrame({
   const compactEtaLabel = hasLiveEta && /\d/.test(etaLabel)
     ? etaLabel
     : t(getCompactEtaKey(status, showDeliveredTitle));
+
+  if (showDeliveredTitle) {
+    return (
+      <View style={[styles.completion, { gap: spacing.md, paddingVertical: spacing.lg }]} accessibilityRole="summary">
+        <View style={[styles.completionIcon, { backgroundColor: colors.successSoft, borderRadius: shape.radius.pill }]}>
+          <Ionicons name="checkmark" size={30} color={colors.success} />
+        </View>
+        <View style={styles.statusCopy}>
+          <Text color={colors.text} variant="sectionTitle" weight="bold">
+            {t("orders_status_delivered")}
+          </Text>
+          {statusMessage ? <Text color={colors.textSubtle} variant="supporting" style={{ marginTop: spacing.xs }}>
+            {statusMessage}
+          </Text> : null}
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -219,6 +238,8 @@ function getStatusProgress(status: DeliveryOrderStatus) {
 }
 
 const styles = StyleSheet.create({
+  completion: { flexDirection: 'row', alignItems: 'center', width: '100%' },
+  completionIcon: { width: 56, height: 56, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   arrivalWindow: {
     fontSize: 11,
     lineHeight: 15,

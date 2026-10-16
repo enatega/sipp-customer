@@ -35,7 +35,12 @@ export function useCheckoutPreview(
     },
     enabled: Boolean(input && session.data?.token) && !isSelectingCoupon,
     retry: false,
-    staleTime: 0,
+    // Each pricing input/cart revision owns its confirmed result. Recalculate
+    // on a changed key or explicit invalidation/retry, never just on focus/resume.
+    staleTime: Infinity,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     ...options,
   });
 }

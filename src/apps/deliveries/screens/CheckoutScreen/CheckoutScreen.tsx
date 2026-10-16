@@ -1,6 +1,6 @@
 import React from 'react';
 import { useStripe } from '@stripe/stripe-react-native';
-import { AppState, View } from 'react-native';
+import { View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -25,7 +25,6 @@ import useSelectSavedAddress from '../../../../general/hooks/useSelectSavedAddre
 import { useCart } from '../../hooks/useCart';
 import { useCheckoutPreview } from '../../hooks/useCheckoutPreview';
 import { couponMutationKey } from '../../hooks/useUseCouponMutation';
-import { claimedCouponsKeys } from '../../hooks/useClaimedCouponsQuery';
 import { formatCartPrice } from '../../components/cart/cartUtils';
 import {
   createSelectedDeliveryAddress,
@@ -211,6 +210,7 @@ export default function CheckoutScreen() {
   const walletBalanceQuery = useCustomerWalletBalance();
   const wantsWalletAfterTopUpRef = React.useRef(false);
   const hasManuallySelectedPaymentMethodRef = React.useRef(false);
+  const [initialPaymentReady, setInitialPaymentReady] = React.useState(false);
   const [selectedStripeCardId, setSelectedStripeCardId] = React.useState<string | null>(null);
   const savedCards = savedCardsQuery.data?.cards ?? [];
   const selectedSavedCard = savedCards.find((card) => card.id === selectedStripeCardId)
@@ -223,8 +223,13 @@ export default function CheckoutScreen() {
     error: cartError,
     refetch: refetchCart,
   } = useCart();
+  React.useEffect(() => {
+    if (initialPaymentReady || savedCardsQuery.isPending) return;
+    if (selectedSavedCard) setPaymentMethod('stripe');
+    setInitialPaymentReady(true);
+  }, [initialPaymentReady, savedCardsQuery.isPending, selectedSavedCard?.id]);
   const previewInput = React.useMemo(
-    () => phoneProfile.data?.data?.user && !(phoneProfile.data.data.user.phone_verification_required ?? (!phoneProfile.data.data.user.phone || !phoneProfile.data.data.user.phone_is_verified)) ? getPreviewInput(
+    () => initialPaymentReady && !isAddressesLoading && phoneProfile.data?.data?.user && !(phoneProfile.data.data.user.phone_verification_required ?? (!phoneProfile.data.data.user.phone || !phoneProfile.data.data.user.phone_is_verified)) ? getPreviewInput(
       cart,
       orderType,
       paymentMethod,
@@ -232,6 +237,8 @@ export default function CheckoutScreen() {
       selectedTip,
     ) : null,
     [
+      initialPaymentReady,
+      isAddressesLoading,
       cart,
       phoneProfile.data?.data?.user?.phone_verification_required,
       phoneProfile.data?.data?.user?.phone,
@@ -249,7 +256,7 @@ export default function CheckoutScreen() {
     isFetching: isPreviewPending,
     isError: isPreviewError,
     refetch: refetchPreview,
-  } = useCheckoutPreview(previewInput, undefined, JSON.stringify([cartCouponIds(cart), cart?.items.map(item => [item.id, item.quantity, item.unitPrice]), cart?.totalPrice, cart?.discountAmount]));
+  } = useCheckoutPreview(previewInput, undefined, JSON.stringify([cartCouponIds(cart).sort(), cart?.items.map(item => [item.id, item.quantity, item.unitPrice]).sort((a, b) => String(a[0]).localeCompare(String(b[0]))), cart?.totalPrice, cart?.discountAmount, effectiveSelectedAddress]));
 
   React.useEffect(() => {
     if (preview && !isPreviewError && !isPreviewPending) setPlacementInventoryError(null);
@@ -263,24 +270,22 @@ export default function CheckoutScreen() {
     ? cartCouponIds(cart) : couponPreviews.map(coupon => coupon.id);
   const hasCouponIssues = couponPreviews.some(coupon => selectedCouponIds.includes(coupon.id) && (coupon.issue || !coupon.isApplied));
   const missingCouponPreview = selectedCouponIds.some(id => !couponPreviews.some(coupon => coupon.id === id));
-  const isCouponChecking = isPreviewPending || isSelectingCoupon || couponSyncPending;
+  const isCouponChecking = isSelectingCoupon || couponSyncPending || (selectedCouponIds.length > 0 && isPreviewPending);
   const isCouponBlocked = isCouponChecking || hasCouponIssues || missingCouponPreview;
   const confirmedSavings = isCouponChecking || isPreviewError ? 0 : couponPreviews.reduce((sum, coupon) =>
     sum + (selectedCouponIds.includes(coupon.id) && coupon.isApplied && !coupon.issue ? coupon.appliedDiscount ?? 0 : 0), 0);
   const refreshOfferPreview = React.useCallback(async () => {
     await refetchPreview({ throwOnError: true });
   }, [refetchPreview]);
+  const hasLoadedCheckoutCart = React.useRef(false);
   useFocusEffect(React.useCallback(() => {
+    if (!hasLoadedCheckoutCart.current) {
+      hasLoadedCheckoutCart.current = true;
+      return;
+    }
+    // A return from cart/address editing may change pricing inputs. The preview
+    // key handles actual changes; unchanged cart data does not recalculate totals.
     void queryClient.invalidateQueries({ queryKey: deliveryKeys.cart() });
-    void queryClient.invalidateQueries({ queryKey: [...deliveryKeys.all, 'checkout-preview'] });
-    void queryClient.invalidateQueries({ queryKey: claimedCouponsKeys.all });
-    const listener = AppState.addEventListener('change', state => {
-      if (state !== 'active') return;
-      void queryClient.invalidateQueries({ queryKey: deliveryKeys.cart() });
-      void queryClient.invalidateQueries({ queryKey: [...deliveryKeys.all, 'checkout-preview'] });
-      void queryClient.invalidateQueries({ queryKey: claimedCouponsKeys.all });
-    });
-    return () => listener.remove();
   }, [queryClient]));
 
   React.useEffect(() => {
@@ -901,10 +906,10 @@ export default function CheckoutScreen() {
   const walletBalance = walletBalanceQuery.data ?? 0;
   const isWalletEnabled = walletBalanceQuery.data !== undefined && walletBalance >= Number(previewTotal || 0);
   React.useEffect(() => {
-    if (paymentMethod === 'wallet' && walletBalanceQuery.data !== undefined && !isWalletEnabled) {
+    if (preview?.store && !isPreviewPending && paymentMethod === 'wallet' && walletBalanceQuery.data !== undefined && !isWalletEnabled) {
       setPaymentMethod(getPreferredCheckoutPaymentMethod(preview?.store));
     }
-  }, [isWalletEnabled, paymentMethod, preview?.store, walletBalanceQuery.data]);
+  }, [isWalletEnabled, isPreviewPending, paymentMethod, preview?.store, walletBalanceQuery.data]);
   const paymentIconName = paymentMethod === 'stripe' ? 'card-outline' : paymentMethod === 'wallet' ? 'wallet-outline' : 'cash-outline';
   const paymentTitle = getCheckoutPaymentMethodTitle(paymentMethod, t);
   const paymentSubtitle = paymentMethod === 'stripe'
@@ -1093,7 +1098,7 @@ export default function CheckoutScreen() {
         previews={couponPreviews}
         checking={isCouponChecking || isPreviewError}
         previewFailed={isPreviewError}
-        onRefreshPreview={refreshOfferPreview}
+        onRefreshPreview={isPreviewError ? refreshOfferPreview : undefined}
         context={{ storeId: cart.storeId, subtotal: preview?.pricing.subtotal ?? cart.totalPrice, orderType, paymentMethod, productIds: cart.items.map(item => item.productId) }}
       /> : null}
 

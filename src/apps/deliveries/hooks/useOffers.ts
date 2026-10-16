@@ -1,6 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useRef, useState } from 'react';
 import { useIsMutating, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { ApiError } from '../../../general/api/apiClient';
@@ -52,18 +50,6 @@ export function useOffers(onRefreshPreview?: () => Promise<unknown>) {
       setRefreshing(false);
     }
   }, [client, userId, t]);
-  // Checkout owns cart/pricing freshness; opening its sheet reuses those queries.
-  useFocusEffect(useCallback(() => {
-    if (!previewRefresh.current) {
-      void client.invalidateQueries({ queryKey: [...claimedCouponsKeys.all, userId] });
-    }
-  }, [client, userId]));
-  useEffect(() => {
-    const listener = AppState.addEventListener('change', state => {
-      if (state === 'active' && !previewRefresh.current) void refresh();
-    });
-    return () => listener.remove();
-  }, [refresh]);
 
   const claimCode = async () => {
     if (lock.current || claim.isPending) return;
