@@ -1,3 +1,4 @@
+import type { AddressDetails } from '../../../general/api/addressService';
 export type CheckoutOrderType = 'delivery' | 'pickup';
 
 export type CheckoutPaymentMethod = 'cod' | 'stripe' | 'wallet';
@@ -62,6 +63,9 @@ export type CheckoutPreviewPickup = {
 };
 
 export type CheckoutPreviewDelivery = {
+  deliveryAddressDetails?: AddressDetails | null;
+  deliveryAddressIsHistoricalFallback?: boolean;
+  deliveryAddressExtras?: string | null;
   addressId: string;
   label: string | null;
   address: string;

@@ -11,7 +11,7 @@ import type {
 const ORDERS_BASE = '/api/v1/apps/deliveries/orders';
 const CHECKOUT_PREVIEW_PATH = `${ORDERS_BASE}/place-order/preview`;
 const CHECKOUT_PLACE_ORDER_PATH = ORDERS_BASE;
-const ENABLE_DELIVERIES_ORDER_DEBUG = __DEV__;
+const ENABLE_DELIVERIES_ORDER_DEBUG = false;
 const PLACE_ORDER_TIMEOUT_MS = 45_000;
 
 type PlacedOrderLookup = { orderId: string | null; draftId: string | null };
@@ -96,15 +96,8 @@ export const orderService = {
     ),
 
   getCheckoutPreview: async (input: CheckoutPreviewInput) => {
-    if (ENABLE_DELIVERIES_ORDER_DEBUG) {
-      console.log('[Deliveries][OrderService][Request]', {
-        api: CHECKOUT_PREVIEW_PATH,
-        input,
-        method: 'GET',
-      });
-    }
 
-    const response = await apiClient.get<CheckoutPreviewResponse>(
+    const response = await apiClient.post<CheckoutPreviewResponse>(
       CHECKOUT_PREVIEW_PATH,
       input,
     ).catch((error) => {
@@ -117,24 +110,11 @@ export const orderService = {
       throw error;
     });
 
-    if (ENABLE_DELIVERIES_ORDER_DEBUG) {
-      console.log('[Deliveries][OrderService][Response]', {
-        api: CHECKOUT_PREVIEW_PATH,
-        response,
-      });
-    }
 
     return response;
   },
 
   placeOrder: async (input: PlaceOrderInput) => {
-    if (ENABLE_DELIVERIES_ORDER_DEBUG) {
-      console.log('[Deliveries][OrderService][PlaceOrder][Request]', {
-        api: CHECKOUT_PLACE_ORDER_PATH,
-        input,
-        method: 'POST',
-      });
-    }
 
     let response: PlaceOrderResponse;
     try {
@@ -152,12 +132,6 @@ export const orderService = {
       response = await recoverAmbiguousPlacement(input);
     }
 
-    if (ENABLE_DELIVERIES_ORDER_DEBUG) {
-      console.log('[Deliveries][OrderService][PlaceOrder][Response]', {
-        api: CHECKOUT_PLACE_ORDER_PATH,
-        response,
-      });
-    }
 
     return response;
   },

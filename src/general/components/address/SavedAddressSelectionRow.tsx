@@ -1,3 +1,4 @@
+import AddressDetailsView, { type AddressDetails } from './AddressDetailsView';
 import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -5,6 +6,7 @@ import Text from '../Text';
 import { useTheme } from '../../theme/theme';
 
 type Props = {
+  details?: AddressDetails | null;
   address: string | null | undefined;
   iconName: keyof typeof Ionicons.glyphMap;
   isDisabled?: boolean;
@@ -22,6 +24,7 @@ export default function SavedAddressSelectionRow({
   isSelecting = false,
   onPress,
   typeLabel,
+  details,
 }: Props) {
   const { colors, motion, shape, spacing } = useTheme();
   const resolvedAddress = address?.trim() || '-';
@@ -90,6 +93,7 @@ export default function SavedAddressSelectionRow({
         >
           {resolvedAddress}
         </Text>
+        <AddressDetailsView details={details} compact={!isSelected} />
       </View>
 
       {isSelecting ? (

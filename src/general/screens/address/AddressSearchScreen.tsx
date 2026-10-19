@@ -70,10 +70,14 @@ export default function AddressSearchScreen() {
         editAddressId: params.editAddressId,
         editType: params.editType,
         editLocationName: params.editLocationName,
+        editAddressDetails: params.editAddressDetails,
+        expectedUpdatedAt: params.expectedUpdatedAt,
+        draftDetails: params.draftDetails,
+        draftType: params.draftType,
         origin: params.origin,
         preselectAsDefault: params.preselectAsDefault,
       }
-    : { appPrefix: params.appPrefix, origin: params.origin, preselectAsDefault: params.preselectAsDefault };
+    : { appPrefix: params.appPrefix, origin: params.origin, preselectAsDefault: params.preselectAsDefault, draftDetails: params.draftDetails, draftType: params.draftType };
 
   const selectGuestLocation = useCallback(
     (address: string, latitude: number, longitude: number) => {

@@ -2,17 +2,15 @@ import apiClient from "./apiClient";
 import type { ProfileAppPrefix } from "./profileService";
 import { retryTransientMapRequest } from "./retryTransientMapRequest";
 
-function getProfileBase(appPrefix: ProfileAppPrefix) {
-  return `/api/v1/apps/${appPrefix}/profile`;
-}
-
 function getAddressBase(appPrefix: ProfileAppPrefix) {
   return `/api/v1/apps/${appPrefix}/profile/address`;
 }
 
 export type AddressType = "HOME" | "APARTMENT" | "OFFICE" | "OTHER";
 
-export type AddressAdditionalFields = {
+export type AddressDetails = { placeName: string | null; howToFindYou: string | null; deliveryInstructions: string | null };
+
+export type AddressAdditionalFields = Partial<AddressDetails> & {
   apartmentNo?: string;
   building?: string;
   companyName?: string;
@@ -28,18 +26,13 @@ export type AddressPayload = {
   latitude: number;
   longitude: number;
   type: AddressType;
+  addressDetailsVersion?: 2;
+  expectedUpdatedAt?: string;
   location_name?: string;
   additional_fields?: AddressAdditionalFields;
 };
 
-export type AddressResponse = {
-  address: string;
-  latitude: number;
-  longitude: number;
-  type: AddressType;
-  location_name?: string | null;
-  additional_fields?: AddressAdditionalFields;
-};
+export type AddressResponse = { message: string; data: SavedAddress };
 
 export type SavedAddress = {
   id: string;
@@ -52,6 +45,8 @@ export type SavedAddress = {
   location_name: string | null;
   type: AddressType;
   additional_fields?: AddressAdditionalFields;
+  addressDetails?: AddressDetails | null;
+  addressDetailsVersion?: number;
   is_selected: boolean;
   createdAt: string;
   updatedAt: string;
@@ -66,6 +61,7 @@ export type DeliveryAddress = {
   id?: string;
   address: string;
   locationName?: string | null;
+  addressDetails?: AddressDetails | null;
   latitude: number;
   longitude: number;
   type?: AddressType;
@@ -83,15 +79,21 @@ export type RecentAddressSearch = {
 // Factory function for dynamic address CRUD operations (requires appPrefix)
 export function createAddressService(appPrefix: ProfileAppPrefix) {
   const addressBase = getAddressBase(appPrefix);
-  const profileBase = getProfileBase(appPrefix);
 
   return {
+    getAddress: async (id: string) => {
+      const response = await apiClient.get<AddressResponse>(`${addressBase}/${id}`);
+      return response.data;
+    },
     getSavedAddresses: async () => {
-      const response = await apiClient.get<{
-        message: string;
-        data: { addresses: SavedAddress[] };
-      }>(profileBase);
-      return response?.data?.addresses ?? [];
+      const addresses: SavedAddress[] = [];
+      let offset = 0;
+      while (true) {
+        const page = await apiClient.get<{ items: SavedAddress[]; isEnd: boolean }>('/api/v1/address', { offset });
+        addresses.push(...page.items);
+        if (page.isEnd || !page.items.length) return addresses;
+        offset += page.items.length;
+      }
     },
     addAddress: (payload: AddressPayload) =>
       apiClient.post<AddressResponse>(addressBase, payload),
@@ -174,6 +176,8 @@ export const addressService = {
   },
 
   // Address CRUD methods (require appPrefix)
+  getAddress: (appPrefix: ProfileAppPrefix, id: string) => createAddressService(appPrefix).getAddress(id),
+
   getSavedAddresses: (appPrefix: ProfileAppPrefix) =>
     createAddressService(appPrefix).getSavedAddresses(),
 

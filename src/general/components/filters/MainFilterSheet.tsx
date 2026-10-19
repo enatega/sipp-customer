@@ -209,6 +209,7 @@ export default function MainFilterSheet({
                       key={option.id}
                       label={decodeFilterLabel(option.label)}
                       description={option.description ?? undefined}
+                      addressDetails={option.addressDetails}
                       isSelected={draftFilters.address_id === option.id}
                       onPress={() => onSelectAddress(option.id)}
                     />

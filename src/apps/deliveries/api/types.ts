@@ -123,6 +123,7 @@ export interface DeliveryFilterValueCategory {
 }
 
 export interface DeliveryFilterValueAddress {
+    addressDetails?: import("../../../general/api/addressService").AddressDetails | null;
     id: string;
     label: string;
     description?: string | null;

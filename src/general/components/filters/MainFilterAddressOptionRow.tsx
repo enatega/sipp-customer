@@ -1,3 +1,4 @@
+import AddressDetailsView, { type AddressDetails } from '../address/AddressDetailsView';
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Icon from '../Icon';
@@ -5,6 +6,7 @@ import Text from '../Text';
 import { useTheme } from '../../theme/theme';
 
 type Props = {
+  addressDetails?: AddressDetails | null;
   label: string;
   description?: string;
   iconName?: string;
@@ -15,6 +17,7 @@ type Props = {
 
 export default function MainFilterAddressOptionRow({
   label,
+  addressDetails,
   description,
   iconName = 'home-outline',
   iconType = 'Ionicons',
@@ -63,6 +66,7 @@ export default function MainFilterAddressOptionRow({
             {description}
           </Text>
         ) : null}
+        <AddressDetailsView details={addressDetails} compact />
       </View>
 
       {isSelected ? (

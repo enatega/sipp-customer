@@ -3,6 +3,7 @@ import type { SavedAddress } from '../api/addressService';
 import {
   areDeliveryAddressesEqual,
   createSelectedDeliveryAddress,
+  createDeliveryAddressFromSavedAddress,
 } from '../utils/address';
 import { useAddressStore } from '../stores/useAddressStore';
 
@@ -25,6 +26,15 @@ export default function useSyncSelectedSavedAddress(
       selectedAddress,
       setSelectedAddress,
     } = useAddressStore.getState();
+
+    if (selectedAddress?.id && !['current-location', 'guest-selected-location'].includes(selectedAddress.id)) {
+      const sameAddress = addresses.find(address => address.id === selectedAddress.id);
+      if (sameAddress) {
+        const latest = createDeliveryAddressFromSavedAddress(sameAddress);
+        if (latest && !areDeliveryAddressesEqual(latest, selectedAddress)) setSelectedAddress(latest);
+      }
+      return;
+    }
 
     // A saved/default address always wins over the ephemeral "current
     // location" marker the home screen hydrates while no default exists —

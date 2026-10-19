@@ -23,7 +23,6 @@ const OPTIONS: Array<{
   key: keyof Props['labels'];
 }> = [
   { value: 'HOME', icon: 'home-outline', key: 'home' },
-  { value: 'APARTMENT', icon: 'business-outline', key: 'apartment' },
   { value: 'OFFICE', icon: 'briefcase-outline', key: 'office' },
   { value: 'OTHER', icon: 'location-outline', key: 'other' },
 ];

@@ -1,3 +1,4 @@
+import AddressDetailsView, { type AddressDetails } from '../address/AddressDetailsView';
 import React from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,6 +7,7 @@ import { useTheme } from '../../theme/theme';
 import PressableScale from '../PressableScale';
 
 type Props = {
+  details?: AddressDetails | null;
   typeLabel: string;
   address: string | null | undefined;
   iconName: keyof typeof Ionicons.glyphMap;
@@ -18,6 +20,7 @@ type Props = {
 
 export default function MyProfileAddressCard({
   typeLabel,
+  details,
   address,
   iconName,
   isDisabled = false,
@@ -59,6 +62,7 @@ export default function MyProfileAddressCard({
           >
             {address || '—'}
           </Text>
+          <AddressDetailsView details={details} compact={!isSelected} />
         </View>
         {isSelecting ? (
           <ActivityIndicator color={colors.primary} size="small" />

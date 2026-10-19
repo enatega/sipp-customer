@@ -1,3 +1,4 @@
+import type { AddressDetails } from '../../../general/api/addressService';
 import type { PaginatedDeliveryResponse } from "./types";
 
 export type DeliveryOrderStatus =
@@ -43,6 +44,9 @@ export interface DeliveryOrderStore {
 }
 
 export interface DeliveryOrderDeliveryDetails {
+  deliveryAddressDetails?: AddressDetails | null;
+  deliveryAddressIsHistoricalFallback?: boolean;
+  deliveryAddressExtras?: string | null;
   label: string | null;
   address: string | null;
   latitude: number | null;

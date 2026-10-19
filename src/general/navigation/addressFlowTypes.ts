@@ -14,6 +14,10 @@ export type AddressFlowParams = {
   editType?: string;
   editLocationName?: string;
   editAdditionalFields?: AddressAdditionalFields;
+  editAddressDetails?: import("../api/addressService").AddressDetails | null;
+  expectedUpdatedAt?: string;
+  draftDetails?: import("../api/addressService").AddressDetails;
+  draftType?: import("../api/addressService").AddressType;
   initialLatitude?: number;
   initialLongitude?: number;
   origin?: AddressFlowOrigin;
@@ -29,6 +33,10 @@ export type AddressDetailParams = {
   editType?: string;
   editLocationName?: string;
   editAdditionalFields?: AddressAdditionalFields;
+  editAddressDetails?: import("../api/addressService").AddressDetails | null;
+  expectedUpdatedAt?: string;
+  draftDetails?: import("../api/addressService").AddressDetails;
+  draftType?: import("../api/addressService").AddressType;
   origin?: AddressFlowOrigin;
   preselectAsDefault?: boolean;
 };

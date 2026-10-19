@@ -88,6 +88,7 @@ function sanitizeHeaders(headers: unknown): Record<string, unknown> | undefined 
 
 const SENSITIVE_BODY_KEYS = new Set([
   'password',
+  'placename', 'howtofindyou', 'deliveryinstructions', 'addressdetails', 'deliveryaddressdetails', 'deliveryaddressextras', 'additional_fields',
   'newpassword',
   'oldpassword',
   'currentpassword',

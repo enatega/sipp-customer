@@ -1,13 +1,17 @@
+import { useQueryClient } from '@tanstack/react-query';
+import { deliveryKeys } from '../../../apps/deliveries/api/queryKeys';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
-import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
+import { CommonActions, useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { showToast } from '../../components/AppToast';
+import Text from '../../components/Text';
 import Button from '../../components/Button';
 import ScreenHeader from '../../components/ScreenHeader';
 import { useTheme } from '../../theme/theme';
+import { ApiError } from '../../api/apiClient';
 import { addressService } from '../../api/addressService';
 import AddressDetailForm from '../../components/address/AddressDetailForm';
 import type {
@@ -18,79 +22,16 @@ import type {
   AddressFlowHostParamList,
   AddressFlowParamList,
 } from '../../navigation/addressFlowTypes';
-import type { AddressType } from '../../api/addressService';
+import type { AddressDetails, SavedAddress, AddressType } from '../../api/addressService';
 import {
   createDeliveryAddress,
   createDeliveryAddressFromSavedAddress,
   GUEST_SELECTED_LOCATION_ADDRESS_ID,
 } from '../../utils/address';
 import useAddress from '../../hooks/useAddress';
-import type {
-  AddressAdditionalFields,
-  SavedAddress,
-} from '../../api/addressService';
 import { navigateAfterAddressSelection } from '../../navigation/addressFlowNavigation';
 import { useAuthSessionQuery } from '../../hooks/useAuthQueries';
 import useAndroidKeyboardVisible from '../../hooks/useAndroidKeyboardVisible';
-
-function areAdditionalFieldsEqual(
-  first: AddressAdditionalFields | undefined,
-  second: AddressAdditionalFields | undefined,
-) {
-  const normalizedFirst = first ?? {};
-  const normalizedSecond = second ?? {};
-  const keys = Array.from(
-    new Set([
-      ...Object.keys(normalizedFirst),
-      ...Object.keys(normalizedSecond),
-    ]),
-  ) as Array<keyof AddressAdditionalFields>;
-
-  return keys.every((key) => normalizedFirst[key] === normalizedSecond[key]);
-}
-
-function toTimestamp(value: string | undefined) {
-  const timestamp = value ? Date.parse(value) : Number.NaN;
-  return Number.isFinite(timestamp) ? timestamp : 0;
-}
-
-function getNewestAddress(addresses: SavedAddress[]) {
-  return [...addresses].sort(
-    (first, second) =>
-      toTimestamp(second.updatedAt ?? second.createdAt)
-      - toTimestamp(first.updatedAt ?? first.createdAt),
-  )[0];
-}
-
-function findSavedAddressToSelect(
-  addresses: SavedAddress[],
-  params: {
-    address: string;
-    additionalFields?: AddressAdditionalFields;
-    locationName?: string;
-    type: AddressType;
-  },
-) {
-  const exactMatches = addresses.filter((address) =>
-    address.address === params.address
-    && address.type === params.type
-    && (address.location_name ?? undefined) === params.locationName
-    && areAdditionalFieldsEqual(address.additional_fields, params.additionalFields));
-
-  if (exactMatches.length > 0) {
-    return getNewestAddress(exactMatches);
-  }
-
-  const partialMatches = addresses.filter((address) =>
-    address.address === params.address
-    && address.type === params.type);
-
-  if (partialMatches.length > 0) {
-    return getNewestAddress(partialMatches);
-  }
-
-  return getNewestAddress(addresses);
-}
 
 export default function AddressDetailScreen() {
   const nav =
@@ -100,13 +41,43 @@ export default function AddressDetailScreen() {
   const { t } = useTranslation('general');
   const insets = useSafeAreaInsets();
   const isAndroidKeyboardVisible = useAndroidKeyboardVisible();
+  const queryClient = useQueryClient();
   const formRef = useRef<AddressDetailFormHandle>(null);
   const hasCompletedGuestSelection = useRef(false);
   const [isSaving, setIsSaving] = useState(false);
+  const savedId = useRef<string | null>(null);
+  const lastSaved = useRef<{ address: SavedAddress; payload: string } | null>(null);
+  const [loadedAddress, setLoadedAddress] = useState<SavedAddress | null>(null);
+  const [useReloadedLocation, setUseReloadedLocation] = useState(false);
+  const [formRevision, setFormRevision] = useState(0);
+  const [isLoadingAddress, setIsLoadingAddress] = useState(Boolean(route.params.editAddressId));
+  const [saveError, setSaveError] = useState<string | null>(null);
   const params = route.params;
   const { selectedAddress, setSelectedAddress } = useAddress();
   const sessionQuery = useAuthSessionQuery();
   const isEditing = Boolean(params.editAddressId);
+  const handleDraftChange = useCallback((details: AddressDetails, type: AddressType) => {
+    const state = nav.getState();
+    const params = { draftDetails: details, draftType: type };
+    nav.setParams(params);
+    for (const previous of state.routes.slice(0, state.index)) {
+      if (['AddressSearch', 'AddressChooseOnMap'].includes(previous.name)) nav.dispatch({ ...CommonActions.setParams(params), source: previous.key });
+    }
+  }, [nav]);
+  const reloadAddress = useCallback(async () => {
+    if (!params.editAddressId) return;
+    setIsLoadingAddress(true);
+    try {
+      const latest = await addressService.getAddress(params.appPrefix, params.editAddressId);
+      setLoadedAddress(latest);
+      lastSaved.current = null;
+      setFormRevision(value => value + 1);
+      setSaveError(null);
+    } catch { setSaveError(t('address_details_saveRetry')); }
+    finally { setIsLoadingAddress(false); }
+  }, [params.appPrefix, params.editAddressId, t]);
+  useEffect(() => { void reloadAddress(); }, [reloadAddress]);
+
 
   useEffect(() => {
     if (
@@ -145,6 +116,8 @@ export default function AddressDetailScreen() {
         latitude: Number(data.latitude),
         longitude: Number(data.longitude),
         type: data.type,
+        addressDetailsVersion: data.addressDetailsVersion,
+        expectedUpdatedAt: data.expectedUpdatedAt,
         ...(data.location_name ? { location_name: data.location_name } : {}),
         ...(data.additional_fields
           ? { additional_fields: data.additional_fields }
@@ -152,49 +125,36 @@ export default function AddressDetailScreen() {
       };
 
       try {
-        if (isEditing && params.editAddressId) {
-          await addressService.updateAddress(params?.appPrefix, params.editAddressId, payload);
-          showToast.success(t('address_update_success'));
-        } else {
-          await addressService.addAddress(params?.appPrefix, payload);
-          showToast.success(t('address_save_success'));
-        }
-
-        // Keep the just-saved address selected so users don't need to reselect it.
+        setSaveError(null);
+        const payloadKey = JSON.stringify({ ...payload, expectedUpdatedAt: undefined });
+        const existingId = savedId.current ?? params.editAddressId;
+        const savedAddress = lastSaved.current?.payload === payloadKey ? lastSaved.current.address
+          : existingId ? (await addressService.updateAddress(params.appPrefix, existingId, { ...payload, expectedUpdatedAt: lastSaved.current?.address.updatedAt ?? payload.expectedUpdatedAt })).data
+          : (await addressService.addAddress(params.appPrefix, payload)).data;
+        void queryClient.invalidateQueries({ queryKey: [...deliveryKeys.all, 'checkout-preview'] });
+        const refreshedSelection = createDeliveryAddressFromSavedAddress(savedAddress);
+        if (selectedAddress?.id === savedAddress.id && refreshedSelection) setSelectedAddress(refreshedSelection);
+        savedId.current = savedAddress.id;
+        lastSaved.current = { address: savedAddress, payload: payloadKey };
         if (data.shouldSetDefault || (isEditing && selectedAddress?.id === params.editAddressId)) {
-          const savedAddresses = await addressService.getSavedAddresses(
-            params.appPrefix,
-          );
-          const savedAddressToSelect = isEditing
-            ? savedAddresses.find((address) => address.id === params.editAddressId)
-            : findSavedAddressToSelect(savedAddresses, {
-              address: payload.address,
-              additionalFields: data.additional_fields,
-              locationName: data.location_name,
-              type: payload.type,
-            });
-
-          if (savedAddressToSelect) {
-            const selectedResponse = await addressService.selectAddress(
-              params.appPrefix,
-              savedAddressToSelect.id,
-            );
-            const nextAddress = createDeliveryAddressFromSavedAddress(
-              selectedResponse.data,
-            );
-
-            if (nextAddress) {
-              setSelectedAddress(nextAddress);
-            }
+          try {
+            const selected = await addressService.selectAddress(params.appPrefix, savedAddress.id);
+            const nextAddress = createDeliveryAddressFromSavedAddress(selected.data);
+            if (nextAddress) setSelectedAddress(nextAddress);
+          } catch {
+            setSaveError(t('address_details_defaultRetry'));
+            return;
           }
         }
+        showToast.success(t(isEditing ? 'address_update_success' : 'address_save_success'));
 
         navigateAfterAddressSelection(nav, params.origin);
-      } catch {
+      } catch (error) {
+        setSaveError(t(error instanceof ApiError && error.code === 'ADDRESS_EDIT_CONFLICT' ? 'address_details_editConflict' : error instanceof ApiError && error.code === 'ADDRESS_APP_UPDATE_REQUIRED' ? 'address_details_updateRequired' : 'address_details_saveRetry'));
         showToast.error(t('address_save_error'));
       }
     },
-    [isEditing, nav, params.appPrefix, params.editAddressId, params.origin, selectedAddress?.id, setSelectedAddress, t],
+    [queryClient, isEditing, nav, params.appPrefix, params.editAddressId, params.origin, selectedAddress?.id, setSelectedAddress, t],
   );
 
   const handleButtonPress = useCallback(async () => {
@@ -230,54 +190,21 @@ export default function AddressDetailScreen() {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'none'}
       >
-        <AddressDetailForm
+        {saveError ? <Text accessibilityRole="alert" style={{ paddingHorizontal: 20 }}>{saveError}</Text> : null}
+        {saveError && isEditing ? <Button label={t('address_details_reload')} onPress={() => { const cleared = { draftDetails: undefined, draftType: undefined }; nav.setParams(cleared); const state = nav.getState(); for (const previous of state.routes.slice(0, state.index)) { if (['AddressSearch', 'AddressChooseOnMap'].includes(previous.name)) nav.dispatch({ ...CommonActions.setParams(cleared), source: previous.key }); } setUseReloadedLocation(true); void reloadAddress(); }} /> : null}
+        {!isLoadingAddress && (!isEditing || loadedAddress) ? <AddressDetailForm
+          key={formRevision}
           ref={formRef}
-          address={params.address}
-          latitude={Number(params.latitude)}
-          longitude={Number(params.longitude)}
-          initialLocationName={params.editLocationName}
-          initialSetAsDefault={params.preselectAsDefault}
-          initialType={(params.editType as AddressType) ?? 'HOME'}
-          initialAdditionalFields={params.editAdditionalFields}
+          address={useReloadedLocation && loadedAddress ? loadedAddress.address : params.address}
+          latitude={useReloadedLocation && loadedAddress ? loadedAddress.location.coordinates[1] : Number(params.latitude)}
+          longitude={useReloadedLocation && loadedAddress ? loadedAddress.location.coordinates[0] : Number(params.longitude)}
+          initialDetails={params.draftDetails ?? loadedAddress?.addressDetails ?? params.editAddressDetails}
+          expectedUpdatedAt={loadedAddress?.updatedAt ?? params.expectedUpdatedAt}
+          initialSetAsDefault={params.preselectAsDefault ?? loadedAddress?.is_selected}
+          initialType={params.draftType ?? loadedAddress?.type ?? (params.editType as AddressType) ?? 'HOME'}
+          onDraftChange={handleDraftChange}
           onSave={handleSave}
-          labels={{
-            apartmentDetailsTitle: t('address_apartment_details_title'),
-            requiredFieldSuffix: t('address_required_field_suffix'),
-            invalidCoordinates: t('address_invalid_coordinates'),
-            apartmentFloorTowerLabel: t('address_field_floor_tower_optional'),
-            apartmentFloorTowerPlaceholder: t('address_detail_floor_placeholder'),
-            apartmentLandmarkLabel: t('address_field_landmark_optional'),
-            apartmentLandmarkPlaceholder: t('address_detail_landmark_placeholder'),
-            apartmentSocietyBuildingNameLabel: t('address_field_society_building_name'),
-            apartmentSocietyBuildingNamePlaceholder: t('address_detail_society_placeholder'),
-            apartmentUnitLabel: t('address_field_apartment_flat'),
-            apartmentUnitPlaceholder: t('address_detail_apartment_placeholder'),
-            locationNamePlaceholder: t('address_location_name_placeholder'),
-            addressDetailsLabel: t('address_details_label'),
-            locationTypeLabel: t('address_location_type_label'),
-            homeAreaStreetLabel: t('address_field_area_street'),
-            homeAreaStreetPlaceholder: t('address_detail_area_placeholder'),
-            homeDetailsTitle: t('address_home_details_title'),
-            homeHouseFlatNumberLabel: t('address_field_house_flat_number'),
-            homeHouseFlatNumberPlaceholder: t('address_detail_house_placeholder'),
-            homeLandmarkLabel: t('address_field_landmark_optional'),
-            homeLandmarkPlaceholder: t('address_detail_landmark_placeholder'),
-            home: t('address_type_home'),
-            apartment: t('address_type_apartment'),
-            office: t('address_type_office'),
-            officeCompanyBuildingNameLabel: t('address_field_company_building_name'),
-            officeCompanyBuildingNamePlaceholder: t('address_detail_company_building_placeholder'),
-            officeDepartmentLabel: t('address_field_department_optional'),
-            officeDepartmentPlaceholder: t('address_detail_department_placeholder'),
-            officeDetailsTitle: t('address_office_details_title'),
-            officeFloorSuiteUnitLabel: t('address_field_floor_suite_unit_optional'),
-            officeFloorSuiteUnitPlaceholder: t('address_detail_floor_suite_unit_placeholder'),
-            officeLandmarkLabel: t('address_field_landmark_optional'),
-            officeLandmarkPlaceholder: t('address_detail_landmark_placeholder'),
-            other: t('address_type_other'),
-            setAsDefaultAddress: t('address_set_as_default'),
-          }}
-        />
+        /> : null}
       </ScrollView>
 
       <View
@@ -296,7 +223,7 @@ export default function AddressDetailScreen() {
           label={buttonLabel}
           onPress={handleButtonPress}
           isLoading={isSaving}
-          disabled={isSaving}
+          disabled={isSaving || isLoadingAddress || (isEditing && !loadedAddress)}
         />
       </View>
     </KeyboardAvoidingView>

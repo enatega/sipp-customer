@@ -7,6 +7,7 @@ type DeliveryAddressInput = {
   id?: string;
   address: string;
   locationName?: string | null;
+  addressDetails?: DeliveryAddress['addressDetails'];
   latitude: number;
   longitude: number;
   type?: DeliveryAddress['type'];
@@ -27,6 +28,7 @@ export function createDeliveryAddress(
     latitude: input.latitude,
     longitude: input.longitude,
     type: input.type,
+    addressDetails: input.addressDetails,
   };
 }
 
@@ -48,15 +50,11 @@ export function formatDeliveryAddressLabel(
 }
 
 export function formatSavedAddressDetails(
-  address: Pick<SavedAddress, 'address' | 'location_name' | 'additional_fields'>,
+  address: Pick<SavedAddress, 'address' | 'location_name' | 'additional_fields' | 'addressDetails'>,
 ) {
   const line = formatDeliveryAddressLabel({ address: address.address, locationName: address.location_name });
-  const fields = address.additional_fields;
-  if (!fields) return line;
-  const details = [fields.houseNo, fields.apartmentNo, fields.building, fields.companyName,
-    fields.floorNo, fields.department, fields.societyArea, fields.landmark]
-    .map((value) => value?.trim()).filter(Boolean);
-  return [line, ...new Set(details)].filter(Boolean).join(' · ');
+  const details = address.addressDetails;
+  return [line, details?.placeName, details?.howToFindYou, details?.deliveryInstructions].filter(Boolean).join(' · ');
 }
 
 export function areDeliveryAddressesEqual(
@@ -77,7 +75,8 @@ export function areDeliveryAddressesEqual(
     first.locationName === second.locationName &&
     first.latitude === second.latitude &&
     first.longitude === second.longitude &&
-    first.type === second.type
+    first.type === second.type &&
+    JSON.stringify(first.addressDetails) === JSON.stringify(second.addressDetails)
   );
 }
 
@@ -106,6 +105,7 @@ export function resolveSavedAddressId(
     return selectedAddressId;
   }
 
+  if (selectedAddressId && selectedAddressId !== CURRENT_LOCATION_ADDRESS_ID && selectedAddressId !== GUEST_SELECTED_LOCATION_ADDRESS_ID) return undefined;
   const savedSelectedAddressId = getSelectedSavedAddressId(addresses);
 
   if (
@@ -142,6 +142,7 @@ export function createDeliveryAddressFromSavedAddress(
     latitude,
     longitude,
     type: address.type,
+    addressDetails: address.addressDetails,
   });
 }
 

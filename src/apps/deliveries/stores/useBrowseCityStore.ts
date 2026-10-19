@@ -68,7 +68,7 @@ export const useBrowseCityStore = create<BrowseCityState>((set, get) => ({
   selectAddress: async (browseAddress) => {
     set({ cityName: null, browseAddress, isPickerVisible: false, isConfirmedForLaunch: true, pendingAddedAddressBaseline: undefined });
     try {
-      await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify({ kind: 'address', address: browseAddress }));
+      await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify({ kind: 'address', address: { ...browseAddress, addressDetails: undefined } }));
     } catch {
       // Keep the address active for this session if storage is unavailable.
     }

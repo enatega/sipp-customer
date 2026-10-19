@@ -28,6 +28,7 @@ import { couponMutationKey } from '../../hooks/useUseCouponMutation';
 import { formatCartPrice } from '../../components/cart/cartUtils';
 import {
   createSelectedDeliveryAddress,
+  createDeliveryAddressFromSavedAddress,
   formatDeliveryAddressLabel,
   resolveSavedAddressId,
 } from '../../../../general/utils/address';
@@ -183,8 +184,7 @@ export default function CheckoutScreen() {
     [addresses],
   );
   const effectiveSelectedAddress = React.useMemo(
-    () => selectedAddress?.id && addresses.some((address) => address.id === selectedAddress.id)
-      ? selectedAddress : fallbackSelectedAddress,
+    () => selectedAddress?.id ? (addresses.find(address => address.id === selectedAddress.id) ? createDeliveryAddressFromSavedAddress(addresses.find(address => address.id === selectedAddress.id)!) : selectedAddress) : fallbackSelectedAddress,
     [addresses, fallbackSelectedAddress, selectedAddress],
   );
   const resolvedAddressId = React.useMemo(

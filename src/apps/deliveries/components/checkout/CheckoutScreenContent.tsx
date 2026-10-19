@@ -1,3 +1,4 @@
+import AddressDetailsView from '../../../../general/components/address/AddressDetailsView';
 import React from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -194,6 +195,7 @@ export default function CheckoutScreenContent({
                 onPress={isDeliveryOrder ? onAddressPress : undefined}
                 showDivider={isDeliveryOrder && canShowLeaveAtDoor}
               />
+              {orderType === 'delivery' ? <AddressDetailsView details={preview?.fulfillment.delivery?.deliveryAddressDetails} legacyText={preview?.fulfillment.delivery?.deliveryAddressExtras} /> : null}
 
               {isDeliveryOrder && canShowLeaveAtDoor ? (
                 <CheckoutInfoRow

@@ -31,6 +31,8 @@ export type ProfileAddress = {
   location_name: string | null;
   type: "HOME" | "APARTMENT" | "OFFICE" | "OTHER";
   additional_fields?: import("./addressService").AddressAdditionalFields;
+  addressDetails?: import("./addressService").AddressDetails | null;
+  addressDetailsVersion?: number;
   is_selected: boolean;
   createdAt: string;
   updatedAt: string;

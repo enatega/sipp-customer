@@ -17,6 +17,7 @@ export type MainFilterCategory = {
 export type MainFilterAddress = {
   id: string;
   label: string;
+  addressDetails?: import("../../api/addressService").AddressDetails | null;
   description?: string | null;
 };
 

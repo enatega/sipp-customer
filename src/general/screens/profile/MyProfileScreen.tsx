@@ -108,6 +108,8 @@ export default function MyProfileScreen({ profilePrefix }: Props) {
       editType: addressMenuTarget.type,
       editLocationName: addressMenuTarget.location_name ?? '',
       editAdditionalFields: addressMenuTarget.additional_fields,
+      editAddressDetails: addressMenuTarget.addressDetails,
+      expectedUpdatedAt: addressMenuTarget.updatedAt,
       origin: isSelectionMode
         ? 'multi-vendor-home'
         : 'profile',

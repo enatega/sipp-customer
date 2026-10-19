@@ -11,7 +11,6 @@ import {
 } from '../../utils/savedAddressPresentation';
 import type { ProfileAddress } from '../../api/profileService';
 import {
-  formatSavedAddressDetails,
   getSelectedSavedAddressId,
 } from '../../utils/address';
 import MyProfileAddressCard from './MyProfileAddressCard';
@@ -57,7 +56,8 @@ export default function SavedAddressesList({
           return (
             <SavedAddressSelectionRow
               key={address.id}
-              address={formatSavedAddressDetails(address)}
+              address={address.address}
+              details={address.addressDetails}
               iconName={iconName}
               isDisabled={isSelectionPending}
               isSelected={isSelected}
@@ -71,7 +71,8 @@ export default function SavedAddressesList({
         return (
           <MyProfileAddressCard
             key={address.id}
-            address={formatSavedAddressDetails(address)}
+            address={address.address}
+              details={address.addressDetails}
             iconName={iconName}
             isDisabled={isSelectionPending}
             isSelected={isSelected}

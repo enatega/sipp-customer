@@ -1,3 +1,4 @@
+import AddressDetailsView from '../../../../general/components/address/AddressDetailsView';
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -35,6 +36,7 @@ export default function OrderSummaryContent({
         label={t("order_details_delivery_address")}
         value={deliveryDetails.address || "-"}
       />
+      <AddressDetailsView isHistoricalFallback={deliveryDetails.deliveryAddressIsHistoricalFallback} details={deliveryDetails.deliveryAddressDetails} legacyText={deliveryDetails.deliveryAddressExtras} />
       <OrderDetailsSummaryRow
         label={t("order_details_item_subtotal")}
         value={formatCurrency(summary.itemSubtotal)}

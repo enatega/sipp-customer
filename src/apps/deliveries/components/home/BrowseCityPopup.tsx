@@ -1,3 +1,4 @@
+import AddressDetailsView from '../../../../general/components/address/AddressDetailsView';
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -116,12 +117,12 @@ export default function BrowseCityPopup({ visible, onAddAddress }: Props) {
                   useAddressStore.getState().setSelectedAddress(guestAddress);
                   void selectBrowseAddress(guestAddress);
                 }} /> : null}
-              {addresses.map((address) => <BrowseLocationOption key={address.id}
+              {addresses.map((address) => <View key={address.id}><BrowseLocationOption
                 label={address.location_name?.trim() || getSavedAddressTypeLabel(address.type, tGeneral)}
                 subtitle={address.address} kind="address" iconName={getSavedAddressIcon(address.type)}
                 selected={browseAddress?.id === address.id}
                 loading={selectingAddressId === address.id} disabled={Boolean(selectingAddressId)}
-                onPress={() => { void handleSelectAddress(address); }} />)}
+                onPress={() => { void handleSelectAddress(address); }} /><AddressDetailsView details={address.addressDetails} compact={browseAddress?.id !== address.id} /></View>)}
             </View>
             {error ? <Text variant="caption" color={colors.textSubtle} style={styles.error}>
               {t('browse_city_addresses_error')}

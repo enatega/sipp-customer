@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import AddressDetailsView from '../../../../general/components/address/AddressDetailsView';
 import Button from '../../../../general/components/Button';
 import IconButton from '../../../../general/components/IconButton';
 import Image from '../../../../general/components/Image';
@@ -405,6 +406,11 @@ export default function OrderConfirmationScreen({ navigation, route }: Props) {
               ) : null}
             </View>
           </Surface>
+          {!isPickup && order?.deliveryDetails ? <Surface outlined style={{ padding: spacing.md }}>
+            <Text weight="semiBold">{t('order_details_delivery_address')}</Text>
+            <Text>{order.deliveryDetails.address}</Text>
+            <AddressDetailsView details={order.deliveryDetails.deliveryAddressDetails} legacyText={order.deliveryDetails.deliveryAddressExtras} isHistoricalFallback={order.deliveryDetails.deliveryAddressIsHistoricalFallback} />
+          </Surface> : null}
         </Animated.View>
       </ScrollView>
 
