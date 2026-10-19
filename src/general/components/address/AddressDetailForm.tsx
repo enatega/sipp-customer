@@ -54,7 +54,21 @@ const AddressDetailForm = forwardRef<AddressDetailFormHandle, Props>(function Ad
     {errors.type ? <Text accessibilityRole="alert">{errors.type}</Text> : null}
     {fields.map(key => <View key={key} style={styles.field}>
       <Text weight="medium">{t(`address_details_${key}Label`)}</Text>
-      <TextInput accessibilityLabel={t(`address_details_${key}Label`)} value={values[key]} onChangeText={text => setValues(previous => ({ ...previous, [key]: text })) editable={!isSaving} multiline={key !== 'placeName'} placeholder={t(`address_details_${key}Placeholder`)} placeholderTextColor={colors.mutedText} textAlignVertical="top" style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, minHeight: key === 'placeName' ? 48 : 96 }]} />
+      <TextInput
+        accessibilityLabel={t(`address_details_${key}Label`)}
+        value={values[key]}
+        onChangeText={text => {
+          const next = { ...values, [key]: text };
+          setValues(next);
+          onDraftChange?.(next, type);
+        }}
+        editable={!isSaving}
+        multiline={key !== 'placeName'}
+        placeholder={t(`address_details_${key}Placeholder`)}
+        placeholderTextColor={colors.mutedText}
+        textAlignVertical="top"
+        style={[styles.input, { color: colors.text, backgroundColor: colors.surface, borderColor: colors.border, minHeight: key === 'placeName' ? 48 : 96 }]}
+      />
       {errors[key] ? <Text accessibilityRole="alert">{errors[key]}</Text> : null}
     </View>)}
     <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: shouldSetDefault, disabled: isSaving }} disabled={isSaving} onPress={() => setShouldSetDefault(!shouldSetDefault)} style={styles.defaultRow}>
