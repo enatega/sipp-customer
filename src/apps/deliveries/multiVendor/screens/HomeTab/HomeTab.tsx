@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { RefreshControl, View } from 'react-native';
+import { RefreshControl } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Location from 'expo-location';
 import { CompositeNavigationProp, useNavigation } from '@react-navigation/native';
@@ -53,6 +53,7 @@ type HomeLayout = { revision: number; sections: HomeSection[] };
 
 const fallbackSections: HomeSection[] = [
   { key: 'shop-types', kind: 'shop-types', title: 'Shop Types' },
+  { key: 'favourite-foods', kind: 'favourite-foods', title: 'Favourite Foods' },
   { key: 'banners', kind: 'banners', title: 'Special Offers' },
   { key: 'quick-actions', kind: 'quick-actions', title: 'Quick Actions' },
   { key: 'top-brands', kind: 'top-brands', title: 'Top Brands' },
@@ -339,12 +340,8 @@ export default function HomeTab() {
             index={index + 1}
             style={[styles.sectionGroup, { marginBottom: spacing.md }]}
           >
-            {section.kind === 'shop-types' && <>
-              <ShopTypeList />
-              <View style={{ marginTop: spacing.lg }}>
-                <FavouriteFoodsCarousel onFoodPress={handleFavouriteFoodPress} />
-              </View>
-            </>}
+            {section.kind === 'shop-types' && <ShopTypeList />}
+            {section.kind === 'favourite-foods' && <FavouriteFoodsCarousel onFoodPress={handleFavouriteFoodPress} />}
             {section.kind === 'banners' && <MultiVendorSpecialOffers />}
             {section.kind === 'quick-actions' && <AllInOneQuickActions onActionPress={handleQuickActionPress} />}
             {section.kind === 'top-brands' && <TopBrandsList onClosedStorePress={handleClosedStorePress} />}
